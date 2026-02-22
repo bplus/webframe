@@ -13,10 +13,10 @@ func main() {
 
 	// Static files
 	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 
 	// Pages
-	mux.HandleFunc("GET /", demo.HandleShowcase)
+	mux.HandleFunc("GET /{$}", demo.HandleShowcase)
 
 	// HTMX demo endpoints
 	mux.HandleFunc("POST /api/click", demo.HandleClick)
