@@ -1,0 +1,393 @@
+@import "tailwindcss";
+
+@source "../../components/**/*.templ";
+@source "../../demo/**/*.templ";
+
+@theme {
+  /* ── Primary: Slate Blue ── */
+  --color-primary-50:  #f0f4ff;
+  --color-primary-100: #dbe4ff;
+  --color-primary-200: #bac8ff;
+  --color-primary-300: #91a7ff;
+  --color-primary-400: #748ffc;
+  --color-primary-500: #5c7cfa;
+  --color-primary-600: #4c6ef5;
+  --color-primary-700: #4263eb;
+  --color-primary-800: #3b5bdb;
+  --color-primary-900: #364fc7;
+  --color-primary-950: #2b3f9e;
+
+  /* ── Accent: Amber ── */
+  --color-accent-50:  #fff8e1;
+  --color-accent-100: #ffecb3;
+  --color-accent-200: #ffe082;
+  --color-accent-300: #ffd54f;
+  --color-accent-400: #ffca28;
+  --color-accent-500: #ffc107;
+  --color-accent-600: #ffb300;
+  --color-accent-700: #ffa000;
+  --color-accent-800: #ff8f00;
+  --color-accent-900: #ff6f00;
+
+  /* ── Surface: Slate ── */
+  --color-surface-50:  #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  /* ── shadcn/templUI semantic tokens (dark default) ── */
+  --color-background:           var(--color-surface-950);
+  --color-foreground:           var(--color-surface-50);
+  --color-card:                 var(--color-surface-900);
+  --color-card-foreground:      var(--color-surface-50);
+  --color-popover:              var(--color-surface-900);
+  --color-popover-foreground:   var(--color-surface-50);
+  --color-primary:              var(--color-primary-600);
+  --color-primary-foreground:   #ffffff;
+  --color-secondary:            var(--color-surface-800);
+  --color-secondary-foreground: var(--color-surface-100);
+  --color-muted:                var(--color-surface-800);
+  --color-muted-foreground:     var(--color-surface-400);
+  --color-accent:               var(--color-surface-800);
+  --color-accent-foreground:    var(--color-surface-100);
+  --color-destructive:          #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border:               var(--color-surface-700);
+  --color-input:                var(--color-surface-700);
+  --color-ring:                 var(--color-primary-500);
+
+  /* ── Radius ── */
+  --radius: 0.5rem;
+
+  /* ── Fonts ── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ── Light theme overrides ── */
+:root[data-theme="light"] {
+  --color-background:           var(--color-surface-50);
+  --color-foreground:           var(--color-surface-900);
+  --color-card:                 #ffffff;
+  --color-card-foreground:      var(--color-surface-900);
+  --color-popover:              #ffffff;
+  --color-popover-foreground:   var(--color-surface-900);
+  --color-primary:              var(--color-primary-600);
+  --color-primary-foreground:   #ffffff;
+  --color-secondary:            var(--color-surface-100);
+  --color-secondary-foreground: var(--color-surface-900);
+  --color-muted:                var(--color-surface-100);
+  --color-muted-foreground:     var(--color-surface-500);
+  --color-accent:               var(--color-surface-100);
+  --color-accent-foreground:    var(--color-surface-900);
+  --color-destructive:          #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border:               var(--color-surface-200);
+  --color-input:                var(--color-surface-200);
+  --color-ring:                 var(--color-primary-500);
+}
+
+/* ── Alpine cloak ── */
+[x-cloak] { display: none !important; }
+
+/* ── Body theme ── */
+.wf-theme {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  min-height: 100vh;
+}
+
+/* ── Topbar ── */
+.wf-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--color-background) 85%, transparent);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wf-topbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 3.5rem;
+}
+
+/* ── Nav links ── */
+.wf-nav-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  padding: 0.25rem 0;
+  transition: color 0.15s;
+}
+
+.wf-nav-link:hover,
+.wf-nav-link.active {
+  color: var(--color-primary);
+}
+
+.wf-nav-link.active {
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* ── Theme toggle ── */
+.wf-theme-toggle {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.wf-theme-toggle:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-foreground);
+}
+
+/* ── Section styling ── */
+.wf-section {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wf-section:last-child {
+  border-bottom: none;
+}
+
+.wf-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.wf-section-desc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Demo grid for component variants ── */
+.wf-demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.wf-demo-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  min-width: 6rem;
+}
+
+/* ── Color swatch ── */
+.wf-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wf-swatch-color {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.wf-swatch-label {
+  font-size: 0.625rem;
+  color: var(--color-muted-foreground);
+}
+
+/* ── Code block ── */
+.wf-code {
+  background: var(--color-surface-900);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  color: var(--color-surface-200);
+}
+
+:root[data-theme="light"] .wf-code {
+  background: var(--color-surface-100);
+  color: var(--color-surface-800);
+}
+
+/* ── HTMX indicator ── */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+/* ── Toast ── */
+.wf-toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Hover Card ── */
+.wf-hover-pop {
+  max-width: min(640px, calc(100vw - 2rem));
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 36%, var(--color-border));
+  background:
+    radial-gradient(circle at 90% 8%, color-mix(in srgb, var(--color-accent-500) 24%, transparent), transparent 42%),
+    linear-gradient(140deg, color-mix(in srgb, var(--color-card) 95%, transparent), color-mix(in srgb, var(--color-surface-800) 90%, transparent));
+  border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+:root[data-theme="light"] .wf-hover-pop {
+  background:
+    radial-gradient(circle at 90% 8%, color-mix(in srgb, var(--color-accent-500) 12%, transparent), transparent 42%),
+    linear-gradient(140deg, white 60%, var(--color-surface-50));
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.wf-hover-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 180px;
+}
+
+.wf-hover-shell--with-art {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+.wf-hover-copy {
+  padding: 16px 18px 14px;
+}
+
+.wf-hover-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-500);
+}
+
+.wf-hover-title {
+  margin-top: 8px;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.wf-hover-description {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+}
+
+.wf-hover-meta {
+  margin-top: 10px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+}
+
+.wf-hover-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.wf-hover-row span {
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+.wf-hover-row strong {
+  color: var(--color-foreground);
+  font-weight: 600;
+  text-align: right;
+  font-size: 0.8125rem;
+}
+
+.wf-hover-link {
+  margin-top: 8px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.wf-hover-link:hover {
+  color: var(--color-primary-400);
+}
+
+.wf-hover-art {
+  border-left: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent-500) 6%, transparent), transparent 70%);
+}
+
+.wf-hover-icon {
+  width: 100px;
+  height: 100px;
+  color: var(--color-muted-foreground);
+}
+
+@media (max-width: 900px) {
+  .wf-hover-shell--with-art {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-hover-art {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+    min-height: 120px;
+  }
+}
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
