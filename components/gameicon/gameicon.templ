@@ -1,0 +1,20 @@
+// Package gameicon renders icons from the game-icons.net SVG sprite.
+// Icons are referenced by ID from /static/icons/game-icons.svg.
+// Source: https://game-icons.net — License: CC BY 3.0
+package gameicon
+
+// Props configures a game icon.
+type Props struct {
+	// Name is the icon ID without the "icon-" prefix (e.g. "broadsword", "armor-vest").
+	Name  string
+	// Class is applied to the outer <svg> element. Use for sizing and color.
+	// Example: "w-6 h-6 text-wine-600"
+	Class string
+}
+
+// GameIcon renders an SVG use-reference to the game-icons sprite.
+templ GameIcon(props Props) {
+	<svg class={ props.Class } aria-hidden="true">
+		<use href={ "/static/icons/game-icons.svg#icon-" + props.Name }></use>
+	</svg>
+}

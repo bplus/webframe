@@ -1,0 +1,78 @@
+package hovercard
+
+import (
+	"strings"
+
+	"webframe/components/gameicon"
+	"webframe/components/popover"
+)
+
+// MetaRow is a key-value pair displayed in the hover card metadata section.
+type MetaRow struct {
+	Label string
+	Value string
+}
+
+// Props configures a hover card shown on trigger hover.
+type Props struct {
+	ID          string    // unique ID for popover binding
+	Title       string    // main heading
+	Category    string    // small kicker text above title (e.g. "Product", "User", "Article")
+	Description string    // body text
+	Meta        []MetaRow // key-value metadata rows
+	IconName    string    // game-icon sprite name (optional — omit for no icon panel)
+	Link        string    // optional link URL at bottom
+	LinkText    string    // link label (default: "View details →")
+}
+
+templ Hover(props Props) {
+	@popover.Trigger(popover.TriggerProps{For: props.ID, TriggerType: popover.TriggerTypeHover, Class: "block w-full"}) {
+		{ children... }
+	}
+	@popover.Content(popover.ContentProps{
+		ID:            props.ID,
+		Placement:     popover.PlacementRightStart,
+		ShowArrow:     true,
+		HoverDelay:    120,
+		HoverOutDelay: 120,
+		Exclusive:     true,
+		Class:         "wf-hover-pop",
+	}) {
+		<div class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "") }>
+			<div class="wf-hover-copy">
+				if strings.TrimSpace(props.Category) != "" {
+					<div class="wf-hover-kicker">{ props.Category }</div>
+				}
+				<h3 class="wf-hover-title">{ safe(props.Title, "Untitled") }</h3>
+				<p class="wf-hover-description">{ safe(props.Description, "No description.") }</p>
+				if len(props.Meta) > 0 {
+					<div class="wf-hover-meta">
+						for _, row := range props.Meta {
+							<div class="wf-hover-row">
+								<span>{ row.Label }</span>
+								<strong>{ row.Value }</strong>
+							</div>
+						}
+					</div>
+				}
+				if strings.TrimSpace(props.Link) != "" {
+					<a href={ templ.SafeURL(props.Link) } class="wf-hover-link">
+						{ safe(props.LinkText, "View details →") }
+					</a>
+				}
+			</div>
+			if strings.TrimSpace(props.IconName) != "" {
+				<div class="wf-hover-art">
+					@gameicon.GameIcon(gameicon.Props{Name: props.IconName, Class: "wf-hover-icon"})
+				</div>
+			}
+		</div>
+	}
+}
+
+func safe(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
