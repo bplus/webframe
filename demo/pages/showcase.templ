@@ -206,7 +206,7 @@ templ iconsSection() {
 		</div>
 
 		<div class="wf-code text-xs">
-			<code>@icon.Check()  // renders inline SVG, cached in-process</code>
+			<code>{ `@icon.Check()  // renders inline SVG, cached in-process` }</code>
 		</div>
 	</section>
 }
@@ -599,12 +599,12 @@ templ tabsSection() {
 			@tabs.Content(tabs.ContentProps{Value: "code"}) {
 				@card.Card() {
 					@card.Content() {
-						<pre class="wf-code">@tabs.Tabs() &#123;
-  @tabs.List() &#123;
-    @tabs.Trigger(tabs.TriggerProps&#123;Value: "tab1", IsActive: true&#125;) &#123; Tab 1 &#125;
-  &#125;
-  @tabs.Content(tabs.ContentProps&#123;Value: "tab1"&#125;) &#123; Content &#125;
-&#125;</pre>
+						<pre class="wf-code">{ `@tabs.Tabs() {
+  @tabs.List() {
+    @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }
+  }
+  @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }
+}` }</pre>
 					}
 				}
 			}
@@ -938,7 +938,7 @@ templ gameiconSection() {
 		</div>
 
 		<div class="wf-code text-xs mt-4">
-			<code>@gameicon.GameIcon(gameicon.Props&#123;Name: "broadsword", Class: "w-10 h-10 text-foreground"&#125;)</code>
+			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})` }</code>
 		</div>
 	</section>
 }
@@ -1006,7 +1006,7 @@ templ alpineSection() {
 			<!-- Dropdown with click.outside -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Click Outside (@click.outside) }
+					@card.Title() { Click Outside (@@click.outside) }
 				}
 				@card.Content() {
 					<div x-data="{ open: false }" class="relative">
