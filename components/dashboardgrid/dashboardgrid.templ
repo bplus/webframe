@@ -1,0 +1,82 @@
+package dashboardgrid
+
+import (
+	"fmt"
+	"webframe/utils"
+)
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Cols       int    // grid columns, default 12
+	Gap        string // CSS gap value, default "16px"
+	PageMargin string // outer padding, default "32px"
+}
+
+type SlotProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	ColSpan    int // columns to span, default 12 (full width)
+	RowSpan    int // rows to span, default 1
+}
+
+templ Grid(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Cols == 0 {
+		{{ p.Cols = 12 }}
+	}
+	if p.Gap == "" {
+		{{ p.Gap = "16px" }}
+	}
+	if p.PageMargin == "" {
+		{{ p.PageMargin = "32px" }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				"w-full",
+				p.Class,
+			),
+		}
+		style={ fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%s;padding:%s", p.Cols, p.Gap, p.PageMargin) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
+templ Slot(props ...SlotProps) {
+	{{ var p SlotProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.ColSpan == 0 {
+		{{ p.ColSpan = 12 }}
+	}
+	if p.RowSpan == 0 {
+		{{ p.RowSpan = 1 }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				"min-w-0",
+				p.Class,
+			),
+		}
+		style={ fmt.Sprintf("grid-column:span %d;grid-row:span %d", p.ColSpan, p.RowSpan) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
