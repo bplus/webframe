@@ -81,6 +81,19 @@ func TestHeader_Sticky(t *testing.T) {
 	}
 }
 
+func TestHeader_EmptyTitle(t *testing.T) {
+	var buf bytes.Buffer
+	comp := dashboardheader.Header(dashboardheader.Props{})
+	if err := comp.Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	html := buf.String()
+
+	if strings.Contains(html, "<h1") {
+		t.Errorf("expected no h1 tag when title is empty, got: %s", html)
+	}
+}
+
 func TestHeader_NotSticky(t *testing.T) {
 	var buf bytes.Buffer
 	comp := dashboardheader.Header(dashboardheader.Props{
