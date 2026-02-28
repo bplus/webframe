@@ -17,9 +17,9 @@ type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Cols       int    // grid columns, default 12
-	Gap        string // CSS gap value, default "16px"
-	PageMargin string // outer padding, default "32px"
+	Cols       int // grid columns, default 12
+	Gap        int // gap in pixels, default 16
+	PageMargin int // outer padding in pixels, default 32
 }
 
 type SlotProps struct {
@@ -58,11 +58,12 @@ func Grid(props ...Props) templ.Component {
 		if p.Cols == 0 {
 			p.Cols = 12
 		}
-		if p.Gap == "" {
-			p.Gap = "16px"
+		p.Cols = clamp(p.Cols, 1, 24)
+		if p.Gap == 0 {
+			p.Gap = 16
 		}
-		if p.PageMargin == "" {
-			p.PageMargin = "32px"
+		if p.PageMargin == 0 {
+			p.PageMargin = 32
 		}
 		var templ_7745c5c3_Var2 = []any{utils.TwMerge(
 			"w-full",
@@ -85,7 +86,7 @@ func Grid(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 41, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 42, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -114,9 +115,9 @@ func Grid(props ...Props) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%s;padding:%s", p.Cols, p.Gap, p.PageMargin))
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%dpx;padding:%dpx", p.Cols, p.Gap, p.PageMargin))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 49, Col: 121}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 50, Col: 125}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -174,9 +175,11 @@ func Slot(props ...SlotProps) templ.Component {
 		if p.ColSpan == 0 {
 			p.ColSpan = 12
 		}
+		p.ColSpan = clamp(p.ColSpan, 1, 12)
 		if p.RowSpan == 0 {
 			p.RowSpan = 1
 		}
+		p.RowSpan = clamp(p.RowSpan, 1, 12)
 		var templ_7745c5c3_Var7 = []any{utils.TwMerge(
 			"min-w-0",
 			p.Class,
@@ -198,7 +201,7 @@ func Slot(props ...SlotProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 69, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 72, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -229,7 +232,7 @@ func Slot(props ...SlotProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("grid-column:span %d;grid-row:span %d", p.ColSpan, p.RowSpan))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 77, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 80, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {

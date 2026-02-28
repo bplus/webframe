@@ -9,9 +9,9 @@ type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Cols       int    // grid columns, default 12
-	Gap        string // CSS gap value, default "16px"
-	PageMargin string // outer padding, default "32px"
+	Cols       int // grid columns, default 12
+	Gap        int // gap in pixels, default 16
+	PageMargin int // outer padding in pixels, default 32
 }
 
 type SlotProps struct {
@@ -30,11 +30,12 @@ templ Grid(props ...Props) {
 	if p.Cols == 0 {
 		{{ p.Cols = 12 }}
 	}
-	if p.Gap == "" {
-		{{ p.Gap = "16px" }}
+	{{ p.Cols = clamp(p.Cols, 1, 24) }}
+	if p.Gap == 0 {
+		{{ p.Gap = 16 }}
 	}
-	if p.PageMargin == "" {
-		{{ p.PageMargin = "32px" }}
+	if p.PageMargin == 0 {
+		{{ p.PageMargin = 32 }}
 	}
 	<div
 		if p.ID != "" {
@@ -46,7 +47,7 @@ templ Grid(props ...Props) {
 				p.Class,
 			),
 		}
-		style={ fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%s;padding:%s", p.Cols, p.Gap, p.PageMargin) }
+		style={ fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%dpx;padding:%dpx", p.Cols, p.Gap, p.PageMargin) }
 		{ p.Attributes... }
 	>
 		{ children... }
@@ -61,9 +62,11 @@ templ Slot(props ...SlotProps) {
 	if p.ColSpan == 0 {
 		{{ p.ColSpan = 12 }}
 	}
+	{{ p.ColSpan = clamp(p.ColSpan, 1, 12) }}
 	if p.RowSpan == 0 {
 		{{ p.RowSpan = 1 }}
 	}
+	{{ p.RowSpan = clamp(p.RowSpan, 1, 12) }}
 	<div
 		if p.ID != "" {
 			id={ p.ID }
