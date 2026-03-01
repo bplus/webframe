@@ -1,0 +1,107 @@
+package graphwidget
+
+import (
+	"fmt"
+	"webframe/utils"
+)
+
+type NodeColorEntry struct {
+	Type  string
+	Color string
+}
+
+type Props struct {
+	ID              string
+	Class           string
+	Attributes      templ.Attributes
+	DataURL         string           // endpoint for initial graph JSON
+	Width           int              // px, 0 = fill container
+	Height          int              // px, 0 = fill container
+	BackgroundColor string           // default "transparent"
+	NodeColorMap    []NodeColorEntry // type->color; built-in palette if empty
+	ShowLabels      bool
+	EnableExpand    bool
+	ExpandURL       string // prefix for neighbor expansion endpoint
+	ControlType     string // "trackball" (default), "orbit", "fly"
+	OnNodeClick     string // "slideover", "navigate", or JS function name
+	NodeClickURL    string // URL pattern with "{id}" placeholder
+}
+
+func colorMapJSON(entries []NodeColorEntry) string {
+	if len(entries) == 0 {
+		return "{}"
+	}
+	result := "{"
+	for i, e := range entries {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s":"%s"`, e.Type, e.Color)
+	}
+	result += "}"
+	return result
+}
+
+func dimensionStr(v int) string {
+	if v <= 0 {
+		return "100%"
+	}
+	return fmt.Sprintf("%dpx", v)
+}
+
+templ GraphWidget(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ id := p.ID }}
+	if id == "" {
+		{{ id = utils.RandomID() }}
+	}
+	<div
+		id={ id }
+		data-tui-graph
+		data-tui-graph-data-url={ p.DataURL }
+		if p.BackgroundColor != "" {
+			data-tui-graph-bg={ p.BackgroundColor }
+		}
+		data-tui-graph-color-map={ colorMapJSON(p.NodeColorMap) }
+		if p.ShowLabels {
+			data-tui-graph-labels="true"
+		}
+		if p.EnableExpand {
+			data-tui-graph-expand="true"
+		}
+		if p.ExpandURL != "" {
+			data-tui-graph-expand-url={ p.ExpandURL }
+		}
+		if p.ControlType != "" {
+			data-tui-graph-control={ p.ControlType }
+		}
+		if p.OnNodeClick != "" {
+			data-tui-graph-on-click={ p.OnNodeClick }
+		}
+		if p.NodeClickURL != "" {
+			data-tui-graph-click-url={ p.NodeClickURL }
+		}
+		class={ utils.TwMerge("relative rounded-lg border border-border overflow-hidden bg-card", p.Class) }
+		style={ fmt.Sprintf("width:%s;height:%s", dimensionStr(p.Width), dimensionStr(p.Height)) }
+		{ p.Attributes... }
+	>
+		<!-- Loading placeholder -->
+		<div data-tui-graph-loading class="absolute inset-0 flex items-center justify-center text-muted-foreground">
+			<div class="flex flex-col items-center gap-2">
+				<svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<span class="text-xs">Loading graph...</span>
+			</div>
+		</div>
+	</div>
+}
+
+templ Script() {
+	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/3d-force-graph.min.js") }></script>
+	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/graphwidget.min.js") }></script>
+}
