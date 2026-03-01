@@ -1,0 +1,338 @@
+package slideover
+
+import (
+	"context"
+	"webframe/components/icon"
+	"webframe/utils"
+)
+
+type contextKey string
+
+const (
+	instanceKey contextKey = "slideoverInstance"
+	openKey     contextKey = "slideoverOpen"
+)
+
+type Side string
+
+const (
+	SideRight Side = "right"
+	SideLeft  Side = "left"
+)
+
+type Width string
+
+const (
+	WidthSm   Width = "sm"   // 320px
+	WidthMd   Width = "md"   // 480px
+	WidthLg   Width = "lg"   // 640px
+	WidthXl   Width = "xl"   // 800px
+	WidthFull Width = "full" // 100%
+)
+
+type Props struct {
+	ID              string
+	Class           string
+	Attributes      templ.Attributes
+	Open            bool
+	DisableESC      bool
+	DisableClickAway bool
+}
+
+type PanelProps struct {
+	ID               string
+	Class            string
+	Attributes       templ.Attributes
+	Title            string
+	Side             Side
+	Width            Width
+	HideCloseButton  bool
+	DisableAutoFocus bool
+}
+
+type TriggerProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	For        string
+}
+
+type CloseProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	For        string
+}
+
+type BodyProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+}
+
+type FooterProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+}
+
+func widthClass(w Width) string {
+	switch w {
+	case WidthSm:
+		return "w-80"
+	case WidthMd:
+		return "w-[480px]"
+	case WidthLg:
+		return "w-[640px]"
+	case WidthXl:
+		return "w-[800px]"
+	case WidthFull:
+		return "w-full"
+	default:
+		return "w-[480px]"
+	}
+}
+
+func sideClasses(s Side) (position string, closedTranslate string) {
+	if s == SideLeft {
+		return "left-0", "-translate-x-full"
+	}
+	return "right-0", "translate-x-full"
+}
+
+templ SlideOver(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ instanceID := p.ID }}
+	if instanceID == "" {
+		{{ instanceID = utils.RandomID() }}
+	}
+	{{ ctx = context.WithValue(ctx, instanceKey, instanceID) }}
+	{{ ctx = context.WithValue(ctx, openKey, p.Open) }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		data-tui-slideover
+		data-slideover-instance={ instanceID }
+		if p.DisableClickAway {
+			data-tui-slideover-disable-click-away="true"
+		}
+		if p.DisableESC {
+			data-tui-slideover-disable-esc="true"
+		}
+		class={ utils.TwMerge("", p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
+templ Trigger(props ...TriggerProps) {
+	{{ var p TriggerProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ instanceID := "" }}
+	// Explicit For prop takes priority over inherited context
+	if p.For != "" {
+		{{ instanceID = p.For }}
+	} else if val := ctx.Value(instanceKey); val != nil {
+		{{ instanceID = val.(string) }}
+	}
+	<span
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		data-tui-slideover-trigger={ instanceID }
+		data-slideover-instance={ instanceID }
+		data-tui-slideover-trigger-open="false"
+		class={ utils.TwMerge("contents", p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</span>
+}
+
+templ Panel(props ...PanelProps) {
+	{{ var p PanelProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	// Start with prop values as defaults
+	{{ instanceID := p.ID }}
+	{{ open := false }}
+	// Override with context values if available
+	if val := ctx.Value(instanceKey); val != nil {
+		{{ instanceID = val.(string) }}
+	}
+	if val := ctx.Value(openKey); val != nil {
+		{{ open = val.(bool) }}
+	}
+	// Apply defaults if still empty
+	if instanceID == "" {
+		{{ instanceID = utils.RandomID() }}
+	}
+	// Resolve side and width
+	{{ s := p.Side }}
+	if s == "" {
+		{{ s = SideRight }}
+	}
+	{{ w := p.Width }}
+	if w == "" {
+		{{ w = WidthMd }}
+	}
+	{{ position, closedTranslate := sideClasses(s) }}
+	{{ wClass := widthClass(w) }}
+	{{ borderClass := utils.IfElse(s == SideLeft, "border-r", "border-l") }}
+	<!-- Backdrop -->
+	<div
+		class={ utils.TwMerge(
+			"fixed inset-0 z-50 bg-black/50",
+			"transition-opacity duration-300",
+			"data-[tui-slideover-open=false]:opacity-0",
+			"data-[tui-slideover-open=true]:opacity-100",
+			"data-[tui-slideover-open=false]:pointer-events-none",
+			"data-[tui-slideover-open=true]:pointer-events-auto",
+			"data-[tui-slideover-hidden=true]:!hidden",
+		) }
+		data-tui-slideover-backdrop
+		data-slideover-instance={ instanceID }
+		if open {
+			data-tui-slideover-open="true"
+		} else {
+			data-tui-slideover-open="false"
+			data-tui-slideover-hidden="true"
+		}
+	></div>
+	<!-- Panel -->
+	<div
+		class={
+			utils.TwMerge(
+				// Base positioning
+				"fixed z-50 top-0 h-full",
+				position,
+				wClass,
+				// Max width constraint for smaller screens
+				"max-w-[calc(100%-2rem)]",
+				// Style
+				"bg-background shadow-xl",
+				borderClass,
+				"border-border",
+				// Layout
+				"flex flex-col",
+				// Transitions
+				"transition-transform duration-300 ease-in-out",
+				// Slide animation
+				"data-[tui-slideover-open=false]:"+closedTranslate,
+				"data-[tui-slideover-open=true]:translate-x-0",
+				// Hidden state
+				"data-[tui-slideover-hidden=true]:!hidden",
+				p.Class,
+			),
+		}
+		data-tui-slideover-panel
+		data-slideover-instance={ instanceID }
+		if p.DisableAutoFocus {
+			data-tui-slideover-disable-autofocus="true"
+		}
+		if open {
+			data-tui-slideover-open="true"
+		} else {
+			data-tui-slideover-open="false"
+			data-tui-slideover-hidden="true"
+		}
+		{ p.Attributes... }
+	>
+		<!-- Header -->
+		<div class="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
+			if p.Title != "" {
+				<h2 class="text-lg font-semibold leading-none">{ p.Title }</h2>
+			} else {
+				<div></div>
+			}
+			if !p.HideCloseButton {
+				<button
+					class={ utils.TwMerge(
+						"rounded-xs opacity-70",
+						"transition-opacity hover:opacity-100",
+						"focus:outline-none focus:ring-2",
+						"focus:ring-ring focus:ring-offset-2",
+						"ring-offset-background",
+						"disabled:pointer-events-none",
+						"[&_svg]:pointer-events-none",
+						"[&_svg]:shrink-0",
+						"[&_svg:not([class*='size-'])]:size-4",
+					) }
+					data-tui-slideover-close={ instanceID }
+					aria-label="Close"
+					type="button"
+				>
+					@icon.X()
+					<span class="sr-only">Close</span>
+				</button>
+			}
+		</div>
+		{ children... }
+	</div>
+}
+
+templ Body(props ...BodyProps) {
+	{{ var p BodyProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex-1 overflow-y-auto p-6", p.Class) }
+		data-tui-slideover-body
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
+templ Footer(props ...FooterProps) {
+	{{ var p FooterProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("border-t border-border p-4 flex justify-end gap-2", p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
+templ Close(props ...CloseProps) {
+	{{ var p CloseProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<span
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		if p.For != "" {
+			data-tui-slideover-close={ p.For }
+		} else {
+			data-tui-slideover-close
+		}
+		class={ utils.TwMerge("contents cursor-pointer", p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</span>
+}
+
+templ Script() {
+	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/slideover.min.js") }></script>
+}

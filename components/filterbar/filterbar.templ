@@ -1,0 +1,153 @@
+package filterbar
+
+import (
+	"webframe/utils"
+)
+
+type FilterType string
+
+const (
+	TypeSelect FilterType = "select"
+	TypeSearch FilterType = "search"
+	TypeToggle FilterType = "toggle"
+)
+
+type FilterOption struct {
+	Label    string
+	Value    string
+	Selected bool
+}
+
+type FilterConfig struct {
+	ID          string
+	Label       string
+	Placeholder string
+	Type        FilterType
+	Options     []FilterOption
+}
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Filters    []FilterConfig
+	HxGet      string // HTMX endpoint to call on change
+	HxTarget   string // swap target selector
+	HxSwap     string // swap strategy (default "innerHTML")
+	ShowReset  bool
+}
+
+templ FilterBar(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ id := p.ID }}
+	if id == "" {
+		{{ id = utils.RandomID() }}
+	}
+	{{ hxSwap := p.HxSwap }}
+	if hxSwap == "" {
+		{{ hxSwap = "innerHTML" }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		data-tui-filterbar
+		data-tui-filterbar-hx-get={ p.HxGet }
+		data-tui-filterbar-hx-target={ p.HxTarget }
+		data-tui-filterbar-hx-swap={ hxSwap }
+		class={
+			utils.TwMerge(
+				"flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg",
+				p.Class,
+			),
+		}
+		{ p.Attributes... }
+	>
+		for _, f := range p.Filters {
+			switch f.Type {
+				case TypeSelect:
+					@filterSelect(f)
+				case TypeSearch:
+					@filterSearch(f)
+				case TypeToggle:
+					@filterToggle(f)
+			}
+		}
+		if p.ShowReset {
+			<button
+				type="button"
+				data-tui-filterbar-reset
+				class="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+			>
+				Clear filters
+			</button>
+		}
+	</div>
+}
+
+templ filterSelect(f FilterConfig) {
+	<div class="flex items-center gap-2">
+		<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</label>
+		<select
+			name={ f.ID }
+			data-tui-filterbar-control
+			class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+		>
+			if f.Placeholder != "" {
+				<option value="">{ f.Placeholder }</option>
+			}
+			for _, opt := range f.Options {
+				<option
+					value={ opt.Value }
+					if opt.Selected {
+						selected
+					}
+				>{ opt.Label }</option>
+			}
+		</select>
+	</div>
+}
+
+templ filterSearch(f FilterConfig) {
+	<div class="flex items-center gap-2">
+		<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</label>
+		<input
+			type="search"
+			name={ f.ID }
+			data-tui-filterbar-control
+			data-tui-filterbar-debounce="400"
+			placeholder={ f.Placeholder }
+			class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+		/>
+	</div>
+}
+
+templ filterToggle(f FilterConfig) {
+	<div class="flex items-center gap-2">
+		<span class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</span>
+		<div class="flex gap-1">
+			for _, opt := range f.Options {
+				<button
+					type="button"
+					name={ f.ID }
+					value={ opt.Value }
+					data-tui-filterbar-toggle
+					if opt.Selected {
+						data-tui-filterbar-toggle-selected="true"
+						class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground"
+					} else {
+						data-tui-filterbar-toggle-selected="false"
+						class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+					}
+				>{ opt.Label }</button>
+			}
+		</div>
+	</div>
+}
+
+templ Script() {
+	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/filterbar.min.js") }></script>
+}
