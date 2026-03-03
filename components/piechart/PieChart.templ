@@ -3,13 +3,23 @@ package piechart
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"webframe/utils"
 )
 
 type Slice struct {
 	Label string
-	Value int
+	Value float64
 	Color string // required — hex or CSS color
+}
+
+var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
+
+func sanitizeColor(c string) string {
+	if validColorRe.MatchString(c) {
+		return c
+	}
+	return "#888"
 }
 
 type Props struct {
@@ -18,8 +28,8 @@ type Props struct {
 	Attributes templ.Attributes
 	Slices     []Slice
 	Size       int    // Diameter in px (default 160)
-	InnerSize  int    // Inner radius for donut (0 = full pie, default 50 = donut)
-	ShowLegend bool   // Show legend below chart (default true)
+	InnerSize  *int   // Inner radius for donut (nil = default 50 donut, 0 = full pie)
+	ShowLegend bool   // Show legend below chart
 }
 
 func (p Props) resolveSize() int {
@@ -30,17 +40,14 @@ func (p Props) resolveSize() int {
 }
 
 func (p Props) resolveInnerSize() int {
-	if p.InnerSize > 0 {
-		return p.InnerSize
-	}
-	if p.InnerSize == 0 {
+	if p.InnerSize == nil {
 		return 50 // default donut
 	}
-	return 0
+	return *p.InnerSize
 }
 
-func total(slices []Slice) int {
-	t := 0
+func total(slices []Slice) float64 {
+	t := 0.0
 	for _, s := range slices {
 		t += s.Value
 	}
@@ -67,7 +74,7 @@ func computeArcs(slices []Slice) []arcData {
 	arcs := make([]arcData, len(slices))
 	angle := -math.Pi / 2 // start at top
 	for i, s := range slices {
-		pct := float64(s.Value) / float64(t)
+		pct := s.Value / t
 		sweep := pct * 2 * math.Pi
 		color := s.Color
 		if color == "" {
@@ -76,7 +83,7 @@ func computeArcs(slices []Slice) []arcData {
 		arcs[i] = arcData{
 			startAngle: angle,
 			endAngle:   angle + sweep,
-			color:      color,
+			color:      sanitizeColor(color),
 		}
 		angle += sweep
 	}
@@ -154,17 +161,18 @@ templ PieChart(props ...Props) {
 				}
 			}
 		</svg>
-		if p.ShowLegend || len(p.Slices) > 0 {
+		if p.ShowLegend {
 			<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 				for i, s := range p.Slices {
 					{{ color := s.Color }}
 					if color == "" {
 						{{ color = defaultColors[i%len(defaultColors)] }}
 					}
+					{{ color = sanitizeColor(color) }}
 					{{ pct := s.Value * 100 / t }}
 					<div class="flex items-center gap-1.5">
 						<span class="inline-block w-2.5 h-2.5 rounded-sm shrink-0" style={ fmt.Sprintf("background-color: %s", color) }></span>
-						<span>{ s.Label } ({ fmt.Sprintf("%d%%", pct) })</span>
+						<span>{ s.Label } ({ fmt.Sprintf("%.0f%%", pct) })</span>
 					</div>
 				}
 			</div>

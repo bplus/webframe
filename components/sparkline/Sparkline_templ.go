@@ -18,11 +18,11 @@ type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Data       []int  // Y-values (will be scaled to fit)
-	Width      int    // SVG width in px (default 80)
-	Height     int    // SVG height in px (default 24)
-	Color      string // Stroke color (Tailwind class-compatible, e.g. "currentColor" or hex)
-	Fill       bool   // Fill area under line
+	Data       []float64 // Y-values (will be scaled to fit)
+	Width      int       // SVG width in px (default 80)
+	Height     int       // SVG height in px (default 24)
+	Color      string    // Stroke color (Tailwind class-compatible, e.g. "currentColor" or hex)
+	Fill       bool      // Fill area under line
 }
 
 func (p Props) resolveWidth() int {
@@ -39,7 +39,7 @@ func (p Props) resolveHeight() int {
 	return 24
 }
 
-func buildPolylinePoints(data []int, w, h int) string {
+func buildPolylinePoints(data []float64, w, h int) string {
 	if len(data) == 0 {
 		return ""
 	}
@@ -57,13 +57,13 @@ func buildPolylinePoints(data []int, w, h int) string {
 		rang = 1
 	}
 	padding := 2
-	plotW := w - 2*padding
-	plotH := h - 2*padding
+	plotW := float64(w - 2*padding)
+	plotH := float64(h - 2*padding)
 	pts := make([]string, len(data))
 	for i, v := range data {
-		x := padding + (i * plotW / max(len(data)-1, 1))
-		y := padding + plotH - ((v - minVal) * plotH / rang)
-		pts[i] = fmt.Sprintf("%d,%d", x, y)
+		x := float64(padding) + float64(i)*plotW/float64(max(len(data)-1, 1))
+		y := float64(padding) + plotH - ((v - minVal) * plotH / rang)
+		pts[i] = fmt.Sprintf("%.2f,%.2f", x, y)
 	}
 	return strings.Join(pts, " ")
 }
@@ -96,8 +96,8 @@ func Sparkline(props ...Props) templ.Component {
 		w := p.resolveWidth()
 		h := p.resolveHeight()
 		points := buildPolylinePoints(p.Data, w, h)
-		color := p.Color
-		if color == "" {
+		color := utils.SanitizeColor(p.Color)
+		if p.Color == "" {
 			color = "currentColor"
 		}
 		var templ_7745c5c3_Var2 = []any{utils.TwMerge("inline-block", p.Class)}

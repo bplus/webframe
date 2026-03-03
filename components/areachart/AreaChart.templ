@@ -2,13 +2,14 @@ package areachart
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"webframe/utils"
 )
 
 type DataPoint struct {
-	Label string // X-axis label (e.g. date)
-	Value int    // Y value
+	Label string  // X-axis label (e.g. date)
+	Value float64 // Y value
 }
 
 type Series struct {
@@ -47,9 +48,9 @@ var areaDefaultColors = []string{
 	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
 }
 
-func globalMinMax(series []Series) (int, int) {
-	minV := int(^uint(0) >> 1) // max int
-	maxV := 0
+func globalMinMax(series []Series) (float64, float64) {
+	minV := math.Inf(1)
+	maxV := math.Inf(-1)
 	for _, s := range series {
 		for _, d := range s.Data {
 			if d.Value < minV {
@@ -60,7 +61,8 @@ func globalMinMax(series []Series) (int, int) {
 			}
 		}
 	}
-	if minV > maxV {
+	if math.IsInf(minV, 1) || math.IsInf(maxV, -1) {
+		// No data points at all
 		return 0, 1
 	}
 	if minV == maxV {
@@ -69,27 +71,27 @@ func globalMinMax(series []Series) (int, int) {
 	return minV, maxV
 }
 
-func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB, minV, maxV int) (polyline string, polygon string) {
+func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB int, minV, maxV float64) (polyline string, polygon string) {
 	n := len(data)
 	if n == 0 {
 		return "", ""
 	}
-	plotW := w - padL - padR
-	plotH := h - padT - padB
+	plotW := float64(w - padL - padR)
+	plotH := float64(h - padT - padB)
 	rang := maxV - minV
 	if rang == 0 {
 		rang = 1
 	}
 	pts := make([]string, n)
 	for i, d := range data {
-		x := padL + (i * plotW / max(n-1, 1))
-		y := padT + plotH - ((d.Value - minV) * plotH / rang)
-		pts[i] = fmt.Sprintf("%d,%d", x, y)
+		x := float64(padL) + float64(i)*plotW/float64(max(n-1, 1))
+		y := float64(padT) + plotH - ((d.Value-minV)*plotH/rang)
+		pts[i] = fmt.Sprintf("%.2f,%.2f", x, y)
 	}
 	polyline = strings.Join(pts, " ")
 	// Close polygon for fill: add bottom-right and bottom-left corners
-	lastX := padL + ((n - 1) * plotW / max(n-1, 1))
-	polygon = polyline + fmt.Sprintf(" %d,%d %d,%d", lastX, padT+plotH, padL, padT+plotH)
+	lastX := float64(padL) + float64(n-1)*plotW/float64(max(n-1, 1))
+	polygon = polyline + fmt.Sprintf(" %.2f,%d %.2f,%d", lastX, padT+int(plotH), float64(padL), padT+int(plotH))
 	return
 }
 
@@ -136,8 +138,8 @@ templ AreaChart(props ...Props) {
 				}
 			}
 			for si, s := range p.Series {
-				{{ color := s.Color }}
-				if color == "" {
+				{{ color := utils.SanitizeColor(s.Color) }}
+				if s.Color == "" {
 					{{ color = areaDefaultColors[si%len(areaDefaultColors)] }}
 				}
 				{{ polyline, polygon := buildAreaPoints(s.Data, w, h, padL, padR, padT, padB, minV, maxV) }}
@@ -177,8 +179,8 @@ templ AreaChart(props ...Props) {
 		if p.ShowLegend && len(p.Series) > 1 {
 			<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
 				for si, s := range p.Series {
-					{{ color := s.Color }}
-					if color == "" {
+					{{ color := utils.SanitizeColor(s.Color) }}
+					if s.Color == "" {
 						{{ color = areaDefaultColors[si%len(areaDefaultColors)] }}
 					}
 					<div class="flex items-center gap-1.5">

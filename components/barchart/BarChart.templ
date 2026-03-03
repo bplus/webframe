@@ -2,6 +2,8 @@ package barchart
 
 import (
 	"fmt"
+	"math"
+	"regexp"
 	"webframe/utils"
 )
 
@@ -14,8 +16,17 @@ const (
 
 type Bar struct {
 	Label string
-	Value int
+	Value float64
 	Color string // optional per-bar color override
+}
+
+var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
+
+func sanitizeColor(c string) string {
+	if validColorRe.MatchString(c) {
+		return c
+	}
+	return "#888"
 }
 
 type Props struct {
@@ -59,8 +70,11 @@ func (p Props) resolveBarColor() string {
 	return "var(--color-primary)"
 }
 
-func maxVal(bars []Bar) int {
-	m := 0
+func maxVal(bars []Bar) float64 {
+	if len(bars) == 0 {
+		return 1
+	}
+	m := math.Inf(-1)
 	for _, b := range bars {
 		if b.Value > m {
 			m = b.Value
@@ -80,7 +94,7 @@ templ BarChart(props ...Props) {
 	{{ w := p.resolveWidth() }}
 	{{ h := p.resolveHeight() }}
 	{{ orientation := p.resolveOrientation() }}
-	{{ defaultColor := p.resolveBarColor() }}
+	{{ defaultColor := sanitizeColor(p.resolveBarColor()) }}
 	{{ mv := maxVal(p.Bars) }}
 	<div
 		if p.ID != "" {
@@ -104,11 +118,11 @@ templ BarChart(props ...Props) {
 				}
 				{{ gap := 4 }}
 				for i, bar := range p.Bars {
-					{{ color := bar.Color }}
-					if color == "" {
-						{{ color = defaultColor }}
+					{{ color := defaultColor }}
+					if bar.Color != "" {
+						{{ color = sanitizeColor(bar.Color) }}
 					}
-					{{ barWidth := bar.Value * plotW / mv }}
+					{{ barWidth := int(bar.Value * float64(plotW) / mv) }}
 					{{ y := i * barH + gap/2 }}
 					{{ rectH := barH - gap }}
 					if rectH < 2 {
@@ -137,7 +151,7 @@ templ BarChart(props ...Props) {
 							y={ fmt.Sprintf("%d", y+rectH/2+4) }
 							class="text-xs fill-foreground"
 							style="font-size: 10px"
-						>{ fmt.Sprintf("%d", bar.Value) }</text>
+						>{ fmt.Sprintf("%.4g", bar.Value) }</text>
 					}
 				}
 			} else {
@@ -149,11 +163,11 @@ templ BarChart(props ...Props) {
 				}
 				{{ gap := 4 }}
 				for i, bar := range p.Bars {
-					{{ color := bar.Color }}
-					if color == "" {
-						{{ color = defaultColor }}
+					{{ color := defaultColor }}
+					if bar.Color != "" {
+						{{ color = sanitizeColor(bar.Color) }}
 					}
-					{{ barHeight := bar.Value * plotH / mv }}
+					{{ barHeight := int(bar.Value * float64(plotH) / mv) }}
 					{{ x := i * barW + gap/2 }}
 					{{ rectW := barW - gap }}
 					if rectW < 2 {
@@ -183,7 +197,7 @@ templ BarChart(props ...Props) {
 							text-anchor="middle"
 							class="text-xs fill-foreground"
 							style="font-size: 10px"
-						>{ fmt.Sprintf("%d", bar.Value) }</text>
+						>{ fmt.Sprintf("%.4g", bar.Value) }</text>
 					}
 				}
 			}
