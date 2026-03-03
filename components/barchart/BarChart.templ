@@ -1,0 +1,192 @@
+package barchart
+
+import (
+	"fmt"
+	"webframe/utils"
+)
+
+type Orientation string
+
+const (
+	Horizontal Orientation = "horizontal"
+	Vertical   Orientation = "vertical"
+)
+
+type Bar struct {
+	Label string
+	Value int
+	Color string // optional per-bar color override
+}
+
+type Props struct {
+	ID          string
+	Class       string
+	Attributes  templ.Attributes
+	Bars        []Bar
+	Orientation Orientation // default horizontal
+	Width       int         // SVG width (default 300)
+	Height      int         // SVG height (default 200)
+	BarColor    string      // default bar color (default "var(--color-primary)")
+	ShowValues  bool        // show value labels on bars
+	ShowLabels  bool        // show axis labels
+}
+
+func (p Props) resolveOrientation() Orientation {
+	if p.Orientation == Vertical {
+		return Vertical
+	}
+	return Horizontal
+}
+
+func (p Props) resolveWidth() int {
+	if p.Width > 0 {
+		return p.Width
+	}
+	return 300
+}
+
+func (p Props) resolveHeight() int {
+	if p.Height > 0 {
+		return p.Height
+	}
+	return 200
+}
+
+func (p Props) resolveBarColor() string {
+	if p.BarColor != "" {
+		return p.BarColor
+	}
+	return "var(--color-primary)"
+}
+
+func maxVal(bars []Bar) int {
+	m := 0
+	for _, b := range bars {
+		if b.Value > m {
+			m = b.Value
+		}
+	}
+	if m == 0 {
+		return 1
+	}
+	return m
+}
+
+templ BarChart(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ w := p.resolveWidth() }}
+	{{ h := p.resolveHeight() }}
+	{{ orientation := p.resolveOrientation() }}
+	{{ defaultColor := p.resolveBarColor() }}
+	{{ mv := maxVal(p.Bars) }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("inline-block", p.Class) }
+		{ p.Attributes... }
+	>
+		<svg
+			width={ fmt.Sprintf("%d", w) }
+			height={ fmt.Sprintf("%d", h) }
+			viewBox={ fmt.Sprintf("0 0 %d %d", w, h) }
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			if orientation == Horizontal {
+				{{ labelW := 60 }}
+				{{ plotW := w - labelW - 10 }}
+				{{ barH := 0 }}
+				if len(p.Bars) > 0 {
+					{{ barH = (h - 10) / len(p.Bars) }}
+				}
+				{{ gap := 4 }}
+				for i, bar := range p.Bars {
+					{{ color := bar.Color }}
+					if color == "" {
+						{{ color = defaultColor }}
+					}
+					{{ barWidth := bar.Value * plotW / mv }}
+					{{ y := i * barH + gap/2 }}
+					{{ rectH := barH - gap }}
+					if rectH < 2 {
+						{{ rectH = 2 }}
+					}
+					if p.ShowLabels {
+						<text
+							x={ fmt.Sprintf("%d", labelW-4) }
+							y={ fmt.Sprintf("%d", y+rectH/2+4) }
+							text-anchor="end"
+							class="text-xs fill-muted-foreground"
+							style="font-size: 11px"
+						>{ bar.Label }</text>
+					}
+					<rect
+						x={ fmt.Sprintf("%d", labelW) }
+						y={ fmt.Sprintf("%d", y) }
+						width={ fmt.Sprintf("%d", barWidth) }
+						height={ fmt.Sprintf("%d", rectH) }
+						fill={ color }
+						rx="2"
+					/>
+					if p.ShowValues {
+						<text
+							x={ fmt.Sprintf("%d", labelW+barWidth+4) }
+							y={ fmt.Sprintf("%d", y+rectH/2+4) }
+							class="text-xs fill-foreground"
+							style="font-size: 10px"
+						>{ fmt.Sprintf("%d", bar.Value) }</text>
+					}
+				}
+			} else {
+				{{ labelH := 20 }}
+				{{ plotH := h - labelH - 10 }}
+				{{ barW := 0 }}
+				if len(p.Bars) > 0 {
+					{{ barW = (w - 10) / len(p.Bars) }}
+				}
+				{{ gap := 4 }}
+				for i, bar := range p.Bars {
+					{{ color := bar.Color }}
+					if color == "" {
+						{{ color = defaultColor }}
+					}
+					{{ barHeight := bar.Value * plotH / mv }}
+					{{ x := i * barW + gap/2 }}
+					{{ rectW := barW - gap }}
+					if rectW < 2 {
+						{{ rectW = 2 }}
+					}
+					<rect
+						x={ fmt.Sprintf("%d", x) }
+						y={ fmt.Sprintf("%d", plotH - barHeight) }
+						width={ fmt.Sprintf("%d", rectW) }
+						height={ fmt.Sprintf("%d", barHeight) }
+						fill={ color }
+						rx="2"
+					/>
+					if p.ShowLabels {
+						<text
+							x={ fmt.Sprintf("%d", x+rectW/2) }
+							y={ fmt.Sprintf("%d", h-2) }
+							text-anchor="middle"
+							class="text-xs fill-muted-foreground"
+							style="font-size: 10px"
+						>{ bar.Label }</text>
+					}
+					if p.ShowValues {
+						<text
+							x={ fmt.Sprintf("%d", x+rectW/2) }
+							y={ fmt.Sprintf("%d", plotH-barHeight-4) }
+							text-anchor="middle"
+							class="text-xs fill-foreground"
+							style="font-size: 10px"
+						>{ fmt.Sprintf("%d", bar.Value) }</text>
+					}
+				}
+			}
+		</svg>
+	</div>
+}
