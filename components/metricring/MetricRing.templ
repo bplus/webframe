@@ -1,0 +1,107 @@
+package metricring
+
+import (
+	"fmt"
+	"math"
+	"webframe/utils"
+)
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Value      int    // 0-100 percentage
+	Label      string // Center label text (e.g. "75%")
+	Size       int    // Diameter in px (default 80)
+	Color      string // Ring color (Tailwind-compatible, default "var(--color-primary)")
+	TrackColor string // Background track color (default "var(--color-muted)")
+}
+
+func (p Props) resolveSize() int {
+	if p.Size > 0 {
+		return p.Size
+	}
+	return 80
+}
+
+func (p Props) resolveColor() string {
+	if p.Color != "" {
+		return p.Color
+	}
+	return "var(--color-primary)"
+}
+
+func (p Props) resolveTrackColor() string {
+	if p.TrackColor != "" {
+		return p.TrackColor
+	}
+	return "var(--color-muted)"
+}
+
+func clamp(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+func circumference(radius int) int {
+	return int(math.Round(2 * math.Pi * float64(radius)))
+}
+
+templ MetricRing(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ size := p.resolveSize() }}
+	{{ pct := clamp(p.Value, 0, 100) }}
+	{{ color := p.resolveColor() }}
+	{{ track := p.resolveTrackColor() }}
+	{{ labelText := p.Label }}
+	if labelText == "" {
+		{{ labelText = fmt.Sprintf("%d%%", pct) }}
+	}
+	{{ radius := size/2 - 6 }}
+	{{ circ := circumference(radius) }}
+	{{ dashLen := circ * pct / 100 }}
+	{{ gapLen := circ - dashLen }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("relative inline-flex items-center justify-center", p.Class) }
+		style={ fmt.Sprintf("width: %dpx; height: %dpx", size, size) }
+		{ p.Attributes... }
+	>
+		<svg
+			width={ fmt.Sprintf("%d", size) }
+			height={ fmt.Sprintf("%d", size) }
+			viewBox={ fmt.Sprintf("0 0 %d %d", size, size) }
+			class="transform -rotate-90"
+		>
+			<circle
+				cx={ fmt.Sprintf("%d", size/2) }
+				cy={ fmt.Sprintf("%d", size/2) }
+				r={ fmt.Sprintf("%d", radius) }
+				fill="none"
+				stroke={ track }
+				stroke-width="6"
+			/>
+			<circle
+				cx={ fmt.Sprintf("%d", size/2) }
+				cy={ fmt.Sprintf("%d", size/2) }
+				r={ fmt.Sprintf("%d", radius) }
+				fill="none"
+				stroke={ color }
+				stroke-width="6"
+				stroke-dasharray={ fmt.Sprintf("%d %d", dashLen, gapLen) }
+				stroke-linecap="round"
+			/>
+		</svg>
+		<span class="absolute text-sm font-bold text-foreground">{ labelText }</span>
+	</div>
+}
