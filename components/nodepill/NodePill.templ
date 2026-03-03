@@ -1,0 +1,92 @@
+package nodepill
+
+import "webframe/utils"
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Title      string // Node title to display
+	NodeType   string // Node type (concept, tool, decision, error, etc.) — controls dot color
+	Href       string // Optional: makes the pill a link
+	Truncate   int    // Max chars before truncation (default 30)
+}
+
+func (p Props) dotColor() string {
+	switch p.NodeType {
+	case "concept":
+		return "bg-blue-500"
+	case "tool":
+		return "bg-green-500"
+	case "decision":
+		return "bg-amber-500"
+	case "error":
+		return "bg-red-500"
+	case "service":
+		return "bg-purple-500"
+	case "person":
+		return "bg-cyan-500"
+	case "incident":
+		return "bg-orange-500"
+	case "code_path":
+		return "bg-emerald-500"
+	case "reference":
+		return "bg-slate-500"
+	default:
+		return "bg-muted-foreground"
+	}
+}
+
+func (p Props) displayTitle() string {
+	limit := p.Truncate
+	if limit == 0 {
+		limit = 30
+	}
+	if len(p.Title) > limit {
+		return p.Title[:limit-1] + "\u2026"
+	}
+	return p.Title
+}
+
+templ NodePill(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Href != "" {
+		<a
+			href={ templ.SafeURL(p.Href) }
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={
+				utils.TwMerge(
+					"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+					"bg-muted/50 text-foreground hover:bg-muted transition-colors cursor-pointer",
+					p.Class,
+				),
+			}
+			{ p.Attributes... }
+		>
+			<span class={ utils.TwMerge("size-2 rounded-full shrink-0", p.dotColor()) }></span>
+			<span class="truncate">{ p.displayTitle() }</span>
+		</a>
+	} else {
+		<span
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={
+				utils.TwMerge(
+					"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+					"bg-muted/50 text-foreground",
+					p.Class,
+				),
+			}
+			{ p.Attributes... }
+		>
+			<span class={ utils.TwMerge("size-2 rounded-full shrink-0", p.dotColor()) }></span>
+			<span class="truncate">{ p.displayTitle() }</span>
+		</span>
+	}
+}
