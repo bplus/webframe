@@ -1,0 +1,192 @@
+package areachart
+
+import (
+	"fmt"
+	"strings"
+	"webframe/utils"
+)
+
+type DataPoint struct {
+	Label string // X-axis label (e.g. date)
+	Value int    // Y value
+}
+
+type Series struct {
+	Label  string      // Legend label
+	Data   []DataPoint
+	Color  string      // Line/fill color (hex or CSS)
+}
+
+type Props struct {
+	ID          string
+	Class       string
+	Attributes  templ.Attributes
+	Series      []Series // One or more data series
+	Width       int      // SVG width (default 400)
+	Height      int      // SVG height (default 200)
+	ShowLabels  bool     // X-axis labels
+	ShowLegend  bool     // Legend below chart
+	ShowGrid    bool     // Horizontal grid lines
+}
+
+func (p Props) resolveWidth() int {
+	if p.Width > 0 {
+		return p.Width
+	}
+	return 400
+}
+
+func (p Props) resolveHeight() int {
+	if p.Height > 0 {
+		return p.Height
+	}
+	return 200
+}
+
+var areaDefaultColors = []string{
+	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+}
+
+func globalMinMax(series []Series) (int, int) {
+	minV := int(^uint(0) >> 1) // max int
+	maxV := 0
+	for _, s := range series {
+		for _, d := range s.Data {
+			if d.Value < minV {
+				minV = d.Value
+			}
+			if d.Value > maxV {
+				maxV = d.Value
+			}
+		}
+	}
+	if minV > maxV {
+		return 0, 1
+	}
+	if minV == maxV {
+		return minV, minV + 1
+	}
+	return minV, maxV
+}
+
+func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB, minV, maxV int) (polyline string, polygon string) {
+	n := len(data)
+	if n == 0 {
+		return "", ""
+	}
+	plotW := w - padL - padR
+	plotH := h - padT - padB
+	rang := maxV - minV
+	if rang == 0 {
+		rang = 1
+	}
+	pts := make([]string, n)
+	for i, d := range data {
+		x := padL + (i * plotW / max(n-1, 1))
+		y := padT + plotH - ((d.Value - minV) * plotH / rang)
+		pts[i] = fmt.Sprintf("%d,%d", x, y)
+	}
+	polyline = strings.Join(pts, " ")
+	// Close polygon for fill: add bottom-right and bottom-left corners
+	lastX := padL + ((n - 1) * plotW / max(n-1, 1))
+	polygon = polyline + fmt.Sprintf(" %d,%d %d,%d", lastX, padT+plotH, padL, padT+plotH)
+	return
+}
+
+templ AreaChart(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ w := p.resolveWidth() }}
+	{{ h := p.resolveHeight() }}
+	{{ padL := 10 }}
+	{{ padR := 10 }}
+	{{ padT := 10 }}
+	{{ padB := 20 }}
+	if !p.ShowLabels {
+		{{ padB = 10 }}
+	}
+	{{ minV, maxV := globalMinMax(p.Series) }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("inline-block", p.Class) }
+		{ p.Attributes... }
+	>
+		<svg
+			width={ fmt.Sprintf("%d", w) }
+			height={ fmt.Sprintf("%d", h) }
+			viewBox={ fmt.Sprintf("0 0 %d %d", w, h) }
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			if p.ShowGrid {
+				for i := 0; i <= 4; i++ {
+					{{ gy := padT + (h-padT-padB) * i / 4 }}
+					<line
+						x1={ fmt.Sprintf("%d", padL) }
+						y1={ fmt.Sprintf("%d", gy) }
+						x2={ fmt.Sprintf("%d", w-padR) }
+						y2={ fmt.Sprintf("%d", gy) }
+						stroke="var(--color-border)"
+						stroke-width="0.5"
+						stroke-dasharray="4 4"
+					/>
+				}
+			}
+			for si, s := range p.Series {
+				{{ color := s.Color }}
+				if color == "" {
+					{{ color = areaDefaultColors[si%len(areaDefaultColors)] }}
+				}
+				{{ polyline, polygon := buildAreaPoints(s.Data, w, h, padL, padR, padT, padB, minV, maxV) }}
+				if len(s.Data) > 0 {
+					<polygon
+						points={ polygon }
+						fill={ color }
+						fill-opacity="0.15"
+					/>
+					<polyline
+						points={ polyline }
+						fill="none"
+						stroke={ color }
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				}
+			}
+			if p.ShowLabels && len(p.Series) > 0 && len(p.Series[0].Data) > 0 {
+				{{ data := p.Series[0].Data }}
+				{{ n := len(data) }}
+				{{ plotW := w - padL - padR }}
+				{{ step := max(n/6, 1) }}
+				for i := 0; i < n; i += step {
+					{{ x := padL + (i * plotW / max(n-1, 1)) }}
+					<text
+						x={ fmt.Sprintf("%d", x) }
+						y={ fmt.Sprintf("%d", h-2) }
+						text-anchor="middle"
+						class="fill-muted-foreground"
+						style="font-size: 9px"
+					>{ data[i].Label }</text>
+				}
+			}
+		</svg>
+		if p.ShowLegend && len(p.Series) > 1 {
+			<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+				for si, s := range p.Series {
+					{{ color := s.Color }}
+					if color == "" {
+						{{ color = areaDefaultColors[si%len(areaDefaultColors)] }}
+					}
+					<div class="flex items-center gap-1.5">
+						<span class="inline-block w-3 h-0.5 rounded shrink-0" style={ fmt.Sprintf("background-color: %s", color) }></span>
+						<span>{ s.Label }</span>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
