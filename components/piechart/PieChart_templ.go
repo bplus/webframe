@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"webframe/utils"
 )
 
@@ -19,15 +18,6 @@ type Slice struct {
 	Label string
 	Value float64
 	Color string // required — hex or CSS color
-}
-
-var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
-
-func sanitizeColor(c string) string {
-	if validColorRe.MatchString(c) {
-		return c
-	}
-	return "#888"
 }
 
 type Props struct {
@@ -57,7 +47,9 @@ func (p Props) resolveInnerSize() int {
 func total(slices []Slice) float64 {
 	t := 0.0
 	for _, s := range slices {
-		t += s.Value
+		if s.Value > 0 {
+			t += s.Value
+		}
 	}
 	if t == 0 {
 		return 1
@@ -82,16 +74,25 @@ func computeArcs(slices []Slice) []arcData {
 	arcs := make([]arcData, len(slices))
 	angle := -math.Pi / 2 // start at top
 	for i, s := range slices {
-		pct := s.Value / t
-		sweep := pct * 2 * math.Pi
 		color := s.Color
 		if color == "" {
 			color = defaultColors[i%len(defaultColors)]
 		}
+		if s.Value <= 0 {
+			// Negative/zero slices get zero-width arcs (no visual)
+			arcs[i] = arcData{
+				startAngle: angle,
+				endAngle:   angle,
+				color:      utils.SanitizeColor(color),
+			}
+			continue
+		}
+		pct := s.Value / t
+		sweep := pct * 2 * math.Pi
 		arcs[i] = arcData{
 			startAngle: angle,
 			endAngle:   angle + sweep,
-			color:      sanitizeColor(color),
+			color:      utils.SanitizeColor(color),
 		}
 		angle += sweep
 	}
@@ -184,7 +185,7 @@ func PieChart(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 144, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 145, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -223,7 +224,7 @@ func PieChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", size))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 150, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 151, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -236,7 +237,7 @@ func PieChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", size))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 151, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 152, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -249,7 +250,7 @@ func PieChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("0 0 %d %d", size, size))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 152, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 153, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -268,7 +269,7 @@ func PieChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(arcPath(cx, cy, outerR, innerR, arc.startAngle, arc.endAngle))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 158, Col: 71}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 159, Col: 71}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -281,7 +282,7 @@ func PieChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(arc.color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 159, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 160, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -311,7 +312,7 @@ func PieChart(props ...Props) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				color = sanitizeColor(color)
+				color = utils.SanitizeColor(color)
 				pct := s.Value * 100 / t
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"flex items-center gap-1.5\"><span class=\"inline-block w-2.5 h-2.5 rounded-sm shrink-0\" style=\"")
 				if templ_7745c5c3_Err != nil {
@@ -320,7 +321,7 @@ func PieChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("background-color: %s", color))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 174, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 175, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -333,7 +334,7 @@ func PieChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(s.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 175, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 176, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -346,7 +347,7 @@ func PieChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f%%", pct))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 175, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/piechart/PieChart.templ`, Line: 176, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {

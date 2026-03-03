@@ -3,7 +3,6 @@ package barchart
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"webframe/utils"
 )
 
@@ -18,15 +17,6 @@ type Bar struct {
 	Label string
 	Value float64
 	Color string // optional per-bar color override
-}
-
-var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
-
-func sanitizeColor(c string) string {
-	if validColorRe.MatchString(c) {
-		return c
-	}
-	return "#888"
 }
 
 type Props struct {
@@ -74,10 +64,10 @@ func maxVal(bars []Bar) float64 {
 	if len(bars) == 0 {
 		return 1
 	}
-	m := math.Inf(-1)
+	m := 0.0
 	for _, b := range bars {
-		if b.Value > m {
-			m = b.Value
+		if math.Abs(b.Value) > m {
+			m = math.Abs(b.Value)
 		}
 	}
 	if m == 0 {
@@ -94,7 +84,7 @@ templ BarChart(props ...Props) {
 	{{ w := p.resolveWidth() }}
 	{{ h := p.resolveHeight() }}
 	{{ orientation := p.resolveOrientation() }}
-	{{ defaultColor := sanitizeColor(p.resolveBarColor()) }}
+	{{ defaultColor := utils.SanitizeColor(p.resolveBarColor()) }}
 	{{ mv := maxVal(p.Bars) }}
 	<div
 		if p.ID != "" {
@@ -120,9 +110,9 @@ templ BarChart(props ...Props) {
 				for i, bar := range p.Bars {
 					{{ color := defaultColor }}
 					if bar.Color != "" {
-						{{ color = sanitizeColor(bar.Color) }}
+						{{ color = utils.SanitizeColor(bar.Color) }}
 					}
-					{{ barWidth := int(bar.Value * float64(plotW) / mv) }}
+					{{ barWidth := max(0, int(math.Abs(bar.Value) * float64(plotW) / mv)) }}
 					{{ y := i * barH + gap/2 }}
 					{{ rectH := barH - gap }}
 					if rectH < 2 {
@@ -165,9 +155,9 @@ templ BarChart(props ...Props) {
 				for i, bar := range p.Bars {
 					{{ color := defaultColor }}
 					if bar.Color != "" {
-						{{ color = sanitizeColor(bar.Color) }}
+						{{ color = utils.SanitizeColor(bar.Color) }}
 					}
-					{{ barHeight := int(bar.Value * float64(plotH) / mv) }}
+					{{ barHeight := max(0, int(math.Abs(bar.Value) * float64(plotH) / mv)) }}
 					{{ x := i * barW + gap/2 }}
 					{{ rectW := barW - gap }}
 					if rectW < 2 {

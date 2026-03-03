@@ -3,7 +3,6 @@ package piechart
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"webframe/utils"
 )
 
@@ -11,15 +10,6 @@ type Slice struct {
 	Label string
 	Value float64
 	Color string // required — hex or CSS color
-}
-
-var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
-
-func sanitizeColor(c string) string {
-	if validColorRe.MatchString(c) {
-		return c
-	}
-	return "#888"
 }
 
 type Props struct {
@@ -49,7 +39,9 @@ func (p Props) resolveInnerSize() int {
 func total(slices []Slice) float64 {
 	t := 0.0
 	for _, s := range slices {
-		t += s.Value
+		if s.Value > 0 {
+			t += s.Value
+		}
 	}
 	if t == 0 {
 		return 1
@@ -74,16 +66,25 @@ func computeArcs(slices []Slice) []arcData {
 	arcs := make([]arcData, len(slices))
 	angle := -math.Pi / 2 // start at top
 	for i, s := range slices {
-		pct := s.Value / t
-		sweep := pct * 2 * math.Pi
 		color := s.Color
 		if color == "" {
 			color = defaultColors[i%len(defaultColors)]
 		}
+		if s.Value <= 0 {
+			// Negative/zero slices get zero-width arcs (no visual)
+			arcs[i] = arcData{
+				startAngle: angle,
+				endAngle:   angle,
+				color:      utils.SanitizeColor(color),
+			}
+			continue
+		}
+		pct := s.Value / t
+		sweep := pct * 2 * math.Pi
 		arcs[i] = arcData{
 			startAngle: angle,
 			endAngle:   angle + sweep,
-			color:      sanitizeColor(color),
+			color:      utils.SanitizeColor(color),
 		}
 		angle += sweep
 	}
@@ -168,7 +169,7 @@ templ PieChart(props ...Props) {
 					if color == "" {
 						{{ color = defaultColors[i%len(defaultColors)] }}
 					}
-					{{ color = sanitizeColor(color) }}
+					{{ color = utils.SanitizeColor(color) }}
 					{{ pct := s.Value * 100 / t }}
 					<div class="flex items-center gap-1.5">
 						<span class="inline-block w-2.5 h-2.5 rounded-sm shrink-0" style={ fmt.Sprintf("background-color: %s", color) }></span>

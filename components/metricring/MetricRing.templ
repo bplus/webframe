@@ -26,14 +26,14 @@ func (p Props) resolveSize() int {
 
 func (p Props) resolveColor() string {
 	if p.Color != "" {
-		return p.Color
+		return utils.SanitizeColor(p.Color)
 	}
 	return "var(--color-primary)"
 }
 
 func (p Props) resolveTrackColor() string {
 	if p.TrackColor != "" {
-		return p.TrackColor
+		return utils.SanitizeColor(p.TrackColor)
 	}
 	return "var(--color-muted)"
 }
