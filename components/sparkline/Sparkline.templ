@@ -31,6 +31,10 @@ func (p Props) resolveHeight() int {
 	return 24
 }
 
+// sparklinePadding is the SVG-pixel inset used by both the polyline
+// and the fill polygon so they stay in sync.
+const sparklinePadding = 2
+
 func buildPolylinePoints(data []float64, w, h int) string {
 	if len(data) == 0 {
 		return ""
@@ -48,13 +52,12 @@ func buildPolylinePoints(data []float64, w, h int) string {
 	if rang == 0 {
 		rang = 1
 	}
-	padding := 2
-	plotW := float64(w - 2*padding)
-	plotH := float64(h - 2*padding)
+	plotW := float64(w - 2*sparklinePadding)
+	plotH := float64(h - 2*sparklinePadding)
 	pts := make([]string, len(data))
 	for i, v := range data {
-		x := float64(padding) + float64(i)*plotW/float64(max(len(data)-1, 1))
-		y := float64(padding) + plotH - ((v-minVal)*plotH/rang)
+		x := float64(sparklinePadding) + float64(i)*plotW/float64(max(len(data)-1, 1))
+		y := float64(sparklinePadding) + plotH - ((v-minVal)*plotH/rang)
 		pts[i] = fmt.Sprintf("%.2f,%.2f", x, y)
 	}
 	return strings.Join(pts, " ")
@@ -68,9 +71,11 @@ templ Sparkline(props ...Props) {
 	{{ w := p.resolveWidth() }}
 	{{ h := p.resolveHeight() }}
 	{{ points := buildPolylinePoints(p.Data, w, h) }}
-	{{ color := utils.SanitizeColor(p.Color) }}
+	{{ var color string }}
 	if p.Color == "" {
 		{{ color = "currentColor" }}
+	} else {
+		{{ color = utils.SanitizeColor(p.Color) }}
 	}
 	<svg
 		if p.ID != "" {
@@ -85,7 +90,7 @@ templ Sparkline(props ...Props) {
 		{ p.Attributes... }
 	>
 		if len(p.Data) > 0 && p.Fill {
-			{{ fillPoints := points + fmt.Sprintf(" %d,%d %d,%d", w-2, h-2, 2, h-2) }}
+			{{ fillPoints := points + fmt.Sprintf(" %d,%d %d,%d", w-sparklinePadding, h-sparklinePadding, sparklinePadding, h-sparklinePadding) }}
 			<polygon
 				points={ fillPoints }
 				fill={ color }
