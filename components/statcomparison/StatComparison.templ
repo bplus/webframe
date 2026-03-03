@@ -1,0 +1,77 @@
+package statcomparison
+
+import (
+	"webframe/utils"
+)
+
+type Direction string
+
+const (
+	DirectionUp   Direction = "up"
+	DirectionDown Direction = "down"
+	DirectionFlat Direction = "flat"
+)
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Label      string    // Metric name, e.g. "Total Nodes"
+	Value      string    // Current value, e.g. "1,234"
+	PrevValue  string    // Previous value, e.g. "1,100"
+	Delta      string    // Change text, e.g. "+134" or "+12.2%"
+	Direction  Direction // up, down, flat
+}
+
+func (p Props) directionColor() string {
+	switch p.Direction {
+	case DirectionUp:
+		return "text-green-500"
+	case DirectionDown:
+		return "text-red-500"
+	default:
+		return "text-muted-foreground"
+	}
+}
+
+templ StatComparison(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex flex-col gap-1", p.Class) }
+		{ p.Attributes... }
+	>
+		if p.Label != "" {
+			<span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">{ p.Label }</span>
+		}
+		<div class="flex items-baseline gap-2">
+			<span class="text-2xl font-bold text-foreground">{ p.Value }</span>
+			if p.PrevValue != "" {
+				<span class="text-sm text-muted-foreground">from { p.PrevValue }</span>
+			}
+		</div>
+		if p.Delta != "" {
+			<div class={ utils.TwMerge("flex items-center gap-1 text-sm font-medium", p.directionColor()) }>
+				if p.Direction == DirectionUp {
+					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M8 3v10M8 3l4 4M8 3L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+				} else if p.Direction == DirectionDown {
+					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M8 13V3M8 13l4-4M8 13L4 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+				} else {
+					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+					</svg>
+				}
+				<span>{ p.Delta }</span>
+			</div>
+		}
+	</div>
+}
