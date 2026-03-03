@@ -1,0 +1,173 @@
+package piechart
+
+import (
+	"fmt"
+	"math"
+	"webframe/utils"
+)
+
+type Slice struct {
+	Label string
+	Value int
+	Color string // required — hex or CSS color
+}
+
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Slices     []Slice
+	Size       int    // Diameter in px (default 160)
+	InnerSize  int    // Inner radius for donut (0 = full pie, default 50 = donut)
+	ShowLegend bool   // Show legend below chart (default true)
+}
+
+func (p Props) resolveSize() int {
+	if p.Size > 0 {
+		return p.Size
+	}
+	return 160
+}
+
+func (p Props) resolveInnerSize() int {
+	if p.InnerSize > 0 {
+		return p.InnerSize
+	}
+	if p.InnerSize == 0 {
+		return 50 // default donut
+	}
+	return 0
+}
+
+func total(slices []Slice) int {
+	t := 0
+	for _, s := range slices {
+		t += s.Value
+	}
+	if t == 0 {
+		return 1
+	}
+	return t
+}
+
+// defaultColors provides fallback colors for slices without explicit color.
+var defaultColors = []string{
+	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+	"#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
+}
+
+type arcData struct {
+	startAngle float64
+	endAngle   float64
+	color      string
+}
+
+func computeArcs(slices []Slice) []arcData {
+	t := total(slices)
+	arcs := make([]arcData, len(slices))
+	angle := -math.Pi / 2 // start at top
+	for i, s := range slices {
+		pct := float64(s.Value) / float64(t)
+		sweep := pct * 2 * math.Pi
+		color := s.Color
+		if color == "" {
+			color = defaultColors[i%len(defaultColors)]
+		}
+		arcs[i] = arcData{
+			startAngle: angle,
+			endAngle:   angle + sweep,
+			color:      color,
+		}
+		angle += sweep
+	}
+	return arcs
+}
+
+func arcPath(cx, cy, outerR, innerR int, startAngle, endAngle float64) string {
+	if endAngle-startAngle >= 2*math.Pi-0.001 {
+		// Full circle — use two arcs to avoid SVG rendering issues
+		mid := startAngle + math.Pi
+		return arcPath(cx, cy, outerR, innerR, startAngle, mid) + " " + arcPath(cx, cy, outerR, innerR, mid, endAngle)
+	}
+	outerStart := polarToCart(cx, cy, outerR, startAngle)
+	outerEnd := polarToCart(cx, cy, outerR, endAngle)
+	largeArc := 0
+	if endAngle-startAngle > math.Pi {
+		largeArc = 1
+	}
+	if innerR <= 0 {
+		return fmt.Sprintf("M %d %d A %d %d 0 %d 1 %d %d L %d %d Z",
+			outerStart[0], outerStart[1],
+			outerR, outerR, largeArc,
+			outerEnd[0], outerEnd[1],
+			cx, cy)
+	}
+	innerStart := polarToCart(cx, cy, innerR, startAngle)
+	innerEnd := polarToCart(cx, cy, innerR, endAngle)
+	return fmt.Sprintf("M %d %d A %d %d 0 %d 1 %d %d L %d %d A %d %d 0 %d 0 %d %d Z",
+		outerStart[0], outerStart[1],
+		outerR, outerR, largeArc,
+		outerEnd[0], outerEnd[1],
+		innerEnd[0], innerEnd[1],
+		innerR, innerR, largeArc,
+		innerStart[0], innerStart[1])
+}
+
+func polarToCart(cx, cy, r int, angle float64) [2]int {
+	return [2]int{
+		cx + int(math.Round(float64(r)*math.Cos(angle))),
+		cy + int(math.Round(float64(r)*math.Sin(angle))),
+	}
+}
+
+templ PieChart(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ size := p.resolveSize() }}
+	{{ innerR := p.resolveInnerSize() }}
+	{{ outerR := size/2 - 4 }}
+	{{ cx := size / 2 }}
+	{{ cy := size / 2 }}
+	{{ arcs := computeArcs(p.Slices) }}
+	{{ t := total(p.Slices) }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("inline-flex flex-col items-center gap-3", p.Class) }
+		{ p.Attributes... }
+	>
+		<svg
+			width={ fmt.Sprintf("%d", size) }
+			height={ fmt.Sprintf("%d", size) }
+			viewBox={ fmt.Sprintf("0 0 %d %d", size, size) }
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			for i, arc := range arcs {
+				if p.Slices[i].Value > 0 {
+					<path
+						d={ arcPath(cx, cy, outerR, innerR, arc.startAngle, arc.endAngle) }
+						fill={ arc.color }
+					/>
+				}
+			}
+		</svg>
+		if p.ShowLegend || len(p.Slices) > 0 {
+			<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+				for i, s := range p.Slices {
+					{{ color := s.Color }}
+					if color == "" {
+						{{ color = defaultColors[i%len(defaultColors)] }}
+					}
+					{{ pct := s.Value * 100 / t }}
+					<div class="flex items-center gap-1.5">
+						<span class="inline-block w-2.5 h-2.5 rounded-sm shrink-0" style={ fmt.Sprintf("background-color: %s", color) }></span>
+						<span>{ s.Label } ({ fmt.Sprintf("%d%%", pct) })</span>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
