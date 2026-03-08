@@ -15,6 +15,42 @@ func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 	templ.Handler(pages.Showcase()).ServeHTTP(w, r)
 }
 
+// HandleTraffic renders the live traffic stream demo page.
+func HandleTraffic(w http.ResponseWriter, r *http.Request) {
+	templ.Handler(pages.Traffic()).ServeHTTP(w, r)
+}
+
+// HandleTrafficStream emits demo SSE traffic events.
+func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	providers := []string{"anthropic", "openai", "gemini", "local"}
+	events := []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"}
+	directions := []string{"request", "response", "event", "local"}
+	statuses := []string{"", "200", "202", "500"}
+	ticker := time.NewTicker(1200 * time.Millisecond)
+	defer ticker.Stop()
+	for i := 0; ; i++ {
+		select {
+		case <-r.Context().Done():
+			return
+		case ts := <-ticker.C:
+			provider := providers[i%len(providers)]
+			eventType := events[i%len(events)]
+			direction := directions[i%len(directions)]
+			status := statuses[i%len(statuses)]
+			fmt.Fprintf(w, "data: {\"ts\":\"%s\",\"provider\":\"%s\",\"direction\":\"%s\",\"type\":\"%s\",\"status\":\"%s\",\"trace_id\":\"trace-demo-%03d\",\"summary\":\"%s %s\"}\n\n", ts.UTC().Format(time.RFC3339Nano), provider, direction, eventType, status, i+1, strings.ToUpper(direction), provider)
+			flusher.Flush()
+		}
+	}
+}
+
 // HandleClick returns an updated button label (demonstrates hx-post + hx-swap)
 func HandleClick(w http.ResponseWriter, r *http.Request) {
 	count := r.FormValue("count")

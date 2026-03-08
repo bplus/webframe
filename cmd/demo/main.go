@@ -17,8 +17,10 @@ func main() {
 
 	// Pages
 	mux.HandleFunc("GET /{$}", demo.HandleShowcase)
+	mux.HandleFunc("GET /traffic", demo.HandleTraffic)
 
 	// HTMX demo endpoints
+	mux.HandleFunc("GET /api/traffic/stream", demo.HandleTrafficStream)
 	mux.HandleFunc("POST /api/click", demo.HandleClick)
 	mux.HandleFunc("GET /api/search", demo.HandleSearch)
 	mux.HandleFunc("POST /api/validate", demo.HandleValidate)
