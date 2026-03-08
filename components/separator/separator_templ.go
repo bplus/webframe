@@ -12,7 +12,7 @@ package separator
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "webframe/utils"
+import "github.com/bplus/webframe/utils"
 
 type Orientation string
 type Decoration string

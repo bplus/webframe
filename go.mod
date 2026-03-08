@@ -1,4 +1,4 @@
-module webframe
+module github.com/bplus/webframe
 
 go 1.24
 

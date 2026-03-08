@@ -14,8 +14,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"context"
-	"webframe/components/popover"
-	"webframe/utils"
+	"github.com/bplus/webframe/components/popover"
+	"github.com/bplus/webframe/utils"
 )
 
 type Placement = popover.Placement

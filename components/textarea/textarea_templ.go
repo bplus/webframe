@@ -14,7 +14,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"strconv"
-	"webframe/utils"
+	"github.com/bplus/webframe/utils"
 )
 
 type Props struct {

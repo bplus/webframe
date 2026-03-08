@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"webframe/components/copybutton"
-	"webframe/utils"
+	"github.com/bplus/webframe/components/copybutton"
+	"github.com/bplus/webframe/utils"
 )
 
 func TestSizeClasses_Default(t *testing.T) {

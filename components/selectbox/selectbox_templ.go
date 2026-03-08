@@ -16,11 +16,11 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"webframe/components/button"
-	"webframe/components/icon"
-	"webframe/components/input"
-	"webframe/components/popover"
-	"webframe/utils"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/popover"
+	"github.com/bplus/webframe/utils"
 )
 
 type contextKey string

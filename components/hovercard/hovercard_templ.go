@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strings"
 
-	"webframe/components/gameicon"
-	"webframe/components/popover"
+	"github.com/bplus/webframe/components/gameicon"
+	"github.com/bplus/webframe/components/popover"
 )
 
 // MetaRow is a key-value pair displayed in the hover card metadata section.

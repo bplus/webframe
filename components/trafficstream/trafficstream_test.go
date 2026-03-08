@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"webframe/components/trafficstream"
+	"github.com/bplus/webframe/components/trafficstream"
 )
 
 func TestTrafficStream_Defaults(t *testing.T) {

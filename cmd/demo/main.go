@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"webframe/demo"
+	"github.com/bplus/webframe/demo"
 )
 
 func main() {

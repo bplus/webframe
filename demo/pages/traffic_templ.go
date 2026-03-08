@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"webframe/components/trafficstream"
-	"webframe/demo/layouts"
+	"github.com/bplus/webframe/components/trafficstream"
+	"github.com/bplus/webframe/demo/layouts"
 )
 
 func Traffic() templ.Component {

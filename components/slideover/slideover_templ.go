@@ -10,8 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"context"
-	"webframe/components/icon"
-	"webframe/utils"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
 )
 
 type contextKey string

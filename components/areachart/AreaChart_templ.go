@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"webframe/utils"
+	"github.com/bplus/webframe/utils"
 )
 
 type DataPoint struct {

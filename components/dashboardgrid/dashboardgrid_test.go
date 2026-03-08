@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
-	"webframe/components/dashboardgrid"
+	"github.com/bplus/webframe/components/dashboardgrid"
 )
 
 func TestGrid_DefaultProps(t *testing.T) {

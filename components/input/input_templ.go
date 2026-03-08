@@ -13,9 +13,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"webframe/components/button"
-	"webframe/components/icon"
-	"webframe/utils"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
 )
 
 type Type string

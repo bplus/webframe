@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"webframe/demo/pages"
+	"github.com/bplus/webframe/demo/pages"
 
 	"github.com/a-h/templ"
 )

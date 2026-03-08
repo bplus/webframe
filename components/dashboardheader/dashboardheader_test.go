@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"webframe/components/dashboardheader"
+	"github.com/bplus/webframe/components/dashboardheader"
 )
 
 func TestHeader_TitleOnly(t *testing.T) {

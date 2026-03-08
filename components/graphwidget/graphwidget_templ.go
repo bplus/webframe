@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"webframe/utils"
+	"github.com/bplus/webframe/utils"
 )
 
 type NodeColorEntry struct {

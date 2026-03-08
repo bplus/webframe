@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"webframe/components/emptystate"
+	"github.com/bplus/webframe/components/emptystate"
 )
 
 func TestEmptyState_DefaultProps(t *testing.T) {
