@@ -30,6 +30,7 @@ type Props struct {
 	BarColor    string      // default bar color (default "var(--color-primary)")
 	ShowValues  bool        // show value labels on bars
 	ShowLabels  bool        // show axis labels
+	MaxBars     int         // cap bar count; extra bars fold into "Other (K)" (0 = unlimited)
 }
 
 func (p Props) resolveOrientation() Orientation {
@@ -85,7 +86,12 @@ templ BarChart(props ...Props) {
 	{{ h := p.resolveHeight() }}
 	{{ orientation := p.resolveOrientation() }}
 	{{ defaultColor := utils.SanitizeColor(p.resolveBarColor()) }}
-	{{ mv := maxVal(p.Bars) }}
+	{{ bars := capBars(p.Bars, p.MaxBars) }}
+	{{ labelW := 60 }}
+	if orientation == Horizontal {
+		{{ labelW, w = computeLabelGutter(bars, w, p.ShowLabels) }}
+	}
+	{{ mv := maxVal(bars) }}
 	<div
 		if p.ID != "" {
 			id={ p.ID }
@@ -100,14 +106,13 @@ templ BarChart(props ...Props) {
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			if orientation == Horizontal {
-				{{ labelW := 60 }}
 				{{ plotW := w - labelW - 10 }}
 				{{ barH := 0 }}
-				if len(p.Bars) > 0 {
-					{{ barH = (h - 10) / len(p.Bars) }}
+				if len(bars) > 0 {
+					{{ barH = (h - 10) / len(bars) }}
 				}
 				{{ gap := 4 }}
-				for i, bar := range p.Bars {
+				for i, bar := range bars {
 					{{ color := defaultColor }}
 					if bar.Color != "" {
 						{{ color = utils.SanitizeColor(bar.Color) }}
@@ -119,13 +124,19 @@ templ BarChart(props ...Props) {
 						{{ rectH = 2 }}
 					}
 					if p.ShowLabels {
+						{{ disp, truncated := fitLabel(bar.Label, labelW) }}
 						<text
 							x={ fmt.Sprintf("%d", labelW-4) }
 							y={ fmt.Sprintf("%d", y+rectH/2+4) }
 							text-anchor="end"
 							class="text-xs fill-muted-foreground"
 							style="font-size: 11px"
-						>{ bar.Label }</text>
+						>
+							if truncated {
+								<title>{ bar.Label }</title>
+							}
+							{ disp }
+						</text>
 					}
 					<rect
 						x={ fmt.Sprintf("%d", labelW) }
@@ -148,11 +159,11 @@ templ BarChart(props ...Props) {
 				{{ labelH := 20 }}
 				{{ plotH := h - labelH - 10 }}
 				{{ barW := 0 }}
-				if len(p.Bars) > 0 {
-					{{ barW = (w - 10) / len(p.Bars) }}
+				if len(bars) > 0 {
+					{{ barW = (w - 10) / len(bars) }}
 				}
 				{{ gap := 4 }}
-				for i, bar := range p.Bars {
+				for i, bar := range bars {
 					{{ color := defaultColor }}
 					if bar.Color != "" {
 						{{ color = utils.SanitizeColor(bar.Color) }}

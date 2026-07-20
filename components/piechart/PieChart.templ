@@ -20,6 +20,7 @@ type Props struct {
 	Size       int    // Diameter in px (default 160)
 	InnerSize  *int   // Inner radius for donut (nil = default 50 donut, 0 = full pie)
 	ShowLegend bool   // Show legend below chart
+	MaxSlices  int    // cap slice count; extra slices fold into "Other (K)" (0 = unlimited)
 }
 
 func (p Props) resolveSize() int {
@@ -138,8 +139,9 @@ templ PieChart(props ...Props) {
 	{{ outerR := size/2 - 4 }}
 	{{ cx := size / 2 }}
 	{{ cy := size / 2 }}
-	{{ arcs := computeArcs(p.Slices) }}
-	{{ t := total(p.Slices) }}
+	{{ slices := capSlices(p.Slices, p.MaxSlices) }}
+	{{ arcs := computeArcs(slices) }}
+	{{ t := total(slices) }}
 	<div
 		if p.ID != "" {
 			id={ p.ID }
@@ -154,7 +156,7 @@ templ PieChart(props ...Props) {
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			for i, arc := range arcs {
-				if p.Slices[i].Value > 0 {
+				if slices[i].Value > 0 {
 					<path
 						d={ arcPath(cx, cy, outerR, innerR, arc.startAngle, arc.endAngle) }
 						fill={ arc.color }
@@ -164,7 +166,7 @@ templ PieChart(props ...Props) {
 		</svg>
 		if p.ShowLegend {
 			<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-				for i, s := range p.Slices {
+				for i, s := range slices {
 					{{ color := s.Color }}
 					if color == "" {
 						{{ color = defaultColors[i%len(defaultColors)] }}
