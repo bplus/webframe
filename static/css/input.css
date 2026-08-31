@@ -42,7 +42,71 @@
   --color-surface-900: #0f172a;
   --color-surface-950: #020617;
 
-  /* ── shadcn/templUI semantic tokens (dark default) ── */
+  /* ── shadcn/templUI semantic tokens ──
+     LIGHT, HIGH-CONTRAST DEFAULT (decided 2026-08-31: light ground,
+     near-black ink, across all products). Palette adopted from the
+     Observatory mockup: warm paper ground, white cards, warm hairline
+     borders, deep-purple accent. Dark remains available as an explicit
+     opt-in via [data-theme="dark"]. */
+  --color-background:           #F5F5F2;
+  --color-foreground:           #0B0B0B;
+  --color-card:                 #FFFFFF;
+  --color-card-foreground:      #0B0B0B;
+  --color-popover:              #FFFFFF;
+  --color-popover-foreground:   #0B0B0B;
+  --color-primary:              #4A3AA7;
+  --color-primary-foreground:   #ffffff;
+  --color-secondary:            #E9E8E4;
+  --color-secondary-foreground: #0B0B0B;
+  --color-muted:                #EFEEE9;
+  --color-muted-foreground:     #52514E;
+  --color-accent:               #EDEBFA;
+  --color-accent-foreground:    #4A3AA7;
+  --color-destructive:          #E34948;
+  --color-destructive-foreground: #ffffff;
+  --color-border:               #DBDAD5;
+  --color-input:                #DBDAD5;
+  --color-ring:                 #4A3AA7;
+
+  /* ── Radius ── */
+  --radius: 0.5rem;
+
+  /* ── Fonts (Observatory pairing; graceful system fallbacks) ── */
+  --font-sans: 'Archivo', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Archivo', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Readability: slightly larger root size — every rem-based Tailwind size
+   scales with it (the letters were too small). */
+:root { font-size: 17px; }
+
+/* ── Light theme, explicit (same as the default; kept so products that
+      already set data-theme="light" stay correct) ── */
+:root[data-theme="light"] {
+  --color-background:           #F5F5F2;
+  --color-foreground:           #0B0B0B;
+  --color-card:                 #FFFFFF;
+  --color-card-foreground:      #0B0B0B;
+  --color-popover:              #FFFFFF;
+  --color-popover-foreground:   #0B0B0B;
+  --color-primary:              #4A3AA7;
+  --color-primary-foreground:   #ffffff;
+  --color-secondary:            #E9E8E4;
+  --color-secondary-foreground: #0B0B0B;
+  --color-muted:                #EFEEE9;
+  --color-muted-foreground:     #52514E;
+  --color-accent:               #EDEBFA;
+  --color-accent-foreground:    #4A3AA7;
+  --color-destructive:          #E34948;
+  --color-destructive-foreground: #ffffff;
+  --color-border:               #DBDAD5;
+  --color-input:                #DBDAD5;
+  --color-ring:                 #4A3AA7;
+}
+
+/* ── Dark theme, explicit opt-in (the pre-2026-08-31 default, preserved) ── */
+:root[data-theme="dark"] {
   --color-background:           var(--color-surface-950);
   --color-foreground:           var(--color-surface-50);
   --color-card:                 var(--color-surface-900);
@@ -61,37 +125,6 @@
   --color-destructive-foreground: #ffffff;
   --color-border:               var(--color-surface-700);
   --color-input:                var(--color-surface-700);
-  --color-ring:                 var(--color-primary-500);
-
-  /* ── Radius ── */
-  --radius: 0.5rem;
-
-  /* ── Fonts ── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-}
-
-/* ── Light theme overrides ── */
-:root[data-theme="light"] {
-  --color-background:           var(--color-surface-50);
-  --color-foreground:           var(--color-surface-900);
-  --color-card:                 #ffffff;
-  --color-card-foreground:      var(--color-surface-900);
-  --color-popover:              #ffffff;
-  --color-popover-foreground:   var(--color-surface-900);
-  --color-primary:              var(--color-primary-600);
-  --color-primary-foreground:   #ffffff;
-  --color-secondary:            var(--color-surface-100);
-  --color-secondary-foreground: var(--color-surface-900);
-  --color-muted:                var(--color-surface-100);
-  --color-muted-foreground:     var(--color-surface-500);
-  --color-accent:               var(--color-surface-100);
-  --color-accent-foreground:    var(--color-surface-900);
-  --color-destructive:          #dc2626;
-  --color-destructive-foreground: #ffffff;
-  --color-border:               var(--color-surface-200);
-  --color-input:                var(--color-surface-200);
   --color-ring:                 var(--color-primary-500);
 }
 
