@@ -5,12 +5,14 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"github.com/a-h/templ"
 )
 
 func renderCompact(t *testing.T, steps []Step) string {
 	t.Helper()
 	var buf bytes.Buffer
-	if err := LifecycleStepper(steps).Render(context.Background(), &buf); err != nil {
+	if err := LifecycleStepper(Props{Steps: steps}).Render(context.Background(), &buf); err != nil {
 		t.Fatalf("render LifecycleStepper: %v", err)
 	}
 	return buf.String()
@@ -19,8 +21,8 @@ func renderCompact(t *testing.T, steps []Step) string {
 func renderLarge(t *testing.T, steps []Step) string {
 	t.Helper()
 	var buf bytes.Buffer
-	if err := LifecycleStepperLarge(steps).Render(context.Background(), &buf); err != nil {
-		t.Fatalf("render LifecycleStepperLarge: %v", err)
+	if err := LifecycleStepper(Props{Steps: steps, Large: true}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render LifecycleStepper (Large): %v", err)
 	}
 	return buf.String()
 }
@@ -219,5 +221,32 @@ func TestRender_EmptySteps(t *testing.T) {
 	html := renderCompact(t, nil)
 	if strings.Contains(html, "<button") || strings.Contains(html, "display:block") {
 		t.Errorf("empty steps should render an empty row; html:\n%s", html)
+	}
+}
+
+// Props.ID, Props.Class, and Props.Attributes all land on the root
+// element: ID as a plain id attribute, Class merged alongside the
+// component's base classes via TwMerge, and Attributes spread
+// verbatim.
+func TestRender_Props_IDClassAttributes(t *testing.T) {
+	var buf bytes.Buffer
+	props := Props{
+		ID:         "x",
+		Class:      "mt-2",
+		Attributes: templ.Attributes{"data-foo": "bar"},
+	}
+	if err := LifecycleStepper(props).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render LifecycleStepper: %v", err)
+	}
+	html := buf.String()
+
+	if !strings.Contains(html, `id="x"`) {
+		t.Errorf("expected id=\"x\" on the root element; html:\n%s", html)
+	}
+	if !strings.Contains(html, "inline-flex") || !strings.Contains(html, "mt-2") {
+		t.Errorf("expected the base class and mt-2 merged onto the root element; html:\n%s", html)
+	}
+	if !strings.Contains(html, `data-foo="bar"`) {
+		t.Errorf("expected data-foo=\"bar\" spread onto the root element; html:\n%s", html)
 	}
 }

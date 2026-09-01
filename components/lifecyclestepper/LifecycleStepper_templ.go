@@ -18,7 +18,11 @@ package lifecyclestepper
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/bplus/webframe/utils"
+)
 
 // State is the status of one LifecycleStepper node. Use one of the
 // State* constants; the empty value and any unrecognized State render
@@ -75,8 +79,8 @@ const (
 	colorConnectorOff = "var(--color-border)"
 )
 
-// Step is one node in a LifecycleStepper / LifecycleStepperLarge row.
-// Label and State are always used. PopoverURL, PopoverTarget, and
+// Step is one node in a LifecycleStepper row. Label and State are
+// always used. PopoverURL, PopoverTarget, and
 // Title are optional: when PopoverURL is non-empty the node renders
 // as a clickable <button type="button"> carrying hx-get={PopoverURL},
 // hx-target={PopoverTarget} (omitted when PopoverTarget is empty),
@@ -163,8 +167,8 @@ var (
 // check for done, a center dot for active, an exclamation mark for
 // attn, an X for failed, and mono-font text (the 1-based index, or an
 // en dash for skipped) for future/skipped/unknown. The glyph is a
-// fixed real-pixel size in both LifecycleStepper and
-// LifecycleStepperLarge; only the surrounding circle grows.
+// fixed real-pixel size regardless of Props.Large; only the
+// surrounding circle grows.
 func nodeIcon(s State, index int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -215,7 +219,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 176, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 180, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -233,7 +237,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 178, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 182, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -246,7 +250,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", index))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 178, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 182, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -303,7 +307,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(step.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 195, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 199, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -321,7 +325,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(step.PopoverURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 197, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 201, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -339,7 +343,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(step.PopoverTarget)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 199, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 203, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -357,7 +361,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(circle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 204, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 208, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -378,7 +382,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 207, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 211, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -391,7 +395,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(step.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 207, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 211, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -414,7 +418,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(step.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 212, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 216, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -432,7 +436,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(circle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 216, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 220, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -453,7 +457,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 219, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 223, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -466,7 +470,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(step.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 219, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 223, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -513,7 +517,7 @@ func stepperConnector(color string, width int, dot int) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("display:flex;align-items:center;height:%dpx;flex-shrink:0", dot))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 229, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 233, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -526,7 +530,7 @@ func stepperConnector(color string, width int, dot int) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block", width, color))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 230, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 234, Col: 102}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -540,9 +544,10 @@ func stepperConnector(color string, width int, dot int) templ.Component {
 	})
 }
 
-// stepper renders the shared markup for both exported sizes: a
-// flex-wrap row of stepperNode/stepperConnector pairs.
-func stepper(steps []Step, sz sizeConfig) templ.Component {
+// stepper renders the shared markup for both size variants: a
+// flex-wrap row of stepperNode/stepperConnector pairs, rooted at the
+// <div> that carries the caller's id/class/attributes.
+func stepper(p Props, sz sizeConfig) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -563,27 +568,76 @@ func stepper(steps []Step, sz sizeConfig) templ.Component {
 			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"inline-flex flex-wrap items-start gap-y-3\">")
+		var templ_7745c5c3_Var20 = []any{utils.TwMerge("inline-flex flex-wrap items-start gap-y-3", p.Class)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var20...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for i, step := range steps {
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if p.ID != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, " id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var21 string
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 244, Col: 12}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, " class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var20).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, p.Attributes)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, ">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		for i, step := range p.Steps {
 			templ_7745c5c3_Err = stepperNode(step, i+1, sz).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if i < len(steps)-1 {
-				templ_7745c5c3_Err = stepperConnector(connectorColor(step.State, steps[i+1].State), sz.connector, sz.dot).Render(ctx, templ_7745c5c3_Buffer)
+			if i < len(p.Steps)-1 {
+				templ_7745c5c3_Err = stepperConnector(connectorColor(step.State, p.Steps[i+1].State), sz.connector, sz.dot).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -591,51 +645,39 @@ func stepper(steps []Step, sz sizeConfig) templ.Component {
 	})
 }
 
-// LifecycleStepper renders the compact wizard-dot progress bar: 22px
-// dots, 12.5px labels, 26px connectors. steps renders in order;
-// connectors sit between consecutive steps (len(steps)-1 of them) and
-// are colored per connectorColor. An empty or nil steps renders an
+// Props configures a LifecycleStepper. Steps renders in order;
+// connectors sit between consecutive steps (len(Steps)-1 of them) and
+// are colored per connectorColor. An empty or nil Steps renders an
+// empty row. Large selects the expanded size variant (26px dots,
+// 13.5px labels, 34px connectors); the default is compact (22px
+// dots, 12.5px labels, 26px connectors) — see sizeConfig,
+// compactSize, largeSize.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Steps      []Step
+	Large      bool // expanded size variant; default is compact
+}
+
+// LifecycleStepper renders a horizontal wizard-dot progress row: an
+// ordered row of stage nodes (Props.Steps) joined by connector lines,
+// sized per Props.Large.
+//
+// It accepts zero or one Props (extras ignored); Props{} renders an
 // empty row.
 //
-// @pure renders markup only; no state, I/O, or globals touched
-// @ai-context see LifecycleStepperLarge for the expanded variant;
-// both share stepper() parameterized by sizeConfig rather than
-// diverging templ trees.
-func LifecycleStepper(steps []Step) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = stepper(steps, compactSize).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-// LifecycleStepperLarge renders the expanded wizard-dot progress bar:
-// 26px dots, 13.5px labels, 34px connectors. Otherwise identical to
-// LifecycleStepper — see its doc comment.
+// Returns a templ.Component rooted at an inline-flex <div> carrying
+// Props.ID (as id, when set), Props.Class (merged onto the component's
+// base classes via TwMerge), and Props.Attributes (spread onto the
+// root); it takes no children.
+//
+// No scripts or client state are emitted.
 //
 // @pure renders markup only; no state, I/O, or globals touched
-func LifecycleStepperLarge(steps []Step) templ.Component {
+// @ai-context both size variants share stepper() parameterized by
+// sizeConfig rather than diverging templ trees.
+func LifecycleStepper(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -651,14 +693,25 @@ func LifecycleStepperLarge(steps []Step) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = stepper(steps, largeSize).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		var p Props
+		if len(props) > 0 {
+			p = props[0]
+		}
+		if p.Large {
+			templ_7745c5c3_Err = stepper(p, largeSize).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = stepper(p, compactSize).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
