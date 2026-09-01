@@ -29,6 +29,11 @@ func TestTrafficStream_Defaults(t *testing.T) {
 	if !strings.Contains(html, `Waiting for request and response events to arrive.`) {
 		t.Fatalf("expected default empty description, got: %s", html)
 	}
+	// No explicit ID means no id attribute on the root <section>: the removed
+	// utils.RandomID fallback was computed but never rendered.
+	if strings.Contains(html, `id="`) {
+		t.Fatalf("expected no id attribute when Props.ID is empty, got: %s", html)
+	}
 }
 
 func TestTrafficStream_CustomProps(t *testing.T) {

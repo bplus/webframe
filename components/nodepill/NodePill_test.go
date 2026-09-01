@@ -1,6 +1,9 @@
 package nodepill
 
-import "testing"
+import (
+	"testing"
+	"unicode/utf8"
+)
 
 // --- dotColor() tests ---
 
@@ -104,5 +107,68 @@ func TestDisplayTitle_CustomTruncate_ExactCustomLimit(t *testing.T) {
 	got := p.displayTitle()
 	if got != "Hello" {
 		t.Errorf("displayTitle() at exact custom limit = %q, want %q", got, "Hello")
+	}
+}
+
+// TestDisplayTitle_MultiByteUTF8_RuneBoundary guards against truncating by
+// byte index: a multi-byte title cut mid-rune produces invalid UTF-8 that
+// renders as U+FFFD in the browser.
+func TestDisplayTitle_MultiByteUTF8_RuneBoundary(t *testing.T) {
+	p := Props{Title: "héllo world", Truncate: 3}
+	got := p.displayTitle()
+
+	if !utf8.ValidString(got) {
+		t.Fatalf("displayTitle() = %q is not valid UTF-8", got)
+	}
+	want := "hé…" // "hé…" — 2 runes + ellipsis
+	if got != want {
+		t.Errorf("displayTitle() = %q, want %q", got, want)
+	}
+}
+
+func TestDisplayTitle_MultiByteUTF8_WideRunes(t *testing.T) {
+	// Every rune here is multi-byte; a byte-index cut would slice a rune
+	// in half no matter where the cutoff falls.
+	p := Props{Title: "こんにちは世界", Truncate: 5}
+	got := p.displayTitle()
+
+	if !utf8.ValidString(got) {
+		t.Fatalf("displayTitle() = %q is not valid UTF-8", got)
+	}
+	want := "こんにち…" // 4 runes + ellipsis
+	if got != want {
+		t.Errorf("displayTitle() = %q, want %q", got, want)
+	}
+}
+
+// TestDisplayTitle_NegativeTruncate guards against a negative Truncate
+// causing a slice-bounds panic; it should be treated as the default (30).
+func TestDisplayTitle_NegativeTruncate(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("displayTitle() panicked with negative Truncate: %v", r)
+		}
+	}()
+
+	p := Props{Title: "Hello", Truncate: -1}
+	got := p.displayTitle()
+	if got != "Hello" {
+		t.Errorf("displayTitle() with negative Truncate = %q, want %q", got, "Hello")
+	}
+}
+
+func TestDisplayTitle_NegativeTruncate_LongTitle(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("displayTitle() panicked with negative Truncate: %v", r)
+		}
+	}()
+
+	title := "1234567890123456789012345678901" // 31 chars, over default 30
+	p := Props{Title: title, Truncate: -5}
+	got := p.displayTitle()
+	want := "12345678901234567890123456789…" // default-limit behavior
+	if got != want {
+		t.Errorf("displayTitle() with negative Truncate = %q, want %q", got, want)
 	}
 }
