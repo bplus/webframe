@@ -587,7 +587,7 @@ func stepper(p Props, sz sizeConfig) templ.Component {
 			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var21 = []any{utils.TwMerge("inline-flex flex-wrap items-center gap-y-3", p.Class)}
+		var templ_7745c5c3_Var21 = []any{utils.TwMerge("inline-flex flex-wrap items-center", p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var21...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -628,7 +628,7 @@ func stepper(p Props, sz sizeConfig) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" style=\"gap:12px 8px\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

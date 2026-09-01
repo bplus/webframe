@@ -248,7 +248,8 @@ templ stepper(p Props, sz sizeConfig) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("inline-flex flex-wrap items-center gap-y-3", p.Class) }
+		class={ utils.TwMerge("inline-flex flex-wrap items-center", p.Class) }
+		style="gap:12px 8px"
 		{ p.Attributes... }
 	>
 		for i, step := range p.Steps {
