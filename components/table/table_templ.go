@@ -10,24 +10,40 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures Table, Header, and Body (all three share this type):
+// optional element ID, extra Tailwind classes merged via utils.TwMerge, and
+// arbitrary attributes spread onto the element.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// RowProps configures a Row (<tr>) in a Header or Body.
 type RowProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// CellProps configures both Head (<th>) and Cell (<td>) elements.
 type CellProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// Table is the root of a styled data table: a bordered, scrollable (
+// overflow-auto) <div> wrapping a full-width <table>. Expected nesting:
+// Table > { Header > Row > Head..., Body > Row > Cell... }. Only props[0] is
+// used, extras ignored; the zero value works. Returns a templ.Component with
+// children rendered inside the <table>. Purely structural/presentational —
+// no IDs are generated, no context is used, and no scripts are required.
+//
+// @ai-context: ID/Class/Attributes land on the wrapper <div>, not the
+// <table> element itself, so CSS/JS targeting the ID must account for the
+// extra level.
+// @pure
 func Table(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -74,7 +90,7 @@ func Table(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 30, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 46, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -122,6 +138,11 @@ func Table(props ...Props) templ.Component {
 	})
 }
 
+// Header renders the <thead> section; children should be Row components
+// containing Head cells. Only props[0] is used; zero value fine. Returns a
+// templ.Component.
+//
+// @pure
 func Header(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -168,7 +189,7 @@ func Header(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 53, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 74, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -216,6 +237,12 @@ func Header(props ...Props) templ.Component {
 	})
 }
 
+// Body renders the <tbody> section (last row's border suppressed so the
+// wrapper's rounded border closes the table cleanly); children should be Row
+// components containing Cells. Only props[0] is used; zero value fine.
+// Returns a templ.Component.
+//
+// @pure
 func Body(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -262,7 +289,7 @@ func Body(props ...Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 74, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 101, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -310,6 +337,11 @@ func Body(props ...Props) templ.Component {
 	})
 }
 
+// Row renders a <tr> with a bottom border and hover highlight, for use
+// inside Header or Body; children are Head or Cell components. Only props[0]
+// is used; zero value fine. Returns a templ.Component.
+//
+// @pure
 func Row(props ...RowProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -356,7 +388,7 @@ func Row(props ...RowProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 95, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 127, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -404,6 +436,11 @@ func Row(props ...RowProps) templ.Component {
 	})
 }
 
+// Head renders a column-header <th> (left-aligned, muted) inside a Header
+// Row; children are the header content. Only props[0] is used; zero value
+// fine. Returns a templ.Component.
+//
+// @pure
 func Head(props ...CellProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -450,7 +487,7 @@ func Head(props ...CellProps) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 116, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 153, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -498,6 +535,10 @@ func Head(props ...CellProps) templ.Component {
 	})
 }
 
+// Cell renders a data <td> inside a Body Row; children are the cell content.
+// Only props[0] is used; zero value fine. Returns a templ.Component.
+//
+// @pure
 func Cell(props ...CellProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -544,7 +585,7 @@ func Cell(props ...CellProps) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 137, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/table/table.templ`, Line: 178, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {

@@ -4,42 +4,63 @@ package card
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures the Card container. All fields are optional; Class
+// is merged into the base card classes via utils.TwMerge (caller classes
+// win Tailwind conflicts) and Attributes are spread onto the root <div>.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// HeaderProps configures the Header section; all fields optional.
 type HeaderProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// TitleProps configures the Title heading; all fields optional.
 type TitleProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// DescriptionProps configures the Description paragraph; all fields
+// optional.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// ContentProps configures the Content section; all fields optional.
 type ContentProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// FooterProps configures the Footer section; all fields optional.
 type FooterProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// Card renders the outer surface for grouped content — a bordered,
+// full-width, rounded panel on the card background color. Call with no
+// arguments for defaults; only the first Props is used and extras are
+// silently ignored. Returns a templ.Component rendering a root <div>
+// whose children slot takes the section sub-components.
+//
+// @pure
+// @ai-context Composition contract (by convention, not enforced):
+// Card > [Header > [Title, Description], Content, Footer]. Spacing
+// depends on the order — Header uses p-6 pb-0, Content p-6, Footer p-6
+// pt-0 — so Header-then-Content-then-Footer is the only order that
+// produces even padding. Any sub-component may be omitted.
 templ Card(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -61,6 +82,13 @@ templ Card(props ...Props) {
 	</div>
 }
 
+// Header renders the top section of a Card, stacking its children
+// (typically Title and Description) vertically with p-6 pb-0 padding.
+// Zero-value / omitted props give defaults; extras beyond the first are
+// ignored. Returns a templ.Component rendering a <div> with a children
+// slot.
+//
+// @pure
 templ Header(props ...HeaderProps) {
 	{{ var p HeaderProps }}
 	if len(props) > 0 {
@@ -82,6 +110,12 @@ templ Header(props ...HeaderProps) {
 	</div>
 }
 
+// Title renders the card's heading as an <h3> (semantic heading level
+// is fixed, not configurable) with a children slot for the heading
+// text. Zero-value / omitted props give defaults; extras beyond the
+// first are ignored.
+//
+// @pure
 templ Title(props ...TitleProps) {
 	{{ var p TitleProps }}
 	if len(props) > 0 {
@@ -103,6 +137,11 @@ templ Title(props ...TitleProps) {
 	</h3>
 }
 
+// Description renders muted supporting text under a Title, as a <p>
+// with a children slot. Zero-value / omitted props give defaults;
+// extras beyond the first are ignored.
+//
+// @pure
 templ Description(props ...DescriptionProps) {
 	{{ var p DescriptionProps }}
 	if len(props) > 0 {
@@ -124,6 +163,11 @@ templ Description(props ...DescriptionProps) {
 	</p>
 }
 
+// Content renders the card body with uniform p-6 padding, as a <div>
+// with a children slot. Zero-value / omitted props give defaults;
+// extras beyond the first are ignored.
+//
+// @pure
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -145,6 +189,13 @@ templ Content(props ...ContentProps) {
 	</div>
 }
 
+// Footer renders the bottom action row of a Card — children are laid
+// out horizontally (flex items-center) with p-6 pt-0 padding, typically
+// for buttons. Zero-value / omitted props give defaults; extras beyond
+// the first are ignored. Returns a templ.Component rendering a <div>
+// with a children slot.
+//
+// @pure
 templ Footer(props ...FooterProps) {
 	{{ var p FooterProps }}
 	if len(props) > 0 {

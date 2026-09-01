@@ -13,50 +13,109 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"strings"
 	"github.com/bplus/webframe/utils"
+	"strings"
 )
 
+// Variant selects the visual style family of a Button — background,
+// border, and hover treatment. The zero value renders the filled
+// primary style.
 type Variant string
+
+// Size selects the height and padding preset of a Button. The zero
+// value renders the standard h-9 size.
 type Size string
+
+// Type maps to the HTML type attribute on the rendered <button>,
+// controlling form interaction (submit/reset) versus an inert click
+// target. Button defaults it to TypeButton.
 type Type string
 
+// Button style variants. An unrecognized or empty Variant falls back
+// to the primary filled style, so VariantDefault never needs to be
+// spelled out.
 const (
-	VariantDefault     Variant = "default"
+	// VariantDefault is the filled primary-color style (also the zero-value fallback).
+	VariantDefault Variant = "default"
+	// VariantDestructive is a red/destructive fill for dangerous actions.
 	VariantDestructive Variant = "destructive"
-	VariantOutline     Variant = "outline"
-	VariantSecondary   Variant = "secondary"
-	VariantGhost       Variant = "ghost"
-	VariantLink        Variant = "link"
+	// VariantOutline is a bordered button on the page background.
+	VariantOutline Variant = "outline"
+	// VariantSecondary is a muted secondary-color fill.
+	VariantSecondary Variant = "secondary"
+	// VariantGhost has no fill until hovered.
+	VariantGhost Variant = "ghost"
+	// VariantLink renders as underline-on-hover text, no box styling beyond sizing.
+	VariantLink Variant = "link"
 )
 
+// HTML button types. Button applies TypeButton when Props.Type is
+// empty, so a Button inside a <form> never submits it implicitly —
+// opt in with TypeSubmit.
 const (
 	TypeButton Type = "button"
 	TypeReset  Type = "reset"
 	TypeSubmit Type = "submit"
 )
 
+// Button size presets. An unrecognized or empty Size falls back to
+// the default preset.
 const (
+	// SizeDefault is h-9 with standard horizontal padding (zero-value fallback).
 	SizeDefault Size = "default"
-	SizeSm      Size = "sm"
-	SizeLg      Size = "lg"
-	SizeIcon    Size = "icon"
+	// SizeSm is a compact h-8 button with tighter padding.
+	SizeSm Size = "sm"
+	// SizeLg is a taller h-10 button with wider padding.
+	SizeLg Size = "lg"
+	// SizeIcon is a square (size-9) button for icon-only content.
+	SizeIcon Size = "icon"
 )
 
+// Props configures Button. The zero value renders an enabled,
+// primary, default-size <button type="button">. Class is merged after
+// the built-in classes via utils.TwMerge, so caller classes win
+// conflicts; Attributes are spread onto the root element last.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 	Variant    Variant
 	Size       Size
-	FullWidth  bool
-	Href       string
-	Target     string
-	Disabled   bool
-	Type       Type
-	Form       string
+	// FullWidth adds w-full so the button spans its container.
+	FullWidth bool
+	// Href switches rendering to an <a> styled as a button — unless
+	// Disabled is set, which forces the <button> form (anchors cannot
+	// be disabled).
+	Href string
+	// Target is the anchor target attribute; only used with Href.
+	Target   string
+	Disabled bool
+	// Type defaults to TypeButton when empty; ignored in <a> mode.
+	Type Type
+	// Form associates the <button> with a <form> by id, allowing the
+	// button to live outside the form element; ignored in <a> mode.
+	Form string
 }
 
+// Button renders a clickable action styled by Variant and Size — an
+// <a> when Href is set (so styled links keep real navigation
+// semantics), otherwise a <button>. Children render inside as the
+// label; child SVGs are auto-sized to 1rem unless they carry their own
+// size-* class.
+//
+// Accepts zero or one Props: with none, all defaults apply; elements
+// past the first are ignored. Type defaults to TypeButton so a Button
+// inside a form does not submit it implicitly. Disabled wins over
+// Href: the anchor branch is skipped entirely (Href and Target are
+// dropped) and a real disabled <button> renders instead, because
+// anchors have no disabled attribute.
+//
+// Returns a templ.Component whose root is the <a> or <button>; no id
+// is generated and no scripts or Alpine state are attached.
+//
+// @pure
+// @ai-context a "disabled link" intentionally loses its href — do not
+// try to restore navigation on disabled buttons.
 func Button(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -114,7 +173,7 @@ func Button(props ...Props) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 61, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 120, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -132,7 +191,7 @@ func Button(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 templ.SafeURL
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.Href))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 63, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 122, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -150,7 +209,7 @@ func Button(props ...Props) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Target)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 65, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 124, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -223,7 +282,7 @@ func Button(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 87, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 146, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -259,7 +318,7 @@ func Button(props ...Props) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(string(p.Type))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 103, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 162, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -278,7 +337,7 @@ func Button(props ...Props) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 106, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/button/button.templ`, Line: 165, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {

@@ -1,42 +1,93 @@
 package filterbar
 
-import (
-	"github.com/bplus/webframe/utils"
-)
+import "github.com/bplus/webframe/utils"
 
+// FilterType selects which control a FilterConfig renders inside the
+// bar. A FilterConfig with an unrecognized or empty Type renders
+// nothing.
 type FilterType string
 
+// Filter control kinds.
 const (
+	// TypeSelect is a single-choice <select> dropdown built from Options.
 	TypeSelect FilterType = "select"
+	// TypeSearch is a text input debounced 400ms before triggering an update.
 	TypeSearch FilterType = "search"
+	// TypeToggle is a row of pill buttons; multiple pills may be
+	// selected and their values are submitted comma-joined.
 	TypeToggle FilterType = "toggle"
 )
 
+// FilterOption is one choice within a select or toggle filter.
+// Selected marks it active in the initial render (the selected
+// <option>, or a highlighted toggle pill).
 type FilterOption struct {
 	Label    string
 	Value    string
 	Selected bool
 }
 
+// FilterConfig describes one control in a FilterBar.
 type FilterConfig struct {
-	ID          string
-	Label       string
+	// ID doubles as the control's name attribute and therefore the
+	// query parameter key sent to Props.HxGet.
+	ID string
+	// Label is the small caption rendered beside the control.
+	Label string
+	// Placeholder is the empty first <option> for TypeSelect and the
+	// input placeholder for TypeSearch; unused by TypeToggle.
 	Placeholder string
 	Type        FilterType
-	Options     []FilterOption
+	// Options populate TypeSelect and TypeToggle controls; unused by
+	// TypeSearch.
+	Options []FilterOption
 }
 
+// Props configures FilterBar. Class merges after the built-in classes
+// via utils.TwMerge; Attributes spread onto the container <div>.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Filters    []FilterConfig
-	HxGet      string // HTMX endpoint to call on change
-	HxTarget   string // swap target selector
-	HxSwap     string // swap strategy (default "innerHTML")
-	ShowReset  bool
+	// Filters render in order as the bar's controls.
+	Filters  []FilterConfig
+	HxGet    string // HTMX endpoint to call on change
+	HxTarget string // swap target selector
+	HxSwap   string // swap strategy (default "innerHTML")
+	// ShowReset appends a "Clear filters" button that resets every
+	// control and re-triggers the update.
+	ShowReset bool
 }
 
+// FilterBar renders a horizontal bar of filter controls (selects,
+// debounced search inputs, toggle pills) plus an optional reset
+// button, built to drive HTMX partial reloads: on any change,
+// /static/js/filterbar.min.js collects every control's value into
+// query parameters (keyed by FilterConfig.ID; multi-selected toggle
+// values comma-joined), issues htmx.ajax GET to HxGet, and swaps the
+// response into HxTarget using HxSwap (default "innerHTML"). The
+// script also dispatches a bubbling "filterbar-change" CustomEvent and
+// mirrors the params into the page URL via history.replaceState.
+//
+// Accepts zero or one Props (elements past the first are ignored).
+// The markup itself only carries data-tui-filterbar-* attributes;
+// children are not accepted — controls come solely from Props.
+// Filters. Returns a templ.Component rooted at the container <div>.
+//
+// @side-effects calls utils.RandomID when Props.ID is empty, but the
+// result is never rendered (see @ai-context below) — entropy is
+// consumed without affecting output, so markup stays deterministic.
+// @boundary at runtime the bar issues GET requests to HxGet and
+// rewrites the browser URL — server handlers must accept the
+// FilterConfig.ID query parameters.
+// @temporal-coupling inert unless both Script() and htmx are loaded
+// on the page.
+// @ai-context confirmed dead fallback: the local `id` (Props.ID, or
+// utils.RandomID when empty) is computed but never rendered — the root
+// <div> emits id={ p.ID } only when Props.ID is non-empty, so a bar
+// without an explicit ID renders no id attribute at all (contrast
+// graphwidget, which renders id={ id } unconditionally so its
+// generated fallback actually appears in the markup).
 templ FilterBar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -148,6 +199,15 @@ templ filterToggle(f FilterConfig) {
 	</div>
 }
 
+// Script emits the deferred <script> tag implementing FilterBar
+// behavior: change listeners, per-attribute search debounce, toggle
+// pill state, reset, URL sync, and the htmx.ajax dispatch. CSP-nonced
+// via templ.GetNonce, cache-busted via utils.ScriptURL; include once
+// per page alongside htmx.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request).
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/filterbar.min.js") }></script>
 }

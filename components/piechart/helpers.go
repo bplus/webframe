@@ -12,6 +12,9 @@ import (
 // rest are folded into a single aggregated "Other (K)" slice whose value is the
 // sum of the folded remainder. The folded slice has no explicit color, so it
 // falls back to the default palette. The caller's slice is never mutated.
+//
+// @pure - sorts a copy; no mutation of the input, no I/O
+// @complexity O(n log n) time, O(n) space, n = len(slices)
 func capSlices(slices []Slice, maxSlices int) []Slice {
 	if maxSlices <= 0 || len(slices) <= maxSlices {
 		return slices

@@ -4,12 +4,19 @@ package avatar
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures the Avatar container. All fields are optional; the
+// zero value yields a 40x40px circular container with default styling.
+// Class is merged into the base classes via utils.TwMerge, so Tailwind
+// conflicts resolve in favor of caller-supplied classes.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// ImageProps configures the Image sub-component. Src is the image URL
+// (the src attribute is omitted entirely when empty); Alt is always
+// emitted, even when empty, for accessibility.
 type ImageProps struct {
 	ID         string
 	Class      string
@@ -18,12 +25,29 @@ type ImageProps struct {
 	Src        string
 }
 
+// FallbackProps configures the Fallback sub-component. All fields are
+// optional; content shown in the fallback (e.g. initials) is passed as
+// children of Fallback, not via these props.
 type FallbackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// Avatar renders the circular container for a user/entity image with
+// graceful fallback support; use it when you want an image that degrades
+// to initials or an icon when the image is missing or fails to load.
+// Call with no arguments for defaults; only the first Props is used and
+// any extras are silently ignored. Returns a templ.Component rendering a
+// <div data-tui-avatar> (h-10 w-10, rounded-full, overflow-hidden) whose
+// children slot should contain Image and/or Fallback.
+//
+// @pure
+// @ai-context Composition contract: Avatar > [Image, Fallback]. The
+// template itself contains no fallback logic — the show/hide switching
+// between Image and Fallback is done client-side by avatar.min.js
+// (loaded via Script), which matches the data-tui-avatar-* attributes.
+// Without Script on the page, both children render and remain visible.
 templ Avatar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -46,6 +70,18 @@ templ Avatar(props ...Props) {
 	</div>
 }
 
+// Image renders the picture inside an Avatar; place it as a child of
+// Avatar alongside an optional Fallback. Zero-value ImageProps renders
+// an <img> with no src and an empty alt; only the first ImageProps is
+// used, extras are ignored. Returns a templ.Component rendering a
+// self-closing <img data-tui-avatar-image> filling the avatar
+// (aspect-square, full width/height); it takes no children.
+//
+// @pure
+// @ai-context avatar.min.js hides this element and reveals the sibling
+// Fallback when the image errors (and does the reverse on load), keyed
+// off the data-tui-avatar-image attribute — so the attribute, not the
+// class list, is the contract.
 templ Image(props ...ImageProps) {
 	{{ var p ImageProps }}
 	if len(props) > 0 {
@@ -70,6 +106,18 @@ templ Image(props ...ImageProps) {
 	/>
 }
 
+// Fallback renders the stand-in shown when the Avatar's Image is absent
+// or fails to load — typically initials or an icon passed as children.
+// Zero-value FallbackProps gives the default muted circle; only the
+// first FallbackProps is used, extras are ignored. Returns a
+// templ.Component rendering a centered <span data-tui-avatar-fallback>
+// with a children slot.
+//
+// @pure
+// @ai-context Server-side this always renders visible; avatar.min.js
+// (via Script) sets display:none once a sibling Image loads
+// successfully, so a brief flash of the fallback before image load is
+// expected behavior.
 templ Fallback(props ...FallbackProps) {
 	{{ var p FallbackProps }}
 	if len(props) > 0 {
@@ -92,6 +140,18 @@ templ Fallback(props ...FallbackProps) {
 	</span>
 }
 
+// Script emits the <script> tag that loads avatar.min.js, which drives
+// the Image/Fallback swap (hide fallback on image load, hide image and
+// show fallback on error). Include it once per page that uses Avatar
+// with a Fallback. Returns a templ.Component rendering a deferred
+// script tag whose URL is cache-busted via utils.ScriptURL and whose
+// nonce is read from the request context via templ.GetNonce.
+//
+// @side-effects emits a script tag that attaches global capture-phase
+// load/error listeners on document when executed in the browser
+// @idempotent including it more than once re-emits the tag but the JS
+// wiring is safe to run repeatedly
+// @boundary bridges server-rendered markup to client-side JS behavior
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/avatar.min.js") }></script>
 }

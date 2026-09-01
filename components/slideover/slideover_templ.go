@@ -21,15 +21,22 @@ const (
 	openKey     contextKey = "slideoverOpen"
 )
 
+// Side selects which screen edge the panel is anchored to and slides in
+// from. The zero value ("") is treated as SideRight by Panel.
 type Side string
 
+// Side values accepted by PanelProps.Side.
 const (
 	SideRight Side = "right"
 	SideLeft  Side = "left"
 )
 
+// Width selects the panel's fixed width tier. The zero value ("") is treated
+// as WidthMd by Panel; unknown values also fall back to the 480px width. All
+// tiers are additionally capped at calc(100%-2rem) on narrow screens.
 type Width string
 
+// Width values accepted by PanelProps.Width.
 const (
 	WidthSm   Width = "sm"   // 320px
 	WidthMd   Width = "md"   // 480px
@@ -38,46 +45,69 @@ const (
 	WidthFull Width = "full" // 100%
 )
 
+// Props configures the SlideOver root wrapper. The zero value is usable: an
+// instance ID is generated automatically and the panel starts closed with
+// click-away and ESC dismissal enabled.
+//
+// ID doubles as the slide-over's instance ID, linking the root to its
+// Trigger/Panel/Close descendants (and to external Trigger/Close elements
+// via their For field). Leave it empty unless something outside the
+// SlideOver subtree needs to reference this instance.
 type Props struct {
 	ID               string
 	Class            string
 	Attributes       templ.Attributes
-	Open             bool
-	DisableESC       bool
-	DisableClickAway bool
+	Open             bool // initial open state, propagated to Panel via render context
+	DisableESC       bool // when true, the Escape key does not close the panel
+	DisableClickAway bool // when true, clicking the backdrop does not close the panel
 }
 
+// PanelProps configures the Panel (backdrop + sliding drawer). Zero values
+// give a right-anchored, 480px-wide panel with a close button and no title.
+// When Panel renders inside a SlideOver, its instance ID and open state come
+// from the wrapper's render context, overriding ID here.
 type PanelProps struct {
 	ID               string
 	Class            string
 	Attributes       templ.Attributes
-	Title            string
-	Side             Side
-	Width            Width
-	HideCloseButton  bool
-	DisableAutoFocus bool
+	Title            string // header text; empty leaves the header's title slot blank
+	Side             Side   // edge to slide from; "" = SideRight
+	Width            Width  // width tier; "" = WidthMd (480px)
+	HideCloseButton  bool   // suppress the default header X close button
+	DisableAutoFocus bool   // when true, focus is not moved into the panel on open
 }
 
+// TriggerProps configures a Trigger element. The zero value works when the
+// Trigger is nested inside a SlideOver: the instance ID is inherited from
+// the wrapper's render context. Set For only for triggers placed outside the
+// SlideOver subtree.
 type TriggerProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	For        string
+	For        string // ID of the slide-over to open (overrides inherited context)
 }
 
+// CloseProps configures a Close element. The zero value closes the nearest
+// enclosing slide-over; set For to target a specific instance by ID from
+// anywhere on the page.
 type CloseProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	For        string
+	For        string // ID of the slide-over to close (optional, defaults to closest)
 }
 
+// BodyProps configures the Body scroll region. All fields are optional
+// pass-throughs to the rendered div.
 type BodyProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// FooterProps configures the Footer action row. All fields are optional
+// pass-throughs to the rendered div.
 type FooterProps struct {
 	ID         string
 	Class      string
@@ -108,6 +138,31 @@ func sideClasses(s Side) (position string, closedTranslate string) {
 	return "right-0", "translate-x-full"
 }
 
+// SlideOver is the root wrapper that binds a drawer's Trigger and Panel into
+// one interactive unit — use it for edge-anchored panels (settings, detail
+// views) where a centered Dialog would be wrong. Sub-components placed
+// outside its subtree must link by ID via their For props instead.
+//
+// Accepts zero or one Props; with none, a zero-value Props is used (random
+// instance ID, closed, dismissable). Extra Props beyond the first are
+// ignored. Returns a templ.Component rendering a plain div (no layout of its
+// own) with children in its body.
+//
+// Side effects: calls utils.RandomID when Props.ID is empty, and injects the
+// resolved instance ID plus Props.Open into the render context so nested
+// Trigger/Panel resolve the same instance without explicit wiring. State is
+// NOT Alpine-based: open/close is driven by data-tui-slideover-* attributes
+// that the external script from Script() (static/js/slideover.min.js) reads
+// and toggles.
+//
+// @ai-context Composition contract: SlideOver > { Trigger, Panel > { Body,
+// Footer, Close } }. All parts share one instance ID (attribute
+// data-slideover-instance) — nested parts inherit it via context; external
+// Trigger/Close elements must set For to the SlideOver's Props.ID.
+// @temporal-coupling Script() must be included once on any page using
+// SlideOver, or triggers and close buttons are inert server-rendered markup.
+// @side-effects reads crypto/rand entropy via utils.RandomID when Props.ID
+// is empty, and derives a new render context for descendants.
 func SlideOver(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -156,7 +211,7 @@ func SlideOver(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 116, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 171, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -174,7 +229,7 @@ func SlideOver(props ...Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 119, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 174, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -233,6 +288,23 @@ func SlideOver(props ...Props) templ.Component {
 	})
 }
 
+// Trigger wraps arbitrary children (typically a button) so that clicking
+// them opens the associated slide-over panel.
+//
+// Accepts zero or one TriggerProps (extras ignored; zero value = inherit the
+// enclosing SlideOver's instance). Returns a templ.Component rendering a
+// layout-neutral span (class "contents") with the children slot providing
+// the visible control.
+//
+// Side effects: none beyond markup; it reads (never writes) the instance ID
+// from the render context. Click behavior comes from slideover.min.js, which
+// matches this element's data-tui-slideover-trigger value to the target
+// panel.
+//
+// @invariant The resolved instance ID (For, or inherited context) must equal
+// the target SlideOver/Panel's instance ID; an empty ID (no For, no
+// enclosing SlideOver) produces a trigger bound to nothing. For overrides
+// context when both are present.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -281,7 +353,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 147, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 219, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -299,7 +371,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 149, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 221, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -312,7 +384,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 150, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 222, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -355,6 +427,27 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
+// Panel renders the drawer itself: a fixed full-screen backdrop plus an
+// edge-anchored, full-height column that slides in from Side. It includes a
+// built-in header (Title text and, unless HideCloseButton, an icon.X close
+// button); children render below that header and are expected to be Body
+// and/or Footer to complete the flex column.
+//
+// Accepts zero or one PanelProps (extras ignored). Returns a templ.Component
+// emitting two sibling fixed-position divs (backdrop, then panel).
+//
+// Side effects: calls utils.RandomID when no ID is available from props or
+// context. Open/close state lives in data-tui-slideover-open /
+// data-tui-slideover-hidden attributes on both divs — server-rendered from
+// the wrapper's Open flag, then toggled at runtime by slideover.min.js (not
+// Alpine).
+//
+// @temporal-coupling An enclosing SlideOver's context overrides
+// PanelProps.ID and supplies the initial open state; unlike dialog.Content,
+// PanelProps has no Open field, so a standalone Panel (no SlideOver wrapper)
+// always starts closed and its ID must match the external Trigger's For.
+// @side-effects reads crypto/rand entropy via utils.RandomID when no ID is
+// supplied by props or context.
 func Panel(props ...PanelProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -439,7 +532,7 @@ func Panel(props ...PanelProps) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 202, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 295, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -511,7 +604,7 @@ func Panel(props ...PanelProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 237, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 330, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -554,7 +647,7 @@ func Panel(props ...PanelProps) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 252, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 345, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -606,7 +699,7 @@ func Panel(props ...PanelProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 269, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 362, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -641,6 +734,15 @@ func Panel(props ...PanelProps) templ.Component {
 	})
 }
 
+// Body is the scrollable main region of a Panel: it takes the remaining
+// vertical space (flex-1) and scrolls its overflow, keeping the header and
+// Footer pinned. Place it directly inside Panel.
+//
+// Accepts zero or one BodyProps (extras ignored; zero value fine). Returns a
+// templ.Component rendering a div (tagged data-tui-slideover-body) with
+// children as its slot. No instance wiring or context access.
+//
+// @pure deterministic markup from props and children only.
 func Body(props ...BodyProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -683,7 +785,7 @@ func Body(props ...BodyProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 289, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 391, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -731,6 +833,15 @@ func Body(props ...BodyProps) templ.Component {
 	})
 }
 
+// Footer holds a Panel's action row, pinned below the Body: top-bordered,
+// right-aligned buttons. Pair action buttons with Close to make them dismiss
+// the panel.
+//
+// Accepts zero or one FooterProps (extras ignored; zero value fine). Returns
+// a templ.Component rendering a div with children as its slot. No instance
+// wiring or context access.
+//
+// @pure deterministic markup from props and children only.
 func Footer(props ...FooterProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -773,7 +884,7 @@ func Footer(props ...FooterProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 306, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 417, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -821,6 +932,19 @@ func Footer(props ...FooterProps) templ.Component {
 	})
 }
 
+// Close wraps children (e.g. a Cancel button) so that clicking them closes a
+// slide-over — the in-content alternative to the header's X button.
+//
+// Accepts zero or one CloseProps (extras ignored). Returns a templ.Component
+// rendering a layout-neutral span (class "contents cursor-pointer") with
+// children as the visible control. With For set it emits
+// data-tui-slideover-close="<id>" targeting that instance; without, a bare
+// data-tui-slideover-close lets slideover.min.js resolve the closest
+// enclosing panel at click time.
+//
+// @pure server-side rendering is deterministic (no RandomID, no context
+// access); close behavior is applied by the external slideover.min.js
+// script.
 func Close(props ...CloseProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -863,7 +987,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 322, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 446, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -882,7 +1006,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 325, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 449, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
@@ -935,6 +1059,20 @@ func Close(props ...CloseProps) templ.Component {
 	})
 }
 
+// Script emits the script tag that activates every slide-over on the page —
+// wiring trigger clicks, backdrop/ESC dismissal, focus handling, and the
+// data-tui-slideover-open attribute toggling that drives the slide
+// transitions. Include it once per page (typically in the layout) whenever
+// SlideOver is used.
+//
+// Takes no arguments and returns a templ.Component rendering a single
+// deferred script tag. Side effects: reads the CSP nonce from the render
+// context via templ.GetNonce, and utils.ScriptURL appends a per-process
+// ?v= cache-busting timestamp to /static/js/slideover.min.js.
+//
+// @temporal-coupling SlideOver/Trigger/Panel/Close render inert markup until
+// this script loads; it must appear on the same page, after which no further
+// per-instance setup is needed.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -963,7 +1101,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 337, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 475, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -976,7 +1114,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var38 string
 		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/slideover.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 337, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 475, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {

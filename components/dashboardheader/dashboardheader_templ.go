@@ -10,6 +10,12 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures the dashboard Header. Every text field is
+// omitted-when-empty: an empty Title suppresses the H1 (rather than
+// rendering a blank heading), and empty Subtitle/TimeRange omit their
+// elements, so the zero value renders only the bordered container. Sticky
+// pins the header to the top of the scroll container with an opaque
+// background so content scrolls beneath it.
 type Props struct {
 	ID         string
 	Class      string
@@ -20,6 +26,20 @@ type Props struct {
 	Sticky     bool   // optional: sticky top on scroll
 }
 
+// Header renders the standard title bar for a dashboard page — H1 plus
+// optional subtitle on the left, optional time-range chip on the right —
+// so every dashboard shares one heading layout instead of ad-hoc markup.
+//
+// It accepts zero or one Props (extras ignored); empty text fields omit
+// their elements entirely (see Props).
+//
+// Returns a templ.Component rooted at a flex <div> with a bottom border;
+// it takes no children — all content comes from Props.
+//
+// No scripts or JS wiring are emitted; Sticky is pure CSS positioning
+// (sticky top-0 with a bg-background fill).
+//
+// @pure
 func Header(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -67,7 +87,7 @@ func Header(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 22, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 42, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -111,7 +131,7 @@ func Header(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 36, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 56, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -130,7 +150,7 @@ func Header(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 41, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 61, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -153,7 +173,7 @@ func Header(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.TimeRange)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 47, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardheader/dashboardheader.templ`, Line: 67, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

@@ -7,21 +7,49 @@ import (
 	"strconv"
 )
 
+// Props configures Textarea. The zero value renders an enabled, empty
+// textarea (min-height 80px) with a generated id. Class merges after
+// the built-in classes via utils.TwMerge; Attributes spread onto the
+// <textarea>.
 type Props struct {
-	ID          string
-	Class       string
-	Attributes  templ.Attributes
-	Name        string
-	Value       string
+	// ID is auto-generated via utils.RandomID when empty. Set it
+	// explicitly when a Label must reference this field via For.
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Name       string
+	// Value becomes the element's text content (the initial value).
+	Value string
+	// Form associates the textarea with a <form> by id, allowing it to
+	// live outside the form element.
 	Form        string
 	Placeholder string
-	Rows        int
-	AutoResize  bool
-	Disabled    bool
-	Readonly    bool
-	HasError    bool
+	// Rows is only emitted as the rows attribute when > 0.
+	Rows int
+	// AutoResize makes the field grow with its content (via
+	// textarea.min.js) and hides the scrollbar/resize handle.
+	AutoResize bool
+	Disabled   bool
+	Readonly   bool
+	// HasError sets aria-invalid="true" and destructive border/ring styling.
+	HasError bool
 }
 
+// Textarea renders a styled multi-line <textarea> whose initial
+// content comes from Props.Value; it does not take children. Accepts
+// zero or one Props (elements past the first are ignored).
+//
+// AutoResize only tags the element (data-tui-textarea-auto-resize) and
+// swaps the scrollbar for overflow-hidden/resize-none; the actual
+// grow-to-fit behavior is implemented by /static/js/textarea.min.js.
+//
+// Returns a templ.Component rooted at the <textarea> element.
+//
+// @side-effects calls utils.RandomID when Props.ID is empty, so
+// markup is non-deterministic across renders — pass an explicit ID
+// whenever a stable id (label For, hx-target, tests) matters.
+// @temporal-coupling AutoResize does nothing unless Script() is
+// included on the page.
 templ Textarea(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -80,6 +108,14 @@ templ Textarea(props ...Props) {
 	>{ p.Value }</textarea>
 }
 
+// Script emits the deferred <script> tag implementing AutoResize
+// (grow-to-fit on input), CSP-nonced via templ.GetNonce and
+// cache-busted via utils.ScriptURL. Include once per page when any
+// Textarea uses AutoResize; deferred, so placement is flexible.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request).
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/textarea.min.js") }></script>
 }

@@ -14,15 +14,30 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Variant selects the badge's color treatment. Use one of the Variant*
+// constants; any unrecognized value (including the zero value "") falls
+// back to the default primary styling in variantClasses.
 type Variant string
 
 const (
-	VariantDefault     Variant = "default"
-	VariantSecondary   Variant = "secondary"
+	// VariantDefault is the primary-colored badge; also the effective
+	// styling for the zero value and any unknown Variant.
+	VariantDefault Variant = "default"
+	// VariantSecondary is a lower-emphasis badge using the secondary
+	// palette.
+	VariantSecondary Variant = "secondary"
+	// VariantDestructive is a red/destructive badge for errors or
+	// dangerous states.
 	VariantDestructive Variant = "destructive"
-	VariantOutline     Variant = "outline"
+	// VariantOutline is a bordered, transparent-background badge that
+	// inherits the foreground text color.
+	VariantOutline Variant = "outline"
 )
 
+// Props configures a Badge. All fields are optional: the zero value
+// produces a default-variant badge. Class is merged after the variant
+// classes via utils.TwMerge, so caller classes win Tailwind conflicts,
+// and Attributes are spread onto the root <span>.
 type Props struct {
 	ID         string
 	Class      string
@@ -30,6 +45,13 @@ type Props struct {
 	Variant    Variant
 }
 
+// Badge renders a small inline status pill (a <span>) around its children.
+// Call with zero Props for the default (primary) look, or pass one Props to
+// pick a Variant or add classes/attributes; extra Props beyond the first are
+// ignored.
+//
+// @pure renders markup only; no state, I/O, or globals touched
+// @ai-context variant styling is resolved by variantClasses() below, not in the template
 func Badge(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -80,7 +102,7 @@ func Badge(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/badge/badge.templ`, Line: 30, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/badge/badge.templ`, Line: 52, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

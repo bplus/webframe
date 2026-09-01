@@ -14,14 +14,41 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures Label. Class merges after the built-in classes via
+// utils.TwMerge; Attributes spread onto the <label>.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	For        string
-	Error      string
+	// For is the id of the control this label describes (HTML for
+	// attribute). Inputs that auto-generate ids (input, textarea) must
+	// be given an explicit matching ID for this pairing to hold.
+	For string
+	// Error, when non-empty, switches the label text to the
+	// destructive color. Only its presence is used — the string itself
+	// is never rendered (pair with form.Message for the text).
+	Error string
 }
 
+// Label renders a <label> with children as its content, linked to a
+// form control through Props.For so clicking the text focuses or
+// toggles that control. A non-empty Error recolors the text
+// destructive without rendering the message itself.
+//
+// The hardcoded data-tui-label-disabled-style attribute carries the
+// classes ("opacity-50 cursor-not-allowed") that /static/js/
+// label.min.js applies to the label whenever the referenced control is
+// disabled — include Script() to activate that dimming.
+//
+// Accepts zero or one Props (elements past the first are ignored).
+// Returns a templ.Component rooted at the <label> element.
+//
+// @pure
+// @invariant For must equal the target control's rendered id;
+// components that auto-generate ids (input.Input, textarea.Textarea)
+// need an explicit Props.ID for the association to survive.
+// @temporal-coupling disabled-state dimming is inert unless Script()
+// is included on the page.
 func Label(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -69,7 +96,7 @@ func Label(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 22, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 49, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -88,7 +115,7 @@ func Label(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 25, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 52, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -136,6 +163,14 @@ func Label(props ...Props) templ.Component {
 	})
 }
 
+// Script emits the deferred <script> tag that watches labeled
+// controls and applies the label's disabled-style classes when the
+// control is disabled. CSP-nonced via templ.GetNonce, cache-busted via
+// utils.ScriptURL; include once per page, placement flexible.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request).
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -164,7 +199,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 42, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 77, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -177,7 +212,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/label.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 42, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/label/label.templ`, Line: 77, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

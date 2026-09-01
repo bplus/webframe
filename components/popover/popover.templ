@@ -7,8 +7,12 @@ import (
 	"strconv"
 )
 
+// Placement selects which side of the trigger the popover content is
+// positioned on, with optional -start/-end alignment along that side. The
+// zero value ("") is treated as PlacementBottom by Content.
 type Placement string
 
+// Placement values accepted by ContentProps.Placement.
 const (
 	PlacementTop         Placement = "top"
 	PlacementTopStart    Placement = "top-start"
@@ -24,36 +28,64 @@ const (
 	PlacementLeftEnd     Placement = "left-end"
 )
 
+// TriggerType selects how the popover opens: on click (toggle) or on hover.
+// The zero value ("") is treated as TriggerTypeClick by Trigger.
 type TriggerType string
 
+// TriggerType values accepted by TriggerProps.TriggerType.
 const (
 	TriggerTypeHover TriggerType = "hover"
 	TriggerTypeClick TriggerType = "click"
 )
 
+// TriggerProps configures a popover Trigger. Unlike dialog/slideover, there
+// is no root wrapper or context inheritance: For is the only link to the
+// Content and should always be set to the matching ContentProps.ID (a
+// zero-value TriggerProps renders a trigger bound to nothing).
 type TriggerProps struct {
 	ID          string
 	Class       string
 	Attributes  templ.Attributes
-	For         string
-	TriggerType TriggerType
+	For         string      // ID of the Content this trigger opens (required for wiring)
+	TriggerType TriggerType // "" = TriggerTypeClick
 }
 
+// ContentProps configures the popover Content panel. ID is the binding key
+// that Trigger.For must reference; all other fields tune positioning and
+// dismissal behavior and are serialized into data-tui-popover-* attributes
+// consumed by popover.min.js.
 type ContentProps struct {
-	ID               string
+	ID               string // binding key; must match the Trigger's For and be page-unique
 	Class            string
 	Attributes       templ.Attributes
-	Placement        Placement
-	Offset           int
+	Placement        Placement // "" = PlacementBottom
+	Offset           int       // px gap from trigger; 0 = default (8 with arrow, 4 without)
 	DisableClickAway bool
 	DisableESC       bool
-	ShowArrow        bool
-	HoverDelay       int
-	HoverOutDelay    int
-	MatchWidth       bool
-	Exclusive        bool
+	ShowArrow        bool // render a rotated-square arrow pointing at the trigger
+	HoverDelay       int  // ms before opening on hover (hover triggers)
+	HoverOutDelay    int  // ms before closing after hover leaves (hover triggers)
+	MatchWidth       bool // expose the trigger's width as --popover-trigger-width for sizing
+	Exclusive        bool // auto-close this popover whenever another popover opens
 }
 
+// Trigger wraps arbitrary children so hovering or clicking them opens the
+// popover Content whose ID matches For. Trigger and Content are siblings by
+// design — there is no root wrapper component in this package, so the ID
+// link is the entire composition contract.
+//
+// Accepts zero or one TriggerProps (extras ignored). Zero-value default:
+// TriggerType falls back to click. Returns a templ.Component rendering a
+// span (class "group cursor-pointer") with children as the visible control.
+//
+// Side effects: none — no context access, no ID generation; interactivity is
+// supplied by popover.min.js via the data-tui-popover-trigger/-type
+// attributes.
+//
+// @invariant For must exactly match the ContentProps.ID of the target
+// Content (when For is empty, no data-tui-popover-trigger attribute is
+// emitted and the trigger opens nothing). Unlike dialog/slideover, no
+// context fallback exists.
 templ Trigger(props ...TriggerProps) {
 	{{ var p TriggerProps }}
 	if len(props) > 0 {
@@ -78,6 +110,23 @@ templ Trigger(props ...TriggerProps) {
 	</span>
 }
 
+// Content renders the floating panel a Trigger opens: an absolutely
+// positioned, initially hidden div that popover.min.js positions relative to
+// the trigger at runtime (and may reparent into a
+// data-tui-popover-portal-container element). Children render inside an
+// overflow-hidden inner wrapper; an arrow element is appended when
+// ShowArrow is set.
+//
+// Accepts zero or one ContentProps (extras ignored). Zero-value defaults
+// applied here: Placement -> bottom, Offset 0 -> 8px with arrow / 4px
+// without. All options are serialized to data-tui-popover-* attributes; open
+// state starts as data-tui-popover-open="false" plus the "hidden" class and
+// is toggled entirely by the script (not Alpine).
+//
+// @invariant ContentProps.ID is the binding key: it must be non-empty,
+// page-unique, and referenced by the paired Trigger's For, or the panel can
+// never be opened. Note this component renders id={ p.ID } unconditionally,
+// so an empty ID emits id="" — there is no RandomID fallback here.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -130,6 +179,20 @@ templ Content(props ...ContentProps) {
 	</div>
 }
 
+// Script emits the script tag that activates every popover on the page —
+// trigger wiring (click/hover with delays), positioning per Placement and
+// Offset, arrow placement, click-away/ESC dismissal, exclusive-group
+// closing, and optional portal reparenting. Include it once per page
+// (typically in the layout) whenever Trigger/Content are used, including
+// indirect users such as the hovercard component.
+//
+// Takes no arguments and returns a templ.Component rendering a single
+// deferred script tag. Side effects: reads the CSP nonce from the render
+// context via templ.GetNonce, and utils.ScriptURL appends a per-process
+// ?v= cache-busting timestamp to /static/js/popover.min.js.
+//
+// @temporal-coupling Trigger and Content render inert, hidden markup until
+// this script loads on the same page.
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/popover.min.js") }></script>
 }

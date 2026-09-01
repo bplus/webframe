@@ -32,6 +32,24 @@ import (
 	"github.com/bplus/webframe/demo/layouts"
 )
 
+// Showcase renders the full component reference page — every webframe
+// component demonstrated in labeled sections with a hero and a table of
+// contents — so developers can eyeball the library in one scroll and copy
+// usage snippets.
+//
+// It takes no parameters and no children; all content is static demo data
+// composed from the unexported per-topic section templates below.
+//
+// Returns a templ.Component producing the complete HTML document via
+// layouts.Base("Component Showcase").
+//
+// Rendering is static, but the emitted markup wires live browser behavior:
+// Alpine x-data examples, and HTMX demos that POST/GET /api/click,
+// /api/search, /api/validate, and /api/toast (handled in demo/handlers.go),
+// all relying on the scripts loaded by Base.
+//
+// @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
+// the library's importable API
 func Showcase() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -418,7 +436,7 @@ func iconsSection() templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(`@icon.Check()  // renders inline SVG, cached in-process`)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 209, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 227, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -3534,7 +3552,7 @@ func tabsSection() templ.Component {
   @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }
 }`)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 606, Col: 2}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 624, Col: 2}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var137))
 						if templ_7745c5c3_Err != nil {
@@ -5125,7 +5143,7 @@ func gameiconSection() templ.Component {
 		var templ_7745c5c3_Var197 string
 		templ_7745c5c3_Var197, templ_7745c5c3_Err = templ.JoinStringErrs(`@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})`)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 939, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 957, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var197))
 		if templ_7745c5c3_Err != nil {

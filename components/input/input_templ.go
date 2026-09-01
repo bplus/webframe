@@ -18,8 +18,15 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Type maps to the HTML type attribute on the rendered <input>,
+// selecting the browser's native behavior (keyboard, validation,
+// picker). Input defaults it to TypeText.
 type Type string
 
+// Supported input types, mirroring HTML type attribute values.
+// TypeText is the zero-value default applied by Input. TypePassword
+// additionally renders a visibility-toggle button (see Props.
+// NoTogglePassword); TypeFile honors Props.FileAccept.
 const (
 	TypeText     Type = "text"
 	TypePassword Type = "password"
@@ -37,22 +44,59 @@ const (
 	TypeMonth    Type = "month"
 )
 
+// Props configures Input. The zero value renders an enabled, empty
+// text input with a generated id. Class merges after the built-in
+// classes via utils.TwMerge; Attributes spread onto the <input>
+// itself, not the wrapper <div>.
 type Props struct {
-	ID               string
-	Class            string
-	Attributes       templ.Attributes
-	Name             string
-	Type             Type
-	Form             string
-	Placeholder      string
-	Value            string
-	Disabled         bool
-	Readonly         bool
-	FileAccept       string
-	HasError         bool
+	// ID is auto-generated via utils.RandomID when empty (the password
+	// toggle needs one). Set it explicitly when a Label must reference
+	// this input via For.
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Name       string
+	Type       Type
+	// Form associates the input with a <form> by id, allowing it to
+	// live outside the form element.
+	Form        string
+	Placeholder string
+	Value       string
+	Disabled    bool
+	Readonly    bool
+	// FileAccept becomes the accept attribute; only emitted for TypeFile.
+	FileAccept string
+	// HasError sets aria-invalid="true" and destructive border/ring styling.
+	HasError bool
+	// NoTogglePassword suppresses the eye/eye-off visibility toggle
+	// that TypePassword inputs otherwise get.
 	NoTogglePassword bool
 }
 
+// Input renders a styled <input> inside a relative full-width <div>;
+// the wrapper exists as the positioning context for the password
+// visibility toggle, which is overlaid at the field's right edge.
+// Children are not accepted.
+//
+// Accepts zero or one Props (elements past the first are ignored).
+// Type defaults to TypeText. When Type is TypePassword and
+// NoTogglePassword is false, a ghost icon button (eye/eye-off) is
+// rendered with data-tui-input-toggle-password set to the input's id,
+// and the input gains right padding to clear it; the toggle behavior
+// itself lives in /static/js/input.min.js.
+//
+// Returns a templ.Component rooted at the wrapper <div>.
+//
+// @side-effects calls utils.RandomID when Props.ID is empty, so
+// markup is non-deterministic across renders — pass an explicit ID
+// whenever a stable id (label For, hx-target, tests) matters. The
+// password toggle's eye/eye-off icons also insert into the icon
+// package's global SVG cache on first render (thread-safe memoization).
+// @invariant the input's id and the toggle button's
+// data-tui-input-toggle-password value are always equal; label.Props.
+// For must carry the same id for the <label> association to work.
+// @temporal-coupling the password toggle is inert unless Script() is
+// included somewhere on the page.
 func Input(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -121,7 +165,7 @@ func Input(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 59, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 103, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -134,7 +178,7 @@ func Input(props ...Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(string(p.Type))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 60, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 104, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -152,7 +196,7 @@ func Input(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 62, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 106, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -171,7 +215,7 @@ func Input(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Placeholder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 65, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 109, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -190,7 +234,7 @@ func Input(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 68, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 112, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -209,7 +253,7 @@ func Input(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.FileAccept)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 71, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 115, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -228,7 +272,7 @@ func Input(props ...Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 74, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 118, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -339,6 +383,15 @@ func Input(props ...Props) templ.Component {
 	})
 }
 
+// Script emits the deferred <script> tag that powers the password
+// visibility toggle, CSP-nonced via templ.GetNonce and cache-busted
+// via utils.ScriptURL. Include it once per page when any password
+// Input keeps its toggle; order relative to the inputs doesn't matter
+// because the script is deferred.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request); including it more than once only wastes bytes.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -367,7 +420,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 129, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 182, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -380,7 +433,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/input.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 129, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/input/input.templ`, Line: 182, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {

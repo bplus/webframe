@@ -14,6 +14,12 @@ type MetaRow struct {
 }
 
 // Props configures a hover card shown on trigger hover.
+//
+// Invariant: ID must be non-empty and unique on the page — it is passed
+// straight through as both popover.TriggerProps.For and
+// popover.ContentProps.ID, and that match is the only thing binding the
+// trigger to the card. Empty Title, Description, and LinkText fall back to
+// placeholder text at render time; the other fields are optional.
 type Props struct {
 	ID          string    // unique ID for popover binding
 	Title       string    // main heading
@@ -25,6 +31,29 @@ type Props struct {
 	LinkText    string    // link label (default: "View details →")
 }
 
+// Hover renders a rich preview card (kicker, title, description, key-value
+// meta rows, optional link and game-icon art panel) that appears when the
+// user hovers its children — use it to preview an entity without navigating.
+// It is a pre-wired composition over the popover package rather than a new
+// overlay primitive.
+//
+// Takes exactly one required Props (not variadic — Props.ID must be set, see
+// Props). Returns a templ.Component emitting two sibling elements: a
+// popover.Trigger (hover type) whose slot is this component's children (the
+// hover target), and a popover.Content (placement right-start, arrow,
+// exclusive, 120ms hover in/out delays) holding the generated card markup. Empty
+// Title/Description/LinkText render fallbacks ("Untitled", "No
+// description.", "View details →"); empty Category/Link/IconName omit their
+// sections. Props.Link is emitted via templ.SafeURL.
+//
+// Side effects: none server-side — no RandomID, no context writes;
+// deterministic markup from Props and children.
+//
+// @temporal-coupling Interactivity is entirely delegated to the popover
+// machinery: popover.Script() must be included on the page (hovercard has no
+// Script of its own), and Props.ID links the emitted trigger/content pair.
+// Because Content is Exclusive, an open hover card closes when another
+// popover opens.
 templ Hover(props Props) {
 	@popover.Trigger(popover.TriggerProps{For: props.ID, TriggerType: popover.TriggerTypeHover, Class: "block w-full"}) {
 		{ children... }
