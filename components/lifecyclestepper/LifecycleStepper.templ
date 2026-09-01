@@ -106,11 +106,11 @@ func (s Step) circleStyle() string {
 
 // labelStyle returns the inline CSS for the node's label text.
 // active/attn/failed get font-weight 600 per the design spec;
-// done/future/skipped/unknown stay regular weight.
+// done/future/skipped/unknown stay at the design's 500.
 func (s Step) labelStyle() string {
 	switch s.State {
 	case StateDone:
-		return fmt.Sprintf("color:%s", colorDoneGreen)
+		return fmt.Sprintf("color:%s;font-weight:500", colorDoneGreen)
 	case StateActive:
 		return fmt.Sprintf("color:%s;font-weight:600", colorActivePurple)
 	case StateAttn:
@@ -118,7 +118,7 @@ func (s Step) labelStyle() string {
 	case StateFailed:
 		return fmt.Sprintf("color:%s;font-weight:600", colorFailedRed)
 	default: // StateFuture, StateSkipped, and any unrecognized State
-		return fmt.Sprintf("color:%s", colorMutedLabel)
+		return fmt.Sprintf("color:%s;font-weight:500", colorMutedLabel)
 	}
 }
 
@@ -143,11 +143,15 @@ type sizeConfig struct {
 	dot       int    // circle diameter, px
 	labelFont string // label font-size, CSS length
 	connector int    // connector line width, px
+	gap       int    // dot-to-label gap, px
 }
 
+// Sizes are the design canvas's ("Floor view (chosen)", Main
+// + StageDrilldown artboards, 2026-09-01): compact = 22px dot / 12.5px
+// label / 26px connector / 7px gap; large = 26 / 13.5px / 34 / 8.
 var (
-	compactSize = sizeConfig{dot: 22, labelFont: "12.5px", connector: 26}
-	largeSize   = sizeConfig{dot: 26, labelFont: "13.5px", connector: 34}
+	compactSize = sizeConfig{dot: 22, labelFont: "12.5px", connector: 26, gap: 7}
+	largeSize   = sizeConfig{dot: 26, labelFont: "13.5px", connector: 34, gap: 8}
 )
 
 // nodeIcon renders the fixed 12x12 glyph inside a node's circle: a
@@ -184,14 +188,17 @@ templ nodeIcon(s State, index int) {
 }
 
 // stepperNode renders one step: a circle (sized per sz) holding
-// nodeIcon, and a label below it. When step.PopoverURL is non-empty
+// nodeIcon, and a label inline to its right (the design canvas's
+// wizard-dot row reads as one line: "(✓) Submitted —— (✓) Started").
+// When step.PopoverURL is non-empty
 // the root element is a <button type="button"> carrying the
 // hx-get/hx-target/hx-swap attributes described on Step; otherwise
 // it's a plain <div>. step.Title, when set, becomes a title attribute
 // on the root element either way.
 templ stepperNode(step Step, index int, sz sizeConfig) {
 	{{ circle := fmt.Sprintf("width:%dpx;height:%dpx;border-radius:9999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;%s", sz.dot, sz.dot, step.circleStyle()) }}
-	{{ label := fmt.Sprintf("font-size:%s;white-space:nowrap;%s", sz.labelFont, step.labelStyle()) }}
+	{{ label := fmt.Sprintf("font-size:%s;letter-spacing:0.01em;white-space:nowrap;%s", sz.labelFont, step.labelStyle()) }}
+	{{ node := fmt.Sprintf("display:flex;align-items:center;gap:%dpx;flex-shrink:0", sz.gap) }}
 	if step.PopoverURL != "" {
 		<button
 			type="button"
@@ -203,7 +210,8 @@ templ stepperNode(step Step, index int, sz sizeConfig) {
 				hx-target={ step.PopoverTarget }
 			}
 			hx-swap="innerHTML"
-			class="flex flex-col items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+			style={ node }
+			class="bg-transparent border-0 p-0 m-0 cursor-pointer"
 		>
 			<span style={ circle }>
 				@nodeIcon(step.State, index)
@@ -215,7 +223,7 @@ templ stepperNode(step Step, index int, sz sizeConfig) {
 			if step.Title != "" {
 				title={ step.Title }
 			}
-			class="flex flex-col items-center gap-1"
+			style={ node }
 		>
 			<span style={ circle }>
 				@nodeIcon(step.State, index)
@@ -225,14 +233,11 @@ templ stepperNode(step Step, index int, sz sizeConfig) {
 	}
 }
 
-// stepperConnector renders one connector segment: a horizontal line
-// of the given width and color, vertically centered against the
-// node's circle height (not its label) so it lines up with the dots
-// on either side.
-templ stepperConnector(color string, width int, dot int) {
-	<span style={ fmt.Sprintf("display:flex;align-items:center;height:%dpx;flex-shrink:0", dot) }>
-		<span style={ fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block", width, color) }></span>
-	</span>
+// stepperConnector renders one connector segment: a horizontal 1.5px
+// line of the given width and color. The row is align-items:center, so
+// it sits on the dots' midline with no extra wrapper.
+templ stepperConnector(color string, width int) {
+	<span style={ fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block;flex-shrink:0", width, color) }></span>
 }
 
 // stepper renders the shared markup for both size variants: a
@@ -243,13 +248,13 @@ templ stepper(p Props, sz sizeConfig) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("inline-flex flex-wrap items-start gap-y-3", p.Class) }
+		class={ utils.TwMerge("inline-flex flex-wrap items-center gap-y-3", p.Class) }
 		{ p.Attributes... }
 	>
 		for i, step := range p.Steps {
 			@stepperNode(step, i+1, sz)
 			if i < len(p.Steps)-1 {
-				@stepperConnector(connectorColor(step.State, p.Steps[i+1].State), sz.connector, sz.dot)
+				@stepperConnector(connectorColor(step.State, p.Steps[i+1].State), sz.connector)
 			}
 		}
 	</div>
