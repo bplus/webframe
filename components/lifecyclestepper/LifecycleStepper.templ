@@ -1,0 +1,300 @@
+// Package lifecyclestepper renders a generic horizontal wizard-dot
+// progress bar: an ordered row of stage nodes joined by connector
+// lines. It carries no domain-specific naming or assumptions beyond
+// "ordered stages with states" — callers decide what the stages mean
+// (a task lifecycle, a checkout flow, an approval chain, etc).
+package lifecyclestepper
+
+import (
+	"fmt"
+
+	"github.com/bplus/webframe/utils"
+)
+
+// State is the status of one LifecycleStepper node. Use one of the
+// State* constants; the empty value and any unrecognized State render
+// like StateFuture (a plain numbered placeholder) — see
+// (Step).circleStyle and (Step).labelStyle.
+type State string
+
+const (
+	// StateDone marks a stage that completed successfully: a filled
+	// green circle with a white check mark.
+	StateDone State = "done"
+	// StateActive marks the stage currently in progress: a filled
+	// purple circle with a white center dot.
+	StateActive State = "active"
+	// StateAttn marks a stage waiting on the operator: a filled amber
+	// circle with a white exclamation mark.
+	StateAttn State = "attn"
+	// StateFailed marks a stage that errored: a filled red circle
+	// with a white X.
+	StateFailed State = "failed"
+	// StateFuture marks a stage not yet reached: a white circle with
+	// a grey border showing the stage's 1-based index.
+	StateFuture State = "future"
+	// StateSkipped marks a stage that was deliberately bypassed: a
+	// white circle with a dashed grey border showing an en dash.
+	// Connectors touching a skipped node always render grey — see
+	// connectorColor — so a fully-green connector bar can only mean
+	// every stage actually ran.
+	StateSkipped State = "skipped"
+)
+
+// Fixed design colors with no matching Observatory theme token.
+// Checked against static/css/input.css (2026-09-01): no
+// --color-success or --color-warning variable exists, so these are
+// hard-coded per the approved design rather than left to guess a
+// token name.
+const (
+	colorDoneGreen  = "#1B7F4B" // done circle fill, done->done connectors
+	colorAttnAmber  = "#B45309" // attn circle fill
+	colorNodeBorder = "#C9C8C2" // future/skipped circle border
+	colorMutedIcon  = "#7A7975" // future index digit / skipped en dash
+	colorMutedLabel = "#8B8A85" // future/skipped label text
+)
+
+// Theme-token colors reused verbatim because they match the design
+// spec's hex values exactly (static/css/input.css): --color-primary
+// is #4A3AA7, --color-destructive is #E34948, --color-border is
+// #DBDAD5. Using the tokens (rather than hard-coding the same hex)
+// keeps the stepper following the active theme automatically,
+// including the dark-mode override block in input.css.
+const (
+	colorActivePurple = "var(--color-primary)"
+	colorFailedRed     = "var(--color-destructive)"
+	colorConnectorOff  = "var(--color-border)"
+)
+
+// Step is one node in a LifecycleStepper row. Label and State are
+// always used. PopoverURL, PopoverTarget, and
+// Title are optional: when PopoverURL is non-empty the node renders
+// as a clickable <button type="button"> carrying hx-get={PopoverURL},
+// hx-target={PopoverTarget} (omitted when PopoverTarget is empty),
+// and hx-swap="innerHTML", so a host page wires it to an HTMX partial
+// (e.g. a per-stage detail popover); otherwise the node is a plain
+// non-interactive <div>. Title, when non-empty, renders as a plain
+// title attribute (hover summary) on the node regardless of
+// PopoverURL.
+type Step struct {
+	Label         string
+	State         State
+	PopoverURL    string
+	PopoverTarget string
+	Title         string
+}
+
+// circleStyle returns the inline CSS for the node's circle: a filled
+// background for done/active/attn/failed, or a bordered white circle
+// (dashed for skipped, solid otherwise) for future/skipped/unknown.
+func (s Step) circleStyle() string {
+	switch s.State {
+	case StateDone:
+		return fmt.Sprintf("background-color:%s;border:none", colorDoneGreen)
+	case StateActive:
+		return fmt.Sprintf("background-color:%s;border:none", colorActivePurple)
+	case StateAttn:
+		return fmt.Sprintf("background-color:%s;border:none", colorAttnAmber)
+	case StateFailed:
+		return fmt.Sprintf("background-color:%s;border:none", colorFailedRed)
+	case StateSkipped:
+		return fmt.Sprintf("background-color:var(--color-card);border:1.5px dashed %s", colorNodeBorder)
+	default: // StateFuture and any unrecognized State
+		return fmt.Sprintf("background-color:var(--color-card);border:1.5px solid %s", colorNodeBorder)
+	}
+}
+
+// labelStyle returns the inline CSS for the node's label text.
+// active/attn/failed get font-weight 600 per the design spec;
+// done/future/skipped/unknown stay regular weight.
+func (s Step) labelStyle() string {
+	switch s.State {
+	case StateDone:
+		return fmt.Sprintf("color:%s", colorDoneGreen)
+	case StateActive:
+		return fmt.Sprintf("color:%s;font-weight:600", colorActivePurple)
+	case StateAttn:
+		return fmt.Sprintf("color:%s;font-weight:600", colorAttnAmber)
+	case StateFailed:
+		return fmt.Sprintf("color:%s;font-weight:600", colorFailedRed)
+	default: // StateFuture, StateSkipped, and any unrecognized State
+		return fmt.Sprintf("color:%s", colorMutedLabel)
+	}
+}
+
+// connectorColor returns the connector line color between two
+// adjacent nodes: green only when both are StateDone, grey (the
+// --color-border token) otherwise. Because equality with StateDone is
+// required on both sides, a connector touching a skipped (or future,
+// attn, failed, active, unknown) node is always grey — a fully-green
+// bar can only mean every stage in between really ran.
+func connectorColor(a, b State) string {
+	if a == StateDone && b == StateDone {
+		return colorDoneGreen
+	}
+	return colorConnectorOff
+}
+
+// sizeConfig holds the pixel/CSS dimensions that differ between the
+// compact and large stepper variants; both funcs share one internal
+// templ tree parameterized by this struct rather than duplicating
+// markup.
+type sizeConfig struct {
+	dot       int    // circle diameter, px
+	labelFont string // label font-size, CSS length
+	connector int    // connector line width, px
+}
+
+var (
+	compactSize = sizeConfig{dot: 22, labelFont: "12.5px", connector: 26}
+	largeSize   = sizeConfig{dot: 26, labelFont: "13.5px", connector: 34}
+)
+
+// nodeIcon renders the fixed 12x12 glyph inside a node's circle: a
+// check for done, a center dot for active, an exclamation mark for
+// attn, an X for failed, and mono-font text (the 1-based index, or an
+// en dash for skipped) for future/skipped/unknown. The glyph is a
+// fixed real-pixel size regardless of Props.Large; only the
+// surrounding circle grows.
+templ nodeIcon(s State, index int) {
+	switch s {
+		case StateDone:
+			<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M2.5 6.5L5 9L9.5 3.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+			</svg>
+		case StateActive:
+			<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<circle cx="6" cy="6" r="2.4" fill="white"></circle>
+			</svg>
+		case StateAttn:
+			<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M6 3v3.6" stroke="white" stroke-width="1.8" stroke-linecap="round"></path>
+				<circle cx="6" cy="9" r="1" fill="white"></circle>
+			</svg>
+		case StateFailed:
+			<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M3.5 3.5L8.5 8.5" stroke="white" stroke-width="1.8" stroke-linecap="round"></path>
+				<path d="M8.5 3.5L3.5 8.5" stroke="white" stroke-width="1.8" stroke-linecap="round"></path>
+			</svg>
+		case StateSkipped:
+			<span style={ fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon) }>&ndash;</span>
+		default: // StateFuture and any unrecognized State
+			<span style={ fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon) }>{ fmt.Sprintf("%d", index) }</span>
+	}
+}
+
+// stepperNode renders one step: a circle (sized per sz) holding
+// nodeIcon, and a label below it. When step.PopoverURL is non-empty
+// the root element is a <button type="button"> carrying the
+// hx-get/hx-target/hx-swap attributes described on Step; otherwise
+// it's a plain <div>. step.Title, when set, becomes a title attribute
+// on the root element either way.
+templ stepperNode(step Step, index int, sz sizeConfig) {
+	{{ circle := fmt.Sprintf("width:%dpx;height:%dpx;border-radius:9999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;%s", sz.dot, sz.dot, step.circleStyle()) }}
+	{{ label := fmt.Sprintf("font-size:%s;white-space:nowrap;%s", sz.labelFont, step.labelStyle()) }}
+	if step.PopoverURL != "" {
+		<button
+			type="button"
+			if step.Title != "" {
+				title={ step.Title }
+			}
+			hx-get={ step.PopoverURL }
+			if step.PopoverTarget != "" {
+				hx-target={ step.PopoverTarget }
+			}
+			hx-swap="innerHTML"
+			class="flex flex-col items-center gap-1 bg-transparent border-0 p-0 m-0 cursor-pointer"
+		>
+			<span style={ circle }>
+				@nodeIcon(step.State, index)
+			</span>
+			<span style={ label }>{ step.Label }</span>
+		</button>
+	} else {
+		<div
+			if step.Title != "" {
+				title={ step.Title }
+			}
+			class="flex flex-col items-center gap-1"
+		>
+			<span style={ circle }>
+				@nodeIcon(step.State, index)
+			</span>
+			<span style={ label }>{ step.Label }</span>
+		</div>
+	}
+}
+
+// stepperConnector renders one connector segment: a horizontal line
+// of the given width and color, vertically centered against the
+// node's circle height (not its label) so it lines up with the dots
+// on either side.
+templ stepperConnector(color string, width int, dot int) {
+	<span style={ fmt.Sprintf("display:flex;align-items:center;height:%dpx;flex-shrink:0", dot) }>
+		<span style={ fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block", width, color) }></span>
+	</span>
+}
+
+// stepper renders the shared markup for both size variants: a
+// flex-wrap row of stepperNode/stepperConnector pairs, rooted at the
+// <div> that carries the caller's id/class/attributes.
+templ stepper(p Props, sz sizeConfig) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("inline-flex flex-wrap items-start gap-y-3", p.Class) }
+		{ p.Attributes... }
+	>
+		for i, step := range p.Steps {
+			@stepperNode(step, i+1, sz)
+			if i < len(p.Steps)-1 {
+				@stepperConnector(connectorColor(step.State, p.Steps[i+1].State), sz.connector, sz.dot)
+			}
+		}
+	</div>
+}
+
+// Props configures a LifecycleStepper. Steps renders in order;
+// connectors sit between consecutive steps (len(Steps)-1 of them) and
+// are colored per connectorColor. An empty or nil Steps renders an
+// empty row. Large selects the expanded size variant (26px dots,
+// 13.5px labels, 34px connectors); the default is compact (22px
+// dots, 12.5px labels, 26px connectors) — see sizeConfig,
+// compactSize, largeSize.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Steps      []Step
+	Large      bool // expanded size variant; default is compact
+}
+
+// LifecycleStepper renders a horizontal wizard-dot progress row: an
+// ordered row of stage nodes (Props.Steps) joined by connector lines,
+// sized per Props.Large.
+//
+// It accepts zero or one Props (extras ignored); Props{} renders an
+// empty row.
+//
+// Returns a templ.Component rooted at an inline-flex <div> carrying
+// Props.ID (as id, when set), Props.Class (merged onto the component's
+// base classes via TwMerge), and Props.Attributes (spread onto the
+// root); it takes no children.
+//
+// No scripts or client state are emitted.
+//
+// @pure renders markup only; no state, I/O, or globals touched
+// @ai-context both size variants share stepper() parameterized by
+// sizeConfig rather than diverging templ trees.
+templ LifecycleStepper(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Large {
+		@stepper(p, largeSize)
+	} else {
+		@stepper(p, compactSize)
+	}
+}
