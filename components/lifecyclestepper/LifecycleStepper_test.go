@@ -243,6 +243,9 @@ func TestRender_Props_IDClassAttributes(t *testing.T) {
 	if !strings.Contains(html, `id="x"`) {
 		t.Errorf("expected id=\"x\" on the root element; html:\n%s", html)
 	}
+	if !strings.Contains(html, "gap:12px 8px") {
+		t.Errorf("expected the row's 8px column gap (canvas: steps and connectors are 8px apart); html:\n%s", html)
+	}
 	if !strings.Contains(html, "inline-flex") || !strings.Contains(html, "mt-2") {
 		t.Errorf("expected the base class and mt-2 merged onto the root element; html:\n%s", html)
 	}
