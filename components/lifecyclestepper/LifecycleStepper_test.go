@@ -158,7 +158,7 @@ func TestRender_ConnectorColor_DoneDoneGreen(t *testing.T) {
 		{Label: "Submitted", State: StateDone},
 		{Label: "Started", State: StateDone},
 	})
-	if !strings.Contains(html, "background-color:#1B7F4B;display:block") {
+	if !strings.Contains(html, "background-color:#1B7F4B;display:block;flex-shrink:0") {
 		t.Errorf("expected a green connector between two done nodes; html:\n%s", html)
 	}
 }
@@ -168,12 +168,12 @@ func TestRender_ConnectorColor_DoneSkippedGrey(t *testing.T) {
 		{Label: "Submitted", State: StateDone},
 		{Label: "Reflect", State: StateSkipped},
 	})
-	if strings.Contains(html, "background-color:#1B7F4B;display:block") {
+	if strings.Contains(html, "background-color:#1B7F4B;display:block;flex-shrink:0") {
 		t.Errorf("connector adjacent to a skipped node must not be green; html:\n%s", html)
 	}
 	// Grey connector uses the --color-border theme token (#DBDAD5 in
 	// static/css/input.css), not the hard-coded done-green.
-	if !strings.Contains(html, "background-color:var(--color-border);display:block") {
+	if !strings.Contains(html, "background-color:var(--color-border);display:block;flex-shrink:0") {
 		t.Errorf("expected connector to use the var(--color-border) grey token; html:\n%s", html)
 	}
 }
