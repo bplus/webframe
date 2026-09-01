@@ -14,19 +14,35 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Orientation selects the separator's axis. The zero value is treated
+// as OrientationHorizontal by Separator; any other non-empty value
+// (including typos) falls through to the vertical branch.
 type Orientation string
+
+// Decoration selects the line style of the separator's rule. The zero
+// value (and any unrecognized value) renders the default solid border.
 type Decoration string
 
 const (
+	// OrientationHorizontal draws a full-width horizontal rule; this is
+	// the default when Props.Orientation is unset.
 	OrientationHorizontal Orientation = "horizontal"
-	OrientationVertical   Orientation = "vertical"
+	// OrientationVertical draws a full-height vertical rule; the parent
+	// must give the separator a height for it to be visible.
+	OrientationVertical Orientation = "vertical"
 )
 
 const (
+	// DecorationDashed renders the rule as a dashed line.
 	DecorationDashed Decoration = "dashed"
+	// DecorationDotted renders the rule as a dotted line.
 	DecorationDotted Decoration = "dotted"
 )
 
+// Props configures a Separator. The zero value renders a plain solid
+// horizontal rule. Class is merged onto the outer wrapper (not the rule
+// itself) via utils.TwMerge, and Attributes are spread onto the same
+// wrapper.
 type Props struct {
 	ID          string
 	Class       string
@@ -35,6 +51,23 @@ type Props struct {
 	Decoration  Decoration
 }
 
+// Separator renders a visual divider between regions, optionally with a
+// small text label centered on the line (pass the label as children;
+// note the padded label chip is emitted even when children are empty,
+// leaving a small gap at the line's center — px-2 wide horizontally,
+// py-2 tall vertically). Call with no
+// arguments for
+// a solid horizontal rule; only the first Props is used and extras are
+// silently ignored. Returns a templ.Component rendering a
+// <div role="separator" aria-orientation="..."> containing the rule
+// (aria-hidden) and a children slot on a bg-background chip that masks
+// the line behind the label.
+//
+// @pure
+// @ai-context The children label chip uses bg-background to cover the
+// rule, so on a non-default background (e.g. inside bg-card) the chip
+// color will not match its surroundings unless overridden. Vertical
+// orientation needs an explicit height from the parent (root is h-full).
 func Separator(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -81,7 +114,7 @@ func Separator(props ...Props) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 39, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 72, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -169,7 +202,7 @@ func Separator(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 64, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 97, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

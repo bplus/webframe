@@ -13,12 +13,23 @@ import (
 
 // iconContents caches the fully generated SVG strings for icons that have been used,
 // keyed by a composite key of name and props to handle different stylings.
+// Guarded by iconMutex. The cache grows unbounded — one entry per unique
+// name+props combination for the life of the process — which is fine for the
+// intended use (a finite set of icons/stylings per app), but means callers
+// should not feed it unbounded user-derived props.
 var (
 	iconContents = make(map[string]string)
 	iconMutex    sync.RWMutex
 )
 
 // Props defines the properties that can be set for an icon.
+//
+// The zero value is valid and renders the Lucide defaults: Size <= 0 becomes
+// 24, empty Fill becomes "none", empty Stroke falls back to Color and then to
+// "currentColor", and empty StrokeWidth becomes "2" (all applied in
+// generateSVG at render time). Values are interpolated into SVG attributes
+// without sanitization, so props must come from trusted (developer) code, not
+// end-user input.
 type Props struct {
 	Size        int
 	Color       string
@@ -29,6 +40,20 @@ type Props struct {
 }
 
 // Icon returns a function that generates a templ.Component for the specified icon name.
+// This two-step shape exists so the generated icon_defs.go can predefine
+// ~1,600 icons as `var X = Icon("x")` while apps still choose Props per use.
+// The component writes a complete <svg> element, memoized in the package
+// cache so repeated renders of the same name+props are a single map read.
+//
+// An unknown name is not detected here — the error surfaces at render time,
+// wrapped with the icon name and props. Only the first Props value is used;
+// extras are silently ignored.
+//
+// @thread-safe - cache guarded by iconMutex (sync.RWMutex); two goroutines
+// racing on an uncached icon may both generate it, but the writes are
+// identical so the race is benign
+// @side-effects inserts into the package-level iconContents cache
+// @complexity O(1) amortized per render after first generation
 func Icon(name string) func(...Props) templ.Component {
 	return func(props ...Props) templ.Component {
 		var p Props
@@ -71,6 +96,10 @@ func Icon(name string) func(...Props) templ.Component {
 
 // generateSVG creates an SVG string for the specified icon with the given properties.
 // This function is called when an icon-prop combination is not yet in the cache.
+// Returns an error only when the name is missing from internalSvgData; all
+// prop defaulting (size, fill, stroke, stroke-width) happens here.
+//
+// @pure - reads only the immutable generated internalSvgData map
 func generateSVG(name string, props Props) (string, error) {
 	// Get the raw, inner SVG content for the icon name from our internal data map.
 	content, err := getIconContent(name) // This now reads from internalSvgData
@@ -109,6 +138,9 @@ func generateSVG(name string, props Props) (string, error) {
 
 // getIconContent retrieves the raw inner SVG content for a given icon name.
 // It reads from the pre-generated internalSvgData map from icon_data.go.
+// A miss (name not in the Lucide set, or a typo) is the only error path.
+//
+// @pure
 func getIconContent(name string) (string, error) {
 	content, exists := internalSvgData[name]
 	if !exists {

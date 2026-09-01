@@ -10,6 +10,12 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures an EmptyState. Icon, Title, and Description are each
+// rendered only when non-empty (Title is "required" by convention, but
+// an empty Title simply omits the heading rather than erroring). Icon is
+// rendered as text content — an emoji or glyph string, not an icon
+// component. Class is merged via utils.TwMerge; Attributes spread onto
+// the root <div>.
 type Props struct {
 	ID          string
 	Class       string
@@ -19,6 +25,19 @@ type Props struct {
 	Description string // Optional: e.g., "Try adjusting your search filters"
 }
 
+// EmptyState renders a centered "nothing here" placeholder for empty
+// lists, empty search results, or unpopulated panels — icon over title
+// over description, with a children slot below for a call-to-action
+// (e.g. a "Create" button). Calling with no arguments renders only the
+// centered container and children slot, since every text section is
+// conditional on being non-empty; only the first Props is used and
+// extras are silently ignored. Returns a templ.Component rendering a
+// vertically stacked, text-centered <div>.
+//
+// @pure
+// @ai-context The mt-4 children wrapper is emitted unconditionally, so
+// even with no children a small trailing gap exists; there is no way to
+// suppress it via Props.
 func EmptyState(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -65,7 +84,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 21, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 40, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -109,7 +128,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Icon)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 33, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 52, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -128,7 +147,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 38, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 57, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -147,7 +166,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 43, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 62, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

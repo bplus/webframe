@@ -8,18 +8,30 @@ package statcomparison
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"github.com/bplus/webframe/utils"
-)
+import "github.com/bplus/webframe/utils"
 
+// Direction indicates which way a metric moved and controls both the
+// delta's color and its arrow icon. The zero value (and any
+// unrecognized value) renders like DirectionFlat: muted color and a
+// horizontal-line icon.
 type Direction string
 
 const (
-	DirectionUp   Direction = "up"
+	// DirectionUp shows the delta in green with an up arrow.
+	DirectionUp Direction = "up"
+	// DirectionDown shows the delta in red with a down arrow.
 	DirectionDown Direction = "down"
+	// DirectionFlat shows the delta in muted gray with a flat line;
+	// same rendering as the zero value.
 	DirectionFlat Direction = "flat"
 )
 
+// Props configures a StatComparison tile. All display fields are
+// preformatted strings — the component does no number formatting or
+// delta math; callers supply Value, PrevValue, and Delta already
+// rendered as text. Label, PrevValue, and Delta sections are each
+// omitted when empty; Value is always emitted. Direction only matters
+// when Delta is non-empty.
 type Props struct {
 	ID         string
 	Class      string
@@ -42,6 +54,20 @@ func (p Props) directionColor() string {
 	}
 }
 
+// StatComparison renders a KPI tile that shows a current value against
+// a previous one — label, big value with "from <prev>", and a colored
+// delta row with a trend arrow. Use it in dashboards where the change
+// matters as much as the number. Zero-value / omitted props render only
+// an empty value line; only the first Props is used and extras are
+// silently ignored. Returns a templ.Component rendering a vertical
+// flex <div>; it takes no children — all content comes from Props.
+//
+// @pure
+// @ai-context Colors are fixed to "up = green, down = red" via
+// directionColor(); there is no way to flip the mapping for metrics
+// where a decrease is good (e.g. error counts) other than choosing a
+// different Direction than the arithmetic one. Arrow SVGs are inlined,
+// hard-coded 16x16 stroked paths using currentColor.
 func StatComparison(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -84,7 +110,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 44, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 70, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -128,7 +154,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 50, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 76, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -146,7 +172,7 @@ func StatComparison(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 53, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 79, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -164,7 +190,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.PrevValue)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 55, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 81, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +251,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Delta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 73, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 99, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {

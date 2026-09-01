@@ -10,13 +10,26 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Size selects the button's visual size preset so callers choose from known
+// dimensions instead of passing raw utility classes. The zero value ("")
+// renders the same as SizeDefault.
 type Size string
 
+// Supported Size presets: SizeDefault is an 8x8 (h-8 w-8) button with a
+// 16px icon; SizeSm is 6x6 with a 12px icon.
 const (
 	SizeDefault Size = "default"
 	SizeSm      Size = "sm"
 )
 
+// Props configures a single CopyButton. The zero value renders an icon-only,
+// default-size button that copies an empty string, so callers should at
+// minimum set Value. Class is combined with the built-in classes via
+// utils.TwMerge; Attributes are spread onto the <button> element after the
+// built-in attributes (id, type, class, x-data, x-on:click). They can add new
+// attributes, but a key that collides with a built-in is emitted as a
+// duplicate attribute and HTML parsers keep the first occurrence — so the
+// built-ins cannot be overridden this way.
 type Props struct {
 	ID         string
 	Class      string
@@ -35,6 +48,27 @@ func (p Props) sizeClasses() string {
 	}
 }
 
+// CopyButton renders a small icon button that copies a fixed string to the
+// user's clipboard — the "copy this" affordance next to code snippets, IDs,
+// and URLs.
+//
+// It accepts zero or one Props; with no argument all fields take their
+// zero-value defaults (icon-only, default size, empty copy value). Any Props
+// beyond the first are ignored. Props.Value is passed through utils.EscapeJS
+// before being embedded in the inline click handler, so arbitrary strings
+// (quotes, newlines, </script>) are safe to copy.
+//
+// Returns a templ.Component whose root element is a <button type="button">;
+// it takes no children — Props.Label is the only way to add visible text.
+//
+// Server-side rendering has no side effects. In the browser the button owns
+// Alpine state (x-data "copied") and an x-on:click handler that calls
+// navigator.clipboard.writeText, then shows a green check icon for 2 seconds
+// before reverting. Requires Alpine.js on the page; the async Clipboard API
+// only works in secure contexts (HTTPS or localhost).
+//
+// @boundary browser Clipboard API (navigator.clipboard) via inline Alpine handler
+// @side-effects writes to the user's clipboard on click; transient Alpine state toggle
 func CopyButton(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -85,7 +119,7 @@ func CopyButton(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 37, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 71, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -116,7 +150,7 @@ func CopyButton(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs("navigator.clipboard.writeText('" + utils.EscapeJS(p.Value) + "').then(() => { copied = true; setTimeout(() => copied = false, 2000) })")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 51, Col: 151}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 85, Col: 151}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -142,7 +176,7 @@ func CopyButton(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 66, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/copybutton/CopyButton.templ`, Line: 100, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {

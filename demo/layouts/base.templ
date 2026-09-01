@@ -1,5 +1,35 @@
 package layouts
 
+// Base is the HTML shell shared by every demo page: the full document with
+// head, topbar navigation, a centered <main> for page content, the component
+// script bundle, and the toast container. Wrap page bodies in it so all demo
+// pages get identical chrome and JS wiring.
+//
+// title is interpolated into the document title as "{title} — Webframe".
+//
+// Returns a templ.Component rendering a complete <!DOCTYPE html> document;
+// children render inside <main> (max-w-5xl, centered).
+//
+// What it loads, in order:
+//   - /static/css/output.css — the compiled Tailwind stylesheet
+//   - an inline flash-free theme script that reads localStorage key
+//     "wf-theme" and sets data-theme on <html> (falling back to "dark")
+//     before first paint
+//   - htmx.min.js (blocking) and alpine.min.js (deferred)
+//   - the per-component scripts: popover, dropdown, dialog, selectbox, tabs,
+//     input, checkbox, textarea, avatar, label, theme-toggle
+//   - an inline htmx:afterSwap listener that calls Alpine.initTree on
+//     swapped-in content, so Alpine components keep working after HTMX
+//     updates
+//
+// It also renders the #toast-container div targeted by the demo's
+// out-of-band toast swaps, and the data-theme-toggle button that
+// theme-toggle.js wires up. Note trafficstream.min.js is NOT included here;
+// pages using TrafficStream must add trafficstream.Script() themselves.
+//
+// @side-effects inline scripts mutate document state at load time (data-theme
+// attribute, Alpine re-init on HTMX swaps)
+// @boundary browser localStorage ("wf-theme") and static asset URLs under /static/
 templ Base(title string) {
 	<!DOCTYPE html>
 	<html lang="en">

@@ -2,6 +2,12 @@ package emptystate
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures an EmptyState. Icon, Title, and Description are each
+// rendered only when non-empty (Title is "required" by convention, but
+// an empty Title simply omits the heading rather than erroring). Icon is
+// rendered as text content — an emoji or glyph string, not an icon
+// component. Class is merged via utils.TwMerge; Attributes spread onto
+// the root <div>.
 type Props struct {
 	ID          string
 	Class       string
@@ -11,6 +17,19 @@ type Props struct {
 	Description string // Optional: e.g., "Try adjusting your search filters"
 }
 
+// EmptyState renders a centered "nothing here" placeholder for empty
+// lists, empty search results, or unpopulated panels — icon over title
+// over description, with a children slot below for a call-to-action
+// (e.g. a "Create" button). Calling with no arguments renders only the
+// centered container and children slot, since every text section is
+// conditional on being non-empty; only the first Props is used and
+// extras are silently ignored. Returns a templ.Component rendering a
+// vertically stacked, text-centered <div>.
+//
+// @pure
+// @ai-context The mt-4 children wrapper is emitted unconditionally, so
+// even with no children a small trailing gap exists; there is no way to
+// suppress it via Props.
 templ EmptyState(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

@@ -17,33 +17,52 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// MessageVariant selects the color of a Message. The zero value
+// leaves the text in the surrounding foreground color.
 type MessageVariant string
 
+// Message color variants: error renders red (validation failures),
+// info renders blue (neutral hints).
 const (
 	MessageVariantError MessageVariant = "error"
 	MessageVariantInfo  MessageVariant = "info"
 )
 
+// ItemProps configures the Item and ItemFlex field wrappers. The zero
+// value is fine; Class merges after the built-in layout classes via
+// utils.TwMerge.
 type ItemProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// LabelProps configures form.Label; ID, Class, Attributes, and For are
+// forwarded to the underlying label component.
 type LabelProps struct {
-	ID            string
-	Class         string
-	Attributes    templ.Attributes
-	For           string
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	// For is the id of the control this label describes; it must match
+	// the control's rendered id (auto-id components like input need an
+	// explicit ID).
+	For string
+	// DisabledClass is currently unused: form.Label does not forward
+	// it, and the label component hardcodes its disabled styling.
 	DisabledClass string
 }
 
+// DescriptionProps configures Description. The zero value is fine;
+// Class merges after the built-in classes via utils.TwMerge.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// MessageProps configures Message. The zero-value Variant renders
+// uncolored text; use MessageVariantError/MessageVariantInfo for
+// red/blue feedback.
 type MessageProps struct {
 	ID         string
 	Class      string
@@ -51,6 +70,13 @@ type MessageProps struct {
 	Variant    MessageVariant
 }
 
+// Item renders the vertical wrapper for one form field: a <div> with
+// space-y-2 that stacks its children — typically form.Label, the
+// control, form.Description, and form.Message — with consistent
+// spacing. Accepts zero or one ItemProps (extras ignored); returns a
+// templ.Component rooted at the <div> with children rendered inside.
+//
+// @pure
 func Item(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -93,7 +119,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 51, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 77, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -141,6 +167,13 @@ func Item(props ...ItemProps) templ.Component {
 	})
 }
 
+// ItemFlex is the horizontal counterpart of Item: an items-center
+// flex row with space-x-2, suited to fields where the control sits
+// beside its label (checkboxes, radios, switches). Accepts zero or
+// one ItemProps (extras ignored); returns a templ.Component rooted at
+// the <div> with children rendered inside.
+//
+// @pure
 func ItemFlex(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -183,7 +216,7 @@ func ItemFlex(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 67, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 100, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -231,6 +264,22 @@ func ItemFlex(props ...ItemProps) templ.Component {
 	})
 }
 
+// Label is the form-scoped wrapper around label.Label, so form
+// markup reads uniformly (form.Item > form.Label > form.Message). It
+// forwards ID, Class, Attributes, and For, and renders children as
+// the label text; the underlying label supplies styling and the
+// disabled-dimming hook.
+//
+// Accepts zero or one LabelProps (extras ignored); returns a
+// templ.Component rooted at the <label> element.
+//
+// @invariant For must equal the described control's rendered id for
+// click-to-focus and accessibility to work.
+// @ai-context LabelProps.DisabledClass is confirmed dead
+// configuration: this wrapper forwards only ID, Class, Attributes, and
+// For; label.Props has no DisabledClass field, and label.Label
+// hardcodes its disabled styling ("opacity-50 cursor-not-allowed") via
+// data-tui-label-disabled-style. Setting it has no effect.
 func Label(props ...LabelProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -287,6 +336,13 @@ func Label(props ...LabelProps) templ.Component {
 	})
 }
 
+// Description renders muted helper text (<p class="text-sm
+// text-muted-foreground">) for a form field — the always-visible hint
+// under a control, as opposed to Message which carries state-colored
+// feedback. Accepts zero or one DescriptionProps (extras ignored);
+// children are the text; returns a templ.Component rooted at the <p>.
+//
+// @pure
 func Description(props ...DescriptionProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -329,7 +385,7 @@ func Description(props ...DescriptionProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 98, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 154, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -377,6 +433,19 @@ func Description(props ...DescriptionProps) templ.Component {
 	})
 }
 
+// Message renders a small feedback line (<p>) colored by Variant —
+// red for MessageVariantError, blue for MessageVariantInfo, inherited
+// color for the zero value. It carries the validation text whose
+// presence usually accompanies HasError on the control and Error on
+// the label (those style themselves; this renders the words).
+//
+// Accepts zero or one MessageProps (extras ignored); children are the
+// message text; returns a templ.Component rooted at the <p>.
+//
+// @pure
+// @ai-context Message has no show/hide logic of its own — the caller
+// decides whether to render it (typically only when validation
+// produced text).
 func Message(props ...MessageProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -424,7 +493,7 @@ func Message(props ...MessageProps) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 114, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 183, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {

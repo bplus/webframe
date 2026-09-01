@@ -13,6 +13,13 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Props configures a ProgressBar. Value and Max define the fill: the
+// rendered percentage is clampPercent(Value, Max) — Value*100/Max with
+// integer truncation, clamped to [0, 100], and Max <= 0 treated as 100 — so
+// Props{Value: 40} alone reads as 40% and out-of-range values never
+// overflow the track. Color must be a Tailwind background class (it is
+// merged into the class list via TwMerge, not sanitized as a CSS value);
+// when empty the fill uses "bg-primary".
 type Props struct {
 	ID         string
 	Class      string
@@ -24,6 +31,24 @@ type Props struct {
 	ShowValue  bool   // show percentage text
 }
 
+// ProgressBar renders a horizontal determinate progress track with a
+// colored fill and an optional label/percentage row, for showing completion
+// against a known total.
+//
+// It accepts zero or one Props (extras ignored); Props{} renders an empty
+// (0%) bar. The fill width and the ShowValue text use the same clamped
+// integer percentage (see Props), so the number shown always matches the
+// bar. The header row above the track only renders when Label or ShowValue
+// is set.
+//
+// Returns a templ.Component rooted at a w-full <div>; it takes no children.
+//
+// No scripts or client state are emitted; the transition-all class on the
+// fill animates width changes when the element is updated in place (e.g. an
+// HTMX swap that morphs the style attribute).
+//
+// @pure
+// @invariant rendered fill width and displayed percentage are always within [0, 100]
 func ProgressBar(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -66,7 +91,7 @@ func ProgressBar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 26, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 51, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -115,7 +140,7 @@ func ProgressBar(props ...Props) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 34, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 59, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -134,7 +159,7 @@ func ProgressBar(props ...Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d%%", clampPercent(p.Value, p.Max)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 37, Col: 106}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 62, Col: 106}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -179,7 +204,7 @@ func ProgressBar(props ...Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width: %d%%", clampPercent(p.Value, p.Max)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 44, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 69, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {

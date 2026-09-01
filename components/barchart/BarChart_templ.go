@@ -14,19 +14,39 @@ import (
 	"math"
 )
 
+// Orientation selects the bar direction for BarChart. Valid values are the
+// Horizontal and Vertical constants; any other value — including the zero
+// value "" — resolves to Horizontal.
 type Orientation string
 
 const (
+	// Horizontal lays bars left-to-right with a left-hand label gutter.
+	// This is the default: a zero-value or unrecognized Orientation resolves here.
 	Horizontal Orientation = "horizontal"
-	Vertical   Orientation = "vertical"
+	// Vertical lays bars bottom-up with labels underneath; it is the only
+	// value that must be set explicitly.
+	Vertical Orientation = "vertical"
 )
 
+// Bar is one bar's label, value, and optional color. Bars are plotted by
+// absolute magnitude relative to the largest |Value| in the set — a negative
+// value draws the same length as its positive counterpart, with no visual sign
+// distinction. A non-empty Color passes through utils.SanitizeColor and
+// overrides Props.BarColor for that bar only.
 type Bar struct {
 	Label string
 	Value float64
 	Color string // optional per-bar color override
 }
 
+// Props configures BarChart; pass it as the single optional argument. The zero
+// value renders an empty 300x200 horizontal chart: Width/Height default to
+// 300x200 when <= 0, Orientation to Horizontal, and BarColor to
+// "var(--color-primary)". Setting MaxBars > 0 caps the bar count: only when
+// len(Bars) exceeds MaxBars, the MaxBars largest bars (by raw value) are kept
+// re-sorted descending — input order is lost — and the remainder folds into one
+// synthetic "Other (K)" bar; at or under the cap, and with MaxBars = 0, order
+// and count are untouched.
 type Props struct {
 	ID          string
 	Class       string
@@ -85,6 +105,30 @@ func maxVal(bars []Bar) float64 {
 	return m
 }
 
+// BarChart renders a horizontal (default) or vertical bar chart as an inline
+// SVG, distinctive for its adaptive label gutter and its MaxBars "Other (K)"
+// folding. Bars are sized by |value| against the largest magnitude present;
+// empty or all-zero data draws no bars but still emits the SVG frame.
+//
+// Accepts zero or one Props: called with no arguments it uses the zero value,
+// and any Props beyond the first are ignored. In Horizontal orientation with
+// ShowLabels set, the left gutter grows to fit the widest label — the SVG may
+// widen up to 2x the requested Width to keep the gutter within 45% of it —
+// and labels that still overflow are ellipsis-truncated with the full text in
+// a hover <title>. Vertical labels render as-is with no truncation. Bar colors
+// (default and per-bar) pass through utils.SanitizeColor; ShowValues labels
+// use %.4g formatting; bar thickness never drops below 2px.
+//
+// Returns a templ.Component that renders a <div>-wrapped <svg>.
+//
+// @pure
+// @complexity O(n log n) when MaxBars caps the input, O(n) otherwise
+// @invariant with MaxBars > 0, at most MaxBars+1 bars render; with ShowLabels
+// set, the horizontal gutter stays <= 45% of the (possibly widened) SVG width
+// (without ShowLabels the fixed 60px gutter can exceed 45% of a Width < 134)
+// @ai-context negative values are drawn by absolute magnitude with no sign
+// axis, and the folded "Other (K)" bar sums raw values — negatives in the
+// remainder shrink it.
 func BarChart(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -137,7 +181,7 @@ func BarChart(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 97, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 141, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -176,7 +220,7 @@ func BarChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", w))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 103, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 147, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -189,7 +233,7 @@ func BarChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", h))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 104, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 148, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -202,7 +246,7 @@ func BarChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("0 0 %d %d", w, h))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 105, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 149, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -251,7 +295,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", labelW-4))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 129, Col: 38}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 173, Col: 38}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -264,7 +308,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", y+rectH/2+4))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 130, Col: 41}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 174, Col: 41}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -282,7 +326,7 @@ func BarChart(props ...Props) templ.Component {
 						var templ_7745c5c3_Var10 string
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(bar.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 136, Col: 26}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 180, Col: 26}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -296,7 +340,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var11 string
 					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(disp)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 138, Col: 13}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 182, Col: 13}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
@@ -314,7 +358,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", labelW))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 142, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 186, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -327,7 +371,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", y))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 143, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 187, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -340,7 +384,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", barWidth))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 144, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 188, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -353,7 +397,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", rectH))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 145, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 189, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -366,7 +410,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 146, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 190, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -384,7 +428,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", labelW+barWidth+4))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 151, Col: 47}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 195, Col: 47}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {
@@ -397,7 +441,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var18 string
 					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", y+rectH/2+4))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 152, Col: 41}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 196, Col: 41}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 					if templ_7745c5c3_Err != nil {
@@ -410,7 +454,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var19 string
 					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.4g", bar.Value))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 155, Col: 39}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 199, Col: 39}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 					if templ_7745c5c3_Err != nil {
@@ -456,7 +500,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", x))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 178, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 222, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
@@ -469,7 +513,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", plotH-barHeight))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 179, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 223, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
@@ -482,7 +526,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var22 string
 				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", rectW))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 180, Col: 38}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 224, Col: 38}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 				if templ_7745c5c3_Err != nil {
@@ -495,7 +539,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", barHeight))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 181, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 225, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 				if templ_7745c5c3_Err != nil {
@@ -508,7 +552,7 @@ func BarChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 182, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 226, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -526,7 +570,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var25 string
 					templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", x+rectW/2))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 187, Col: 39}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 231, Col: 39}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 					if templ_7745c5c3_Err != nil {
@@ -539,7 +583,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var26 string
 					templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", h-2))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 188, Col: 33}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 232, Col: 33}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 					if templ_7745c5c3_Err != nil {
@@ -552,7 +596,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var27 string
 					templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(bar.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 192, Col: 18}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 236, Col: 18}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 					if templ_7745c5c3_Err != nil {
@@ -575,7 +619,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var28 string
 					templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", x+rectW/2))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 196, Col: 39}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 240, Col: 39}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 					if templ_7745c5c3_Err != nil {
@@ -588,7 +632,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var29 string
 					templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", plotH-barHeight-4))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 197, Col: 47}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 241, Col: 47}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 					if templ_7745c5c3_Err != nil {
@@ -601,7 +645,7 @@ func BarChart(props ...Props) templ.Component {
 					var templ_7745c5c3_Var30 string
 					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.4g", bar.Value))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 201, Col: 39}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/barchart/BarChart.templ`, Line: 245, Col: 39}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 					if templ_7745c5c3_Err != nil {

@@ -1,17 +1,29 @@
 package statcomparison
 
-import (
-	"github.com/bplus/webframe/utils"
-)
+import "github.com/bplus/webframe/utils"
 
+// Direction indicates which way a metric moved and controls both the
+// delta's color and its arrow icon. The zero value (and any
+// unrecognized value) renders like DirectionFlat: muted color and a
+// horizontal-line icon.
 type Direction string
 
 const (
-	DirectionUp   Direction = "up"
+	// DirectionUp shows the delta in green with an up arrow.
+	DirectionUp Direction = "up"
+	// DirectionDown shows the delta in red with a down arrow.
 	DirectionDown Direction = "down"
+	// DirectionFlat shows the delta in muted gray with a flat line;
+	// same rendering as the zero value.
 	DirectionFlat Direction = "flat"
 )
 
+// Props configures a StatComparison tile. All display fields are
+// preformatted strings — the component does no number formatting or
+// delta math; callers supply Value, PrevValue, and Delta already
+// rendered as text. Label, PrevValue, and Delta sections are each
+// omitted when empty; Value is always emitted. Direction only matters
+// when Delta is non-empty.
 type Props struct {
 	ID         string
 	Class      string
@@ -34,6 +46,20 @@ func (p Props) directionColor() string {
 	}
 }
 
+// StatComparison renders a KPI tile that shows a current value against
+// a previous one — label, big value with "from <prev>", and a colored
+// delta row with a trend arrow. Use it in dashboards where the change
+// matters as much as the number. Zero-value / omitted props render only
+// an empty value line; only the first Props is used and extras are
+// silently ignored. Returns a templ.Component rendering a vertical
+// flex <div>; it takes no children — all content comes from Props.
+//
+// @pure
+// @ai-context Colors are fixed to "up = green, down = red" via
+// directionColor(); there is no way to flip the mapping for metrics
+// where a decrease is good (e.g. error counts) other than choosing a
+// different Direction than the arithmetic one. Arrow SVGs are inlined,
+// hard-coded 16x16 stroked paths using currentColor.
 templ StatComparison(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

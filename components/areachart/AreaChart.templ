@@ -2,32 +2,45 @@ package areachart
 
 import (
 	"fmt"
+	"github.com/bplus/webframe/utils"
 	"math"
 	"strings"
-	"github.com/bplus/webframe/utils"
 )
 
+// DataPoint is one X/Y sample in a Series. Label is display text only (dates,
+// hours, categories) and carries no ordering or spacing semantics — points
+// render in slice order, evenly spaced across the plot width.
 type DataPoint struct {
 	Label string  // X-axis label (e.g. date)
 	Value float64 // Y value
 }
 
+// Series is one named line-plus-area in an AreaChart. An empty Color is
+// assigned from a built-in five-color palette by series index; a non-empty
+// Color passes through utils.SanitizeColor, so invalid values render as gray
+// #888 rather than being dropped. A Series with empty Data draws nothing but
+// still occupies a legend row and a palette slot.
 type Series struct {
-	Label  string      // Legend label
-	Data   []DataPoint
-	Color  string      // Line/fill color (hex or CSS)
+	Label string // Legend label
+	Data  []DataPoint
+	Color string // Line/fill color (hex or CSS)
 }
 
+// Props configures AreaChart; pass it as the single optional argument. The
+// zero value renders an empty 400x200 SVG frame: Width/Height default to
+// 400x200 when <= 0, and Series may be nil. All series share one global Y
+// scale computed over every data point of every series, so overlaid lines are
+// directly comparable; there is no per-series normalization.
 type Props struct {
-	ID          string
-	Class       string
-	Attributes  templ.Attributes
-	Series      []Series // One or more data series
-	Width       int      // SVG width (default 400)
-	Height      int      // SVG height (default 200)
-	ShowLabels  bool     // X-axis labels
-	ShowLegend  bool     // Legend below chart
-	ShowGrid    bool     // Horizontal grid lines
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Series     []Series // One or more data series
+	Width      int      // SVG width (default 400)
+	Height     int      // SVG height (default 200)
+	ShowLabels bool     // X-axis labels
+	ShowLegend bool     // Legend below chart
+	ShowGrid   bool     // Horizontal grid lines
 }
 
 func (p Props) resolveWidth() int {
@@ -85,7 +98,7 @@ func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB int, minV, m
 	pts := make([]string, n)
 	for i, d := range data {
 		x := float64(padL) + float64(i)*plotW/float64(max(n-1, 1))
-		y := float64(padT) + plotH - ((d.Value-minV)*plotH/rang)
+		y := float64(padT) + plotH - ((d.Value - minV) * plotH / rang)
 		pts[i] = fmt.Sprintf("%.2f,%.2f", x, y)
 	}
 	polyline = strings.Join(pts, " ")
@@ -95,6 +108,28 @@ func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB int, minV, m
 	return
 }
 
+// AreaChart renders one or more overlaid line-plus-filled-area series as an
+// inline SVG, for comparing trends on a single shared Y scale (the min/max is
+// computed globally across all series, never per series).
+//
+// Accepts zero or one Props: called with no arguments it uses the zero value,
+// and any Props beyond the first are ignored. Series with no data points are
+// skipped; with no data at all an empty SVG frame still renders at the
+// resolved size. When ShowLabels is set, X-axis labels come from the FIRST
+// series only, thinned to roughly six evenly spaced labels. The legend renders
+// only when ShowLegend is set AND there are at least two series. The filled
+// area uses the stroke color at 15% opacity.
+//
+// Returns a templ.Component that renders a <div>-wrapped <svg> plus the
+// optional legend.
+//
+// @pure
+// @complexity O(total data points across all series)
+// @ai-context explicit series colors pass through utils.SanitizeColor; when
+// every value across ALL series is identical (global min == max), the lines
+// render along the BOTTOM edge, not centered — the flat range is padded to 1,
+// anchoring values at the minimum. A flat series next to a varying one instead
+// renders at its value's height on the shared global scale.
 templ AreaChart(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -125,7 +160,7 @@ templ AreaChart(props ...Props) {
 		>
 			if p.ShowGrid {
 				for i := 0; i <= 4; i++ {
-					{{ gy := padT + (h-padT-padB) * i / 4 }}
+					{{ gy := padT + (h-padT-padB)*i/4 }}
 					<line
 						x1={ fmt.Sprintf("%d", padL) }
 						y1={ fmt.Sprintf("%d", gy) }

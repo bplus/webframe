@@ -2,10 +2,16 @@ package metricring
 
 import (
 	"fmt"
-	"math"
 	"github.com/bplus/webframe/utils"
+	"math"
 )
 
+// Props configures MetricRing; pass it as the single optional argument. The
+// zero value renders an 80px ring at 0% labeled "0%": Size defaults to 80 when
+// <= 0, Value is clamped to [0, 100] before any use, Label defaults to the
+// clamped value formatted as "N%", Color defaults to "var(--color-primary)",
+// and TrackColor to "var(--color-muted)". Custom Color/TrackColor values pass
+// through utils.SanitizeColor.
 type Props struct {
 	ID         string
 	Class      string
@@ -52,6 +58,25 @@ func circumference(radius int) int {
 	return int(math.Round(2 * math.Pi * float64(radius)))
 }
 
+// MetricRing renders a circular progress gauge as an inline SVG — a fixed
+// 6px-wide track circle with a partial colored arc over it and a centered text
+// label — for at-a-glance percentage KPIs (disk usage, completion, scores).
+//
+// Accepts zero or one Props: called with no arguments it uses the zero value,
+// and any Props beyond the first are ignored. Value is clamped to [0, 100]
+// before both the arc and the default label are computed, so out-of-range
+// input renders as an empty or full ring rather than overflowing. The arc
+// starts at twelve o'clock (a -90deg CSS rotation on the SVG) and sweeps
+// clockwise via stroke-dasharray. An explicit Label replaces the default "N%"
+// text verbatim and is not derived from Value.
+//
+// Returns a templ.Component that renders a fixed-size <div> wrapping the
+// <svg> and an absolutely positioned label span.
+//
+// @pure
+// @complexity O(1)
+// @invariant the rendered arc covers clamp(Value, 0, 100) percent of the ring
+// circumference regardless of the raw Value passed in
 templ MetricRing(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

@@ -17,20 +17,56 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Props configures Checkbox. The zero value renders an enabled,
+// unchecked box that submits "on" when checked (the HTML default
+// value is written out explicitly when Value is empty). Class merges
+// after the built-in classes via utils.TwMerge; Attributes spread
+// onto the <input>, not the wrapper <div>.
 type Props struct {
-	ID          string
-	Class       string
-	Attributes  templ.Attributes
-	Name        string
-	Value       string
-	Disabled    bool
-	Checked     bool
-	Group       string
+	// ID is not auto-generated — supply one and mirror it in
+	// label.Props.For to make the label clickable.
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Name       string
+	// Value defaults to "on" in the rendered markup when empty.
+	Value    string
+	Disabled bool
+	Checked  bool
+	// Group names a checkbox group (data-tui-checkbox-group) for the
+	// select-all/indeterminate wiring in checkbox.min.js.
+	Group string
+	// GroupParent marks this box as its group's select-all parent; it
+	// shows the indeterminate state when children are mixed.
 	GroupParent bool
-	Form        string
-	Icon        templ.Component
+	// Form associates the checkbox with a <form> by id, allowing it to
+	// live outside the form element.
+	Form string
+	// Icon replaces the default check-mark indicator (icon.Check)
+	// shown when the box is checked.
+	Icon templ.Component
 }
 
+// Checkbox renders a native <input type="checkbox"> restyled with
+// appearance-none, overlaid by two pointer-events-none layers driven
+// purely by CSS peer-* selectors: a check icon (or Props.Icon) that
+// appears when checked, and a minus icon when indeterminate. It does
+// not take children.
+//
+// Accepts zero or one Props (elements past the first are ignored).
+// The root element is an inline-flex wrapper <div>; the <input> sits
+// inside it. Group/GroupParent only stamp data-tui-checkbox-*
+// attributes — the select-all and indeterminate logic lives in
+// /static/js/checkbox.min.js.
+//
+// @side-effects rendering the built-in icon.Check/icon.Minus
+// indicators inserts into the icon package's global SVG cache on first
+// use (thread-safe memoization); no id generation or randomness —
+// markup is deterministic.
+// @invariant label association requires a caller-supplied ID equal to
+// label.Props.For — nothing here generates one.
+// @temporal-coupling Group/GroupParent behavior is inert unless
+// Script() is included on the page.
 func Checkbox(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -99,7 +135,7 @@ func Checkbox(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 34, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 70, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -118,7 +154,7 @@ func Checkbox(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 37, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 73, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -137,7 +173,7 @@ func Checkbox(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 40, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 76, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -161,7 +197,7 @@ func Checkbox(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 45, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 81, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +216,7 @@ func Checkbox(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Group)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 48, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 84, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -249,6 +285,15 @@ func Checkbox(props ...Props) templ.Component {
 	})
 }
 
+// Script emits the deferred <script> tag implementing checkbox group
+// behavior (parent select-all, child sync, indeterminate state),
+// CSP-nonced via templ.GetNonce and cache-busted via utils.ScriptURL.
+// Only needed when Group/GroupParent are used; deferred, so placement
+// is flexible.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request).
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -277,7 +322,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 86, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 131, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -290,7 +335,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/checkbox.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 86, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/checkbox/checkbox.templ`, Line: 131, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {

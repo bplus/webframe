@@ -10,6 +10,14 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
+// Props configures a NodePill. NodeType selects the colored dot from a
+// fixed set of known types (concept, tool, decision, error, service,
+// person, incident, code_path, reference); unknown or empty types get a
+// neutral muted dot. A non-empty Href switches the root element from
+// <span> to <a>. Truncate is a byte-length cap on the displayed title
+// (0 means the default of 30); titles longer than the cap are cut to
+// limit-1 bytes and suffixed with an ellipsis. A negative Truncate
+// panics (slice bounds out of range) for any Title, including empty.
 type Props struct {
 	ID         string
 	Class      string
@@ -56,6 +64,31 @@ func (p Props) displayTitle() string {
 	return p.Title
 }
 
+// NodePill renders a compact rounded pill identifying a graph
+// node: a type-colored dot plus a truncated title, optionally acting as
+// a link. Use it for dense node lists where type must be scannable at a
+// glance. Zero-value / omitted props render an empty non-link pill with
+// a muted dot; only the first Props is used and extras are silently
+// ignored. Returns a templ.Component rendering an <a> when Href is set
+// (URL passed through templ.SafeURL) or a <span> otherwise; it takes no
+// children — content comes from Props.
+//
+// @pure
+// @ai-context Truncation in displayTitle() counts bytes (len on a Go
+// string), not runes, so a multi-byte UTF-8 title can be cut
+// mid-character; the cut keeps limit-1 bytes and appends U+2026.
+// Hover/cursor affordances are only applied in the link branch.
+//
+// @ai-hint Confirmed (verified by test): when a multi-byte rune
+// straddles the limit-1 byte boundary, displayTitle() emits invalid
+// UTF-8 — the leading bytes of the split rune remain in the output just
+// before the ellipsis (e.g. "héllo" with Truncate=3 yields "h\xc3…").
+// templ's HTML escaping passes the invalid bytes through unchanged, so
+// browsers render them as U+FFFD replacement characters. This is a
+// latent bug for non-ASCII titles, not intended behavior; a fix would
+// truncate on a rune boundary ([]rune conversion or
+// utf8.DecodeRuneInString walking). Documented here, deliberately left
+// unfixed (comments-only pass).
 func NodePill(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -99,7 +132,7 @@ func NodePill(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 templ.SafeURL
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.Href))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 58, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 91, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -117,7 +150,7 @@ func NodePill(props ...Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 60, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 93, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -178,7 +211,7 @@ func NodePill(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.displayTitle())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 72, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 105, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -211,7 +244,7 @@ func NodePill(props ...Props) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 77, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 110, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -272,7 +305,7 @@ func NodePill(props ...Props) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.displayTitle())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 89, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 122, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {

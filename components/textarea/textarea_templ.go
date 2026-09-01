@@ -13,25 +13,53 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"strconv"
 	"github.com/bplus/webframe/utils"
+	"strconv"
 )
 
+// Props configures Textarea. The zero value renders an enabled, empty
+// textarea (min-height 80px) with a generated id. Class merges after
+// the built-in classes via utils.TwMerge; Attributes spread onto the
+// <textarea>.
 type Props struct {
-	ID          string
-	Class       string
-	Attributes  templ.Attributes
-	Name        string
-	Value       string
+	// ID is auto-generated via utils.RandomID when empty. Set it
+	// explicitly when a Label must reference this field via For.
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Name       string
+	// Value becomes the element's text content (the initial value).
+	Value string
+	// Form associates the textarea with a <form> by id, allowing it to
+	// live outside the form element.
 	Form        string
 	Placeholder string
-	Rows        int
-	AutoResize  bool
-	Disabled    bool
-	Readonly    bool
-	HasError    bool
+	// Rows is only emitted as the rows attribute when > 0.
+	Rows int
+	// AutoResize makes the field grow with its content (via
+	// textarea.min.js) and hides the scrollbar/resize handle.
+	AutoResize bool
+	Disabled   bool
+	Readonly   bool
+	// HasError sets aria-invalid="true" and destructive border/ring styling.
+	HasError bool
 }
 
+// Textarea renders a styled multi-line <textarea> whose initial
+// content comes from Props.Value; it does not take children. Accepts
+// zero or one Props (elements past the first are ignored).
+//
+// AutoResize only tags the element (data-tui-textarea-auto-resize) and
+// swaps the scrollbar for overflow-hidden/resize-none; the actual
+// grow-to-fit behavior is implemented by /static/js/textarea.min.js.
+//
+// Returns a templ.Component rooted at the <textarea> element.
+//
+// @side-effects calls utils.RandomID when Props.ID is empty, so
+// markup is non-deterministic across renders — pass an explicit ID
+// whenever a stable id (label For, hx-target, tests) matters.
+// @temporal-coupling AutoResize does nothing unless Script() is
+// included on the page.
 func Textarea(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -93,7 +121,7 @@ func Textarea(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 34, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 62, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -111,7 +139,7 @@ func Textarea(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 37, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 65, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -130,7 +158,7 @@ func Textarea(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 40, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 68, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -149,7 +177,7 @@ func Textarea(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Placeholder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 43, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 71, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -168,7 +196,7 @@ func Textarea(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.Rows))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 46, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 74, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -231,7 +259,7 @@ func Textarea(props ...Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 80, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 108, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -245,6 +273,14 @@ func Textarea(props ...Props) templ.Component {
 	})
 }
 
+// Script emits the deferred <script> tag implementing AutoResize
+// (grow-to-fit on input), CSP-nonced via templ.GetNonce and
+// cache-busted via utils.ScriptURL. Include once per page when any
+// Textarea uses AutoResize; deferred, so placement is flexible.
+//
+// @idempotent same output for a given render context (the ?v= version
+// is fixed at startup; only the CSP nonce from templ.GetNonce varies
+// per request).
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -273,7 +309,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 84, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 120, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -286,7 +322,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/textarea.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 84, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/textarea/textarea.templ`, Line: 120, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

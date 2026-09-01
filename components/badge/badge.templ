@@ -4,15 +4,30 @@ package badge
 
 import "github.com/bplus/webframe/utils"
 
+// Variant selects the badge's color treatment. Use one of the Variant*
+// constants; any unrecognized value (including the zero value "") falls
+// back to the default primary styling in variantClasses.
 type Variant string
 
 const (
-	VariantDefault     Variant = "default"
-	VariantSecondary   Variant = "secondary"
+	// VariantDefault is the primary-colored badge; also the effective
+	// styling for the zero value and any unknown Variant.
+	VariantDefault Variant = "default"
+	// VariantSecondary is a lower-emphasis badge using the secondary
+	// palette.
+	VariantSecondary Variant = "secondary"
+	// VariantDestructive is a red/destructive badge for errors or
+	// dangerous states.
 	VariantDestructive Variant = "destructive"
-	VariantOutline     Variant = "outline"
+	// VariantOutline is a bordered, transparent-background badge that
+	// inherits the foreground text color.
+	VariantOutline Variant = "outline"
 )
 
+// Props configures a Badge. All fields are optional: the zero value
+// produces a default-variant badge. Class is merged after the variant
+// classes via utils.TwMerge, so caller classes win Tailwind conflicts,
+// and Attributes are spread onto the root <span>.
 type Props struct {
 	ID         string
 	Class      string
@@ -20,6 +35,13 @@ type Props struct {
 	Variant    Variant
 }
 
+// Badge renders a small inline status pill (a <span>) around its children.
+// Call with zero Props for the default (primary) look, or pass one Props to
+// pick a Variant or add classes/attributes; extra Props beyond the first are
+// ignored.
+//
+// @pure renders markup only; no state, I/O, or globals touched
+// @ai-context variant styling is resolved by variantClasses() below, not in the template
 templ Badge(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

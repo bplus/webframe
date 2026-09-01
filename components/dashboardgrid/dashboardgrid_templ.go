@@ -13,6 +13,12 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Props configures the outer Grid container. The zero value is fully usable:
+// each field's default (noted below) is applied at render time, so Props{}
+// yields a standard 12-column grid. After defaulting, Cols is clamped to
+// [1, 24], so an out-of-range value degrades to the nearest bound instead of
+// emitting broken grid CSS. Gap and PageMargin are only defaulted when
+// exactly 0; negative values pass through into the inline style unchanged.
 type Props struct {
 	ID         string
 	Class      string
@@ -22,6 +28,11 @@ type Props struct {
 	PageMargin int // outer padding in pixels, default 32
 }
 
+// SlotProps configures one Slot cell inside a Grid. ColSpan 0 defaults to 12
+// (full width of the default 12-column grid) and RowSpan 0 defaults to 1;
+// after defaulting, both are clamped to [1, 12], so a bad span degrades to
+// an edge value rather than invalid CSS. Note the ColSpan cap is 12 even
+// when the parent Grid has up to 24 columns.
 type SlotProps struct {
 	ID         string
 	Class      string
@@ -30,6 +41,22 @@ type SlotProps struct {
 	RowSpan    int // rows to span, default 1
 }
 
+// Grid renders the top-level dashboard layout container: a CSS grid whose
+// column count, gap, and outer padding come from Props, so dashboard pages
+// get consistent spacing without hand-written layout CSS.
+//
+// It accepts zero or one Props (extras ignored); zero-value fields take the
+// defaults documented on Props, and Cols is clamped to [1, 24] via clamp().
+//
+// Returns a templ.Component rooted at a w-full <div> carrying inline
+// display:grid / grid-template-columns / gap / padding styles; children
+// render inside the grid and are typically Slot cells, though any content
+// participates as a grid item.
+//
+// No scripts, generated IDs, or JS wiring are emitted.
+//
+// @pure
+// @invariant the emitted grid-template-columns always has 1-24 tracks
 func Grid(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -86,7 +113,7 @@ func Grid(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 42, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 69, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -117,7 +144,7 @@ func Grid(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%dpx;padding:%dpx", p.Cols, p.Gap, p.PageMargin))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 50, Col: 125}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 77, Col: 125}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -147,6 +174,21 @@ func Grid(props ...Props) templ.Component {
 	})
 }
 
+// Slot renders one cell of a Grid, translating ColSpan/RowSpan into inline
+// grid-column / grid-row span styles so callers size dashboard tiles without
+// writing CSS.
+//
+// It accepts zero or one SlotProps (extras ignored); ColSpan 0 becomes 12,
+// RowSpan 0 becomes 1, then both are clamped to [1, 12] via clamp().
+//
+// Returns a templ.Component rooted at a min-w-0 <div> (min-w-0 lets wide
+// content like tables shrink instead of blowing out the column); children
+// are the cell's content.
+//
+// No scripts, generated IDs, or JS wiring are emitted.
+//
+// @pure
+// @invariant emitted column and row span values are always within [1, 12]
 func Slot(props ...SlotProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -201,7 +243,7 @@ func Slot(props ...SlotProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 72, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 114, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -232,7 +274,7 @@ func Slot(props ...SlotProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("grid-column:span %d;grid-row:span %d", p.ColSpan, p.RowSpan))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 80, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardgrid/dashboardgrid.templ`, Line: 122, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {

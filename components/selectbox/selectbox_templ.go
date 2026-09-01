@@ -15,18 +15,22 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/utils"
+	"strconv"
 )
 
 type contextKey string
 
 var contentIDKey contextKey = "contentID"
 
+// Props configures the SelectBox root wrapper. ID seeds the wrapper element's
+// id and (as "<ID>-content") the popover content ID; empty means a random ID.
+// Multiple is currently unused by SelectBox itself — set TriggerProps.Multiple
+// to enable multi-select behavior.
 type Props struct {
 	ID         string
 	Class      string
@@ -34,6 +38,13 @@ type Props struct {
 	Multiple   bool
 }
 
+// TriggerProps configures the Trigger button and its hidden form input.
+// Name/Form go on the hidden <input> that carries the selected value on
+// submit. Multiple enables multi-select mode in selectbox.min.js; ShowPills
+// implies Multiple and renders selections as pills; SelectedCountText is a
+// template for the multi-select summary with "{n}" replaced by the count
+// (default "{n} items selected"). HasError applies destructive styling and
+// aria-invalid.
 type TriggerProps struct {
 	ID                string
 	Class             string
@@ -47,6 +58,10 @@ type TriggerProps struct {
 	SelectedCountText string
 }
 
+// ValueProps configures the Value display span. Placeholder is shown until
+// selectbox.min.js swaps in the selected item's text (it is also emitted as
+// data-tui-selectbox-placeholder, which the JS uses as the fallback display
+// text). Multiple is currently unused by Value.
 type ValueProps struct {
 	ID          string
 	Class       string
@@ -55,6 +70,9 @@ type ValueProps struct {
 	Multiple    bool
 }
 
+// ContentProps configures the Content option panel. NoSearch removes the
+// sticky search input (and re-enables ESC-to-close, which is otherwise left
+// to the search field); SearchPlaceholder overrides the default "Search...".
 type ContentProps struct {
 	ID                string
 	Class             string
@@ -63,18 +81,24 @@ type ContentProps struct {
 	SearchPlaceholder string
 }
 
+// GroupProps configures a Group section (role="group") inside Content.
 type GroupProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// LabelProps configures a non-interactive Label heading inside Content.
 type LabelProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// ItemProps configures an option Item. Value is the machine value written to
+// the hidden input when chosen (children are only the human-readable label).
+// Selected marks the initial selection server-side; Disabled makes the option
+// inert.
 type ItemProps struct {
 	ID         string
 	Class      string
@@ -84,6 +108,21 @@ type ItemProps struct {
 	Disabled   bool
 }
 
+// SelectBox is the root of a custom form select: a <div class="select-container">
+// wrapper that establishes the popover content ID linking Trigger and
+// Content. Required nesting: SelectBox > { Trigger > Value, Content >
+// (Group | Label | Item) }; also render Script once per page. Only props[0]
+// is used, extras ignored; the zero value works. Returns a templ.Component
+// with children rendered inside the wrapper.
+//
+// Side effects: generates a random wrapper ID via utils.RandomID when
+// Props.ID is empty, derives the content ID as "<wrapperID>-content", and
+// stores it in ctx for Trigger/Content to consume.
+//
+// @temporal-coupling: Trigger and Content resolve their shared ID from ctx
+// set here; rendered outside a SelectBox both fall back to the literal
+// "fallback-select-content-id", which collides across multiple orphans.
+// @side-effects
 func SelectBox(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -127,7 +166,7 @@ func SelectBox(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(wrapperID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 91, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 130, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -170,6 +209,21 @@ func SelectBox(props ...Props) templ.Component {
 	})
 }
 
+// Trigger renders the visible control that opens the option panel: a
+// click-type popover.Trigger wrapping an outline button.Button that carries
+// the selectbox JS configuration (data-tui-selectbox-* attributes), a hidden
+// form <input> for the submitted value, the children (typically a Value
+// span), and a chevron icon. Only props[0] is used; extras ignored. Setting
+// ShowPills forces Multiple on. Returns a templ.Component.
+//
+// Note: TriggerProps.Attributes is spread onto the hidden input, not the
+// button — put button-level attributes in Class or use the wrapper.
+//
+// @temporal-coupling: targets the content ID from ctx set by the enclosing
+// SelectBox (falls back to "fallback-select-content-id" outside one); the
+// selected value only reaches the form via the hidden input, which
+// selectbox.min.js populates — on init it syncs from Items marked Selected,
+// so form submission depends on the Script having loaded and run.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -238,7 +292,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 154, Col: 18}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 208, Col: 18}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -257,7 +311,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 157, Col: 18}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 211, Col: 18}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -351,6 +405,15 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
+// Value renders the span inside Trigger that displays the current selection;
+// it initially shows Placeholder (muted) and selectbox.min.js rewrites its
+// text as the selection changes. Children may supply server-rendered initial
+// content after the placeholder. Only props[0] is used; zero value fine.
+// Returns a templ.Component.
+//
+// @ai-context: the JS finds this element by the "select-value" class — keep
+// exactly one Value per Trigger and don't remove that class via overrides.
+// @pure
 func Value(props ...ValueProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -393,7 +456,7 @@ func Value(props ...ValueProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 180, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 243, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -429,7 +492,7 @@ func Value(props ...ValueProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.Placeholder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 184, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 247, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -452,7 +515,7 @@ func Value(props ...ValueProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.Placeholder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 189, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 252, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -471,6 +534,17 @@ func Value(props ...ValueProps) templ.Component {
 	})
 }
 
+// Content renders the option panel as an exclusive popover.Content
+// (role="listbox") placed bottom-start, width-matched to the trigger, with an
+// optional sticky search input at the top (omit via NoSearch) and a scrolling
+// (max 300px) region containing the children — the Items/Groups/Labels. Only
+// props[0] is used; extras ignored. Returns a templ.Component. When search is
+// present, the popover's own ESC-to-close is disabled so selectbox.min.js
+// can stage ESC itself (from an item: refocus search; from search: close).
+//
+// @temporal-coupling: takes its DOM ID from ctx set by the enclosing
+// SelectBox (ContentProps.ID is not applied to the element); falls back to
+// "fallback-select-content-id", matching Trigger.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -582,6 +656,11 @@ func Content(props ...ContentProps) templ.Component {
 	})
 }
 
+// Group visually clusters related Items inside Content under role="group".
+// Only props[0] is used; zero value fine. Returns a templ.Component rendering
+// a <div> with children as the group body.
+//
+// @pure
 func Group(props ...GroupProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -624,7 +703,7 @@ func Group(props ...GroupProps) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 256, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 335, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -672,6 +751,11 @@ func Group(props ...GroupProps) templ.Component {
 	})
 }
 
+// Label renders a non-interactive heading for a Group of options inside
+// Content. Only props[0] is used; zero value fine. Returns a templ.Component
+// rendering a <span> with children as the label text.
+//
+// @pure
 func Label(props ...LabelProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -714,7 +798,7 @@ func Label(props ...LabelProps) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 273, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 357, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -762,6 +846,17 @@ func Label(props ...LabelProps) templ.Component {
 	})
 }
 
+// Item renders one selectable option (role="option") inside Content:
+// children as the visible label plus a check icon shown when Selected. Only
+// props[0] is used; extras ignored. Selection state, Value, and Disabled are
+// emitted as data-tui-selectbox-* attributes that selectbox.min.js reads to
+// drive toggling, filtering, and hidden-input sync.
+//
+// @invariant: ItemProps.Value must be unique within one SelectBox and should
+// be non-empty — it is the value submitted with the form and the key the JS
+// uses to match items (multi-select joins values with commas, so values must
+// not contain commas).
+// @pure
 func Item(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -812,7 +907,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 289, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 384, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -843,7 +938,7 @@ func Item(props ...ItemProps) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 302, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 397, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -856,7 +951,7 @@ func Item(props ...ItemProps) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.Selected))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 303, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 398, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -869,7 +964,7 @@ func Item(props ...ItemProps) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.Disabled))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 304, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 399, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -933,6 +1028,14 @@ func Item(props ...ItemProps) templ.Component {
 	})
 }
 
+// Script emits the <script defer> tag loading selectbox.min.js, which
+// implements selection, search filtering, keyboard navigation, pills, and
+// hidden-input/form sync (initializing on DOMContentLoaded and re-scanning
+// via MutationObserver, so HTMX-swapped selectboxes work). Include it once
+// per page whenever any SelectBox is rendered; the URL is cache-busted via
+// utils.ScriptURL and the tag carries the CSP nonce from ctx.
+//
+// @boundary
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -961,7 +1064,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 325, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 428, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -974,7 +1077,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/selectbox.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 325, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/selectbox/selectbox.templ`, Line: 428, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {

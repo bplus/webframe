@@ -24,6 +24,24 @@ import (
 	"github.com/bplus/webframe/demo/layouts"
 )
 
+// Showcase renders the full component reference page — every webframe
+// component demonstrated in labeled sections with a hero and a table of
+// contents — so developers can eyeball the library in one scroll and copy
+// usage snippets.
+//
+// It takes no parameters and no children; all content is static demo data
+// composed from the unexported per-topic section templates below.
+//
+// Returns a templ.Component producing the complete HTML document via
+// layouts.Base("Component Showcase").
+//
+// Rendering is static, but the emitted markup wires live browser behavior:
+// Alpine x-data examples, and HTMX demos that POST/GET /api/click,
+// /api/search, /api/validate, and /api/toast (handled in demo/handlers.go),
+// all relying on the scripts loaded by Base.
+//
+// @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
+// the library's importable API
 templ Showcase() {
 	@layouts.Base("Component Showcase") {
 		<!-- Hero -->

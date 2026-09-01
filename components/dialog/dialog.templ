@@ -15,15 +15,27 @@ const (
 	openKey     contextKey = "dialogOpen"
 )
 
+// Props configures the Dialog root wrapper. The zero value is usable: an
+// instance ID is generated automatically and the dialog starts closed with
+// click-away and ESC dismissal enabled.
+//
+// ID doubles as the dialog's instance ID, which links the root to its
+// Trigger/Content/Close descendants (and to external Trigger/Close elements
+// via their For field). Leave it empty unless something outside the Dialog
+// subtree needs to reference this dialog.
 type Props struct {
 	ID               string
 	Class            string
 	Attributes       templ.Attributes
-	DisableClickAway bool
-	DisableESC       bool
-	Open             bool
+	DisableClickAway bool // when true, clicking the backdrop does not close the dialog
+	DisableESC       bool // when true, the Escape key does not close the dialog
+	Open             bool // initial open state, propagated to Content via render context
 }
 
+// TriggerProps configures a Trigger element. The zero value works when the
+// Trigger is nested inside a Dialog: the instance ID is inherited from the
+// surrounding Dialog's render context. Set For only for triggers placed
+// outside the Dialog subtree.
 type TriggerProps struct {
 	ID         string
 	Class      string
@@ -31,15 +43,22 @@ type TriggerProps struct {
 	For        string // Reference to a specific dialog ID (for external triggers)
 }
 
+// ContentProps configures the Content (backdrop + panel) of a dialog. When
+// Content renders inside a Dialog, ID and Open are overridden by the values
+// the Dialog placed in the render context; set them directly only for
+// standalone usage without a Dialog wrapper.
 type ContentProps struct {
 	ID               string
 	Class            string
 	Attributes       templ.Attributes
-	HideCloseButton  bool
+	HideCloseButton  bool // suppress the default top-right X close button
 	Open             bool // Initial open state for standalone usage (when no context)
-	DisableAutoFocus bool
+	DisableAutoFocus bool // when true, focus is not moved into the dialog on open
 }
 
+// CloseProps configures a Close element. The zero value closes the nearest
+// enclosing dialog; set For to target a specific dialog by ID from anywhere
+// on the page.
 type CloseProps struct {
 	ID         string
 	Class      string
@@ -47,30 +66,63 @@ type CloseProps struct {
 	For        string // ID of the dialog to close (optional, defaults to closest dialog)
 }
 
+// HeaderProps configures the Header layout wrapper. All fields are optional
+// pass-throughs to the rendered div.
 type HeaderProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// FooterProps configures the Footer layout wrapper. All fields are optional
+// pass-throughs to the rendered div.
 type FooterProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// TitleProps configures the Title heading. All fields are optional
+// pass-throughs to the rendered h2.
 type TitleProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// DescriptionProps configures the Description paragraph. All fields are
+// optional pass-throughs to the rendered p.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
+// Dialog is the root wrapper that binds a modal's Trigger and Content into
+// one interactive unit. Use it when trigger and content live together in the
+// same subtree; sub-components placed elsewhere must link by ID via their
+// For props instead.
+//
+// Accepts zero or one Props; with none, a zero-value Props is used (random
+// instance ID, closed, dismissable). Extra Props beyond the first are
+// ignored. Returns a templ.Component rendering a plain div (no layout of its
+// own) with children in its body.
+//
+// Side effects: calls utils.RandomID when Props.ID is empty, and injects the
+// resolved instance ID plus Props.Open into the render context so nested
+// Trigger/Content resolve the same instance without explicit wiring. State is
+// NOT Alpine-based: open/close is driven by data-tui-dialog-* attributes that
+// the external script from Script() (static/js/dialog.min.js) reads and
+// toggles.
+//
+// @ai-context Composition contract: Dialog > { Trigger, Content > { Header >
+// { Title, Description }, Footer, Close } }. All parts share one instance ID
+// (attribute data-dialog-instance) — nested parts inherit it via context;
+// external Trigger/Close elements must set For to the Dialog's Props.ID.
+// @temporal-coupling Script() must be included once on any page using Dialog,
+// or triggers and close buttons are inert server-rendered markup.
+// @side-effects reads crypto/rand entropy via utils.RandomID when Props.ID
+// is empty, and derives a new render context for descendants.
 templ Dialog(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -101,6 +153,24 @@ templ Dialog(props ...Props) {
 	</div>
 }
 
+// Trigger wraps arbitrary children (typically a button) so that clicking
+// them opens the associated dialog. Use it instead of hand-wiring click
+// handlers.
+//
+// Accepts zero or one TriggerProps (extras ignored; zero value = inherit the
+// enclosing Dialog's instance). Returns a templ.Component rendering a span
+// with class "contents" — the span is layout-neutral and the children slot
+// provides the visible control.
+//
+// Side effects: none beyond markup; it reads (never writes) the instance ID
+// from the render context. The click behavior itself comes from
+// dialog.min.js, which matches this element's data-tui-dialog-trigger value
+// to the target dialog.
+//
+// @invariant The resolved instance ID (For, or inherited context) must equal
+// the target Dialog/Content's instance ID; an empty ID (no For, no enclosing
+// Dialog) produces a trigger bound to nothing. For overrides context when
+// both are present.
 templ Trigger(props ...TriggerProps) {
 	{{ var p TriggerProps }}
 	if len(props) > 0 {
@@ -127,6 +197,26 @@ templ Trigger(props ...TriggerProps) {
 	</span>
 }
 
+// Content renders the modal itself: a fixed full-screen backdrop plus a
+// centered panel that fades/scales in. Place it inside a Dialog (usual case)
+// or standalone with an explicit ContentProps.ID for external triggers.
+//
+// Accepts zero or one ContentProps (extras ignored). Returns a
+// templ.Component emitting two sibling fixed-position divs (backdrop, then
+// panel); children render inside the panel, followed by a default close
+// button (icon.X) unless HideCloseButton is set.
+//
+// Side effects: calls utils.RandomID when no ID is available from props or
+// context. Open/close state lives in data-tui-dialog-open /
+// data-tui-dialog-hidden attributes on both divs — server-rendered from the
+// initial open flag, then toggled at runtime by dialog.min.js (not Alpine).
+//
+// @temporal-coupling Context values from an enclosing Dialog override
+// ContentProps.ID and ContentProps.Open, so inside a Dialog those two props
+// are dead — configure them on the Dialog instead. Standalone (no Dialog),
+// the props are authoritative and ID must match the external Trigger's For.
+// @side-effects reads crypto/rand entropy via utils.RandomID when no ID is
+// supplied by props or context.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -242,6 +332,19 @@ templ Content(props ...ContentProps) {
 	</div>
 }
 
+// Close wraps children (e.g. a Cancel button) so that clicking them closes a
+// dialog — the in-content alternative to the default X button.
+//
+// Accepts zero or one CloseProps (extras ignored). Returns a templ.Component
+// rendering a layout-neutral span (class "contents cursor-pointer") with
+// children as the visible control. No side effects and no context reads: with
+// For set it emits data-tui-dialog-close="<id>" targeting that dialog;
+// without, it emits a bare data-tui-dialog-close and dialog.min.js resolves
+// the closest enclosing dialog at click time.
+//
+// @pure server-side rendering is deterministic (no RandomID, no context
+// writes); the close behavior itself is applied by the external
+// dialog.min.js script.
 templ Close(props ...CloseProps) {
 	{{ var p CloseProps }}
 	if len(props) > 0 {
@@ -263,6 +366,14 @@ templ Close(props ...CloseProps) {
 	</span>
 }
 
+// Header groups the Title and Description at the top of a dialog's Content
+// with standard spacing (stacked, centered on mobile, left-aligned from sm:).
+//
+// Accepts zero or one HeaderProps (extras ignored; zero value fine). Returns
+// a templ.Component rendering a div with children as its slot. Purely
+// presentational — no instance wiring, no context access.
+//
+// @pure deterministic markup from props and children only.
 templ Header(props ...HeaderProps) {
 	{{ var p HeaderProps }}
 	if len(props) > 0 {
@@ -279,6 +390,15 @@ templ Header(props ...HeaderProps) {
 	</div>
 }
 
+// Footer holds a dialog's action row (confirm/cancel buttons): stacked in
+// reverse order on mobile, right-aligned in a row from sm:. Pair action
+// buttons with Close to make them dismiss the dialog.
+//
+// Accepts zero or one FooterProps (extras ignored; zero value fine). Returns
+// a templ.Component rendering a div with children as its slot. Purely
+// presentational — no instance wiring, no context access.
+//
+// @pure deterministic markup from props and children only.
 templ Footer(props ...FooterProps) {
 	{{ var p FooterProps }}
 	if len(props) > 0 {
@@ -295,6 +415,13 @@ templ Footer(props ...FooterProps) {
 	</div>
 }
 
+// Title renders the dialog's heading with the library's standard typography;
+// place it inside Header so spacing against Description is handled.
+//
+// Accepts zero or one TitleProps (extras ignored; zero value fine). Returns
+// a templ.Component rendering an h2 with children as the heading text.
+//
+// @pure deterministic markup from props and children only.
 templ Title(props ...TitleProps) {
 	{{ var p TitleProps }}
 	if len(props) > 0 {
@@ -311,6 +438,13 @@ templ Title(props ...TitleProps) {
 	</h2>
 }
 
+// Description renders muted supporting text under the Title; place it inside
+// Header alongside Title.
+//
+// Accepts zero or one DescriptionProps (extras ignored; zero value fine).
+// Returns a templ.Component rendering a p with children as the body text.
+//
+// @pure deterministic markup from props and children only.
 templ Description(props ...DescriptionProps) {
 	{{ var p DescriptionProps }}
 	if len(props) > 0 {
@@ -327,6 +461,19 @@ templ Description(props ...DescriptionProps) {
 	</p>
 }
 
+// Script emits the script tag that activates every dialog on the page —
+// wiring trigger clicks, backdrop/ESC dismissal, focus handling, and the
+// data-tui-dialog-open attribute toggling that drives the CSS transitions.
+// Include it once per page (typically in the layout) whenever Dialog is used.
+//
+// Takes no arguments and returns a templ.Component rendering a single
+// deferred script tag. Side effects: reads the CSP nonce from the render
+// context via templ.GetNonce, and utils.ScriptURL appends a per-process
+// ?v= cache-busting timestamp to /static/js/dialog.min.js.
+//
+// @temporal-coupling Dialog/Trigger/Content/Close render inert markup until
+// this script loads; it must appear on the same page, after which no further
+// per-instance setup is needed.
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/dialog.min.js") }></script>
 }

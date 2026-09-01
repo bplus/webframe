@@ -11,16 +11,36 @@ import (
 	"github.com/a-h/templ"
 )
 
+// HandleShowcase renders the component showcase gallery page — the demo
+// server's home page (GET /). All content comes from the compiled
+// pages.Showcase templ component; the request carries no parameters.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
 func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 	templ.Handler(pages.Showcase()).ServeHTTP(w, r)
 }
 
-// HandleTraffic renders the live traffic stream demo page.
+// HandleTraffic renders the live traffic stream demo page (GET /traffic). The
+// page itself then opens an SSE connection to HandleTrafficStream for its
+// live data.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
 func HandleTraffic(w http.ResponseWriter, r *http.Request) {
 	templ.Handler(pages.Traffic()).ServeHTTP(w, r)
 }
 
-// HandleTrafficStream emits demo SSE traffic events.
+// HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one
+// synthetic JSON event — provider/type/direction/status cycled from fixed
+// lists by loop index, so the stream is deterministic, not random — then
+// flushes. It blocks until the client disconnects (r.Context() canceled);
+// there is no other exit. Responds 500 if the ResponseWriter does not
+// implement http.Flusher, since SSE is impossible without flushing.
+//
+// @boundary HTTP - Server-Sent Events stream
+// @side-effects streams to the response indefinitely; holds the connection
+// open and a running time.Ticker until client disconnect
 func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -51,7 +71,16 @@ func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleClick returns an updated button label (demonstrates hx-post + hx-swap)
+// HandleClick returns an updated button label (demonstrates hx-post + hx-swap).
+// Stateless by design: the count round-trips through the hx-vals attribute of
+// the replacement button this handler emits, so the server keeps no counter.
+// A missing "count" form value yields 1 (first click); a present value is
+// parsed and incremented. An unparseable value leaves n at its default and
+// still increments, so garbage input resets the counter to 2 rather than
+// erroring.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
 func HandleClick(w http.ResponseWriter, r *http.Request) {
 	count := r.FormValue("count")
 	n := 1
@@ -63,7 +92,16 @@ func HandleClick(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<button hx-post="/api/click" hx-swap="outerHTML" hx-vals='{"count":"%d"}' class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">Clicked %d times</button>`, n, n)
 }
 
-// HandleSearch returns filtered results (demonstrates hx-get + debounce)
+// HandleSearch returns filtered results (demonstrates hx-get + debounce).
+// Filters a hard-coded framework-name list by case-insensitive substring match
+// on the "q" query param. An empty q returns the full list; zero matches
+// return a "No results found" placeholder item instead of an empty <ul>.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
+// @ai-context the query value is never echoed into the response — only the
+// static list items are — which is why the raw Fprintf here is XSS-safe; do
+// not copy this pattern for user-supplied output
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.ToLower(r.URL.Query().Get("q"))
 	items := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
@@ -83,7 +121,15 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</ul>`)
 }
 
-// HandleValidate returns field validation feedback (demonstrates hx-post on blur)
+// HandleValidate returns field validation feedback (demonstrates hx-post on
+// blur). Only two fields have rules — "email" (non-empty, contains '@') and
+// "name" (at least 2 bytes — byte length, not runes, so a single multibyte
+// character like "é" passes) — and any other "field" value falls through
+// with no error, rendering the success message. The submitted value is never
+// echoed back, so no output escaping is needed.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
 func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	field := r.FormValue("field")
 	value := r.FormValue("value")
@@ -113,7 +159,16 @@ func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleToast returns a toast notification (demonstrates hx-swap-oob)
+// HandleToast returns a toast notification (demonstrates hx-swap-oob). The
+// "variant" form value picks the message and accent color; empty defaults to
+// "success". The response swaps out-of-band into #toast-container and relies
+// on Alpine.js (x-data/x-init) to auto-dismiss after 4 seconds — the data-ts
+// attribute forces the swapped node to differ each call so re-triggering works.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
+// @ai-context an unrecognized non-empty variant is NOT defaulted: both map
+// lookups miss and the toast renders with an empty message and no accent color
 func HandleToast(w http.ResponseWriter, r *http.Request) {
 	variant := r.FormValue("variant")
 	if variant == "" {
