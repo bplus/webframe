@@ -108,20 +108,13 @@ func emptyDescription(v string) string {
 //
 // @boundary HTTP — the browser opens an SSE (EventSource) connection to Props.StreamURL
 // @temporal-coupling inert without Script(); pair them on the same page
-// @ai-context confirmed dead code: when Props.ID is empty, utils.RandomID()
-// is assigned to a local `id` that is never rendered — the <section> emits an
-// id attribute only when Props.ID is non-empty, so the fallback never reaches
-// the output (contrast graphwidget, which renders id={ id } unconditionally).
-// Harmless at runtime (one wasted crypto/rand read per render); an aria/id
-// wiring pass would either use the local or delete it
+// The <section> emits an id attribute only when Props.ID is non-empty, so a
+// stream without an explicit ID renders no id attribute at all (contrast
+// graphwidget, which renders id={ id } unconditionally).
 templ TrafficStream(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
 		{{ p = props[0] }}
-	}
-	{{ id := p.ID }}
-	if id == "" {
-		{{ id = utils.RandomID() }}
 	}
 	<section
 		if p.ID != "" {

@@ -74,28 +74,18 @@ type Props struct {
 // children are not accepted — controls come solely from Props.
 // Filters. Returns a templ.Component rooted at the container <div>.
 //
-// @side-effects calls utils.RandomID when Props.ID is empty, but the
-// result is never rendered (see @ai-context below) — entropy is
-// consumed without affecting output, so markup stays deterministic.
 // @boundary at runtime the bar issues GET requests to HxGet and
 // rewrites the browser URL — server handlers must accept the
 // FilterConfig.ID query parameters.
 // @temporal-coupling inert unless both Script() and htmx are loaded
 // on the page.
-// @ai-context confirmed dead fallback: the local `id` (Props.ID, or
-// utils.RandomID when empty) is computed but never rendered — the root
-// <div> emits id={ p.ID } only when Props.ID is non-empty, so a bar
-// without an explicit ID renders no id attribute at all (contrast
-// graphwidget, which renders id={ id } unconditionally so its
-// generated fallback actually appears in the markup).
+// The root <div> emits id={ p.ID } only when Props.ID is non-empty, so a
+// bar without an explicit ID renders no id attribute at all (contrast
+// graphwidget, which renders id={ id } unconditionally).
 templ FilterBar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
 		{{ p = props[0] }}
-	}
-	{{ id := p.ID }}
-	if id == "" {
-		{{ id = utils.RandomID() }}
 	}
 	{{ hxSwap := p.HxSwap }}
 	if hxSwap == "" {
