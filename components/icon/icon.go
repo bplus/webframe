@@ -7,20 +7,32 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 
 	"github.com/a-h/templ"
 )
 
+// iconCacheCap bounds the number of entries iconContents may hold. When a
+// write would exceed it, the whole map is cleared first: regeneration from
+// internalSvgData is cheap, so a full flush is simpler than an LRU and keeps
+// memory bounded even if callers feed it many distinct Class values.
+const iconCacheCap = 4096
+
 // iconContents caches the fully generated SVG strings for icons that have been used,
 // keyed by a composite key of name and props to handle different stylings.
-// Guarded by iconMutex. The cache grows unbounded — one entry per unique
-// name+props combination for the life of the process — which is fine for the
-// intended use (a finite set of icons/stylings per app), but means callers
-// should not feed it unbounded user-derived props.
+// Guarded by iconMutex. Bounded to iconCacheCap entries: once full, the map is
+// cleared and repopulated on demand, so a long-running server with many
+// distinct name+props combinations (e.g. per-row Class values) does not grow
+// this cache without limit.
 var (
 	iconContents = make(map[string]string)
 	iconMutex    sync.RWMutex
 )
+
+// iconGenerations counts calls to generateSVG (i.e. cache misses). Exported
+// for tests to verify a repeated render is served from cache rather than
+// regenerated.
+var iconGenerations atomic.Int64
 
 // Props defines the properties that can be set for an icon.
 //
@@ -36,7 +48,10 @@ type Props struct {
 	Fill        string
 	Stroke      string
 	StrokeWidth string // Stroke Width of Icon, Usage: "2.5"
-	Class       string
+	// Class is part of the cache key (see iconContents), so distinct values
+	// each occupy a cache slot; the cache is bounded to iconCacheCap and
+	// clears itself when full rather than growing without limit.
+	Class string
 }
 
 // Icon returns a function that generates a templ.Component for the specified icon name.
@@ -83,8 +98,12 @@ func Icon(name string) func(...Props) templ.Component {
 				// Provide more context in the error message
 				return fmt.Errorf("failed to generate svg for icon '%s' with props %+v: %w", name, p, err)
 			}
+			iconGenerations.Add(1)
 
 			iconMutex.Lock()
+			if len(iconContents) >= iconCacheCap {
+				iconContents = make(map[string]string)
+			}
 			iconContents[cacheKey] = generatedSvg
 			iconMutex.Unlock()
 
