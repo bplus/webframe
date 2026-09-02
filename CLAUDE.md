@@ -13,7 +13,10 @@ make build          # templ generate → tailwind compile → go build ./cmd/dem
 make generate       # templ generate (produces *_templ.go from *.templ)
 make css            # npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css
 make dev            # go run ./cmd/demo (serves on :3333)
-make check          # templ generate → drift check → go vet → go test
+make check          # check-generate → check-vet → check-test
+make check-generate # templ generate → css rebuild → drift check on *_templ.go and output.css
+make check-vet      # go vet ./...
+make check-test     # go test ./...
 go test ./...       # run all tests
 go test ./components/copybutton/...  # single package
 ```
