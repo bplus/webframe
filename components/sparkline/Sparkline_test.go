@@ -1,10 +1,10 @@
 package sparkline
 
 import (
+	"github.com/bplus/webframe/utils"
 	"strconv"
 	"strings"
 	"testing"
-	"github.com/bplus/webframe/utils"
 )
 
 // --- buildPolylinePoints ---
