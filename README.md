@@ -28,8 +28,16 @@ make css
 
 The demo app runs on `http://localhost:3333`.
 
-Run `make check` before pushing — it regenerates templ output, fails on drift in
-committed `*_templ.go` files, then runs `go vet` and `go test`.
+Run `make check` before pushing. It composes three sub-targets, in order:
+
+- `check-generate` — regenerates templ output and Tailwind's `static/css/output.css`,
+  then fails on drift in either
+- `check-vet` — `go vet ./...`
+- `check-test` — `go test ./...`
+
+The Tailwind CLI version is pinned via `@tailwindcss/cli` in `package.json`/
+`package-lock.json` (currently 4.3.3) so `npx @tailwindcss/cli` produces a
+byte-stable `output.css` instead of floating to whatever is latest.
 
 ## Conventions
 
