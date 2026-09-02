@@ -28,6 +28,9 @@ make css
 
 The demo app runs on `http://localhost:3333`.
 
+Run `make check` before pushing — it regenerates templ output, fails on drift in
+committed `*_templ.go` files, then runs `go vet` and `go test`.
+
 ## Conventions
 
 - Keep components additive and avoid breaking existing component contracts
