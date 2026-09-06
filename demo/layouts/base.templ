@@ -13,7 +13,8 @@ package layouts
 // What it loads, in order:
 //   - /static/css/output.css — the compiled Tailwind stylesheet
 //   - an inline flash-free theme script that reads localStorage key
-//     "wf-theme" and sets data-theme on <html> (falling back to "dark")
+//     "wf-theme" and sets data-theme on <html> (falling back to "light",
+//     the product default; dark is opt-in via stored preference)
 //     before first paint
 //   - htmx.min.js (blocking) and alpine.min.js (deferred)
 //   - the per-component scripts: popover, dropdown, dialog, selectbox, tabs,
@@ -43,7 +44,8 @@ templ Base(title string) {
 				(function(){
 					var t;
 					try { t = localStorage.getItem('wf-theme'); } catch(e) {}
-					document.documentElement.setAttribute('data-theme', t || 'dark');
+					// light is the product default (cb57069); dark only applies via stored preference
+					document.documentElement.setAttribute('data-theme', t || 'light');
 				})();
 			</script>
 			<script src="/static/js/htmx.min.js"></script>

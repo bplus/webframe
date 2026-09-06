@@ -41,7 +41,7 @@ Build order matters: templ generate must run before CSS compilation or Go compil
 
 **JS integration**: Alpine.js for client-side reactivity (inline `x-data`/`x-on`), HTMX for server-driven interactions (`hx-*` attributes). A global `htmx:afterSwap` listener reinitializes Alpine on dynamic content.
 
-**CSS**: Tailwind v4 with custom theme tokens in `static/css/input.css`. Dark mode is the default palette.
+**CSS**: Tailwind v4 with custom theme tokens in `static/css/input.css`. Light (Observatory) is the default palette; dark is an opt-in stored preference.
 
 **Demo app** (`cmd/demo/` + `demo/`): HTTP server on :3333 with showcase gallery and traffic stream page. Routes include HTMX interaction demos (click counter, search, validation, toasts).
 
