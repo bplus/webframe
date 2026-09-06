@@ -24,8 +24,10 @@ package layouts
 //
 // It also renders the #toast-container div targeted by the demo's
 // out-of-band toast swaps, and the data-theme-toggle button that
-// theme-toggle.js wires up. Note trafficstream.min.js is NOT included here;
-// pages using TrafficStream must add trafficstream.Script() themselves.
+// theme-toggle.js wires up. Note: filterbar, slideover, trafficstream, and
+// graphwidget scripts are NOT loaded here; pages using FilterBar, Slideover,
+// TrafficStream, or GraphWidget must add each package's own Script()
+// themselves.
 //
 // @side-effects inline scripts mutate document state at load time (data-theme
 // attribute, Alpine re-init on HTMX swaps)
@@ -46,6 +48,12 @@ templ Base(title string) {
 					document.documentElement.setAttribute('data-theme', t || 'dark');
 				})();
 			</script>
+			<!-- htmx loads blocking (not deferred) so it is ready before the
+			     non-deferred htmx:afterSwap listener runs; that inline listener
+			     lives near the end of <body> (see below) and needs the htmx
+			     global available first so its dispatched events reach the
+			     listener. alpine loads deferred since it only needs to be ready
+			     before user interaction, not before that listener registers. -->
 			<script src="/static/js/htmx.min.js"></script>
 			<script defer src="/static/js/alpine.min.js"></script>
 		</head>

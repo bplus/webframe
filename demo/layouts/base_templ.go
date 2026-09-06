@@ -32,8 +32,10 @@ import templruntime "github.com/a-h/templ/runtime"
 //
 // It also renders the #toast-container div targeted by the demo's
 // out-of-band toast swaps, and the data-theme-toggle button that
-// theme-toggle.js wires up. Note trafficstream.min.js is NOT included here;
-// pages using TrafficStream must add trafficstream.Script() themselves.
+// theme-toggle.js wires up. Note: filterbar, slideover, trafficstream, and
+// graphwidget scripts are NOT loaded here; pages using FilterBar, Slideover,
+// TrafficStream, or GraphWidget must add each package's own Script()
+// themselves.
 //
 // @side-effects inline scripts mutate document state at load time (data-theme
 // attribute, Alpine re-init on HTMX swaps)
@@ -66,13 +68,13 @@ func Base(title string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/layouts/base.templ`, Line: 39, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/layouts/base.templ`, Line: 41, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " — Webframe</title><link rel=\"stylesheet\" href=\"/static/css/output.css\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'dark');\n\t\t\t\t})();\n\t\t\t</script><script src=\"/static/js/htmx.min.js\"></script><script defer src=\"/static/js/alpine.min.js\"></script></head><body class=\"wf-theme antialiased\"><!-- Topbar --><nav class=\"wf-topbar\"><div class=\"wf-topbar-inner\"><div class=\"flex items-center gap-6\"><a href=\"/\" class=\"text-lg font-bold tracking-tight\">Webframe</a><div class=\"hidden sm:flex items-center gap-4\"><a href=\"#buttons\" class=\"wf-nav-link\">Buttons</a> <a href=\"#cards\" class=\"wf-nav-link\">Cards</a> <a href=\"#forms\" class=\"wf-nav-link\">Forms</a> <a href=\"#interactive\" class=\"wf-nav-link\">Interactive</a> <a href=\"#patterns\" class=\"wf-nav-link\">Patterns</a> <a href=\"/traffic\" class=\"wf-nav-link\">Traffic</a></div></div><button data-theme-toggle class=\"wf-theme-toggle\">Light Mode</button></div></nav><!-- Main content --><main class=\"max-w-5xl mx-auto px-4 sm:px-6 py-8\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " — Webframe</title><link rel=\"stylesheet\" href=\"/static/css/output.css\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'dark');\n\t\t\t\t})();\n\t\t\t</script><!-- htmx loads blocking (not deferred) so it is ready before the\n\t\t\t     non-deferred htmx:afterSwap listener runs; that inline listener\n\t\t\t     lives near the end of <body> (see below) and needs the htmx\n\t\t\t     global available first so its dispatched events reach the\n\t\t\t     listener. alpine loads deferred since it only needs to be ready\n\t\t\t     before user interaction, not before that listener registers. --><script src=\"/static/js/htmx.min.js\"></script><script defer src=\"/static/js/alpine.min.js\"></script></head><body class=\"wf-theme antialiased\"><!-- Topbar --><nav class=\"wf-topbar\"><div class=\"wf-topbar-inner\"><div class=\"flex items-center gap-6\"><a href=\"/\" class=\"text-lg font-bold tracking-tight\">Webframe</a><div class=\"hidden sm:flex items-center gap-4\"><a href=\"#buttons\" class=\"wf-nav-link\">Buttons</a> <a href=\"#cards\" class=\"wf-nav-link\">Cards</a> <a href=\"#forms\" class=\"wf-nav-link\">Forms</a> <a href=\"#interactive\" class=\"wf-nav-link\">Interactive</a> <a href=\"#patterns\" class=\"wf-nav-link\">Patterns</a> <a href=\"/traffic\" class=\"wf-nav-link\">Traffic</a></div></div><button data-theme-toggle class=\"wf-theme-toggle\">Light Mode</button></div></nav><!-- Main content --><main class=\"max-w-5xl mx-auto px-4 sm:px-6 py-8\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -17,6 +17,13 @@ import (
 // if the listener cannot bind (e.g. port already in use).
 //
 // @boundary HTTP - listens on :3333
+// @boundary filesystem - static file server is rooted at "static" relative
+// to the process's current working directory, so this must be run from the
+// repo root (e.g. `go run ./cmd/demo`, not from inside cmd/demo). Starting it
+// from the wrong directory does not fail fast: the server binds and serves
+// pages fine, but every /static/ asset 404s and components that depend on
+// their JS (popover, dropdown, dialog, etc.) appear inert with no console
+// error pointing at the real cause.
 // @side-effects binds a TCP port, writes startup line to stdout
 func main() {
 	mux := http.NewServeMux()
