@@ -1,9 +1,11 @@
 (function () {
   function getTheme() {
     try {
-      return localStorage.getItem('wf-theme') || 'dark';
+      // light is the product default (cb57069); dark only applies via stored preference
+      return localStorage.getItem('wf-theme') || 'light';
     } catch (e) {
-      return 'dark';
+      // light is the product default (cb57069); dark only applies via stored preference
+      return 'light';
     }
   }
 
@@ -27,7 +29,8 @@
       if (btn.dataset.themeBound === '1') return;
       btn.dataset.themeBound = '1';
       btn.addEventListener('click', function () {
-        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+        // light is the product default (cb57069); dark only applies via stored preference
+        var current = document.documentElement.getAttribute('data-theme') || 'light';
         setTheme(current === 'light' ? 'dark' : 'light');
       });
     });
