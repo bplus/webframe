@@ -459,13 +459,6 @@ func Trigger(props ...TriggerProps) templ.Component {
 //
 // @temporal-coupling: group ID comes from ctx (set by the enclosing Tabs)
 // unless ContentProps.TabsID overrides it.
-// Known bug (confirmed in generated tabs_templ.go): the bare
-// `return templ.NopComponent` line in the empty-Value branch is not inside
-// {{ }}, so templ treats it as template text, not Go — the generated code
-// writes the literal string "return templ.NopComponent" into the HTML right
-// after the error span, and rendering continues on to emit the panel div
-// anyway. It does NOT abort rendering. Left as-is here (comments only); the
-// fix would be deleting the line or wrapping it as a real statement.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -496,7 +489,7 @@ func Content(props ...ContentProps) templ.Component {
 			tabsID = IDFromContext(ctx)
 		}
 		if p.Value == "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"text-xs text-destructive\">Error: Tab Content missing required 'Value' attribute.</span> return templ.NopComponent")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"text-xs text-destructive\">Error: Tab Content missing required 'Value' attribute.</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -523,7 +516,7 @@ func Content(props ...ContentProps) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 195, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 187, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -554,7 +547,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(tabsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 205, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 197, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -567,7 +560,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 206, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 198, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -580,7 +573,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(utils.IfElse(p.IsActive, "active", "inactive"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 207, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 199, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -659,7 +652,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 236, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 228, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -672,7 +665,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/tabs.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 236, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 228, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
