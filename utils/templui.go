@@ -103,10 +103,9 @@ func RandomID() string {
 // Fixed at package init and constant for the process lifetime, so every
 // restart busts browser caches while a running process stays consistent.
 //
-// @boundary wall clock, read once at package init. Multiple instances of the
-// same binary (e.g. behind a load balancer) start at slightly different
-// times and so stamp different ?v= values; a client whose requests land on
-// different instances re-downloads scripts it already has cached.
+// @boundary wall clock, read once at package init: process start time varies
+// per instance, so multiple instances behind a load balancer stamp different
+// ?v= values, causing re-downloads across instances.
 var ScriptVersion = fmt.Sprintf("%d", time.Now().Unix())
 
 // ScriptURL generates cache-busted script URLs.

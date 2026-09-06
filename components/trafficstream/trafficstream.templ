@@ -58,8 +58,9 @@ func dimensionStr(v int) string {
 }
 
 // maxItems returns the retention cap for stream rows: MaxItems if positive,
-// otherwise a default of 250 rows — enough scrollback to review recent
-// traffic while keeping memory bounded on long-running demo sessions.
+// otherwise a default of 250 — a memory vs. scrollback tradeoff: enough rows
+// to review recent traffic without letting memory grow unbounded on a
+// long-running demo session.
 func maxItems(v int) int {
 	if v <= 0 {
 		return 250
