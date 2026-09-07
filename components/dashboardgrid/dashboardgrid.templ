@@ -43,7 +43,13 @@ type SlotProps struct {
 // Returns a templ.Component rooted at a w-full <div> carrying inline
 // display:grid / grid-template-columns / gap / padding styles; children
 // render inside the grid and are typically Slot cells, though any content
-// participates as a grid item.
+// participates as a grid item. The div also carries the stable class
+// wf-dashgrid, which static/css/input.css uses (with !important) to
+// collapse the grid to one column under a 900px viewport -- the inline
+// column-count style has no other way to be overridden by a media query
+// (a stats page had no phone-width
+// breakpoint because Cols is a runtime value, not a Tailwind utility
+// class Tailwind's build can see and generate a responsive variant for).
 //
 // No scripts, generated IDs, or JS wiring are emitted.
 //
@@ -70,7 +76,7 @@ templ Grid(props ...Props) {
 		}
 		class={
 			utils.TwMerge(
-				"w-full",
+				"w-full wf-dashgrid",
 				p.Class,
 			),
 		}
@@ -90,7 +96,10 @@ templ Grid(props ...Props) {
 //
 // Returns a templ.Component rooted at a min-w-0 <div> (min-w-0 lets wide
 // content like tables shrink instead of blowing out the column); children
-// are the cell's content.
+// are the cell's content. The div also carries the stable class
+// wf-dashslot, which static/css/input.css uses (with !important) to reset
+// span to 1x1 under a 900px viewport, matching Grid's own wf-dashgrid
+// breakpoint so a Slot never spans past its now-single-column Grid.
 //
 // No scripts, generated IDs, or JS wiring are emitted.
 //
@@ -115,7 +124,7 @@ templ Slot(props ...SlotProps) {
 		}
 		class={
 			utils.TwMerge(
-				"min-w-0",
+				"min-w-0 wf-dashslot",
 				p.Class,
 			),
 		}

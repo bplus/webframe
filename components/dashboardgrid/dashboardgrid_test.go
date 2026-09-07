@@ -25,6 +25,9 @@ func TestGrid_DefaultProps(t *testing.T) {
 	if !strings.Contains(html, "gap:16px") {
 		t.Errorf("expected 16px gap, got: %s", html)
 	}
+	if !strings.Contains(html, "wf-dashgrid") {
+		t.Errorf("expected wf-dashgrid class (static/css/input.css's phone-width breakpoint targets it), got: %s", html)
+	}
 	if !strings.Contains(html, "padding:32px") {
 		t.Errorf("expected 32px padding, got: %s", html)
 	}
@@ -60,6 +63,9 @@ func TestSlot_DefaultSpan(t *testing.T) {
 
 	if !strings.Contains(html, "span 12") {
 		t.Errorf("expected default col-span 12, got: %s", html)
+	}
+	if !strings.Contains(html, "wf-dashslot") {
+		t.Errorf("expected wf-dashslot class (static/css/input.css's phone-width breakpoint targets it), got: %s", html)
 	}
 }
 
