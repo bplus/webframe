@@ -128,14 +128,9 @@ var componentCases = []componentCase{
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
 	{name: "table", constructor: func() templ.Component { return table.Table() }},
-	// tabs.Tabs() itself is bug-free with zero Props; Content() is the row
-	// that actually exercises the package's known defect (see knownIssue
-	// below), which is the point of this suite.
-	{
-		name:        "tabs",
-		constructor: func() templ.Component { return tabs.Content() },
-		knownIssue:  "bare `return templ.NopComponent` in the empty-Value branch of tabs.Content is template text, not a real Go return — it leaks into rendered HTML instead of aborting the render.",
-	},
+	// tabs.Content() exercises the empty-Value rendering path covered by the
+	// package-level regression test.
+	{name: "tabs", constructor: func() templ.Component { return tabs.Content() }},
 	{name: "textarea", constructor: func() templ.Component { return textarea.Textarea() }},
 	{name: "trafficstream", constructor: func() templ.Component { return trafficstream.TrafficStream() }},
 }
