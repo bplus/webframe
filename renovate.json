@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "description": "Freshness for this repo's own pins (templ, tailwind-merge-go via go.mod's default gomod manager; golang:1.24-alpine via the default dockerfile manager).",
+  "dependencyDashboard": false,
+  "labels": [],
+  "packageRules": [
+    {
+      "description": "The go.mod `go` directive is a decision (matches whatever Go a consumer's build environment carries), never an auto-PR.",
+      "matchDatasources": ["golang-version"],
+      "enabled": false
+    }
+  ]
+}
