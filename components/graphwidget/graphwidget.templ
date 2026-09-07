@@ -100,6 +100,8 @@ func dimensionStr(v int) string {
 //     same catch handler, which replaces the loading placeholder with a
 //     "Failed to load graph" message. This degrades visibly; it does not
 //     spin forever.
+//   - HTTP error statuses are not checked: a 4xx/5xx response with valid JSON
+//     is treated as successful graph data and hides the loading placeholder.
 //   - ExpandURL fetch (neighbor expansion on node click) fails: only
 //     console.error is called — no UI feedback, the click silently does
 //     nothing further. Unlike the initial load, this failure is invisible
