@@ -73,6 +73,18 @@ func TestRender_MaxBarsCapsAndAggregates(t *testing.T) {
 	}
 }
 
+// A fixed-width/height SVG forced the whole page to scroll
+// sideways at a narrow viewport even after its dashboardgrid.Slot had
+// already collapsed to one column. max-width:100%/height:auto lets the
+// SVG shrink to fit its container while viewBox keeps bars/labels drawn
+// at their original scale.
+func TestRender_SVGIsResponsive(t *testing.T) {
+	html := render(t, Props{Bars: []Bar{{Label: "a", Value: 10}}, Width: 640, Height: 190})
+	if !strings.Contains(html, `style="max-width:100%;height:auto;"`) {
+		t.Errorf("expected a responsive max-width/height:auto style on the <svg>; html:\n%s", html)
+	}
+}
+
 // Backward-compat: MaxBars=0 leaves all bars untouched (no Other bucket).
 func TestRender_MaxBarsZeroUnlimited(t *testing.T) {
 	bars := make([]Bar, 0, 20)

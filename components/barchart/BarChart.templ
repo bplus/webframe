@@ -111,7 +111,14 @@ func maxVal(bars []Bar) float64 {
 // (default and per-bar) pass through utils.SanitizeColor; ShowValues labels
 // use %.4g formatting; bar thickness never drops below 2px.
 //
-// Returns a templ.Component that renders a <div>-wrapped <svg>.
+// Returns a templ.Component that renders a <div>-wrapped <svg>. The SVG
+// carries style="max-width:100%;height:auto" (viewBox="0 0 w h" already
+// defines its internal coordinate system, so this only scales the
+// rendered box) -- Width/Height set the chart's natural size, not a
+// floor, so it still shrinks inside a narrower container instead of
+// forcing that container to scroll (a fixed-width chart
+// inside a dashboardgrid.Slot that had already collapsed to one column
+// was still forcing the whole page to scroll sideways at phone width).
 //
 // @pure
 // @complexity O(n log n) when MaxBars caps the input, O(n) otherwise
@@ -140,13 +147,14 @@ templ BarChart(props ...Props) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("inline-block", p.Class) }
+		class={ utils.TwMerge("inline-block max-w-full", p.Class) }
 		{ p.Attributes... }
 	>
 		<svg
 			width={ fmt.Sprintf("%d", w) }
 			height={ fmt.Sprintf("%d", h) }
 			viewBox={ fmt.Sprintf("0 0 %d %d", w, h) }
+			style="max-width:100%;height:auto;"
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			if orientation == Horizontal {
