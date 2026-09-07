@@ -170,13 +170,6 @@ templ Trigger(props ...TriggerProps) {
 //
 // @temporal-coupling: group ID comes from ctx (set by the enclosing Tabs)
 // unless ContentProps.TabsID overrides it.
-// Known bug (confirmed in generated tabs_templ.go): the bare
-// `return templ.NopComponent` line in the empty-Value branch is not inside
-// {{ }}, so templ treats it as template text, not Go — the generated code
-// writes the literal string "return templ.NopComponent" into the HTML right
-// after the error span, and rendering continues on to emit the panel div
-// anyway. It does NOT abort rendering. Left as-is here (comments only); the
-// fix would be deleting the line or wrapping it as a real statement.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -188,7 +181,6 @@ templ Content(props ...ContentProps) {
 	}
 	if p.Value == "" {
 		<span class="text-xs text-destructive">Error: Tab Content missing required 'Value' attribute.</span>
-		return templ.NopComponent
 	}
 	<div
 		if p.ID != "" {
