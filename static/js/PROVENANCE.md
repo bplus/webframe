@@ -35,18 +35,18 @@ there is no `go.mod`/`package.json` entry to cross-check against — the
 `.templ` header comment is the only version record, and it agrees for all
 ten files below.
 
-| File | Paired `.templ` source | Version | License |
-|---|---|---|---|
-| `avatar.min.js` | `components/avatar/avatar.templ` | templUI v1.3.0 | MIT (public knowledge of templui's licensing; not fetched/verified live in this sandbox — confirm at github.com/templui/templui's `LICENSE`). |
-| `checkbox.min.js` | `components/checkbox/checkbox.templ` | templUI v1.3.0 | MIT (see note above). |
-| `dialog.min.js` | `components/dialog/dialog.templ` | templUI v1.3.0 | MIT (see note above). |
-| `dropdown.min.js` | `components/dropdown/dropdown.templ` | templUI v1.3.0 | MIT (see note above). |
-| `input.min.js` | `components/input/input.templ` | templUI v1.3.0 | MIT (see note above). |
-| `label.min.js` | `components/label/label.templ` | templUI v1.3.0 | MIT (see note above). |
-| `popover.min.js` | `components/popover/popover.templ` | templUI v1.3.0 | MIT (see note above). |
-| `selectbox.min.js` | `components/selectbox/selectbox.templ` | templUI v1.3.0 | MIT (see note above). |
-| `tabs.min.js` | `components/tabs/tabs.templ` | templUI v1.3.0 | MIT (see note above). |
-| `textarea.min.js` | `components/textarea/textarea.templ` | templUI v1.3.0 | MIT (see note above). |
+| File | Source | Paired `.templ` source | Version | License |
+|---|---|---|---|---|
+| `avatar.min.js` | templUI | `components/avatar/avatar.templ` | templUI v1.3.0 | MIT (public knowledge of templui's licensing; not fetched/verified live in this sandbox — confirm at github.com/templui/templui's `LICENSE`). |
+| `checkbox.min.js` | templUI | `components/checkbox/checkbox.templ` | templUI v1.3.0 | MIT (see note above). |
+| `dialog.min.js` | templUI | `components/dialog/dialog.templ` | templUI v1.3.0 | MIT (see note above). |
+| `dropdown.min.js` | templUI | `components/dropdown/dropdown.templ` | templUI v1.3.0 | MIT (see note above). |
+| `input.min.js` | templUI | `components/input/input.templ` | templUI v1.3.0 | MIT (see note above). |
+| `label.min.js` | templUI | `components/label/label.templ` | templUI v1.3.0 | MIT (see note above). |
+| `popover.min.js` | templUI | `components/popover/popover.templ` | templUI v1.3.0 | MIT (see note above). |
+| `selectbox.min.js` | templUI | `components/selectbox/selectbox.templ` | templUI v1.3.0 | MIT (see note above). |
+| `tabs.min.js` | templUI | `components/tabs/tabs.templ` | templUI v1.3.0 | MIT (see note above). |
+| `textarea.min.js` | templUI | `components/textarea/textarea.templ` | templUI v1.3.0 | MIT (see note above). |
 
 Upgrade path: re-run the templUI CLI installer for a newer version of each
 component (it overwrites the `.templ` + `.min.js` pair together); there is
@@ -56,29 +56,53 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These files carry none of the templUI header markers, and their introducing
-commits describe original component work rather than vendoring or
-installing something:
+These 3 files carry none of the templUI header markers, and their
+introducing commits directly describe original component work rather than
+vendoring or installing something — evidence is strong enough to call these
+confirmed local, not just inferred:
 
-| File | Evidence of local authorship | License |
-|---|---|---|
-| `graphwidget.min.js` | Introduced in `eaccae72` ("feat: add GraphWidget component with vendored 3d-force-graph"), which explicitly distinguishes the *vendored* `3d-force-graph.min.js` from this hand-written glue script. No `.templ` version header (`components/graphwidget/graphwidget.templ` has none). Content is readable (not obfuscated), consistent with in-repo authorship. | Part of the webframe module; the repo has no separate top-level `LICENSE` file for its own code. |
-| `trafficstream.min.js` | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
-| `filterbar.min.js` | Introduced alongside `slideover.min.js` in `5138e52` ("feat: add SlideOver and FilterBar components"), whose body describes original design ("Mirrors dialog component pattern", "HTMX integration via htmx.ajax, URL param sync via history.replaceState") rather than an install. No `.templ` version header (`components/filterbar/filterbar.templ` has none, unlike every genuine templUI component in this repo). **Not fully certain**: templUI's catalog could not be checked live in this sandbox to confirm it has no "filterbar" component of its own — treat this row as high-confidence local, not certain, until someone with network access cross-checks templui.io's current component list. | Part of the webframe module (see above). |
-| `slideover.min.js` | Same commit (`5138e52`) and same reasoning as `filterbar.min.js` above; the commit body explicitly says it "Mirrors dialog component pattern," i.e. modeled on the templUI-shipped `dialog.min.js` idiom rather than being one. Same caveat about not being able to check templui.io's live catalog. | Part of the webframe module (see above). |
-| `theme-toggle.js` | The only non-minified, fully readable file in `static/js/`. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
+| File | Source | Evidence of local authorship | License |
+|---|---|---|---|
+| `graphwidget.min.js` | Local | Introduced in `eaccae72` ("feat: add GraphWidget component with vendored 3d-force-graph"), which explicitly distinguishes the *vendored* `3d-force-graph.min.js` from this hand-written glue script. No `.templ` version header (`components/graphwidget/graphwidget.templ` has none). Content is readable (not obfuscated), consistent with in-repo authorship. | Part of the webframe module; the repo has no separate top-level `LICENSE` file for its own code. |
+| `trafficstream.min.js` | Local | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
+| `theme-toggle.js` | Local | The only non-minified, fully readable file in `static/js/`. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
+
+## UNKNOWN provenance
+
+These 2 files are **not** classified as local or third-party. They lack the
+templUI header (unlike every confirmed templUI component in this repo), and
+their introducing commit message describes them as original design
+("Mirrors dialog component pattern", "HTMX integration via htmx.ajax, URL
+param sync via history.replaceState") rather than an install — which points
+away from "templUI-shipped." But that is not the same as confirming they
+were *written* for webframe: templUI's live component catalog could not be
+checked from this offline sandbox, so an unlisted or newer templUI
+"filterbar"/"slideover" component cannot be ruled out. Per the ticket's
+instruction to mark genuinely undeterminable rows as UNKNOWN rather than
+guess, both stay UNKNOWN pending a check of templui.io's current catalog
+with network access:
+
+| File | Source | What's known | License |
+|---|---|---|---|
+| `filterbar.min.js` | UNKNOWN | Introduced alongside `slideover.min.js` in `5138e52` ("feat: add SlideOver and FilterBar components"). No `.templ` version header (`components/filterbar/filterbar.templ` has none). Commit message reads like original design, not an install — but templUI's catalog was not checked live. | UNKNOWN — pending source determination. |
+| `slideover.min.js` | UNKNOWN | Same commit (`5138e52`); commit body says it "Mirrors dialog component pattern," i.e. modeled on the templUI-shipped `dialog.min.js` idiom. No `.templ` version header. Same caveat: templUI's live catalog was not checked. | UNKNOWN — pending source determination. |
 
 ## Summary
 
-All 18 files in `static/js/` are accounted for: 3 third-party vendored
-libraries (versions and provenance confirmed from in-file strings and commit
-messages), 10 templUI-shipped component scripts (versions confirmed via the
-paired `.templ` header comment), and 5 local files (identified by absence of
-the templUI marker plus commit-message evidence of original authorship). No
-row required an UNKNOWN verdict — the git history plus in-file version
-strings were sufficient in every case. The two caveats worth flagging to a
-human: (1) none of the license attributions above were verified against a
-live-fetched LICENSE file, since this investigation ran with no network
-access; (2) `filterbar.min.js` / `slideover.min.js` are "local" by strong
-inference (missing templUI header + commit message describing original
-design), not by a confirmed absence from templUI's current catalog.
+18 JavaScript assets live in `static/js/` (17 `.min.js` files plus the one
+readable `theme-toggle.js`; this PROVENANCE.md file itself is not counted).
+Of those 18: 3 are third-party vendored libraries (versions and provenance
+confirmed from in-file strings and commit messages), 10 are templUI
+v1.3.0-shipped component scripts (versions confirmed via the paired
+`.templ` header comment), 3 are confirmed local (identified by absence of
+the templUI marker plus a commit message directly describing original
+authorship), and 2 — `filterbar.min.js` and `slideover.min.js` — are
+UNKNOWN: the same absence-of-templUI-header signal applies, but it only
+rules out "templUI-shipped," it doesn't positively confirm "written for
+webframe," and that distinction couldn't be settled without checking
+templUI's live catalog, which this offline sandbox could not do. The two
+caveats worth flagging to a human: (1) none of the license attributions
+above were verified against a live-fetched LICENSE file, since this
+investigation ran with no network access; (2) `filterbar.min.js` /
+`slideover.min.js` need that same live check against templui.io's current
+component list before their Source can move out of UNKNOWN.
