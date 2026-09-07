@@ -112,6 +112,18 @@ func emptyDescription(v string) string {
 //
 // @boundary HTTP — the browser opens an SSE (EventSource) connection to Props.StreamURL
 // @temporal-coupling inert without Script(); pair them on the same page
+//
+// SSE drop/reconnect behavior (verified against static/js/trafficstream.min.js,
+// which is unminified/readable despite the extension): the native EventSource
+// reconnects on its own browser-controlled schedule after a drop — there is
+// no manual retry loop here. source.onerror sets the connection badge to
+// amber "Reconnecting", but there is no onopen handler, so the badge stays
+// on "Reconnecting" even after the browser silently reconnects and events
+// resume flowing — a real display bug, not just an undocumented state. Rows
+// rendered before the drop are untouched and survive. The Pause button
+// (data-tui-trafficstream-toggle) only stops appending incoming rows to the
+// DOM; it does not close the EventSource, so pausing has no effect on the
+// connection or the badge.
 // The <section> emits an id attribute only when Props.ID is non-empty, so a
 // stream without an explicit ID renders no id attribute at all (contrast
 // graphwidget, which renders id={ id } unconditionally).

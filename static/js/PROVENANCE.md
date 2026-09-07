@@ -1,0 +1,84 @@
+# Provenance of `static/js/*`
+
+Method for each file: `git log --follow`
+on the file (first commit that added it, and its message), reading the file
+content itself (version strings, license banners, code style), and
+cross-referencing the matching Go/`.templ` source when one exists.
+
+**Sandbox limitation:** this investigation ran in an offline environment —
+`WebFetch` and outbound network access were both unavailable, so no upstream
+URL, changelog, or LICENSE file listed below was fetched and diffed live.
+Versions and licenses marked "high confidence" come from strings embedded in
+the vendored file itself or from a matching in-repo version comment (verified
+against repo content, not guessed). Where a fact instead relies on prior
+public knowledge of a well-known project's licensing (not something the repo
+can attest to), that is flagged explicitly — re-verify against the linked
+upstream before treating it as a compliance-grade answer.
+
+## Third-party vendored libraries
+
+| File | Source | Version | License | Upgrade path |
+|---|---|---|---|---|
+| `3d-force-graph.min.js` | [vasturiano/3d-force-graph](https://github.com/vasturiano/3d-force-graph) | **1.73.4** — first line of the file reads `// Version 1.73.4 3d-force-graph - https://github.com/vasturiano/3d-force-graph`; matches the commit message on `eaccae72` ("Vendored 3d-force-graph v1.73.4"). High confidence. | MIT (public knowledge of this project's licensing; not fetched/verified live in this sandbox — confirm at the upstream repo's `LICENSE` before relying on it). | Unminified build + source map are published as part of the `3d-force-graph` npm package (`dist/3d-force-graph.js`, `.js.map`) for the matching version tag; no source map is vendored in this repo. |
+| `htmx.min.js` | [bigskysoftware/htmx](https://github.com/bigskysoftware/htmx) | **2.0.4** — the string `version:"2.0.4"` appears in the bundle's config object. High confidence. | BSD 2-Clause (public knowledge of htmx.org's licensing; not fetched/verified live in this sandbox). | Unminified `htmx.js` for the same tag ships in the `htmx.org` npm package / GitHub release assets; useful to pin down which `hx-*` idioms this codebase was written against before upgrading. |
+| `alpine.min.js` | [alpinejs/alpine](https://github.com/alpinejs/alpine) | **3.14.8** — the string `version:"3.14.8"` appears in the bundle. High confidence. | MIT (public knowledge of Alpine's licensing; not fetched/verified live in this sandbox). | Unminified `dist/cdn.js` (or module build) for the same tag ships in the `alpinejs` npm package / GitHub release assets. |
+
+## templUI-shipped component scripts
+
+These 10 files have no version string of their own, but each pairs 1:1 with
+a `components/<name>/<name>.templ` file whose header comment reads
+`// templui component <name> - version: v1.3.0 installed by templui v1.3.0`
+and links `https://templui.io/docs/components/<name>`. templUI (templui.io)
+is a CLI that installs component source directly into the consuming repo
+(shadcn-style) rather than being pulled in as a versioned dependency, so
+there is no `go.mod`/`package.json` entry to cross-check against — the
+`.templ` header comment is the only version record, and it agrees for all
+ten files below.
+
+| File | Paired `.templ` source | Version | License |
+|---|---|---|---|
+| `avatar.min.js` | `components/avatar/avatar.templ` | templUI v1.3.0 | MIT (public knowledge of templui's licensing; not fetched/verified live in this sandbox — confirm at github.com/templui/templui's `LICENSE`). |
+| `checkbox.min.js` | `components/checkbox/checkbox.templ` | templUI v1.3.0 | MIT (see note above). |
+| `dialog.min.js` | `components/dialog/dialog.templ` | templUI v1.3.0 | MIT (see note above). |
+| `dropdown.min.js` | `components/dropdown/dropdown.templ` | templUI v1.3.0 | MIT (see note above). |
+| `input.min.js` | `components/input/input.templ` | templUI v1.3.0 | MIT (see note above). |
+| `label.min.js` | `components/label/label.templ` | templUI v1.3.0 | MIT (see note above). |
+| `popover.min.js` | `components/popover/popover.templ` | templUI v1.3.0 | MIT (see note above). |
+| `selectbox.min.js` | `components/selectbox/selectbox.templ` | templUI v1.3.0 | MIT (see note above). |
+| `tabs.min.js` | `components/tabs/tabs.templ` | templUI v1.3.0 | MIT (see note above). |
+| `textarea.min.js` | `components/textarea/textarea.templ` | templUI v1.3.0 | MIT (see note above). |
+
+Upgrade path: re-run the templUI CLI installer for a newer version of each
+component (it overwrites the `.templ` + `.min.js` pair together); there is
+no unminified variant to fetch separately since templUI installs source, not
+a pre-built bundle — the "minified" scripts here are templUI's own shipped
+build output, not a build step this repo performs itself.
+
+## Local (written for webframe, not templUI, not third-party)
+
+These files carry none of the templUI header markers, and their introducing
+commits describe original component work rather than vendoring or
+installing something:
+
+| File | Evidence of local authorship | License |
+|---|---|---|
+| `graphwidget.min.js` | Introduced in `eaccae72` ("feat: add GraphWidget component with vendored 3d-force-graph"), which explicitly distinguishes the *vendored* `3d-force-graph.min.js` from this hand-written glue script. No `.templ` version header (`components/graphwidget/graphwidget.templ` has none). Content is readable (not obfuscated), consistent with in-repo authorship. | Part of the webframe module; the repo has no separate top-level `LICENSE` file for its own code. |
+| `trafficstream.min.js` | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
+| `filterbar.min.js` | Introduced alongside `slideover.min.js` in `5138e52` ("feat: add SlideOver and FilterBar components"), whose body describes original design ("Mirrors dialog component pattern", "HTMX integration via htmx.ajax, URL param sync via history.replaceState") rather than an install. No `.templ` version header (`components/filterbar/filterbar.templ` has none, unlike every genuine templUI component in this repo). **Not fully certain**: templUI's catalog could not be checked live in this sandbox to confirm it has no "filterbar" component of its own — treat this row as high-confidence local, not certain, until someone with network access cross-checks templui.io's current component list. | Part of the webframe module (see above). |
+| `slideover.min.js` | Same commit (`5138e52`) and same reasoning as `filterbar.min.js` above; the commit body explicitly says it "Mirrors dialog component pattern," i.e. modeled on the templUI-shipped `dialog.min.js` idiom rather than being one. Same caveat about not being able to check templui.io's live catalog. | Part of the webframe module (see above). |
+| `theme-toggle.js` | The only non-minified, fully readable file in `static/js/`. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
+
+## Summary
+
+All 18 files in `static/js/` are accounted for: 3 third-party vendored
+libraries (versions and provenance confirmed from in-file strings and commit
+messages), 10 templUI-shipped component scripts (versions confirmed via the
+paired `.templ` header comment), and 5 local files (identified by absence of
+the templUI marker plus commit-message evidence of original authorship). No
+row required an UNKNOWN verdict — the git history plus in-file version
+strings were sufficient in every case. The two caveats worth flagging to a
+human: (1) none of the license attributions above were verified against a
+live-fetched LICENSE file, since this investigation ran with no network
+access; (2) `filterbar.min.js` / `slideover.min.js` are "local" by strong
+inference (missing templUI header + commit message describing original
+design), not by a confirmed absence from templUI's current catalog.

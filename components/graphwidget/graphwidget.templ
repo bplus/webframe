@@ -23,6 +23,13 @@ type NodeColorEntry struct {
 // "100%"); DataURL is effectively required, since it is the endpoint the
 // client script fetches the initial graph JSON from. An empty NodeColorMap
 // emits "{}" and the client falls back to its built-in palette.
+//
+// An empty DataURL is not a documented no-op, it is a stuck spinner: the
+// client script's fetch branch is gated on a truthy dataURL
+// (static/js/graphwidget.min.js:150), so an empty attribute skips the fetch
+// entirely with no error and the loading placeholder is left showing
+// indefinitely. The only supported way to populate a graph without a
+// DataURL is the imperative window.tui.graph.setData(id, data) API.
 type Props struct {
 	ID              string
 	Class           string
@@ -86,6 +93,17 @@ func dimensionStr(v int) string {
 // @ai-context unlike the SVG chart components, colors here bypass
 // utils.SanitizeColor — NodeColorMap travels through a JSON data attribute to
 // the client script.
+//
+// Client-side failure behavior (verified against static/js/graphwidget.min.js,
+// which is unminified/readable despite the extension):
+//   - DataURL fetch fails, or its body isn't valid JSON: both cases hit the
+//     same catch handler, which replaces the loading placeholder with a
+//     "Failed to load graph" message. This degrades visibly; it does not
+//     spin forever.
+//   - ExpandURL fetch (neighbor expansion on node click) fails: only
+//     console.error is called — no UI feedback, the click silently does
+//     nothing further. Unlike the initial load, this failure is invisible
+//     to the end user.
 templ GraphWidget(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
