@@ -65,7 +65,7 @@ confirmed local, not just inferred:
 |---|---|---|---|
 | `graphwidget.min.js` | Local | Introduced in `eaccae72` ("feat: add GraphWidget component with vendored 3d-force-graph"), which explicitly distinguishes the *vendored* `3d-force-graph.min.js` from this hand-written glue script. No `.templ` version header (`components/graphwidget/graphwidget.templ` has none). Content is readable (not obfuscated), consistent with in-repo authorship. | Part of the webframe module; the repo has no separate top-level `LICENSE` file for its own code. |
 | `trafficstream.min.js` | Local | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
-| `theme-toggle.js` | Local | The only non-minified, fully readable file in `static/js/`. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
+| `theme-toggle.js` | Local | The only standalone `.js` file, and fully readable. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -90,7 +90,7 @@ with network access:
 ## Summary
 
 18 JavaScript assets live in `static/js/` (17 `.min.js` files plus the one
-readable `theme-toggle.js`; this PROVENANCE.md file itself is not counted).
+standalone `theme-toggle.js`; this PROVENANCE.md file itself is not counted).
 Of those 18: 3 are third-party vendored libraries (versions and provenance
 confirmed from in-file strings and commit messages), 10 are templUI
 v1.3.0-shipped component scripts (versions confirmed via the paired
