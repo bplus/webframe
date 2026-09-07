@@ -48,11 +48,11 @@ templ Base(title string) {
 					document.documentElement.setAttribute('data-theme', t || 'dark');
 				})();
 			</script>
-			<!-- htmx loads blocking (not deferred): the inline, non-deferred
-			     htmx:afterSwap listener near the end of <body> (see below) needs
-			     the htmx global available first, before that listener code runs.
-			     alpine loads deferred since it only needs to be ready before user
-			     interaction, not before that listener registers. -->
+			<!-- htmx loads blocking (not deferred) so htmx is ready and able to
+			     fire the htmx:afterSwap event before any HTMX-triggered swap can
+			     occur; that event is caught by the listener near the end of
+			     <body>. alpine loads deferred since it only needs to be ready
+			     before user interaction, not before the first possible swap. -->
 			<script src="/static/js/htmx.min.js"></script>
 			<script defer src="/static/js/alpine.min.js"></script>
 		</head>
