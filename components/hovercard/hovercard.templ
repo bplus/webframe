@@ -59,9 +59,12 @@ templ Hover(props Props) {
 		{ children... }
 	}
 	@popover.Content(popover.ContentProps{
-		ID:            props.ID,
-		Placement:     popover.PlacementRightStart,
-		ShowArrow:     true,
+		ID:        props.ID,
+		Placement: popover.PlacementRightStart,
+		ShowArrow: true,
+		// 120ms grace period on both edges: enough time for the pointer to
+		// cross the gap between trigger and card without the hover closing,
+		// but short enough that intent to leave still feels immediate.
 		HoverDelay:    120,
 		HoverOutDelay: 120,
 		Exclusive:     true,

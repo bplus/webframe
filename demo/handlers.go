@@ -1,3 +1,6 @@
+// Package demo contains HTTP handlers for the webframe demo application only.
+// It is not part of webframe's library API; consuming applications must not
+// import it.
 package demo
 
 import (
@@ -54,6 +57,8 @@ func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
 	events := []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"}
 	directions := []string{"request", "response", "event", "local"}
 	statuses := []string{"", "200", "202", "500"}
+	// 1.2s: slow enough to read each event as it appears, fast enough that
+	// the stream still feels live rather than static.
 	ticker := time.NewTicker(1200 * time.Millisecond)
 	defer ticker.Stop()
 	for i := 0; ; i++ {
@@ -194,6 +199,8 @@ func HandleToast(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now().UnixMilli()
 
 	w.Header().Set("Content-Type", "text/html")
+	// 4s auto-dismiss: enough time to read the message, short enough that
+	// toasts don't pile up if several are triggered in a row.
 	fmt.Fprintf(w, `<div id="toast-container" hx-swap-oob="innerHTML">
 	<div x-data="{ show: true }" x-show="show" x-transition
 		x-init="setTimeout(() => show = false, 4000)"

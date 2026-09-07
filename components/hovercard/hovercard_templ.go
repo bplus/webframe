@@ -147,7 +147,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 73, Col: 50}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 76, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -165,7 +165,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Title, "Untitled"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 75, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 78, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -178,7 +178,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Description, "No description."))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 76, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 79, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -201,7 +201,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(row.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 81, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 84, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -214,7 +214,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(row.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 82, Col: 27}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 85, Col: 27}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -238,7 +238,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var11 templ.SafeURL
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.Link))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 88, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 91, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -251,7 +251,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.LinkText, "View details →"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 89, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 92, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -287,9 +287,12 @@ func Hover(props Props) templ.Component {
 			return nil
 		})
 		templ_7745c5c3_Err = popover.Content(popover.ContentProps{
-			ID:            props.ID,
-			Placement:     popover.PlacementRightStart,
-			ShowArrow:     true,
+			ID:        props.ID,
+			Placement: popover.PlacementRightStart,
+			ShowArrow: true,
+			// 120ms grace period on both edges: enough time for the pointer to
+			// cross the gap between trigger and card without the hover closing,
+			// but short enough that intent to leave still feels immediate.
 			HoverDelay:    120,
 			HoverOutDelay: 120,
 			Exclusive:     true,

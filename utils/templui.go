@@ -64,6 +64,13 @@ func IfElse[T any](condition bool, trueValue T, falseValue T) T {
 // caller-supplied Attributes with their own defaults. Map iteration order is
 // irrelevant across maps since only key collisions matter.
 //
+// Last-wins applies only among the Attributes maps passed into this call.
+// Once the merged result is spread onto a templ element, it cannot override
+// attributes the template already wrote literally: templ appends spread
+// attributes rather than replacing, and HTML parsers keep the first
+// occurrence of a duplicate attribute — so a template's own hard-coded
+// attributes always win over anything merged in this way.
+//
 // @pure - allocates a fresh map, does not mutate inputs
 // @complexity O(total keys)
 func MergeAttributes(attrs ...templ.Attributes) templ.Attributes {
@@ -95,6 +102,10 @@ func RandomID() string {
 // Used in Script() templates to append ?v=<timestamp> to script URLs.
 // Fixed at package init and constant for the process lifetime, so every
 // restart busts browser caches while a running process stays consistent.
+//
+// @boundary wall clock, read once at package init: process start time varies
+// per instance, so multiple instances behind a load balancer stamp different
+// ?v= values, causing re-downloads across instances.
 var ScriptVersion = fmt.Sprintf("%d", time.Now().Unix())
 
 // ScriptURL generates cache-busted script URLs.

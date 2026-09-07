@@ -51,6 +51,11 @@ type Props struct {
 	// Class is part of the cache key (see iconContents), so distinct values
 	// each occupy a cache slot; the cache is bounded to iconCacheCap and
 	// clears itself when full rather than growing without limit.
+	//
+	// Unlike most component Props.Class fields, this is interpolated as-is
+	// into the SVG's class attribute — it is not passed through TwMerge, so
+	// conflicting utilities are not resolved; callers cannot rely on a later
+	// class winning over the defaults.
 	Class string
 }
 
