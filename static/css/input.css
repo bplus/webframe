@@ -420,6 +420,20 @@
     border-top: 1px solid var(--color-border);
     min-height: 120px;
   }
+
+  /* dashboardgrid.Grid/.Slot compute grid-template-columns
+     and grid-column:span as inline styles from a runtime Cols/ColSpan
+     value, so no Tailwind responsive utility class can target them --
+     !important is the only way to collapse a dashboard grid to one
+     column under 900px. */
+  .wf-dashgrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .wf-dashslot {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
 }
 
 /* ── Google Fonts ── */
