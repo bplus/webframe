@@ -120,6 +120,20 @@ func emptyDescription(v string) string {
 //
 // @boundary HTTP — the browser opens an SSE (EventSource) connection to Props.StreamURL
 // @temporal-coupling inert without Script(); pair them on the same page
+//
+// SSE drop/reconnect behavior (verified against static/js/trafficstream.min.js,
+// which is unminified/readable despite the extension): the native EventSource
+// reconnects on its own browser-controlled schedule after a drop — there is
+// no manual retry loop here. source.onerror sets the connection badge to
+// amber "Reconnecting", but there is no onopen handler, so the badge stays
+// on "Reconnecting" even after the browser silently reconnects and events
+// resume flowing — a real display bug, not just an undocumented state. Rows
+// rendered before the drop are untouched and survive. The Pause button
+// (data-tui-trafficstream-toggle) sets the badge to amber "Paused" and back
+// to green "Live" on resume, and stops appending incoming rows to the DOM
+// while paused — but it does not close the EventSource: only the underlying
+// connection is unaffected by pause, the socket keeps receiving events in
+// the background and they are simply dropped instead of rendered.
 // The <section> emits an id attribute only when Props.ID is non-empty, so a
 // stream without an explicit ID renders no id attribute at all (contrast
 // graphwidget, which renders id={ id } unconditionally).
@@ -165,7 +179,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 125, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 139, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -188,7 +202,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.StreamURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 129, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 143, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -206,7 +220,7 @@ func TrafficStream(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(maxItems(p.MaxItems)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 131, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 145, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -240,7 +254,7 @@ func TrafficStream(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(placeholder(p.SearchPlaceholder))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 150, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 164, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -258,7 +272,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(providerName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 154, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 168, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -271,7 +285,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(providerName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 154, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 168, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -294,7 +308,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(eventName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 160, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 174, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -307,7 +321,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(eventName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 160, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 174, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -325,7 +339,7 @@ func TrafficStream(props ...Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("height:" + dimensionStr(p.Height))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 171, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 185, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -348,7 +362,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(row.Provider)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 187, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 201, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -361,7 +375,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(row.Event)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 188, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 202, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -374,7 +388,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(row.Direction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 189, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 203, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -387,7 +401,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ToLower(strings.Join([]string{row.Provider, row.Direction, row.Event, row.TraceID, row.Summary}, " ")))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 190, Col: 131}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 204, Col: 131}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -413,7 +427,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(row.Time)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 193, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 207, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -426,7 +440,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(row.Provider)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 194, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 208, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -439,7 +453,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(row.Direction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 195, Col: 138}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 209, Col: 138}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -452,7 +466,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(row.Event)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 196, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 210, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -465,7 +479,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 197, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 211, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -478,7 +492,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(row.TraceID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 198, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 212, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -491,7 +505,7 @@ func TrafficStream(props ...Props) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(row.Summary)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 199, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 213, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -531,7 +545,7 @@ func TrafficStream(props ...Props) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(emptyTitle(p.EmptyTitle))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 205, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 219, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -544,7 +558,7 @@ func TrafficStream(props ...Props) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(emptyDescription(p.EmptyDescription))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 206, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 220, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -599,7 +613,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 226, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 240, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -612,7 +626,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/trafficstream.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 226, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/trafficstream/trafficstream.templ`, Line: 240, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
