@@ -35,7 +35,8 @@ check-ui:
 
 # Phone/desktop measurement with Playwright's Chromium. Not part of `check`:
 # needs `make dev` running on :3333. One-time: `npx playwright install chromium`.
+# The showcase deliberately 404s /static/img/missing-avatar.png (avatar fallback demo).
 ui-check:
 	node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
-	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png
-	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png
+	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png --ignore-console missing-avatar.png
+	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png --ignore-console missing-avatar.png
