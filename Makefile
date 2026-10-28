@@ -31,4 +31,4 @@ check-test:
 	go test ./...
 
 check-ui:
-	go run ./cmd/wflint ./internal/wflint/testdata/clean.templ.txt
+	go run ./cmd/wflint ./demo/app.go ./demo/handlers.go ./demo/pages/traffic.templ

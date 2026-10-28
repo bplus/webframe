@@ -5,13 +5,12 @@ package demo
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/bplus/webframe/demo/pages"
-
-	"github.com/a-h/templ"
 )
 
 // HandleShowcase renders the component showcase gallery page — the demo
@@ -21,7 +20,9 @@ import (
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleShowcase(w http.ResponseWriter, r *http.Request) {
-	templ.Handler(pages.Showcase()).ServeHTTP(w, r)
+	if err := App.Render(w, r, "Showcase", pages.Showcase()); err != nil {
+		log.Printf("demo: render showcase: %v", err)
+	}
 }
 
 // HandleTraffic renders the live traffic stream demo page (GET /traffic). The
@@ -31,7 +32,9 @@ func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleTraffic(w http.ResponseWriter, r *http.Request) {
-	templ.Handler(pages.Traffic()).ServeHTTP(w, r)
+	if err := App.Render(w, r, "Traffic", pages.Traffic()); err != nil {
+		log.Printf("demo: render traffic: %v", err)
+	}
 }
 
 // HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one

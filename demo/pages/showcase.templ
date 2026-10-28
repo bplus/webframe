@@ -21,7 +21,6 @@ import (
 	"github.com/bplus/webframe/components/separator"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
-	"github.com/bplus/webframe/demo/layouts"
 )
 
 // Showcase renders the full component reference page — every webframe
@@ -32,83 +31,77 @@ import (
 // It takes no parameters and no children; all content is static demo data
 // composed from the unexported per-topic section templates below.
 //
-// Returns a templ.Component producing the complete HTML document via
-// layouts.Base("Component Showcase").
+// Returns a templ.Component producing the page body only; the document and
+// shell are supplied by demo.App.Render.
 //
 // Rendering is static, but the emitted markup wires live browser behavior:
 // Alpine x-data examples, and HTMX demos that POST/GET /api/click,
 // /api/search, /api/validate, and /api/toast (handled in demo/handlers.go),
-// all relying on the scripts loaded by Base.
+// all relying on the scripts loaded by appshell.Document.
 //
 // @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
 // the library's importable API
 templ Showcase() {
-	@layouts.Base("Component Showcase") {
-		<!-- Hero -->
-		<div class="text-center py-8 mb-8 border-b border-border">
-			<h1 class="text-4xl font-bold tracking-tight mb-2">Webframe Components</h1>
-			<p class="text-muted-foreground text-lg">
-				A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.
-			</p>
+	<!-- Hero -->
+	<div class="text-center py-8 mb-8 border-b border-border">
+		<h1 class="text-4xl font-bold tracking-tight mb-2">Webframe Components</h1>
+		<p class="text-muted-foreground text-lg">
+			A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.
+		</p>
+	</div>
+	<!-- Table of Contents -->
+	<nav class="mb-12 p-4 rounded-lg bg-card border border-border">
+		<h2 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contents</h2>
+		<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+			<a href="#typography" class="hover:text-primary transition-colors">Typography</a>
+			<a href="#colors" class="hover:text-primary transition-colors">Colors</a>
+			<a href="#icons" class="hover:text-primary transition-colors">Icons</a>
+			<a href="#buttons" class="hover:text-primary transition-colors">Buttons</a>
+			<a href="#badges" class="hover:text-primary transition-colors">Badges</a>
+			<a href="#cards" class="hover:text-primary transition-colors">Cards</a>
+			<a href="#forms" class="hover:text-primary transition-colors">Form Elements</a>
+			<a href="#dialog" class="hover:text-primary transition-colors">Dialog</a>
+			<a href="#dropdown" class="hover:text-primary transition-colors">Dropdown</a>
+			<a href="#tabs" class="hover:text-primary transition-colors">Tabs</a>
+			<a href="#selectbox" class="hover:text-primary transition-colors">Selectbox</a>
+			<a href="#popover" class="hover:text-primary transition-colors">Popover</a>
+			<a href="#hovercard" class="hover:text-primary transition-colors">Hover Card</a>
+			<a href="#avatar" class="hover:text-primary transition-colors">Avatar</a>
+			<a href="#separator" class="hover:text-primary transition-colors">Separator</a>
+			<a href="#aspectratio" class="hover:text-primary transition-colors">Aspect Ratio</a>
+			<a href="#gameicon" class="hover:text-primary transition-colors">Game Icon</a>
+			<a href="#alpine" class="hover:text-primary transition-colors">Alpine.js</a>
+			<a href="#htmx" class="hover:text-primary transition-colors">HTMX</a>
 		</div>
-
-		<!-- Table of Contents -->
-		<nav class="mb-12 p-4 rounded-lg bg-card border border-border">
-			<h2 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contents</h2>
-			<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-				<a href="#typography" class="hover:text-primary transition-colors">Typography</a>
-				<a href="#colors" class="hover:text-primary transition-colors">Colors</a>
-				<a href="#icons" class="hover:text-primary transition-colors">Icons</a>
-				<a href="#buttons" class="hover:text-primary transition-colors">Buttons</a>
-				<a href="#badges" class="hover:text-primary transition-colors">Badges</a>
-				<a href="#cards" class="hover:text-primary transition-colors">Cards</a>
-				<a href="#forms" class="hover:text-primary transition-colors">Form Elements</a>
-				<a href="#dialog" class="hover:text-primary transition-colors">Dialog</a>
-				<a href="#dropdown" class="hover:text-primary transition-colors">Dropdown</a>
-				<a href="#tabs" class="hover:text-primary transition-colors">Tabs</a>
-				<a href="#selectbox" class="hover:text-primary transition-colors">Selectbox</a>
-				<a href="#popover" class="hover:text-primary transition-colors">Popover</a>
-				<a href="#hovercard" class="hover:text-primary transition-colors">Hover Card</a>
-				<a href="#avatar" class="hover:text-primary transition-colors">Avatar</a>
-				<a href="#separator" class="hover:text-primary transition-colors">Separator</a>
-				<a href="#aspectratio" class="hover:text-primary transition-colors">Aspect Ratio</a>
-				<a href="#gameicon" class="hover:text-primary transition-colors">Game Icon</a>
-				<a href="#alpine" class="hover:text-primary transition-colors">Alpine.js</a>
-				<a href="#htmx" class="hover:text-primary transition-colors">HTMX</a>
-			</div>
-		</nav>
-
-		@typographySection()
-		@colorsSection()
-		@iconsSection()
-		@buttonsSection()
-		@badgesSection()
-		@cardsSection()
-		@formsSection()
-		@dialogSection()
-		@dropdownSection()
-		@tabsSection()
-		@selectboxSection()
-		@popoverSection()
-		@hovercardSection()
-		@avatarSection()
-		@separatorSection()
-		@aspectratioSection()
-		@gameiconSection()
-		@alpineSection()
-		@htmxSection()
-	}
+	</nav>
+	@typographySection()
+	@colorsSection()
+	@iconsSection()
+	@buttonsSection()
+	@badgesSection()
+	@cardsSection()
+	@formsSection()
+	@dialogSection()
+	@dropdownSection()
+	@tabsSection()
+	@selectboxSection()
+	@popoverSection()
+	@hovercardSection()
+	@avatarSection()
+	@separatorSection()
+	@aspectratioSection()
+	@gameiconSection()
+	@alpineSection()
+	@htmxSection()
 }
 
 // ═══════════════════════════════════════
 // Typography
 // ═══════════════════════════════════════
-
 templ typographySection() {
 	<section id="typography" class="wf-section">
 		<h2 class="wf-section-title">Typography</h2>
 		<p class="wf-section-desc">Font scale and text styles using Inter.</p>
-
 		<div class="space-y-4">
 			<h1 class="text-4xl font-bold tracking-tight">Heading 1 — text-4xl</h1>
 			<h2 class="text-3xl font-bold">Heading 2 — text-3xl</h2>
@@ -126,12 +119,10 @@ templ typographySection() {
 // ═══════════════════════════════════════
 // Colors
 // ═══════════════════════════════════════
-
 templ colorsSection() {
 	<section id="colors" class="wf-section">
 		<h2 class="wf-section-title">Color Palette</h2>
 		<p class="wf-section-desc">CSS custom properties via Tailwind v4 @theme. Swap the palette by editing input.css.</p>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Primary</h3>
 		<div class="flex gap-3 flex-wrap mb-6">
 			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-100"></div><span class="wf-swatch-label">100</span></div>
@@ -141,7 +132,6 @@ templ colorsSection() {
 			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-700"></div><span class="wf-swatch-label">700</span></div>
 			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-900"></div><span class="wf-swatch-label">900</span></div>
 		</div>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Accent</h3>
 		<div class="flex gap-3 flex-wrap mb-6">
 			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-100"></div><span class="wf-swatch-label">100</span></div>
@@ -150,7 +140,6 @@ templ colorsSection() {
 			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-700"></div><span class="wf-swatch-label">700</span></div>
 			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-900"></div><span class="wf-swatch-label">900</span></div>
 		</div>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Semantic</h3>
 		<div class="flex gap-3 flex-wrap">
 			<div class="wf-swatch"><div class="wf-swatch-color bg-background border"></div><span class="wf-swatch-label">bg</span></div>
@@ -166,63 +155,72 @@ templ colorsSection() {
 // ═══════════════════════════════════════
 // Icons
 // ═══════════════════════════════════════
-
 templ iconsSection() {
 	<section id="icons" class="wf-section">
 		<h2 class="wf-section-title">Icons (Lucide)</h2>
 		<p class="wf-section-desc">~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox.</p>
-
 		<div class="wf-demo-row mb-6">
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Check()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Check()
+</div>
 				<span class="text-xs text-muted-foreground">Check</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.X()</div>
+				<div class="p-2 rounded-md border border-border">@icon.X()
+</div>
 				<span class="text-xs text-muted-foreground">X</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.ChevronDown()</div>
+				<div class="p-2 rounded-md border border-border">@icon.ChevronDown()
+</div>
 				<span class="text-xs text-muted-foreground">ChevronDown</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Search()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Search()
+</div>
 				<span class="text-xs text-muted-foreground">Search</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Plus()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Plus()
+</div>
 				<span class="text-xs text-muted-foreground">Plus</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Minus()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Minus()
+</div>
 				<span class="text-xs text-muted-foreground">Minus</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Eye()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Eye()
+</div>
 				<span class="text-xs text-muted-foreground">Eye</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.EyeOff()</div>
+				<div class="p-2 rounded-md border border-border">@icon.EyeOff()
+</div>
 				<span class="text-xs text-muted-foreground">EyeOff</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Settings()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Settings()
+</div>
 				<span class="text-xs text-muted-foreground">Settings</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Trash2()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Trash2()
+</div>
 				<span class="text-xs text-muted-foreground">Trash2</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Copy()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Copy()
+</div>
 				<span class="text-xs text-muted-foreground">Copy</span>
 			</div>
 			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Download()</div>
+				<div class="p-2 rounded-md border border-border">@icon.Download()
+</div>
 				<span class="text-xs text-muted-foreground">Download</span>
 			</div>
 		</div>
-
 		<div class="wf-code text-xs">
 			<code>{ `@icon.Check()  // renders inline SVG, cached in-process` }</code>
 		</div>
@@ -232,41 +230,66 @@ templ iconsSection() {
 // ═══════════════════════════════════════
 // Buttons
 // ═══════════════════════════════════════
-
 templ buttonsSection() {
 	<section id="buttons" class="wf-section">
 		<h2 class="wf-section-title">Buttons</h2>
 		<p class="wf-section-desc">All button variants and sizes from the button component.</p>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Variants</h3>
 		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{}) { Default }
-			@button.Button(button.Props{Variant: button.VariantDestructive}) { Destructive }
-			@button.Button(button.Props{Variant: button.VariantOutline}) { Outline }
-			@button.Button(button.Props{Variant: button.VariantSecondary}) { Secondary }
-			@button.Button(button.Props{Variant: button.VariantGhost}) { Ghost }
-			@button.Button(button.Props{Variant: button.VariantLink}) { Link }
+			@button.Button(button.Props{}) {
+				Default 
+			}
+			@button.Button(button.Props{Variant: button.VariantDestructive}) {
+				Destructive 
+			}
+			@button.Button(button.Props{Variant: button.VariantOutline}) {
+				Outline 
+			}
+			@button.Button(button.Props{Variant: button.VariantSecondary}) {
+				Secondary 
+			}
+			@button.Button(button.Props{Variant: button.VariantGhost}) {
+				Ghost 
+			}
+			@button.Button(button.Props{Variant: button.VariantLink}) {
+				Link 
+			}
 		</div>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Sizes</h3>
 		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{Size: button.SizeSm}) { Small }
-			@button.Button(button.Props{}) { Default }
-			@button.Button(button.Props{Size: button.SizeLg}) { Large }
-			@button.Button(button.Props{Size: button.SizeIcon}) { + }
+			@button.Button(button.Props{Size: button.SizeSm}) {
+				Small 
+			}
+			@button.Button(button.Props{}) {
+				Default 
+			}
+			@button.Button(button.Props{Size: button.SizeLg}) {
+				Large 
+			}
+			@button.Button(button.Props{Size: button.SizeIcon}) {
+				+ 
+			}
 		</div>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">States</h3>
 		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{}) { Enabled }
-			@button.Button(button.Props{Disabled: true}) { Disabled }
-			@button.Button(button.Props{FullWidth: true}) { Full Width }
+			@button.Button(button.Props{}) {
+				Enabled 
+			}
+			@button.Button(button.Props{Disabled: true}) {
+				Disabled 
+			}
+			@button.Button(button.Props{FullWidth: true}) {
+				Full Width 
+			}
 		</div>
-
 		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">As Link</h3>
 		<div class="wf-demo-row">
-			@button.Button(button.Props{Href: "#buttons"}) { Link Button }
-			@button.Button(button.Props{Href: "#buttons", Variant: button.VariantOutline}) { Outline Link }
+			@button.Button(button.Props{Href: "#buttons"}) {
+				Link Button 
+			}
+			@button.Button(button.Props{Href: "#buttons", Variant: button.VariantOutline}) {
+				Outline Link 
+			}
 		</div>
 	</section>
 }
@@ -274,17 +297,23 @@ templ buttonsSection() {
 // ═══════════════════════════════════════
 // Badges
 // ═══════════════════════════════════════
-
 templ badgesSection() {
 	<section id="badges" class="wf-section">
 		<h2 class="wf-section-title">Badges</h2>
 		<p class="wf-section-desc">Inline label variants.</p>
-
 		<div class="wf-demo-row">
-			@badge.Badge(badge.Props{}) { Default }
-			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Secondary }
-			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Destructive }
-			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) { Outline }
+			@badge.Badge(badge.Props{}) {
+				Default 
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Secondary 
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+				Destructive 
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+				Outline 
+			}
 		</div>
 	</section>
 }
@@ -292,64 +321,81 @@ templ badgesSection() {
 // ═══════════════════════════════════════
 // Cards
 // ═══════════════════════════════════════
-
 templ cardsSection() {
 	<section id="cards" class="wf-section">
 		<h2 class="wf-section-title">Cards</h2>
 		<p class="wf-section-desc">Composable card components: Card, Header, Title, Description, Content, Footer.</p>
-
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<!-- Basic card -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Basic Card }
-					@card.Description() { A simple card with header and content. }
+					@card.Title() {
+						Basic Card 
+					}
+					@card.Description() {
+						A simple card with header and content. 
+					}
 				}
 				@card.Content() {
 					<p class="text-sm">Card body content goes here. This is a versatile container for any grouped content.</p>
 				}
 			}
-
 			<!-- Card with footer -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Card with Footer }
-					@card.Description() { Includes action buttons in the footer. }
+					@card.Title() {
+						Card with Footer 
+					}
+					@card.Description() {
+						Includes action buttons in the footer. 
+					}
 				}
 				@card.Content() {
 					<p class="text-sm">Some content that needs actions below it.</p>
 				}
 				@card.Footer() {
 					<div class="flex gap-2">
-						@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) { Cancel }
-						@button.Button(button.Props{Size: button.SizeSm}) { Save }
+						@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
+							Cancel 
+						}
+						@button.Button(button.Props{Size: button.SizeSm}) {
+							Save 
+						}
 					</div>
 				}
 			}
-
 			<!-- Card as form -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Login }
-					@card.Description() { Enter your credentials below. }
+					@card.Title() {
+						Login 
+					}
+					@card.Description() {
+						Enter your credentials below. 
+					}
 				}
 				@card.Content() {
 					<div class="space-y-4">
 						<div>
-							@label.Label(label.Props{}) { Email }
+							@label.Label(label.Props{}) {
+								Email 
+							}
 							@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
 						</div>
 						<div>
-							@label.Label(label.Props{}) { Password }
+							@label.Label(label.Props{}) {
+								Password 
+							}
 							@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
 						</div>
 					</div>
 				}
 				@card.Footer() {
-					@button.Button(button.Props{FullWidth: true}) { Sign In }
+					@button.Button(button.Props{FullWidth: true}) {
+						Sign In 
+					}
 				}
 			}
-
 			<!-- Minimal card -->
 			@card.Card() {
 				@card.Content() {
@@ -363,61 +409,67 @@ templ cardsSection() {
 // ═══════════════════════════════════════
 // Form Elements
 // ═══════════════════════════════════════
-
 templ formsSection() {
 	<section id="forms" class="wf-section">
 		<h2 class="wf-section-title">Form Elements</h2>
 		<p class="wf-section-desc">Input, Textarea, Checkbox, Radio, Label, and Form layout components.</p>
-
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 			<!-- Text inputs -->
 			<div class="space-y-4">
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Text Inputs</h3>
-
 				@form.Item() {
-					@form.Label() { Default Input }
+					@form.Label() {
+						Default Input 
+					}
 					@input.Input(input.Props{Placeholder: "Type something..."})
-					@form.Description() { A standard text input. }
+					@form.Description() {
+						A standard text input. 
+					}
 				}
-
 				@form.Item() {
-					@form.Label() { Email }
+					@form.Label() {
+						Email 
+					}
 					@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
 				}
-
 				@form.Item() {
-					@form.Label() { Password (with toggle) }
+					@form.Label() {
+						Password (with toggle) 
+					}
 					@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
 				}
-
 				@form.Item() {
-					@form.Label() { Disabled }
+					@form.Label() {
+						Disabled 
+					}
 					@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
 				}
-
 				@form.Item() {
-					@form.Label() { With Error }
+					@form.Label() {
+						With Error 
+					}
 					@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
-					@form.Message(form.MessageProps{Variant: form.MessageVariantError}) { This field is required }
+					@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
+						This field is required 
+					}
 				}
 			</div>
-
 			<!-- Textarea + checks -->
 			<div class="space-y-4">
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Textarea</h3>
-
 				@form.Item() {
-					@form.Label() { Description }
+					@form.Label() {
+						Description 
+					}
 					@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
 				}
-
 				@form.Item() {
-					@form.Label() { Auto-resize }
+					@form.Label() {
+						Auto-resize 
+					}
 					@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
 				}
-
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Checkbox</h3>
-
 				<div class="space-y-3">
 					<label class="flex items-center gap-2 text-sm">
 						@checkbox.Checkbox(checkbox.Props{Name: "terms"})
@@ -432,9 +484,7 @@ templ formsSection() {
 						Disabled option
 					</label>
 				</div>
-
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Radio</h3>
-
 				<div class="space-y-3">
 					<label class="flex items-center gap-2 text-sm">
 						@radio.Radio(radio.Props{Name: "plan", Value: "free"})
@@ -451,7 +501,6 @@ templ formsSection() {
 				</div>
 			</div>
 		</div>
-
 		<!-- Form layout demo -->
 		<div class="mt-8">
 			<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Form Layout (Item + ItemFlex)</h3>
@@ -460,15 +509,23 @@ templ formsSection() {
 					<div class="space-y-4">
 						@form.ItemFlex() {
 							<div class="flex-1">
-								@form.Label() { Full Name }
-								@form.Description() { Your display name. }
+								@form.Label() {
+									Full Name 
+								}
+								@form.Description() {
+									Your display name. 
+								}
 							</div>
 							@input.Input(input.Props{Placeholder: "Jane Smith", Class: "max-w-xs"})
 						}
 						@form.ItemFlex() {
 							<div class="flex-1">
-								@form.Label() { Notifications }
-								@form.Description() { Receive email notifications. }
+								@form.Label() {
+									Notifications 
+								}
+								@form.Description() {
+									Receive email notifications. 
+								}
 							</div>
 							@checkbox.Checkbox(checkbox.Props{Name: "notifications"})
 						}
@@ -482,98 +539,134 @@ templ formsSection() {
 // ═══════════════════════════════════════
 // Dialog
 // ═══════════════════════════════════════
-
 templ dialogSection() {
 	<section id="dialog" class="wf-section">
 		<h2 class="wf-section-title">Dialog</h2>
 		<p class="wf-section-desc">Modal dialogs with trigger, content, header, footer.</p>
-
 		<div class="wf-demo-row">
 			@dialog.Dialog() {
 				@dialog.Trigger() {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Open Dialog }
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Open Dialog 
+					}
 				}
 				@dialog.Content() {
 					@dialog.Header() {
-						@dialog.Title() { Confirm Action }
-						@dialog.Description() { Are you sure you want to proceed? This action cannot be undone. }
+						@dialog.Title() {
+							Confirm Action 
+						}
+						@dialog.Description() {
+							Are you sure you want to proceed? This action cannot be undone. 
+						}
 					}
 					@dialog.Footer() {
 						@dialog.Close() {
-							@button.Button(button.Props{Variant: button.VariantOutline}) { Cancel }
+							@button.Button(button.Props{Variant: button.VariantOutline}) {
+								Cancel 
+							}
 						}
 						@dialog.Close() {
-							@button.Button(button.Props{}) { Confirm }
+							@button.Button(button.Props{}) {
+								Confirm 
+							}
 						}
 					}
 				}
 			}
-
 			@dialog.Dialog() {
 				@dialog.Trigger() {
-					@button.Button(button.Props{}) { Form Dialog }
+					@button.Button(button.Props{}) {
+						Form Dialog 
+					}
 				}
 				@dialog.Content() {
 					@dialog.Header() {
-						@dialog.Title() { Edit Profile }
-						@dialog.Description() { Update your profile information below. }
+						@dialog.Title() {
+							Edit Profile 
+						}
+						@dialog.Description() {
+							Update your profile information below. 
+						}
 					}
 					<div class="space-y-4 py-4">
 						@form.Item() {
-							@form.Label() { Name }
+							@form.Label() {
+								Name 
+							}
 							@input.Input(input.Props{Placeholder: "Your name"})
 						}
 						@form.Item() {
-							@form.Label() { Bio }
+							@form.Label() {
+								Bio 
+							}
 							@textarea.Textarea(textarea.Props{Placeholder: "Tell us about yourself...", Rows: 3})
 						}
 					</div>
 					@dialog.Footer() {
 						@dialog.Close() {
-							@button.Button(button.Props{Variant: button.VariantOutline}) { Cancel }
+							@button.Button(button.Props{Variant: button.VariantOutline}) {
+								Cancel 
+							}
 						}
-						@button.Button(button.Props{}) { Save Changes }
+						@button.Button(button.Props{}) {
+							Save Changes 
+						}
 					}
 				}
 			}
 		</div>
-
 	</section>
 }
 
 // ═══════════════════════════════════════
 // Dropdown
 // ═══════════════════════════════════════
-
 templ dropdownSection() {
 	<section id="dropdown" class="wf-section">
 		<h2 class="wf-section-title">Dropdown Menu</h2>
 		<p class="wf-section-desc">Click-triggered dropdown with items, groups, separators, and sub-menus.</p>
-
 		<div class="wf-demo-row">
 			@dropdown.Dropdown() {
 				@dropdown.Trigger() {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Open Menu }
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Open Menu 
+					}
 				}
 				@dropdown.Content() {
-					@dropdown.Label() { My Account }
-					@dropdown.Separator()
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Profile }
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Settings }
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
-						Keyboard Shortcuts
-						@dropdown.Shortcut() { ⌘K }
+					@dropdown.Label() {
+						My Account 
 					}
 					@dropdown.Separator()
-					@dropdown.Sub() {
-						@dropdown.SubTrigger() { More Options }
-						@dropdown.SubContent() {
-							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Import }
-							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Export }
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Profile 
+					}
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Settings 
+					}
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Keyboard Shortcuts
+						@dropdown.Shortcut() {
+							⌘K 
 						}
 					}
 					@dropdown.Separator()
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Log Out }
+					@dropdown.Sub() {
+						@dropdown.SubTrigger() {
+							More Options 
+						}
+						@dropdown.SubContent() {
+							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+								Import 
+							}
+							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+								Export 
+							}
+						}
+					}
+					@dropdown.Separator()
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Log Out 
+					}
 				}
 			}
 		</div>
@@ -583,17 +676,21 @@ templ dropdownSection() {
 // ═══════════════════════════════════════
 // Tabs
 // ═══════════════════════════════════════
-
 templ tabsSection() {
 	<section id="tabs" class="wf-section">
 		<h2 class="wf-section-title">Tabs</h2>
 		<p class="wf-section-desc">Tab navigation with content panels.</p>
-
 		@tabs.Tabs() {
 			@tabs.List() {
-				@tabs.Trigger(tabs.TriggerProps{Value: "overview", IsActive: true}) { Overview }
-				@tabs.Trigger(tabs.TriggerProps{Value: "features"}) { Features }
-				@tabs.Trigger(tabs.TriggerProps{Value: "code"}) { Code }
+				@tabs.Trigger(tabs.TriggerProps{Value: "overview", IsActive: true}) {
+					Overview 
+				}
+				@tabs.Trigger(tabs.TriggerProps{Value: "features"}) {
+					Features 
+				}
+				@tabs.Trigger(tabs.TriggerProps{Value: "code"}) {
+					Code 
+				}
 			}
 			@tabs.Content(tabs.ContentProps{Value: "overview", IsActive: true}) {
 				@card.Card() {
@@ -616,12 +713,14 @@ templ tabsSection() {
 			@tabs.Content(tabs.ContentProps{Value: "code"}) {
 				@card.Card() {
 					@card.Content() {
-						<pre class="wf-code">{ `@tabs.Tabs() {
+						<pre class="wf-code">
+							{ `@tabs.Tabs() {
   @tabs.List() {
     @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }
   }
   @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }
-}` }</pre>
+}` }
+						</pre>
 					}
 				}
 			}
@@ -632,12 +731,10 @@ templ tabsSection() {
 // ═══════════════════════════════════════
 // Selectbox
 // ═══════════════════════════════════════
-
 templ selectboxSection() {
 	<section id="selectbox" class="wf-section">
 		<h2 class="wf-section-title">Selectbox</h2>
 		<p class="wf-section-desc">Custom select with search, groups, and multi-select.</p>
-
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div>
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Basic</h3>
@@ -647,21 +744,36 @@ templ selectboxSection() {
 					}
 					@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
 						@selectbox.Group() {
-							@selectbox.Label() { Frontend }
-							@selectbox.Item(selectbox.ItemProps{Value: "react"}) { React }
-							@selectbox.Item(selectbox.ItemProps{Value: "vue"}) { Vue }
-							@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) { Svelte }
+							@selectbox.Label() {
+								Frontend 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
+								React 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
+								Vue 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
+								Svelte 
+							}
 						}
 						@selectbox.Group() {
-							@selectbox.Label() { Backend }
-							@selectbox.Item(selectbox.ItemProps{Value: "go"}) { Go }
-							@selectbox.Item(selectbox.ItemProps{Value: "python"}) { Python }
-							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) { Rust }
+							@selectbox.Label() {
+								Backend 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+								Go 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+								Python 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+								Rust 
+							}
 						}
 					}
 				}
 			</div>
-
 			<div>
 				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">With Search</h3>
 				@selectbox.SelectBox() {
@@ -669,12 +781,24 @@ templ selectboxSection() {
 						@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
 					}
 					@selectbox.Content() {
-						@selectbox.Item(selectbox.ItemProps{Value: "go"}) { Go }
-						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) { Rust }
-						@selectbox.Item(selectbox.ItemProps{Value: "python"}) { Python }
-						@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) { TypeScript }
-						@selectbox.Item(selectbox.ItemProps{Value: "java"}) { Java }
-						@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) { C# }
+						@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+							Go 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+							Rust 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+							Python 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
+							TypeScript 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
+							Java 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
+							C# 
+						}
 					}
 				}
 			</div>
@@ -685,17 +809,17 @@ templ selectboxSection() {
 // ═══════════════════════════════════════
 // Popover
 // ═══════════════════════════════════════
-
 templ popoverSection() {
 	<section id="popover" class="wf-section">
 		<h2 class="wf-section-title">Popover</h2>
 		<p class="wf-section-desc">Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement.</p>
-
 		<div class="wf-demo-row">
 			<!-- Click popover -->
 			<div>
 				@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Click Popover }
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Click Popover 
+					}
 				}
 				@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
 					<div class="p-4 max-w-xs">
@@ -704,11 +828,12 @@ templ popoverSection() {
 					</div>
 				}
 			</div>
-
 			<!-- Hover popover -->
 			<div>
 				@popover.Trigger(popover.TriggerProps{For: "pop-hover", TriggerType: popover.TriggerTypeHover}) {
-					@button.Button(button.Props{Variant: button.VariantSecondary}) { Hover Popover }
+					@button.Button(button.Props{Variant: button.VariantSecondary}) {
+						Hover Popover 
+					}
 				}
 				@popover.Content(popover.ContentProps{
 					ID:            "pop-hover",
@@ -723,11 +848,12 @@ templ popoverSection() {
 					</div>
 				}
 			</div>
-
 			<!-- Right placement -->
 			<div>
 				@popover.Trigger(popover.TriggerProps{For: "pop-right"}) {
-					@button.Button(button.Props{Variant: button.VariantGhost}) { Right Side }
+					@button.Button(button.Props{Variant: button.VariantGhost}) {
+						Right Side 
+					}
 				}
 				@popover.Content(popover.ContentProps{ID: "pop-right", Placement: popover.PlacementRight, ShowArrow: true}) {
 					<div class="p-4">
@@ -736,19 +862,16 @@ templ popoverSection() {
 				}
 			</div>
 		</div>
-
 	</section>
 }
 
 // ═══════════════════════════════════════
 // Hover Card
 // ═══════════════════════════════════════
-
 templ hovercardSection() {
 	<section id="hovercard" class="wf-section">
 		<h2 class="wf-section-title">Hover Card</h2>
 		<p class="wf-section-desc">Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon.</p>
-
 		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 			<!-- Product hover card -->
 			@hovercard.Hover(hovercard.Props{
@@ -771,7 +894,6 @@ templ hovercardSection() {
 					}
 				}
 			}
-
 			<!-- User profile hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-user",
@@ -793,7 +915,6 @@ templ hovercardSection() {
 					}
 				}
 			}
-
 			<!-- Minimal hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-minimal",
@@ -814,27 +935,33 @@ templ hovercardSection() {
 // ═══════════════════════════════════════
 // Avatar
 // ═══════════════════════════════════════
-
 templ avatarSection() {
 	<section id="avatar" class="wf-section">
 		<h2 class="wf-section-title">Avatar</h2>
 		<p class="wf-section-desc">Circular avatar with image and text fallback.</p>
-
 		<div class="wf-demo-row">
 			@avatar.Avatar() {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=1", Alt: "User"})
-				@avatar.Fallback() { JD }
+				@avatar.Fallback() {
+					JD 
+				}
 			}
 			@avatar.Avatar() {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=5", Alt: "User"})
-				@avatar.Fallback() { AK }
+				@avatar.Fallback() {
+					AK 
+				}
 			}
 			@avatar.Avatar() {
-				@avatar.Fallback() { WF }
+				@avatar.Fallback() {
+					WF 
+				}
 			}
 			@avatar.Avatar(avatar.Props{Class: "h-16 w-16"}) {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=12", Alt: "User"})
-				@avatar.Fallback() { LG }
+				@avatar.Fallback() {
+					LG 
+				}
 			}
 		</div>
 	</section>
@@ -843,23 +970,18 @@ templ avatarSection() {
 // ═══════════════════════════════════════
 // Separator
 // ═══════════════════════════════════════
-
 templ separatorSection() {
 	<section id="separator" class="wf-section">
 		<h2 class="wf-section-title">Separator</h2>
 		<p class="wf-section-desc">Horizontal and vertical dividers.</p>
-
 		<div class="space-y-4">
 			<p class="text-sm">Content above the separator.</p>
 			@separator.Separator()
 			<p class="text-sm">Content below the separator.</p>
-
 			@separator.Separator(separator.Props{Decoration: separator.DecorationDashed})
-
 			@separator.Separator() {
 				<span class="text-xs text-muted-foreground px-2">OR</span>
 			}
-
 			<div class="flex items-center gap-4 h-8">
 				<span class="text-sm">Left</span>
 				@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
@@ -874,12 +996,10 @@ templ separatorSection() {
 // ═══════════════════════════════════════
 // Aspect Ratio
 // ═══════════════════════════════════════
-
 templ aspectratioSection() {
 	<section id="aspectratio" class="wf-section">
 		<h2 class="wf-section-title">Aspect Ratio</h2>
 		<p class="wf-section-desc">Container that maintains a fixed aspect ratio. Useful for images, videos, maps.</p>
-
 		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
 			<div>
 				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">16:9 (Video)</p>
@@ -912,12 +1032,10 @@ templ aspectratioSection() {
 // ═══════════════════════════════════════
 // Game Icon
 // ═══════════════════════════════════════
-
 templ gameiconSection() {
 	<section id="gameicon" class="wf-section">
 		<h2 class="wf-section-title">Game Icon (SVG Sprite)</h2>
 		<p class="wf-section-desc">SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set.</p>
-
 		<div class="wf-demo-row">
 			<div class="flex flex-col items-center gap-1">
 				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})
@@ -952,7 +1070,6 @@ templ gameiconSection() {
 				<span class="text-xs text-muted-foreground">bottled-bolt <span class="text-accent-500">(tinted)</span></span>
 			</div>
 		</div>
-
 		<div class="wf-code text-xs mt-4">
 			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})` }</code>
 		</div>
@@ -962,35 +1079,38 @@ templ gameiconSection() {
 // ═══════════════════════════════════════
 // Alpine.js Patterns
 // ═══════════════════════════════════════
-
 templ alpineSection() {
 	<section id="alpine" class="wf-section">
 		<h2 class="wf-section-title">Alpine.js Patterns</h2>
 		<p class="wf-section-desc">Common Alpine.js patterns used with these components.</p>
-
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<!-- Toggle visibility -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Toggle (x-show) }
+					@card.Title() {
+						Toggle (x-show) 
+					}
 				}
 				@card.Content() {
 					<div x-data="{ open: false }">
 						@button.Button(button.Props{
 							Attributes: templ.Attributes{"@click": "open = !open"},
 							Size:       button.SizeSm,
-						}) { Toggle Content }
+						}) {
+							Toggle Content 
+						}
 						<div x-show="open" x-transition x-cloak class="mt-3 p-3 rounded-md bg-muted text-sm">
 							This content is toggled with <code class="font-mono text-xs">x-show</code> and <code class="font-mono text-xs">x-transition</code>.
 						</div>
 					</div>
 				}
 			}
-
 			<!-- Counter with x-data -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Reactive State (x-data) }
+					@card.Title() {
+						Reactive State (x-data) 
+					}
 				}
 				@card.Content() {
 					<div x-data="{ count: 0 }" class="flex items-center gap-4">
@@ -1000,11 +1120,12 @@ templ alpineSection() {
 					</div>
 				}
 			}
-
 			<!-- Two-way binding -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Two-way Binding (x-model) }
+					@card.Title() {
+						Two-way Binding (x-model) 
+					}
 				}
 				@card.Content() {
 					<div x-data="{ name: '' }">
@@ -1018,19 +1139,25 @@ templ alpineSection() {
 					</div>
 				}
 			}
-
 			<!-- Dropdown with click.outside -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Click Outside (@@click.outside) }
+					@card.Title() {
+						Click Outside (@@click.outside) 
+					}
 				}
 				@card.Content() {
 					<div x-data="{ open: false }" class="relative">
 						<button @click="open = !open" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors">
 							<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
 						</button>
-						<div x-show="open" x-transition @click.outside="open = false" x-cloak
-							class="absolute top-full mt-2 p-4 rounded-md border border-border bg-popover shadow-lg text-sm z-10">
+						<div
+							x-show="open"
+							x-transition
+							@click.outside="open = false"
+							x-cloak
+							class="absolute top-full mt-2 p-4 rounded-md border border-border bg-popover shadow-lg text-sm z-10"
+						>
 							Click outside this panel to close it.
 						</div>
 					</div>
@@ -1043,39 +1170,47 @@ templ alpineSection() {
 // ═══════════════════════════════════════
 // HTMX Patterns
 // ═══════════════════════════════════════
-
 templ htmxSection() {
 	<section id="htmx" class="wf-section">
 		<h2 class="wf-section-title">HTMX Patterns</h2>
 		<p class="wf-section-desc">Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps.</p>
-
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<!-- Click counter -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Click to Update (hx-post + hx-swap) }
+					@card.Title() {
+						Click to Update (hx-post + hx-swap) 
+					}
 				}
 				@card.Content() {
 					<p class="text-sm text-muted-foreground mb-3">Button replaces itself with server response.</p>
-					<button hx-post="/api/click" hx-swap="outerHTML" hx-vals='{"count":"0"}'
-						class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+					<button
+						hx-post="/api/click"
+						hx-swap="outerHTML"
+						hx-vals='{"count":"0"}'
+						class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+					>
 						Click me
 					</button>
 				}
 			}
-
 			<!-- Live search -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Live Search (hx-get + debounce) }
+					@card.Title() {
+						Live Search (hx-get + debounce) 
+					}
 				}
 				@card.Content() {
-					<input type="search" name="q"
+					<input
+						type="search"
+						name="q"
 						hx-get="/api/search"
 						hx-trigger="input changed delay:300ms, search"
 						hx-target="#search-results"
 						placeholder="Search frameworks..."
-						class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
+						class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+					/>
 					<div id="search-results" class="mt-3 max-h-48 overflow-y-auto rounded-md border border-border">
 						<ul class="space-y-1 p-1">
 							<li class="px-3 py-2 text-sm text-muted-foreground">Type to search...</li>
@@ -1083,62 +1218,90 @@ templ htmxSection() {
 					</div>
 				}
 			}
-
 			<!-- Field validation on blur -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Blur Validation (hx-post + hx-trigger="blur") }
+					@card.Title() {
+						Blur Validation (hx-post + hx-trigger="blur") 
+					}
 				}
 				@card.Content() {
 					<div class="space-y-4">
 						<div>
-							@label.Label(label.Props{}) { Email }
-							<input type="email" name="value"
+							@label.Label(label.Props{}) {
+								Email 
+							}
+							<input
+								type="email"
+								name="value"
 								hx-post="/api/validate"
 								hx-trigger="blur"
 								hx-target="#email-feedback"
 								hx-vals='{"field":"email"}'
 								placeholder="you@example.com"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
+								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+							/>
 							<div id="email-feedback"></div>
 						</div>
 						<div>
-							@label.Label(label.Props{}) { Name }
-							<input type="text" name="value"
+							@label.Label(label.Props{}) {
+								Name 
+							}
+							<input
+								type="text"
+								name="value"
 								hx-post="/api/validate"
 								hx-trigger="blur"
 								hx-target="#name-feedback"
 								hx-vals='{"field":"name"}'
 								placeholder="Your name"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
+								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+							/>
 							<div id="name-feedback"></div>
 						</div>
 					</div>
 				}
 			}
-
 			<!-- Toast via OOB swap -->
 			@card.Card() {
 				@card.Header() {
-					@card.Title() { Toast (hx-swap-oob) }
+					@card.Title() {
+						Toast (hx-swap-oob) 
+					}
 				}
 				@card.Content() {
 					<p class="text-sm text-muted-foreground mb-3">Server responds with out-of-band HTML injected into #toast-container.</p>
 					<div class="flex gap-2 flex-wrap">
-						<button hx-post="/api/toast" hx-vals='{"variant":"success"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors">
+						<button
+							hx-post="/api/toast"
+							hx-vals='{"variant":"success"}'
+							hx-swap="none"
+							class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors"
+						>
 							Success
 						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"error"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:bg-destructive/90 transition-colors">
+						<button
+							hx-post="/api/toast"
+							hx-vals='{"variant":"error"}'
+							hx-swap="none"
+							class="inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:bg-destructive/90 transition-colors"
+						>
 							Error
 						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"info"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors">
+						<button
+							hx-post="/api/toast"
+							hx-vals='{"variant":"info"}'
+							hx-swap="none"
+							class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+						>
 							Info
 						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"warning"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 transition-colors">
+						<button
+							hx-post="/api/toast"
+							hx-vals='{"variant":"warning"}'
+							hx-swap="none"
+							class="inline-flex items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
+						>
 							Warning
 						</button>
 					</div>
