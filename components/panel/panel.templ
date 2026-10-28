@@ -63,7 +63,7 @@ templ headerRow(p Props) {
 			}
 		</div>
 		if len(p.Actions) > 0 {
-			<div class="shrink-0">
+			<div class="min-w-0 max-w-full">
 				@action.Group(p.Actions)
 			</div>
 		}

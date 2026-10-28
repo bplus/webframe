@@ -57,3 +57,13 @@ func TestPageHeader_BackHrefSanitized(t *testing.T) {
 		t.Errorf("javascript: URL not sanitized: %s", out)
 	}
 }
+
+func TestPageHeader_ActionsWrapperCanShrink(t *testing.T) {
+	out := render(t, Props{Title: "T", Primary: &action.Action{Label: "A"}})
+	if strings.Contains(out, `<div class="shrink-0">`) {
+		t.Errorf("actions wrapper must not be shrink-0: %s", out)
+	}
+	if !strings.Contains(out, `<div class="min-w-0 max-w-full">`) {
+		t.Errorf("actions wrapper missing min-w-0 max-w-full: %s", out)
+	}
+}

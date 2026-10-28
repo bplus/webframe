@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
+
+	"github.com/bplus/webframe/components/action"
 )
 
 func render(t *testing.T, c templ.Component) string {
@@ -63,5 +65,15 @@ func TestPanel_DangerVariant(t *testing.T) {
 	out := render(t, Panel(Props{Title: "T", Variant: VariantDanger}))
 	if !strings.Contains(out, "border-destructive") {
 		t.Errorf("missing border-destructive in %s", out)
+	}
+}
+
+func TestPanel_ActionsWrapperCanShrink(t *testing.T) {
+	out := render(t, Panel(Props{Title: "T", Actions: []action.Action{{Label: "A"}}}))
+	if strings.Contains(out, `<div class="shrink-0">`) {
+		t.Errorf("actions wrapper must not be shrink-0: %s", out)
+	}
+	if !strings.Contains(out, `<div class="min-w-0 max-w-full">`) {
+		t.Errorf("actions wrapper missing min-w-0 max-w-full: %s", out)
 	}
 }

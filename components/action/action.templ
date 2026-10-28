@@ -16,7 +16,7 @@ templ Button(a Action) {
 
 // Group renders actions as an inline row with a gap-2 gap, in order.
 templ Group(actions []Action) {
-	<div class="flex items-center gap-2">
+	<div class="flex flex-wrap items-center gap-2">
 		for _, a := range actions {
 			@Button(a)
 		}

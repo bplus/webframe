@@ -128,7 +128,7 @@ func headerRow(p Props) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if len(p.Actions) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"shrink-0\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"min-w-0 max-w-full\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

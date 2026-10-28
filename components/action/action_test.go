@@ -82,3 +82,10 @@ func TestIsLink(t *testing.T) {
 		}
 	}
 }
+
+func TestGroup_Wraps(t *testing.T) {
+	out := render(t, Group([]Action{{Label: "A"}, {Label: "B"}}))
+	if !strings.Contains(out, "flex-wrap") {
+		t.Errorf("Group should wrap at narrow widths: %s", out)
+	}
+}
