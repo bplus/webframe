@@ -32,10 +32,13 @@ func TestGameIcon_Classes(t *testing.T) {
 		p    Props
 		want []string
 	}{
-		{"default", Props{Name: "ring"}, []string{"h-8", "w-8", "text-foreground"}},
-		{"size lg", Props{Name: "ring", Size: SizeLg}, []string{"h-12", "w-12", "text-foreground"}},
+		{"default inherits color", Props{Name: "ring"}, []string{"h-8", "w-8"}},
+		{"size lg", Props{Name: "ring", Size: SizeLg}, []string{"h-12", "w-12"}},
+		{"tone foreground", Props{Name: "ring", Tone: ToneForeground}, []string{"h-8", "w-8", "text-foreground"}},
 		{"tone primary", Props{Name: "ring", Tone: TonePrimary}, []string{"h-8", "w-8", "text-primary"}},
-		{"class overrides", Props{Name: "ring", Class: "h-4 w-4"}, []string{"h-4", "w-4", "text-foreground"}},
+		{"tone accent", Props{Name: "ring", Tone: ToneAccent}, []string{"h-8", "w-8", "text-accent-500"}},
+		{"tone muted", Props{Name: "ring", Tone: ToneMuted}, []string{"h-8", "w-8", "text-muted-foreground"}},
+		{"class overrides", Props{Name: "ring", Class: "h-4 w-4"}, []string{"h-4", "w-4"}},
 	}
 	for _, c := range cases {
 		got := classes(t, c.p)

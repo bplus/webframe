@@ -26,15 +26,18 @@ const (
 	SizeXL Size = "xl" // h-16 w-16
 )
 
-// Tone is the icon color, drawn from theme tokens. The zero value is the
-// foreground color.
+// Tone is the icon color, drawn from theme tokens. The sprite fills with
+// currentColor, so the zero value adds no color class and the icon takes
+// the surrounding text color (white inside a primary button, for example).
 type Tone string
 
 const (
-	ToneDefault Tone = ""
-	TonePrimary Tone = "primary"
-	ToneAccent  Tone = "accent"
-	ToneMuted   Tone = "muted"
+	ToneDefault    Tone = ""
+	ToneForeground Tone = "foreground"
+	TonePrimary    Tone = "primary"
+	// ToneAccent is the amber accent scale, visible in both themes.
+	ToneAccent Tone = "accent"
+	ToneMuted  Tone = "muted"
 )
 
 // Props configures a game icon.
@@ -65,12 +68,14 @@ func toneClass(t Tone) string {
 	switch t {
 	case TonePrimary:
 		return "text-primary"
+	case ToneForeground:
+		return "text-foreground"
 	case ToneAccent:
-		return "text-accent-foreground"
+		return "text-accent-500"
 	case ToneMuted:
 		return "text-muted-foreground"
 	default:
-		return "text-foreground"
+		return ""
 	}
 }
 
@@ -121,7 +126,7 @@ func GameIcon(props Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs("/static/icons/game-icons.svg#icon-" + props.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/gameicon/gameicon.templ`, Line: 69, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/gameicon/gameicon.templ`, Line: 74, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

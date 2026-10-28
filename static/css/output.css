@@ -1166,6 +1166,9 @@
   .whitespace-nowrap {
     white-space: nowrap;
   }
+  .text-accent-500 {
+    color: var(--color-accent-500);
+  }
   .text-accent-foreground {
     color: var(--color-accent-foreground);
   }

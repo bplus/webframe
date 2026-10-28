@@ -1045,6 +1045,10 @@ templ gameiconSection() {
 				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
 				<small>bottled-bolt (accent)</small>
 			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg, Tone: gameicon.ToneForeground})
+				<small>shield (foreground)</small>
+			}
 		}
 		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
 			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})` }</code>
