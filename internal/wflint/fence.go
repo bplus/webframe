@@ -27,7 +27,8 @@ func fenceOf(expr string) (kind string, ok bool) {
 var reasonRe = regexp.MustCompile(`Reason:\s*"((?:[^"\\]|\\.)*)"`)
 
 // fenceReason extracts the Reason string literal from a fence expression,
-// unescaping \" and \\. present is false when the field is absent or empty.
+// unescaping \" and \\. present is false when the field is absent, empty, or
+// only whitespace.
 func fenceReason(expr string) (reason string, present bool) {
 	m := reasonRe.FindStringSubmatch(expr)
 	if m == nil {
@@ -42,5 +43,5 @@ func fenceReason(expr string) (reason string, present bool) {
 		b.WriteByte(s[i])
 	}
 	reason = b.String()
-	return reason, reason != ""
+	return reason, strings.TrimSpace(reason) != ""
 }

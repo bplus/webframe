@@ -2,49 +2,111 @@ package wflint
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/a-h/templ/parser/v2"
 )
 
 var (
-	htmlFromGoRe  = regexp.MustCompile(`\btempl\.(Raw|FromGoHTML|ComponentFunc)\(`)
-	propsClassRe  = regexp.MustCompile(`\bClass:\s`)
-	attrsMapRe    = regexp.MustCompile(`\btempl\.Attributes\{`)
-	classStyleKey = regexp.MustCompile(`"(class|style)"\s*:`)
+	htmlFromGoRe = regexp.MustCompile(`\btempl\.(Raw|FromGoHTML|ComponentFunc)\(`)
+	// propsClassRe finds a Class field anywhere; used inside component call
+	// expressions, where any Class: is a Props field.
+	propsClassRe = regexp.MustCompile(`\bClass:\s*`)
+	// propsLitRe finds the opening of a Props composite literal (card.Props{
+	// or Props{); in plain Go code Class: is reported only inside one, since
+	// other structs may legitimately have a Class field.
+	propsLitRe = regexp.MustCompile(`\b(?:[A-Za-z_]\w*\.)?Props\{`)
+	// attrsMapRe finds the opening of an attribute-map literal.
+	attrsMapRe = regexp.MustCompile(`\btempl\.Attributes\{|\bmap\[string\](?:any|interface\{\})\{`)
+	// classStyleKey finds a quoted class or style key, in any case.
+	classStyleKey = regexp.MustCompile(`(?i)"(class|style)"\s*:`)
 )
 
 var goRuleText = map[string][2]string{
 	"html-from-go": {"building HTML from Go strings (templ.Raw, templ.FromGoHTML, templ.ComponentFunc) is not allowed in app code", "prose for content HTML"},
 	"props-class":  {"Class: is not allowed in webframe Props in app code; styling belongs inside webframe components", ""},
-	"attrs-map":    {`templ.Attributes with a "class" or "style" key is not allowed in app code`, ""},
+	"attrs-map":    {`an attribute map (templ.Attributes or map[string]any) with a "class" or "style" key is not allowed in app code`, ""},
 }
 
-// goCodeViolations returns the names of the rules src breaches, each at most
-// once, in the order html-from-go, props-class, attrs-map.
-func goCodeViolations(src string) []string {
-	var rules []string
-	if htmlFromGoRe.MatchString(src) {
-		rules = append(rules, "html-from-go")
+// goFinding is one rule breach at a byte offset into a Go source.
+type goFinding struct {
+	off  int
+	rule string
+}
+
+// goFindings returns every breach in src, sorted by offset. With component
+// (src is a @component(...) or {! } call expression), any Class: is a
+// props-class; otherwise only a Class: inside a Props literal is.
+func goFindings(src string, component bool) []goFinding {
+	var out []goFinding
+	seen := map[goFinding]bool{}
+	add := func(off int, rule string) {
+		f := goFinding{off, rule}
+		if !seen[f] {
+			seen[f] = true
+			out = append(out, f)
+		}
 	}
-	if propsClassRe.MatchString(src) {
-		rules = append(rules, "props-class")
+	for _, loc := range htmlFromGoRe.FindAllStringIndex(src, -1) {
+		add(loc[0], "html-from-go")
+	}
+	if component {
+		for _, loc := range propsClassRe.FindAllStringIndex(src, -1) {
+			add(loc[0], "props-class")
+		}
+	} else {
+		for _, loc := range propsLitRe.FindAllStringIndex(src, -1) {
+			open := loc[1] - 1
+			body := braceBody(src[open:])
+			for _, m := range propsClassRe.FindAllStringIndex(body, -1) {
+				add(open+m[0], "props-class")
+			}
+		}
 	}
 	for _, loc := range attrsMapRe.FindAllStringIndex(src, -1) {
-		if classStyleKey.MatchString(braceBody(src[loc[1]-1:])) {
-			rules = append(rules, "attrs-map")
-			break
+		open := loc[1] - 1
+		if m := classStyleKey.FindStringIndex(braceBody(src[open:])); m != nil {
+			add(open+m[0], "attrs-map")
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].off < out[j].off })
+	return out
+}
+
+// goCodeViolations returns the names of the rules a component call
+// expression breaches, each at most once, in the order html-from-go,
+// props-class, attrs-map.
+func goCodeViolations(src string) []string {
+	found := map[string]bool{}
+	for _, f := range goFindings(src, true) {
+		found[f.rule] = true
+	}
+	var rules []string
+	for _, r := range []string{"html-from-go", "props-class", "attrs-map"} {
+		if found[r] {
+			rules = append(rules, r)
 		}
 	}
 	return rules
 }
 
 // braceBody returns s (which starts with '{') up to its matching '}', or all
-// of s when unbalanced. Braces inside string literals are not special-cased.
+// of s when unbalanced. Braces inside interpreted, raw and rune literals are
+// skipped.
 func braceBody(s string) string {
 	depth := 0
 	for i := 0; i < len(s); i++ {
-		switch s[i] {
+		switch c := s[i]; c {
+		case '"', '\'':
+			for i++; i < len(s) && s[i] != c && s[i] != '\n'; i++ {
+				if s[i] == '\\' {
+					i++
+				}
+			}
+		case '`':
+			for i++; i < len(s) && s[i] != '`'; i++ {
+			}
 		case '{':
 			depth++
 		case '}':
@@ -57,40 +119,31 @@ func braceBody(s string) string {
 	return s
 }
 
-// reportGo reports the Go-side rules breached by expr. html-from-go is
-// checked line by line, so a multi-line Go block is reported at the offending
-// line. With component (expr is the call of a @component), props-class and
-// attrs-map are also checked, over the whole expression since a Props
-// literal often spans lines, and reported at its first line.
+// reportGo reports the Go-side rules breached by expr, each at the line and
+// column of the match. component marks a @component(...) or {! } call
+// expression (see goFindings).
 func (w *walker) reportGo(expr parser.Expression, component bool) {
 	base := int(expr.Range.From.Line) + 1
 	col := int(expr.Range.From.Col) + 1
-	add := func(line, c int, rule string) {
-		w.out = append(w.out, Violation{File: w.file, Line: line, Col: c, Rule: rule,
-			Message: goRuleText[rule][0], Hint: goRuleText[rule][1]})
-	}
-	for i, line := range strings.Split(expr.Value, "\n") {
-		if htmlFromGoRe.MatchString(line) {
-			c := 1
-			if i == 0 {
-				c = col
-			}
-			add(base+i, c, "html-from-go")
+	for _, f := range goFindings(expr.Value, component) {
+		before := expr.Value[:f.off]
+		line := base + strings.Count(before, "\n")
+		c := col + f.off
+		if nl := strings.LastIndexByte(before, '\n'); nl >= 0 {
+			c = f.off - nl
 		}
-	}
-	if !component {
-		return
-	}
-	for _, r := range goCodeViolations(expr.Value) {
-		if r != "html-from-go" {
-			add(base, col, r)
-		}
+		w.out = append(w.out, Violation{File: w.file, Line: line, Col: c, Rule: f.rule,
+			Message: goRuleText[f.rule][0], Hint: goRuleText[f.rule][1]})
 	}
 }
 
-// isGenerated reports whether a Go source carries the templ generated-code
-// header before its package clause.
-func isGenerated(src string) bool {
+// isGenerated reports whether a Go file is templ output: it must be named
+// *_templ.go and carry the templ generated-code header before its package
+// clause, so a hand-written file cannot opt out by adding the comment.
+func isGenerated(file, src string) bool {
+	if !strings.HasSuffix(file, "_templ.go") {
+		return false
+	}
 	for _, line := range strings.Split(src, "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "// Code generated by templ") {
@@ -103,10 +156,10 @@ func isGenerated(src string) bool {
 	return false
 }
 
-// lintGo scans a non-generated Go file for html-from-go only (a Class: match
-// here would hit any struct field named Class).
+// lintGo scans a non-generated Go file for the Go-side rules, with the
+// narrow Props-literal form of props-class.
 func lintGo(file, src string) []Violation {
-	if isGenerated(src) {
+	if isGenerated(file, src) {
 		return nil
 	}
 	w := &walker{file: file}

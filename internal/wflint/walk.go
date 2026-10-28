@@ -59,6 +59,11 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.reportGo(n.Expression, true)
 		}
 		w.nodes(n.Children, inFence)
+	case *parser.CallTemplateExpression:
+		// The older {! expr } call syntax: same checks as @expr.
+		if !inFence {
+			w.reportGo(n.Expression, true)
+		}
 	case *parser.GoCode:
 		if !inFence {
 			w.reportGo(n.Expression, false)
@@ -80,9 +85,8 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.nodes(c.Children, inFence)
 		}
 	default:
-		// Text, Whitespace, HTMLComment, ChildrenExpression,
-		// CallTemplateExpression and the like carry nothing these rules
-		// check.
+		// Text, Whitespace, HTMLComment, ChildrenExpression and the like
+		// carry nothing these rules check.
 	}
 }
 
@@ -95,6 +99,6 @@ func (w *walker) fence(n *parser.TemplElementExpression, kind string) {
 	w.fences = append(w.fences, Fence{File: w.file, Line: int(r.From.Line) + 1, Kind: kind, Reason: reason})
 	if !ok {
 		w.report(r, "fence-reason",
-			"Custom"+strings.ToUpper(kind[:1])+kind[1:]+" needs a non-empty Reason explaining why components cannot be used", "")
+			"Custom"+strings.ToUpper(kind[:1])+kind[1:]+" needs a Reason given as a non-empty double-quoted string literal explaining why components cannot be used", "")
 	}
 }

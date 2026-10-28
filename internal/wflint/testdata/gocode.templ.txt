@@ -14,4 +14,21 @@ templ GoCode(s string) {
 	@templ.Raw(s)
 	{{ h := templ.FromGoHTML(nil, s) }}
 	@button.Button(button.Props{Attributes: templ.Attributes{"hx-get": "/x"}})
+	{! templ.Raw(s) }
+	{! card.Card(card.Props{Class: "x"}) }
+	{{ p := card.Props{Class: "x"} }}
+	@card.Card(p)
+	{{ a := templ.Attributes{"class": "x"} }}
+	@card.Card(card.Props{Class:"p-2"})
+	@button.Button(button.Props{Attributes: map[string]any{"class": "x"}})
+	@button.Button(button.Props{Attributes: templ.Attributes{"Style": "x"}})
+	@button.Button(button.Props{Attributes: templ.Attributes{"title": "}", "style": "x"}})
+	{{
+		q := card.Props{
+			Class: "y",
+		}
+	}}
+	{{ o := other.Options{Class: "x"} }}
 }
+
+var hero = card.Card(card.Props{Class: "x"})
