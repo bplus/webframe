@@ -31,6 +31,9 @@ templ Shell(props ...Props) {
 	if len(props) > 0 {
 		{{ p = props[0] }}
 	}
+	if p.CurrentPath == "" {
+		{{ p.CurrentPath = PathFromContext(ctx) }}
+	}
 	if p.Layout == LayoutSidebar {
 		<div
 			if p.ID != "" {
