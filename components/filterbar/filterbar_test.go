@@ -116,6 +116,78 @@ func TestFilterBar_Hidden(t *testing.T) {
 	}
 }
 
+// TestFilterBar_HiddenIDs: with Props.ID set, each hidden input carries
+// HiddenID(ID, name); a prefixed name's "." becomes "-" so the id works as
+// an htmx oob selector. Without an ID no hidden input has an id.
+func TestFilterBar_HiddenIDs(t *testing.T) {
+	html := render(t, filterbar.Props{
+		ID:     "bar",
+		Hidden: map[string]string{"sort": "name", "items.dir": "asc"},
+	})
+	for _, want := range []string{
+		`<input type="hidden" id="bar-hidden-items-dir" name="items.dir" value="asc" data-tui-filterbar-control>`,
+		`<input type="hidden" id="bar-hidden-sort" name="sort" value="name" data-tui-filterbar-control>`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in: %s", want, html)
+		}
+	}
+	if strings.Contains(html, "hx-swap-oob") {
+		t.Errorf("FilterBar must not render oob inputs: %s", html)
+	}
+	html = render(t, filterbar.Props{Hidden: map[string]string{"sort": "name"}})
+	if strings.Contains(html, ` id=`) {
+		t.Errorf("no ids without Props.ID, got: %s", html)
+	}
+	for _, c := range []struct{ bar, name, want string }{
+		{"bar", "sort", "bar-hidden-sort"},
+		{"list-filterbar", "items.sort", "list-filterbar-hidden-items-sort"},
+		{"bar", "a b:c[d]", "bar-hidden-a-b-c-d-"},
+		{"", "sort", ""},
+	} {
+		if got := filterbar.HiddenID(c.bar, c.name); got != c.want {
+			t.Errorf("HiddenID(%q, %q) = %q, want %q", c.bar, c.name, got, c.want)
+		}
+	}
+}
+
+// TestHiddenOOB: the same inputs as the bar renders, each with
+// hx-swap-oob="true"; nothing without a bar id or without entries.
+func TestHiddenOOB(t *testing.T) {
+	renderOOB := func(id string, hidden map[string]string) string {
+		var buf bytes.Buffer
+		if err := filterbar.HiddenOOB(id, hidden).Render(context.Background(), &buf); err != nil {
+			t.Fatalf("render: %v", err)
+		}
+		return buf.String()
+	}
+	html := renderOOB("bar", map[string]string{"sort": "name", "dir": "asc", "per": ""})
+	want := `<input type="hidden" id="bar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control hx-swap-oob="true">` +
+		`<input type="hidden" id="bar-hidden-per" name="per" value="" data-tui-filterbar-control hx-swap-oob="true">` +
+		`<input type="hidden" id="bar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`
+	if html != want {
+		t.Errorf("HiddenOOB =\n%s\nwant\n%s", html, want)
+	}
+	if got := renderOOB("", map[string]string{"sort": "name"}); got != "" {
+		t.Errorf("HiddenOOB without a bar id = %q, want nothing", got)
+	}
+	if got := renderOOB("bar", nil); got != "" {
+		t.Errorf("HiddenOOB with no entries = %q, want nothing", got)
+	}
+}
+
+// TestFilterBar_Drop: Props.Drop renders comma-joined as
+// data-tui-filterbar-drop; callers that do not set it get no attribute.
+func TestFilterBar_Drop(t *testing.T) {
+	html := render(t, filterbar.Props{Drop: []string{"page", "items.page"}})
+	if !strings.Contains(html, `data-tui-filterbar-drop="page,items.page"`) {
+		t.Errorf("missing drop attribute in: %s", html)
+	}
+	if html := render(t, richProps()); strings.Contains(html, "data-tui-filterbar-drop") {
+		t.Errorf("drop attribute rendered without Drop: %s", html)
+	}
+}
+
 // TestFilterBar_NilHidden_NoHiddenInputs: callers that do not set Hidden get
 // no hidden inputs at all.
 func TestFilterBar_NilHidden_NoHiddenInputs(t *testing.T) {

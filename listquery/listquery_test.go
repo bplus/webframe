@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"math"
 	"net/http/httptest"
 	"net/url"
 	"reflect"
@@ -529,5 +530,87 @@ func TestParse_CommaJoinedFilters(t *testing.T) {
 	}
 	if got := ParseValues(parsed.Query(), itemOpts); !reflect.DeepEqual(got, spec) {
 		t.Errorf("round trip of %q\n got %+v\nwant %+v", u, got, spec)
+	}
+}
+
+// TestParse_PageCeiling: Page is capped at MaxPage, and Offset caps page
+// and size again, so ?page=4611686018427387904&per=100 (2^62 pages) cannot
+// overflow the offset arithmetic into a negative or wrapped value.
+func TestParse_PageCeiling(t *testing.T) {
+	got := ParseValues(values(t, "page=4611686018427387904&per=100"), itemOpts)
+	if got.Page != MaxPage || got.PageSize != 100 {
+		t.Fatalf("Page/PageSize = %d/%d, want %d/100", got.Page, got.PageSize, MaxPage)
+	}
+	if off := got.Offset(); off != (MaxPage-1)*100 {
+		t.Errorf("Offset = %d, want %d", off, (MaxPage-1)*100)
+	}
+	if got.Page <= 0 || got.Offset() <= 0 {
+		t.Errorf("ceiling produced a non-positive page or offset: %d / %d", got.Page, got.Offset())
+	}
+	// A page just under the ceiling is kept as is.
+	if got := ParseValues(values(t, "page=2147483646"), itemOpts); got.Page != MaxPage-1 {
+		t.Errorf("Page = %d, want %d", got.Page, MaxPage-1)
+	}
+	// A hand-built Spec with absurd values is capped by Offset itself.
+	s := Spec{Page: 1 << 62, PageSize: 1 << 62}
+	want := int64(MaxPage-1) * int64(MaxPage)
+	if want > math.MaxInt {
+		want = math.MaxInt
+	}
+	if off := s.Offset(); int64(off) != want || off <= 0 {
+		t.Errorf("hand-built Offset = %d, want %d", off, want)
+	}
+	// URL writes the capped page back.
+	if u := got.URL("/items"); !strings.Contains(u, "page=2147483647") {
+		t.Errorf("URL = %q", u)
+	}
+}
+
+// TestParseCurrent: the Spec comes from the HX-Current-URL header's query
+// (the page the user is looking at) when htmx sent one, else from the
+// request's own query; a header that does not parse falls back too.
+func TestParseCurrent(t *testing.T) {
+	r := httptest.NewRequest("DELETE", "/items/1?sort=created", nil)
+	r.Header.Set("HX-Current-URL", "http://localhost:3333/items?sort=created&dir=desc&page=2&status=open&owner=me")
+	got := ParseCurrent(r, itemOpts)
+	want := Spec{Sort: "created", Dir: Desc, Page: 2, PageSize: 25, defaultSize: 25,
+		Filters: map[string][]string{"status": {"open"}, "owner": {"me"}}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ParseCurrent with header = %+v, want %+v", got, want)
+	}
+	if u := CurrentURL(r); u.Path != "/items" || u.Query().Get("page") != "2" {
+		t.Errorf("CurrentURL = %q", u.String())
+	}
+
+	// No header: the request's own query.
+	r = httptest.NewRequest("GET", "/items?sort=created&page=3", nil)
+	got = ParseCurrent(r, itemOpts)
+	if got.Sort != "created" || got.Page != 3 {
+		t.Errorf("ParseCurrent without header = %+v", got)
+	}
+	if u := CurrentURL(r); u.Path != "/items" {
+		t.Errorf("CurrentURL without header = %q", u.String())
+	}
+	// CurrentURL hands out a copy, never r.URL itself.
+	if CurrentURL(r) == r.URL {
+		t.Error("CurrentURL returned r.URL itself")
+	}
+
+	// A header that does not parse falls back to the request.
+	r = httptest.NewRequest("GET", "/items?sort=created", nil)
+	r.Header.Set("HX-Current-URL", "http://[::1/items?page=9")
+	if got = ParseCurrent(r, itemOpts); got.Sort != "created" || got.Page != 1 {
+		t.Errorf("ParseCurrent with a bad header = %+v", got)
+	}
+	if u := CurrentURL(r); u.Path != "/items" {
+		t.Errorf("CurrentURL with a bad header = %q", u.String())
+	}
+
+	// A nil request: defaults, no panic.
+	if got = ParseCurrent(nil, itemOpts); got.Sort != "name" || got.Page != 1 {
+		t.Errorf("ParseCurrent(nil) = %+v", got)
+	}
+	if u := CurrentURL(nil); u == nil || u.Path != "" {
+		t.Errorf("CurrentURL(nil) = %v", u)
 	}
 }

@@ -44,7 +44,7 @@ templ Page(p Props) {
 templ body(p Props, base string) {
 	<div class="space-y-4">
 		if p.Intro != "" {
-			<p class="text-sm text-muted-foreground">{ p.Intro }</p>
+			<p id={ p.introID() } class={ introClass }>{ p.Intro }</p>
 		}
 		if p.hasFilterBar() {
 			@filterbar.FilterBar(p.filterbarProps(base))
@@ -72,13 +72,32 @@ templ bulkForm(p Props) {
 
 // Results renders the swap region: <div id={ResultsID()}> holding the
 // datatable and the pagination, and nothing else (no header, no filter
-// bar), so sort, filter and page requests can replace it in place. The
-// pagination summary line is always present and the table header stays
-// when there are no rows, so only the rows change the region's height.
+// bar, no out-of-band elements, so it can sit inside Page), so sort,
+// filter and page requests can replace it in place. The pagination
+// summary line is always present and the table header stays when there
+// are no rows, so only the rows change the region's height.
 templ Results(p Props) {
 	{{ base := p.base(appshell.PathFromContext(ctx)) }}
 	<div id={ p.ResultsID() } class="space-y-3">
 		@datatable.DataTable(p.tableProps(base))
 		@pagination.Pagination(p.paginationProps())
 	</div>
+}
+
+// resultsPart is what a results-only response carries (Respond for a
+// request targeting the results, RespondResults for a mutation): Results,
+// then the out-of-band updates htmx applies elsewhere on the page before
+// swapping the region: the filter bar's hidden sort/dir/per inputs (so a
+// sort chosen from a table header is what the next filter change sends)
+// and the intro line (so its counts follow a delete or publish). Each
+// replaces an element of the same id and shape, so nothing on the page
+// moves. Never rendered inside Page, where the originals already are.
+templ resultsPart(p Props) {
+	@Results(p)
+	if p.hasFilterBar() {
+		@filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs())
+	}
+	if p.Intro != "" {
+		<p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>
+	}
 }

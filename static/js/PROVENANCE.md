@@ -131,3 +131,14 @@ carry list state that is not a filter (sort, dir, per), so "Clear filters"
 clears the filters and leaves them in place; `collectParams` already read
 every `[data-tui-filterbar-control]` by `name`, so hidden inputs ride along
 with no other change. Nothing else in the file changed.
+
+Batch 2 review fix (F1, URL sync) makes a second local edit to
+`filterbar.min.js`, in `triggerUpdate`'s URL block: before writing the
+collected parameters into the page URL it now deletes every parameter named
+by one of the bar's controls (`[data-tui-filterbar-control][name]` and
+`[data-tui-filterbar-toggle][name]`, empty ones included) and every name in
+the bar's optional `data-tui-filterbar-drop` attribute (comma-separated;
+`filterbar.Props.Drop`), then sets the non-empty values as before. A cleared
+control or a stale `page=` therefore leaves the URL, while parameters the bar
+does not own are kept (the search string is edited, not replaced). Nothing
+else in the file changed.

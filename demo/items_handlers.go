@@ -198,32 +198,21 @@ func plural(n int, noun string) string {
 	return strconv.Itoa(n) + " " + noun + "s"
 }
 
-// specFromCurrentURL rebuilds the list Spec a mutation (delete, publish)
-// should re-render for: from the HX-Current-URL header's query when htmx
-// sent one (the page the user is looking at), else the request's own
-// query.
-func specFromCurrentURL(r *http.Request) listquery.Spec {
-	q := r.URL.Query()
-	if cur := r.Header.Get("HX-Current-URL"); cur != "" {
-		if u, err := url.Parse(cur); err == nil {
-			q = u.Query()
-		}
-	}
-	return listquery.ParseValues(q, itemsQuery)
-}
-
-// renderResults writes just the results region (table + pagination) for
-// spec, the response to a mutation issued from inside the list.
-func renderResults(w http.ResponseWriter, r *http.Request, spec listquery.Spec) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := listpage.Results(itemsListProps(spec)).Render(r.Context(), w); err != nil {
+// respondResults answers a mutation issued from inside the list: the list
+// state comes from the page the user is looking at (listquery.ParseCurrent
+// reads the HX-Current-URL header), and listpage.RespondResults writes the
+// results region, the filter bar's hidden state and the intro line out of
+// band, and HX-Replace-Url so the address bar follows a clamped page.
+func respondResults(w http.ResponseWriter, r *http.Request) {
+	spec := listquery.ParseCurrent(r, itemsQuery)
+	if err := listpage.RespondResults(w, r, itemsListProps(spec)); err != nil {
 		log.Printf("demo: render items results: %v", err)
 	}
 }
 
 // HandleItemDelete deletes one item (DELETE /items/{id}). From the list
 // (HX-Target is the results region) it re-renders the results for the
-// current URL so the row disappears and the summary updates; from
+// current URL so the row disappears and the summary and intro update; from
 // anywhere else over htmx (the detail page) it answers HX-Redirect to
 // /items; a plain request gets a 303 to /items. Unknown ids are 404.
 //
@@ -235,7 +224,7 @@ func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Header.Get("HX-Target") == itemsResultsID {
-		renderResults(w, r, specFromCurrentURL(r))
+		respondResults(w, r)
 		return
 	}
 	redirectTo(w, r, "/items")
@@ -253,7 +242,7 @@ func HandleItemsPublish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	Items.Publish(r.Form["ids"])
-	renderResults(w, r, specFromCurrentURL(r))
+	respondResults(w, r)
 }
 
 // redirectTo sends the browser to location: HX-Redirect with an empty 200
