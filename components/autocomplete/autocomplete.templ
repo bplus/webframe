@@ -1,0 +1,132 @@
+package autocomplete
+
+import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/utils"
+)
+
+// Props configures an Autocomplete. HxGet is required; everything else
+// is optional with the defaults noted per field.
+type Props struct {
+	// ID is the text box's id; the listbox is ID+"-list". Defaults to
+	// utils.RandomID(). Set it explicitly for stable markup.
+	ID         string
+	Class      string
+	Attributes templ.Attributes // spread on the root
+
+	// Name is the hidden field carrying the picked Value; "" renders no
+	// hidden field (free text only, submitted as q).
+	Name        string
+	Label       string // optional visible label
+	Placeholder string
+	Value       string // initial picked value (hidden field)
+	Text        string // initial visible text
+
+	// HxGet is the server URL: the request is GET HxGet?q=<typed text>
+	// and the response should be a Results(...) fragment.
+	HxGet    string
+	MinChars int // default 1: fewer typed characters → no request, list closed
+	DelayMs  int // default 300: typing pause before the request fires
+	Required bool
+	Disabled bool
+}
+
+// Item is one suggestion in a Results list. Label is shown and copied
+// into the text box on pick; Value goes into the hidden field;
+// Description is optional muted text beside the label.
+type Item struct{ Label, Value, Description string }
+
+func (p Props) inputAttrs() templ.Attributes {
+	a := templ.Attributes{
+		"name":              "q",
+		"role":              "combobox",
+		"aria-autocomplete": "list",
+		"aria-expanded":     "false",
+		"aria-controls":     p.ID + "-list",
+		"autocomplete":      "off",
+		"hx-get":            p.HxGet,
+		"hx-trigger":        "input changed delay:" + strconv.Itoa(p.DelayMs) + "ms",
+		"hx-target":         "#" + p.ID + "-list",
+		"hx-swap":           "innerHTML",
+		"data-wf-ac-input":  "",
+	}
+	if p.Required {
+		a["required"] = true
+	}
+	return a
+}
+
+// Autocomplete renders a server-backed type-ahead picker: a search text
+// box that GETs HxGet?q=<text> (via HTMX) after DelayMs of typing and
+// swaps the server's Results fragment into a listbox below it. Picking
+// an option (click, or arrow keys + Enter) copies its label into the
+// text box and its value into the hidden field named Name, then fires
+// a bubbling "wf:autocomplete:select" event with detail {value, label}
+// on the root. Editing the text after a pick clears the hidden value.
+//
+// @temporal-coupling picking, keyboard navigation, MinChars gating and
+// closing are inert unless Script() is on the page (appshell.Scripts
+// includes it); HTMX must be loaded for any results to appear.
+// @side-effects calls utils.RandomID when Props.ID is empty.
+templ Autocomplete(props Props) {
+	{{ p := props }}
+	if p.ID == "" {
+		{{ p.ID = utils.RandomID() }}
+	}
+	if p.MinChars <= 0 {
+		{{ p.MinChars = 1 }}
+	}
+	if p.DelayMs <= 0 {
+		{{ p.DelayMs = 300 }}
+	}
+	<div class={ utils.TwMerge("relative", p.Class) } data-wf-autocomplete data-wf-ac-min={ strconv.Itoa(p.MinChars) } { p.Attributes... }>
+		if p.Label != "" {
+			@form.Label(form.LabelProps{For: p.ID}) {
+				{ p.Label }
+			}
+		}
+		@input.Input(input.Props{
+			ID:          p.ID,
+			Type:        input.TypeSearch,
+			Placeholder: p.Placeholder,
+			Value:       p.Text,
+			Disabled:    p.Disabled,
+			Attributes:  p.inputAttrs(),
+		})
+		if p.Name != "" {
+			<input type="hidden" name={ p.Name } value={ p.Value } data-wf-ac-value/>
+		}
+		<div id={ p.ID + "-list" } role="listbox" class="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-md hidden" data-wf-ac-list></div>
+	</div>
+}
+
+// Results renders the listbox contents the server returns for a query:
+// one selectable option per item, or a single non-selectable
+// "No matches" row when items is empty.
+//
+// @pure
+templ Results(items []Item) {
+	if len(items) == 0 {
+		<div class="px-3 py-2 text-sm text-muted-foreground" data-wf-ac-empty>No matches</div>
+	}
+	for _, it := range items {
+		<div role="option" tabindex="-1" class="cursor-pointer px-3 py-2 text-sm data-[active]:bg-muted hover:bg-muted" data-wf-ac-option data-wf-ac-item-value={ it.Value } data-wf-ac-item-label={ it.Label }>
+			{ it.Label }
+			if it.Description != "" {
+				<span class="ml-2 text-muted-foreground">{ it.Description }</span>
+			}
+		</div>
+	}
+}
+
+// Script emits the deferred <script> tag for /static/js/autocomplete.js,
+// CSP-nonced and cache-busted. Include once per page; appshell.Scripts
+// already does.
+//
+// @idempotent
+templ Script() {
+	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/autocomplete.js") }></script>
+}

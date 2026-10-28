@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/checkbox"
 	"github.com/bplus/webframe/components/dialog"
@@ -25,8 +26,9 @@ import (
 )
 
 // Scripts renders the standard script bundle: the Script() tag of tabs,
-// popover, dropdown, dialog, selectbox, input, checkbox, textarea, avatar,
-// label, slideover and filterbar, followed by theme-toggle.js. Document
+// popover, dropdown, dialog, selectbox, autocomplete, input, checkbox,
+// textarea, avatar, label, slideover and filterbar, followed by
+// theme-toggle.js. Document
 // renders it at the end of <body>. It deliberately omits trafficstream and
 // graphwidget; pages using those add their own Script().
 //
@@ -72,6 +74,10 @@ func Scripts() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = autocomplete.Script().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = input.Script().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -107,7 +113,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 39, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 42, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -120,7 +126,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/theme-toggle.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 39, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 42, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
