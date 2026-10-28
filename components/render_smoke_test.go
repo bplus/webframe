@@ -18,6 +18,7 @@ import (
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/areachart"
 	"github.com/bplus/webframe/components/aspectratio"
+	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/barchart"
@@ -35,6 +36,7 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/graphwidget"
 	"github.com/bplus/webframe/components/hovercard"
@@ -95,6 +97,7 @@ var componentCases = []componentCase{
 	{name: "appshell", constructor: func() templ.Component { return appshell.Shell() }},
 	{name: "areachart", constructor: func() templ.Component { return areachart.AreaChart() }},
 	{name: "aspectratio", constructor: func() templ.Component { return aspectratio.AspectRatio() }},
+	{name: "autocomplete", constructor: func() templ.Component { return autocomplete.Autocomplete(autocomplete.Props{ID: "x", HxGet: "/q"}) }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
 	{name: "badge", constructor: func() templ.Component { return badge.Badge() }},
 	{name: "barchart", constructor: func() templ.Component { return barchart.BarChart() }},
@@ -117,6 +120,7 @@ var componentCases = []componentCase{
 	{name: "emptystate", constructor: func() templ.Component { return emptystate.EmptyState() }},
 	{name: "filterbar", constructor: func() templ.Component { return filterbar.FilterBar() }},
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
+	{name: "formfield", constructor: func() templ.Component { return formfield.FormField(formfield.Field{Name: "x"}) }},
 	{name: "gameicon", constructor: func() templ.Component { return gameicon.GameIcon(gameicon.Props{}) }},
 	{name: "graphwidget", constructor: func() templ.Component { return graphwidget.GraphWidget() }},
 	{name: "hovercard", constructor: func() templ.Component { return hovercard.Hover(hovercard.Props{}) }},

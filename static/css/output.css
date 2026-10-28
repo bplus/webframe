@@ -329,6 +329,9 @@
   .z-10 {
     z-index: 10;
   }
+  .z-20 {
+    z-index: 20;
+  }
   .z-50 {
     z-index: 50;
   }
@@ -515,6 +518,9 @@
   .h-px {
     height: 1px;
   }
+  .max-h-64 {
+    max-height: calc(var(--spacing) * 64);
+  }
   .max-h-\[300px\] {
     max-height: 300px;
   }
@@ -690,6 +696,9 @@
   }
   .appearance-none {
     appearance: none;
+  }
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1452,6 +1461,9 @@
   .indeterminate\:text-primary-foreground:indeterminate {
     color: var(--color-primary-foreground);
   }
+  .empty\:hidden:empty {
+    display: none;
+  }
   @media (hover: hover) {
     .hover\:bg-accent:hover {
       background-color: var(--color-accent);
@@ -1619,6 +1631,9 @@
       --tw-ring-color: color-mix(in oklab, var(--color-destructive) 20%, transparent);
     }
   }
+  .data-\[active\]\:bg-muted[data-active] {
+    background-color: var(--color-muted);
+  }
   .data-\[tui-dialog-hidden\=true\]\:\!hidden[data-tui-dialog-hidden="true"] {
     display: none !important;
   }
@@ -1750,8 +1765,14 @@
     .md\:order-first {
       order: -9999;
     }
+    .md\:col-span-2 {
+      grid-column: span 2 / span 2;
+    }
     .md\:hidden {
       display: none;
+    }
+    .md\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .md\:grid-cols-\[minmax\(0\,1fr\)_180px_180px_140px\] {
       grid-template-columns: minmax(0,1fr) 180px 180px 140px;
@@ -2280,6 +2301,32 @@
   font-size: 0.875rem;
   color: var(--color-muted-foreground);
   margin-bottom: 1.5rem;
+}
+[data-wf-tabs-sizing="tallest"], [data-wf-tabs-sizing="fixed"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-list], [data-wf-tabs-sizing="fixed"] > [data-tui-tabs-list] {
+  grid-row: 1;
+}
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-content] {
+  grid-row: 2;
+  grid-column: 1;
+  display: block;
+}
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-content][data-tui-tabs-state="inactive"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-wf-tabs-sizing="fixed"] > [data-tui-tabs-content] {
+  grid-row: 2;
+  height: var(--wf-tabs-h, 20rem);
+  overflow: auto;
+}
+[data-wf-tabs-sizing="fixed"][data-wf-tabs-height="s"] {
+  --wf-tabs-h: 12rem;
+}
+[data-wf-tabs-sizing="fixed"][data-wf-tabs-height="l"] {
+  --wf-tabs-h: 32rem;
 }
 .htmx-indicator {
   opacity: 0;
