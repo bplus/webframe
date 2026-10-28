@@ -29,7 +29,7 @@ make check-ui
 
 The demo app runs on `http://localhost:3333`.
 
-Run `make check` before pushing. It composes three sub-targets, in order:
+Run `make check` before pushing. It composes four sub-targets, in order:
 
 - `check-generate` — regenerates templ output and Tailwind's `static/css/output.css`,
   then fails on drift in either

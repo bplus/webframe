@@ -152,14 +152,14 @@ templ navLink(item NavItem, path, base, extra string) {
 		}
 		{ item.Label }
 		if item.Badge != nil {
-			<span hx-get={ item.Badge.HxGet } hx-trigger={ "load, every " + item.Badge.Every } hx-swap="innerHTML"></span>
+			<span hx-get={ item.Badge.HxGet } hx-trigger={ "load, " + everyTrigger(item.Badge.Every) } hx-swap="innerHTML"></span>
 		}
 	</a>
 }
 
 templ rightControls(p Props) {
 	if p.LiveDot != nil {
-		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ "every " + p.LiveDot.Every } hx-swap="none"></div>
+		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ everyTrigger(p.LiveDot.Every) } hx-swap="none"></div>
 	}
 	if p.Right != nil {
 		@p.Right

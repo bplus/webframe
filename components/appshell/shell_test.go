@@ -198,3 +198,25 @@ func TestShell_SidebarDetailsMatchMedia(t *testing.T) {
 		}
 	}
 }
+
+// TestShell_EmptyEveryDefaults30s: a LiveBadge or LiveDot without Every
+// polls every 30s instead of emitting a bare "every ".
+func TestShell_EmptyEveryDefaults30s(t *testing.T) {
+	got := renderShell(t, Props{
+		AppName: "A",
+		Nav:     []NavItem{{Label: "Inbox", Href: "/inbox", Badge: &LiveBadge{HxGet: "/count"}}},
+		LiveDot: &LiveDot{HxGet: "/ping"},
+	}, nil)
+	for _, want := range []string{`hx-trigger="load, every 30s"`, `hx-trigger="every 30s"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, `every "`) {
+		t.Errorf("bare every in:\n%s", got)
+	}
+	got = renderShell(t, Props{AppName: "A", LiveDot: &LiveDot{HxGet: "/ping", Every: "5s"}}, nil)
+	if !strings.Contains(got, `hx-trigger="every 5s"`) {
+		t.Errorf("explicit Every lost in:\n%s", got)
+	}
+}

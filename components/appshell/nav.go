@@ -33,12 +33,26 @@ const (
 )
 
 // LiveBadge is an HTMX-polled badge rendered after a nav item's label.
-// Every is an htmx interval such as "30s".
+// Every is an htmx interval such as "30s"; empty means "30s".
 type LiveBadge struct{ HxGet, Every string }
 
 // LiveDot is an HTMX-polled status dot rendered at the start of the
-// topbar's right side. Every is an htmx interval such as "30s".
+// topbar's right side. Every is an htmx interval such as "30s"; empty
+// means "30s".
 type LiveDot struct{ HxGet, Every string }
+
+// defaultEvery is the poll interval used when a LiveBadge or LiveDot leaves
+// Every empty.
+const defaultEvery = "30s"
+
+// everyTrigger returns the htmx "every <interval>" trigger for every,
+// defaulting an empty interval to defaultEvery.
+func everyTrigger(every string) string {
+	if every == "" {
+		every = defaultEvery
+	}
+	return "every " + every
+}
 
 // NavItem is one navigation link. Match, when set, marks the item active
 // for any path starting with it (e.g. "/factory" for "/factory/123");
