@@ -14,6 +14,7 @@ import (
 
 	"github.com/a-h/templ"
 
+	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/areachart"
 	"github.com/bplus/webframe/components/aspectratio"
 	"github.com/bplus/webframe/components/avatar"
@@ -121,6 +122,7 @@ var componentCases = []componentCase{
 	// panel and the best single representative of the package.
 	{name: "popover", constructor: func() templ.Component { return popover.Content() }},
 	{name: "progressbar", constructor: func() templ.Component { return progressbar.ProgressBar() }},
+	{name: "action", constructor: func() templ.Component { return action.Button(action.Action{Label: "Go"}) }},
 	{name: "radio", constructor: func() templ.Component { return radio.Radio() }},
 	{name: "selectbox", constructor: func() templ.Component { return selectbox.SelectBox() }},
 	{name: "separator", constructor: func() templ.Component { return separator.Separator() }},
