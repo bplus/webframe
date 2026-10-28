@@ -1,0 +1,61 @@
+# tools/ui-check
+
+`ui-check.mjs` loads one page of the demo app in Playwright's own Chromium at a
+device-style viewport, measures it, and exits non-zero when something is wrong.
+It exists because phone width (390px) is a first-class target, also on a machine
+with no desktop Chrome; Playwright's Chromium gives a true 390px viewport
+(`isMobile`, `hasTouch`, `deviceScaleFactor: 2`) with no 500px floor.
+
+## One-time setup
+
+```bash
+npm install                       # installs the pinned playwright devDependency
+npx playwright install chromium   # ~170 MB into ~/Library/Caches/ms-playwright
+```
+
+## Running
+
+Start the demo first (`make dev`, serves on :3333), then:
+
+```bash
+make ui-check                     # /items at 390, / at 390 and 1280
+node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
+node tools/ui-check.mjs --url http://localhost:3333/items --width 390 \
+  --eval 'document.querySelectorAll("table th").length'
+node tools/ui-check.mjs --url http://localhost:3333/items --width 390 \
+  --click '[data-row-menu]' --shot tools/shots/items-390-menu.png
+```
+
+Arguments:
+
+| flag | meaning |
+|------|---------|
+| `--url <u>` | page to load (required) |
+| `--width <n>` | viewport width in CSS px (default 1280) |
+| `--height <n>` | viewport height (default 844 when width <= 500, else 800) |
+| `--shot <path>` | full-page PNG; directories are created. `tools/shots/` is git-ignored |
+| `--eval <js>` | expression evaluated in the page after load + networkidle; result printed as JSON on its own line |
+| `--click <selector>` | click before eval/shot, then wait 300ms |
+| `--hover <selector>` | hover before eval/shot, then wait 300ms |
+| `--wait <ms>` | extra wait after networkidle |
+
+Light color scheme always. No requests leave the page other than what the page itself makes.
+
+## What it checks
+
+The last line of stdout is always one JSON object:
+
+```json
+{"url":"http://localhost:3333/","width":390,"height":844,"scrollWidth":390,"horizontalOverflow":false}
+```
+
+`horizontalOverflow` is `document.documentElement.scrollWidth > width`.
+
+Exit code 1 (with the reason on stderr) when any of:
+
+- the page fails to load (network error, no response, or HTTP status >= 400)
+- `horizontalOverflow` is true
+- a `console.error` or uncaught page error occurred (each one is printed)
+
+Exit code 2 for a usage error. `make ui-check` is not part of `make check`
+because it needs the dev server running.
