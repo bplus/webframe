@@ -59,7 +59,7 @@ templ Showcase() {
 		Title:    "Webframe Components",
 		Subtitle: "A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.",
 	})
-	@panel.Panel(panel.Props{Title: "Contents"}) {
+	@panel.Panel(panel.Props{Level: 2, Title: "Contents"}) {
 		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				<strong>Building blocks</strong>
@@ -1413,11 +1413,13 @@ templ actionSection() {
 			{Label: "Skip", Variant: action.VariantGhost},
 		})
 		<p>A link (jumps to the Shell section) and an HTMX post; the server's reply appears to the right of the buttons.</p>
-		@action.Group([]action.Action{
-			{Label: "Open docs", Href: "/#shell"},
-			{Label: "Post to server", HxPost: "/api/click", HxTarget: "#click-result"},
-		})
-		<span id="click-result"></span>
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@action.Group([]action.Action{
+				{Label: "Open docs", Href: "/#shell"},
+				{Label: "Post to server", HxPost: "/api/click", HxTarget: "#click-result"},
+			})
+			<span id="click-result"></span>
+		}
 	}
 }
 
