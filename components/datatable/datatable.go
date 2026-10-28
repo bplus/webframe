@@ -80,7 +80,9 @@ type Row struct {
 // request path stored by appshell.Middleware, and to "" (a query-only href
 // relative to the current URL) when there is none either.
 //
-// Selection adds a leading checkbox column: the header box is the group
+// Selection adds a leading checkbox column (desktop only: it is hidden
+// below md, where a dense row has no room for it and bulk actions are not
+// offered): the header box is the group
 // parent for checkbox.min.js select-all; row boxes carry SelectionName
 // ("" → "ids"), the row ID as value, and SelectionForm as their form
 // attribute so the bulk form can live outside the table. HxTarget makes

@@ -185,6 +185,11 @@ func TestDataTable_Selection(t *testing.T) {
 		`form="bulk"`,
 		`aria-label="Select all rows"`, `aria-label="Select row"`,
 	)
+	// The selection column is a desktop affordance: hidden below md. The
+	// fixture's hidden type column contributes the other three.
+	if got := strings.Count(out, `md:table-cell`); got != 6 {
+		t.Errorf("md:table-cell count = %d, want 6 (selection and type: header + 2 rows each)", got)
+	}
 	if got := strings.Count(out, `type="checkbox"`); got != 3 {
 		t.Errorf("checkbox count = %d, want 3 (header + 2 rows)", got)
 	}

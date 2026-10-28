@@ -165,7 +165,7 @@ func DataTable(props ...Props) templ.Component {
 							}
 							return nil
 						})
-						templ_7745c5c3_Err = table.Head(table.CellProps{Class: utils.TwMerge("w-px", headPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = table.Head(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", headPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -551,7 +551,7 @@ func row(p Props, r Row, actions bool) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = table.Cell(table.CellProps{Class: utils.TwMerge("w-px", cellPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var23), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = table.Cell(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", cellPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var23), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -960,20 +960,17 @@ func headAttrs(spec listquery.Spec, col Column) templ.Attributes {
 	return templ.Attributes{"aria-sort": ariaSort(spec, col.Key)}
 }
 
-// cellPad is the td padding: table.Cell's p-3 by default, py-1.5 when dense.
+// cellPad is the td padding: table.Cell's p-3 by default, py-1.5 when
+// dense; below md the horizontal padding drops to px-2 so a five-column
+// row fits a 390px phone without scrolling inside its wrapper.
 func cellPad(dense bool) string {
-	if dense {
-		return "py-1.5"
-	}
-	return ""
+	return utils.TwMerge("max-md:px-2", utils.If(dense, "py-1.5"))
 }
 
-// headPad is the th height: table.Head's h-10 by default, h-9 when dense.
+// headPad is the th height: table.Head's h-10 by default, h-9 when dense;
+// the same phone-width horizontal padding as cellPad.
 func headPad(dense bool) string {
-	if dense {
-		return "h-9"
-	}
-	return ""
+	return utils.TwMerge("max-md:px-2", utils.If(dense, "h-9"))
 }
 
 var _ = templruntime.GeneratedTemplate

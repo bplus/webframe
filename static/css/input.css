@@ -435,6 +435,7 @@
 }
 :where(.wf-content) li:not([class]) { margin: 0.25em 0; }
 :where(.wf-content) code:not([class]) {
+  overflow-wrap: anywhere; /* a long call in prose never widens a 390px page */
   font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--color-muted);
