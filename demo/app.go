@@ -3,9 +3,10 @@ package demo
 import "github.com/bplus/webframe/components/appshell"
 
 // App is the demo's application shell configuration: name, navigation and
-// theme toggle. Every demo page is rendered through App.Render, and the
+// theme toggle. Every showcase page is rendered through App.Render, and the
 // server wraps its mux in App.Middleware so the shell can mark the active
-// nav item.
+// nav item. The Items pages are served through SidebarApp instead (see
+// RegisterItemRoutes); the "Items" entry here links across to them.
 var App = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -13,8 +14,8 @@ var App = &appshell.App{
 	MaxVisible:  4,
 	Nav: []appshell.NavItem{
 		{Label: "Showcase", Href: "/"},
+		{Label: "Items", Href: "/items", Match: "/items"},
 		{Label: "Traffic", Href: "/traffic"},
-		{Label: "Sidebar", Href: "/sidebar"},
 		{Label: "Forms", Href: "/#forms"},
 		{Label: "Interactive", Href: "/#interactive"},
 		{Label: "Patterns", Href: "/#patterns"},
@@ -23,9 +24,14 @@ var App = &appshell.App{
 	},
 }
 
-// SidebarApp renders the /sidebar demo page with the sidebar layout. It
-// shares the server's middleware with App (Render takes its nav from the
-// App it is called on, and the active item from the request path).
+// SidebarApp is the shell of the Items app (a dashboard sketch of
+// 2026-10-21): the sidebar layout with the sketch's MINE and DISCOVER
+// groups, every entry a view of the one list. RegisterItemRoutes wraps the
+// Items handlers in SidebarApp.Middleware, so Respond renders them in this
+// shell while the rest of the demo keeps the topbar. The Items entry
+// carries Match so every /items/... page marks it active; the other
+// entries are query-string views of the same path and are never active
+// themselves (the shell compares paths).
 var SidebarApp = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -33,14 +39,15 @@ var SidebarApp = &appshell.App{
 	ThemeToggle: true,
 	Groups: []appshell.NavGroup{
 		{Title: "Mine", Items: []appshell.NavItem{
-			{Label: "Items", Href: "/sidebar"},
-			{Label: "Mods", Href: "/sidebar#mods"},
-			{Label: "Drafts", Href: "/sidebar#drafts"},
+			{Label: "Items", Href: "/items", Match: "/items"},
+			{Label: "Mods", Href: "/items?type=weapon"},
+			{Label: "Drafts", Href: "/items?status=draft"},
+			{Label: "Builds", Href: "/items?status=published"},
 		}},
 		{Title: "Discover", Items: []appshell.NavItem{
-			{Label: "Trending", Href: "/sidebar#trending"},
-			{Label: "New", Href: "/sidebar#new"},
-			{Label: "Saved", Href: "/sidebar#saved"},
+			{Label: "Trending", Href: "/items?sort=updated&dir=desc"},
+			{Label: "New", Href: "/items?sort=updated&dir=desc&per=5"},
+			{Label: "Saved", Href: "/items?type=accessory"},
 		}},
 	},
 }

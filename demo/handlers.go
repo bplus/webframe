@@ -43,17 +43,6 @@ func HandleTraffic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleSidebar renders the sidebar-layout demo page (GET /sidebar) through
-// SidebarApp, a second appshell.App configured with LayoutSidebar.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
-func HandleSidebar(w http.ResponseWriter, r *http.Request) {
-	if err := SidebarApp.Render(w, r, "Sidebar", pages.Sidebar()); err != nil {
-		log.Printf("demo: render sidebar: %v", err)
-	}
-}
-
 // HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one
 // synthetic JSON event — provider/type/direction/status cycled from fixed
 // lists by loop index, so the stream is deterministic, not random — then
