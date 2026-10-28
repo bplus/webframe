@@ -9,6 +9,7 @@ import (
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/form"
@@ -303,76 +304,86 @@ templ badgesSection() {
 // ═══════════════════════════════════════
 templ cardsSection() {
 	@layout.Section(layout.SectionProps{ID: "cards", Title: "Cards", Description: "Composable card components: Card, Header, Title, Description, Content, Footer."}) {
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Basic Card
-				}
-				@card.Description() {
-					A simple card with header and content.
-				}
-			}
-			@card.Content() {
-				<p>Card body content goes here. This is a versatile container for any grouped content.</p>
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Card with Footer
-				}
-				@card.Description() {
-					Includes action buttons in the footer.
-				}
-			}
-			@card.Content() {
-				<p>Some content that needs actions below it.</p>
-			}
-			@card.Footer() {
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
-					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
-						Cancel
-					}
-					@button.Button(button.Props{Size: button.SizeSm}) {
-						Save
-					}
-				}
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Login
-				}
-				@card.Description() {
-					Enter your credentials below.
-				}
-			}
-			@card.Content() {
-				@layout.Stack() {
-					@form.Item() {
-						@label.Label(label.Props{For: "card-login-email"}) {
-							Email
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Basic Card
 						}
-						@input.Input(input.Props{ID: "card-login-email", Type: input.TypeEmail, Placeholder: "you@example.com"})
-					}
-					@form.Item() {
-						@label.Label(label.Props{For: "card-login-password"}) {
-							Password
+						@card.Description() {
+							A simple card with header and content.
 						}
-						@input.Input(input.Props{ID: "card-login-password", Type: input.TypePassword, Placeholder: "••••••••"})
+					}
+					@card.Content() {
+						<p>Card body content goes here. This is a versatile container for any grouped content.</p>
 					}
 				}
 			}
-			@card.Footer() {
-				@button.Button(button.Props{FullWidth: true}) {
-					Sign In
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Card with Footer
+						}
+						@card.Description() {
+							Includes action buttons in the footer.
+						}
+					}
+					@card.Content() {
+						<p>Some content that needs actions below it.</p>
+					}
+					@card.Footer() {
+						@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
+								Cancel
+							}
+							@button.Button(button.Props{Size: button.SizeSm}) {
+								Save
+							}
+						}
+					}
 				}
 			}
-		}
-		@card.Card() {
-			@card.Content() {
-				<p><small>A card with only content — no header or footer. Good for simple containers.</small></p>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Login
+						}
+						@card.Description() {
+							Enter your credentials below.
+						}
+					}
+					@card.Content() {
+						@layout.Stack() {
+							@form.Item() {
+								@label.Label(label.Props{For: "card-login-email"}) {
+									Email
+								}
+								@input.Input(input.Props{ID: "card-login-email", Type: input.TypeEmail, Placeholder: "you@example.com"})
+							}
+							@form.Item() {
+								@label.Label(label.Props{For: "card-login-password"}) {
+									Password
+								}
+								@input.Input(input.Props{ID: "card-login-password", Type: input.TypePassword, Placeholder: "••••••••"})
+							}
+						}
+					}
+					@card.Footer() {
+						@button.Button(button.Props{FullWidth: true}) {
+							Sign In
+						}
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Content() {
+						<p><small>A card with only content — no header or footer. Good for simple containers.</small></p>
+					}
+				}
 			}
 		}
 	}
@@ -383,102 +394,110 @@ templ cardsSection() {
 // ═══════════════════════════════════════
 templ formsSection() {
 	@layout.Section(layout.SectionProps{ID: "forms", Title: "Form Elements", Description: "Input, Textarea, Checkbox, Radio, Label, and Form layout components."}) {
-		@panel.Panel(panel.Props{Title: "Text Inputs"}) {
-			@layout.Stack() {
-				@form.Item() {
-					@form.Label() {
-						Default Input
-					}
-					@input.Input(input.Props{Placeholder: "Type something..."})
-					@form.Description() {
-						A standard text input.
-					}
-				}
-				@form.Item() {
-					@form.Label() {
-						Email
-					}
-					@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
-				}
-				@form.Item() {
-					@form.Label() {
-						Password (with toggle)
-					}
-					@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
-				}
-				@form.Item() {
-					@form.Label() {
-						Disabled
-					}
-					@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
-				}
-				@form.Item() {
-					@form.Label() {
-						With Error
-					}
-					@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
-					@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
-						This field is required
-					}
-				}
-			}
-		}
-		@panel.Panel(panel.Props{Title: "Textarea"}) {
-			@layout.Stack() {
-				@form.Item() {
-					@form.Label() {
-						Description
-					}
-					@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
-				}
-				@form.Item() {
-					@form.Label() {
-						Auto-resize
-					}
-					@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
-				}
-			}
-		}
-		@panel.Panel(panel.Props{Title: "Checkbox"}) {
-			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@checkbox.Checkbox(checkbox.Props{ID: "cb-terms", Name: "terms"})
-					@label.Label(label.Props{For: "cb-terms"}) {
-						Accept terms and conditions
-					}
-				}
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@checkbox.Checkbox(checkbox.Props{ID: "cb-newsletter", Name: "newsletter", Checked: true})
-					@label.Label(label.Props{For: "cb-newsletter"}) {
-						Subscribe to newsletter
-					}
-				}
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@checkbox.Checkbox(checkbox.Props{ID: "cb-disabled", Name: "disabled-cb", Disabled: true})
-					@label.Label(label.Props{For: "cb-disabled"}) {
-						Disabled option
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Title: "Text Inputs"}) {
+					@layout.Stack() {
+						@form.Item() {
+							@form.Label() {
+								Default Input
+							}
+							@input.Input(input.Props{Placeholder: "Type something..."})
+							@form.Description() {
+								A standard text input.
+							}
+						}
+						@form.Item() {
+							@form.Label() {
+								Email
+							}
+							@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
+						}
+						@form.Item() {
+							@form.Label() {
+								Password (with toggle)
+							}
+							@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
+						}
+						@form.Item() {
+							@form.Label() {
+								Disabled
+							}
+							@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
+						}
+						@form.Item() {
+							@form.Label() {
+								With Error
+							}
+							@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
+							@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
+								This field is required
+							}
+						}
 					}
 				}
 			}
-		}
-		@panel.Panel(panel.Props{Title: "Radio"}) {
-			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@radio.Radio(radio.Props{ID: "plan-free", Name: "plan", Value: "free"})
-					@label.Label(label.Props{For: "plan-free"}) {
-						Free
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@layout.Stack() {
+					@panel.Panel(panel.Props{Title: "Textarea"}) {
+						@layout.Stack() {
+							@form.Item() {
+								@form.Label() {
+									Description
+								}
+								@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
+							}
+							@form.Item() {
+								@form.Label() {
+									Auto-resize
+								}
+								@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
+							}
+						}
 					}
-				}
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@radio.Radio(radio.Props{ID: "plan-pro", Name: "plan", Value: "pro", Checked: true})
-					@label.Label(label.Props{For: "plan-pro"}) {
-						Pro
+					@panel.Panel(panel.Props{Title: "Checkbox"}) {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-terms", Name: "terms"})
+								@label.Label(label.Props{For: "cb-terms"}) {
+									Accept terms and conditions
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-newsletter", Name: "newsletter", Checked: true})
+								@label.Label(label.Props{For: "cb-newsletter"}) {
+									Subscribe to newsletter
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-disabled", Name: "disabled-cb", Disabled: true})
+								@label.Label(label.Props{For: "cb-disabled"}) {
+									Disabled option
+								}
+							}
+						}
 					}
-				}
-				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
-					@radio.Radio(radio.Props{ID: "plan-enterprise", Name: "plan", Value: "enterprise"})
-					@label.Label(label.Props{For: "plan-enterprise"}) {
-						Enterprise
+					@panel.Panel(panel.Props{Title: "Radio"}) {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-free", Name: "plan", Value: "free"})
+								@label.Label(label.Props{For: "plan-free"}) {
+									Free
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-pro", Name: "plan", Value: "pro", Checked: true})
+								@label.Label(label.Props{For: "plan-pro"}) {
+									Pro
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-enterprise", Name: "plan", Value: "enterprise"})
+								@label.Label(label.Props{For: "plan-enterprise"}) {
+									Enterprise
+								}
+							}
+						}
 					}
 				}
 			}
@@ -708,66 +727,72 @@ templ tabsSection() {
 // ═══════════════════════════════════════
 templ selectboxSection() {
 	@layout.Section(layout.SectionProps{ID: "selectbox", Title: "Selectbox", Description: "Custom select with search, groups, and multi-select."}) {
-		@panel.Panel(panel.Props{Title: "Basic"}) {
-			@selectbox.SelectBox() {
-				@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
-					@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
-				}
-				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-					@selectbox.Group() {
-						@selectbox.Label() {
-							Frontend 
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Title: "Basic"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
 						}
-						@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
-							React 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
-							Vue 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
-							Svelte 
-						}
-					}
-					@selectbox.Group() {
-						@selectbox.Label() {
-							Backend 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
-							Go 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
-							Python 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
-							Rust 
+						@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+							@selectbox.Group() {
+								@selectbox.Label() {
+									Frontend 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
+									React 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
+									Vue 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
+									Svelte 
+								}
+							}
+							@selectbox.Group() {
+								@selectbox.Label() {
+									Backend 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+									Go 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+									Python 
+								}
+								@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+									Rust 
+								}
+							}
 						}
 					}
 				}
 			}
-		}
-		@panel.Panel(panel.Props{Title: "With Search"}) {
-			@selectbox.SelectBox() {
-				@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
-					@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
-				}
-				@selectbox.Content() {
-					@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
-						Go 
-					}
-					@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
-						Rust 
-					}
-					@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
-						Python 
-					}
-					@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
-						TypeScript 
-					}
-					@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
-						Java 
-					}
-					@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
-						C# 
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Title: "With Search"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
+						}
+						@selectbox.Content() {
+							@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+								Go 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+								Rust 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+								Python 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
+								TypeScript 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
+								Java 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
+								C# 
+							}
+						}
 					}
 				}
 			}
@@ -944,29 +969,37 @@ templ separatorSection() {
 // ═══════════════════════════════════════
 templ aspectratioSection() {
 	@layout.Section(layout.SectionProps{ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
-		@panel.Panel(panel.Props{Title: "16:9 (Video)"}) {
-			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
-					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
-						<small>16:9</small>
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Title: "16:9 (Video)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>16:9</small>
+							}
+						}
 					}
 				}
 			}
-		}
-		@panel.Panel(panel.Props{Title: "3:4 (Portrait)"}) {
-			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
-					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
-						<small>3:4</small>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Title: "3:4 (Portrait)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>3:4</small>
+							}
+						}
 					}
 				}
 			}
-		}
-		@panel.Panel(panel.Props{Title: "1:1 (Square)"}) {
-			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
-					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
-						<small>1:1</small>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Title: "1:1 (Square)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>1:1</small>
+							}
+						}
 					}
 				}
 			}
@@ -1024,73 +1057,83 @@ templ gameiconSection() {
 // ═══════════════════════════════════════
 templ alpineSection() {
 	@layout.Section(layout.SectionProps{ID: "alpine", Title: "Alpine.js Patterns", Description: "Common Alpine.js patterns used with these components."}) {
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Toggle (x-show)
-				}
-			}
-			@card.Content() {
-				@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
-					@button.Button(button.Props{
-						Attributes: templ.Attributes{"x-on:click": "open = !open"},
-						Size:       button.SizeSm,
-					}) {
-						Toggle Content
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Toggle (x-show)
+						}
 					}
-					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-cloak": true}}) {
-						<p>This content is toggled with <code>x-show</code> and <code>x-transition</code>.</p>
-					}
-				}
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Reactive State (x-data)
-				}
-			}
-			@card.Content() {
-				@layout.Inline(layout.InlineProps{Align: layout.AlignCenter, Attributes: templ.Attributes{"x-data": "{ count: 0 }"}}) {
-					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count--", "aria-label": "Decrement"}}) {
-						-
-					}
-					<strong x-text="count">0</strong>
-					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count++", "aria-label": "Increment"}}) {
-						+
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+							@button.Button(button.Props{
+								Attributes: templ.Attributes{"x-on:click": "open = !open"},
+								Size:       button.SizeSm,
+							}) {
+								Toggle Content
+							}
+							@panel.Panel(panel.Props{Variant: panel.VariantMuted, Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-cloak": true}}) {
+								<p>This content is toggled with <code>x-show</code> and <code>x-transition</code>.</p>
+							}
+						}
 					}
 				}
 			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Two-way Binding (x-model)
-				}
-			}
-			@card.Content() {
-				@layout.Stack(layout.StackProps{Gap: layout.GapS, Attributes: templ.Attributes{"x-data": "{ name: '' }"}}) {
-					@input.Input(input.Props{
-						Placeholder: "Type your name...",
-						Attributes:  templ.Attributes{"x-model": "name"},
-					})
-					<p><small>Hello, <strong x-text="name || 'stranger'"></strong>!</small></p>
-				}
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Click Outside (x-on:click.outside)
-				}
-			}
-			@card.Content() {
-				@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
-					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm, Attributes: templ.Attributes{"x-on:click": "open = !open"}}) {
-						<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Reactive State (x-data)
+						}
 					}
-					@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-on:click.outside": "open = false", "x-cloak": true}}) {
-						<p>Click outside this panel to close it.</p>
+					@card.Content() {
+						@layout.Inline(layout.InlineProps{Align: layout.AlignCenter, Attributes: templ.Attributes{"x-data": "{ count: 0 }"}}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count--", "aria-label": "Decrement"}}) {
+								-
+							}
+							<strong x-text="count">0</strong>
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count++", "aria-label": "Increment"}}) {
+								+
+							}
+						}
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Two-way Binding (x-model)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Attributes: templ.Attributes{"x-data": "{ name: '' }"}}) {
+							@input.Input(input.Props{
+								Placeholder: "Type your name...",
+								Attributes:  templ.Attributes{"x-model": "name"},
+							})
+							<p><small>Hello, <strong x-text="name || 'stranger'"></strong>!</small></p>
+						}
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Click Outside (x-on:click.outside)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm, Attributes: templ.Attributes{"x-on:click": "open = !open"}}) {
+								<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
+							}
+							@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-on:click.outside": "open = false", "x-cloak": true}}) {
+								<p>Click outside this panel to close it.</p>
+							}
+						}
 					}
 				}
 			}
@@ -1103,119 +1146,129 @@ templ alpineSection() {
 // ═══════════════════════════════════════
 templ htmxSection() {
 	@layout.Section(layout.SectionProps{ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps."}) {
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Click to Update (hx-post + hx-swap)
-				}
-				@card.Description() {
-					Button replaces itself with server response.
-				}
-			}
-			@card.Content() {
-				@button.Button(button.Props{Attributes: templ.Attributes{
-					"hx-post": "/api/click",
-					"hx-swap": "outerHTML",
-					"hx-vals": `{"count":"0"}`,
-				}}) {
-					Click me
-				}
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Live Search (hx-get + debounce)
-				}
-			}
-			@card.Content() {
-				@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
-					@input.Input(input.Props{
-						Type:        input.TypeSearch,
-						Name:        "q",
-						Placeholder: "Search frameworks...",
-						Attributes: templ.Attributes{
-							"hx-get":     "/api/search",
-							"hx-trigger": "input changed delay:300ms, search",
-							"hx-target":  "#search-results",
-						},
-					})
-					@panel.Panel(panel.Props{ID: "search-results"}) {
-						<ul>
-							<li><small>Type to search...</small></li>
-						</ul>
-					}
-				}
-			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Blur Validation (hx-post + hx-trigger="blur")
-				}
-			}
-			@card.Content() {
-				@layout.Stack() {
-					@form.Item() {
-						@label.Label(label.Props{For: "htmx-email"}) {
-							Email
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Click to Update (hx-post + hx-swap)
 						}
-						@input.Input(input.Props{
-							ID:          "htmx-email",
-							Type:        input.TypeEmail,
-							Name:        "value",
-							Placeholder: "you@example.com",
-							Attributes: templ.Attributes{
-								"hx-post":    "/api/validate",
-								"hx-trigger": "blur",
-								"hx-target":  "#email-feedback",
-								"hx-vals":    `{"field":"email"}`,
-							},
-						})
-						<span id="email-feedback"></span>
-					}
-					@form.Item() {
-						@label.Label(label.Props{For: "htmx-name"}) {
-							Name
+						@card.Description() {
+							Button replaces itself with server response.
 						}
-						@input.Input(input.Props{
-							ID:          "htmx-name",
-							Name:        "value",
-							Placeholder: "Your name",
-							Attributes: templ.Attributes{
-								"hx-post":    "/api/validate",
-								"hx-trigger": "blur",
-								"hx-target":  "#name-feedback",
-								"hx-vals":    `{"field":"name"}`,
-							},
-						})
-						<span id="name-feedback"></span>
+					}
+					@card.Content() {
+						@button.Button(button.Props{Attributes: templ.Attributes{
+							"hx-post": "/api/click",
+							"hx-swap": "outerHTML",
+							"hx-vals": `{"count":"0"}`,
+						}}) {
+							Click me
+						}
 					}
 				}
 			}
-		}
-		@card.Card() {
-			@card.Header() {
-				@card.Title() {
-					Toast (hx-swap-oob)
-				}
-				@card.Description() {
-					Server responds with out-of-band HTML injected into #toast-container.
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Live Search (hx-get + debounce)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+							@input.Input(input.Props{
+								Type:        input.TypeSearch,
+								Name:        "q",
+								Placeholder: "Search frameworks...",
+								Attributes: templ.Attributes{
+									"hx-get":     "/api/search",
+									"hx-trigger": "input changed delay:300ms, search",
+									"hx-target":  "#search-results",
+								},
+							})
+							@panel.Panel(panel.Props{ID: "search-results"}) {
+								<ul>
+									<li><small>Type to search...</small></li>
+								</ul>
+							}
+						}
+					}
 				}
 			}
-			@card.Content() {
-				@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
-					@button.Button(button.Props{Size: button.SizeSm, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"success"}`, "hx-swap": "none"}}) {
-						Success
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Blur Validation (hx-post + hx-trigger="blur")
+						}
 					}
-					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantDestructive, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"error"}`, "hx-swap": "none"}}) {
-						Error
+					@card.Content() {
+						@layout.Stack() {
+							@form.Item() {
+								@label.Label(label.Props{For: "htmx-email"}) {
+									Email
+								}
+								@input.Input(input.Props{
+									ID:          "htmx-email",
+									Type:        input.TypeEmail,
+									Name:        "value",
+									Placeholder: "you@example.com",
+									Attributes: templ.Attributes{
+										"hx-post":    "/api/validate",
+										"hx-trigger": "blur",
+										"hx-target":  "#email-feedback",
+										"hx-vals":    `{"field":"email"}`,
+									},
+								})
+								<span id="email-feedback"></span>
+							}
+							@form.Item() {
+								@label.Label(label.Props{For: "htmx-name"}) {
+									Name
+								}
+								@input.Input(input.Props{
+									ID:          "htmx-name",
+									Name:        "value",
+									Placeholder: "Your name",
+									Attributes: templ.Attributes{
+										"hx-post":    "/api/validate",
+										"hx-trigger": "blur",
+										"hx-target":  "#name-feedback",
+										"hx-vals":    `{"field":"name"}`,
+									},
+								})
+								<span id="name-feedback"></span>
+							}
+						}
 					}
-					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"info"}`, "hx-swap": "none"}}) {
-						Info
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Toast (hx-swap-oob)
+						}
+						@card.Description() {
+							Server responds with out-of-band HTML injected into #toast-container.
+						}
 					}
-					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"warning"}`, "hx-swap": "none"}}) {
-						Warning
+					@card.Content() {
+						@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
+							@button.Button(button.Props{Size: button.SizeSm, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"success"}`, "hx-swap": "none"}}) {
+								Success
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantDestructive, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"error"}`, "hx-swap": "none"}}) {
+								Error
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"info"}`, "hx-swap": "none"}}) {
+								Info
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"warning"}`, "hx-swap": "none"}}) {
+								Warning
+							}
+						}
 					}
 				}
 			}
