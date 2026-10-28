@@ -35,6 +35,7 @@ func main() {
 	mux.HandleFunc("POST /api/click", demo.HandleClick)
 	mux.HandleFunc("GET /api/search", demo.HandleSearch)
 	mux.HandleFunc("POST /api/validate", demo.HandleValidate)
+	mux.HandleFunc("POST /api/picked", demo.HandlePicked)
 	mux.HandleFunc("POST /api/toast", demo.HandleToast)
 
 	addr := ":3333"

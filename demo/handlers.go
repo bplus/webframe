@@ -9,10 +9,13 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/a-h/templ"
 
+	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/demo/pages"
 )
 
@@ -113,30 +116,62 @@ func HandleClick(w http.ResponseWriter, r *http.Request) {
 	fragment(w, r, "click", pages.ClickButton(n))
 }
 
-// HandleSearch returns filtered results (demonstrates hx-get + debounce).
-// Filters a hard-coded framework-name list by case-insensitive substring match
-// on the "q" query param. An empty q returns the full list; zero matches
-// render a "No results found" line.
+// HandleSearch answers the autocomplete demo (GET /api/search?q=...): it
+// filters a hard-coded framework-name list by case-insensitive substring
+// match on q and renders autocomplete.Results, one option per match with
+// Label = the name and Value = slug(name). An empty q returns the full list;
+// zero matches render the component's "No matches" row.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.ToLower(r.URL.Query().Get("q"))
-	items := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
-	var found []string
-	for _, item := range items {
-		if q == "" || strings.Contains(strings.ToLower(item), q) {
-			found = append(found, item)
+	names := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
+	var found []autocomplete.Item
+	for _, name := range names {
+		if q == "" || strings.Contains(strings.ToLower(name), q) {
+			found = append(found, autocomplete.Item{Label: name, Value: slug(name)})
 		}
 	}
-	fragment(w, r, "search", pages.SearchResults(found))
+	fragment(w, r, "search", autocomplete.Results(found))
 }
 
-// HandleValidate returns field validation feedback (demonstrates hx-post on
-// blur). Only two fields have rules — "email" (non-empty, contains '@') and
-// "name" (at least 2 bytes — byte length, not runes, so a single multibyte
-// character like "é" passes) — and any other "field" value falls through
-// with no error, rendering the success message.
+// slug lowercases s, turns every run of non-alphanumeric characters into a
+// single "-", and trims leading and trailing "-" ("Next.js" -> "next-js").
+//
+// @pure
+func slug(s string) string {
+	var b strings.Builder
+	dash := false
+	for _, c := range strings.ToLower(s) {
+		if unicode.IsLetter(c) || unicode.IsDigit(c) {
+			b.WriteRune(c)
+			dash = false
+		} else if !dash {
+			b.WriteByte('-')
+			dash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+// HandlePicked answers the autocomplete form's submit (POST /api/picked):
+// it echoes the hidden "framework" value and the visible "q" text the form
+// sent, so the demo shows which of the two a real form would receive.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
+func HandlePicked(w http.ResponseWriter, r *http.Request) {
+	fragment(w, r, "picked", pages.PickedResult(r.FormValue("framework"), r.FormValue("q")))
+}
+
+// HandleValidate returns one field's validation feedback (demonstrates
+// hx-post on blur). Only two fields have rules — "email" (non-empty,
+// contains '@') and "name" (at least 2 bytes — byte length, not runes, so a
+// single multibyte character like "é" passes); any other "field" value has
+// no rules. It renders formfield.Feedback with id "field-<field>-feedback",
+// the slot the field's hx-target swaps: the error message, or an empty slot
+// (which takes no space) when the value is valid.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
@@ -159,7 +194,7 @@ func HandleValidate(w http.ResponseWriter, r *http.Request) {
 			errMsg = "Name must be at least 2 characters"
 		}
 	}
-	fragment(w, r, "validate", pages.ValidationFeedback(errMsg))
+	fragment(w, r, "validate", formfield.Feedback("field-"+field+"-feedback", errMsg, ""))
 }
 
 // toastKinds maps a toast variant to its badge variant, label and message.

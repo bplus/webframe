@@ -65,6 +65,7 @@ func TestInteractionFragments(t *testing.T) {
 	mux.HandleFunc("GET /api/search", HandleSearch)
 	mux.HandleFunc("POST /api/validate", HandleValidate)
 	mux.HandleFunc("POST /api/toast", HandleToast)
+	mux.HandleFunc("POST /api/picked", HandlePicked)
 	h := App.Middleware(mux)
 
 	for _, c := range []struct {
@@ -72,10 +73,14 @@ func TestInteractionFragments(t *testing.T) {
 		want, notWant  []string
 	}{
 		{"POST", "/api/click?count=1", []string{"Clicked 2 times", `hx-post="/api/click"`, `{&#34;count&#34;:&#34;2&#34;}`}, nil},
-		{"GET", "/api/search?q=re", []string{"React", "Remix", "Express"}, []string{"Vue", "No results found"}},
-		{"GET", "/api/search?q=zzz", []string{"No results found"}, []string{"React"}},
-		{"POST", "/api/validate?field=email&value=nope", []string{"Enter a valid email address"}, []string{"Looks good!"}},
-		{"POST", "/api/validate?field=name&value=Bo", []string{"Looks good!"}, nil},
+		{"GET", "/api/search?q=re", []string{"React", "Remix", "Express", `role="option"`, `data-wf-ac-item-value="react"`}, []string{"Vue", "No matches"}},
+		{"GET", "/api/search?q=next", []string{`data-wf-ac-item-label="Next.js"`, `data-wf-ac-item-value="next-js"`}, nil},
+		{"GET", "/api/search?q=zzz", []string{"No matches"}, []string{"React"}},
+		{"POST", "/api/validate?field=email&value=nope", []string{`id="field-email-feedback"`, "Enter a valid email address"}, []string{"Looks good"}},
+		{"POST", "/api/validate?field=email&value=a@b.c", []string{`id="field-email-feedback"`}, []string{"Looks good", "<p"}},
+		{"POST", "/api/validate?field=name&value=Bo", []string{`id="field-name-feedback"`}, []string{"Looks good", "<p"}},
+		{"POST", "/api/picked?framework=vue&q=Vue", []string{"framework=vue"}, []string{"nothing picked"}},
+		{"POST", "/api/picked?q=Vu", []string{"framework=", "nothing picked"}, nil},
 		{"POST", "/api/toast?variant=error", []string{`hx-swap-oob="beforeend:#toast-container"`, "Something went wrong", "x-init="}, nil},
 	} {
 		rec := httptest.NewRecorder()

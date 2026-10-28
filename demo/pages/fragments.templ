@@ -26,28 +26,21 @@ templ ClickButton(n int) {
 	}
 }
 
-// SearchResults lists the matching names for the live-search demo, or a
-// "No results found" line when there are none.
-templ SearchResults(items []string) {
-	@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
-		for _, item := range items {
-			<p>{ item }</p>
+// PickedResult is the autocomplete form's submit reply: a badge showing
+// the hidden framework value the form sent ("framework=" alone, plus a
+// "nothing picked" note, when the user typed without picking), followed by
+// the visible text box value q.
+templ PickedResult(value, text string) {
+	@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter, Wrap: true}) {
+		@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+			framework={ value }
 		}
-		if len(items) == 0 {
-			<small>No results found</small>
+		if value == "" {
+			<small>nothing picked</small>
 		}
-	}
-}
-
-// ValidationFeedback is the blur-validation result: the error message as a
-// destructive badge, or "Looks good!" when errMsg is empty.
-templ ValidationFeedback(errMsg string) {
-	if errMsg != "" {
-		@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
-			{ errMsg }
+		if text != "" {
+			<small>q={ text }</small>
 		}
-	} else {
-		<small>Looks good!</small>
 	}
 }
 
