@@ -21,14 +21,15 @@ type MetaRow struct {
 // trigger to the card. Empty Title, Description, and LinkText fall back to
 // placeholder text at render time; the other fields are optional.
 type Props struct {
-	ID          string    // unique ID for popover binding
-	Title       string    // main heading
-	Category    string    // small kicker text above title (e.g. "Product", "User", "Article")
-	Description string    // body text
-	Meta        []MetaRow // key-value metadata rows
-	IconName    string    // game-icon sprite name (optional — omit for no icon panel)
-	Link        string    // optional link URL at bottom
-	LinkText    string    // link label (default: "View details →")
+	ID          string            // unique ID for popover binding
+	Title       string            // main heading
+	Category    string            // small kicker text above title (e.g. "Product", "User", "Article")
+	Description string            // body text
+	Meta        []MetaRow         // key-value metadata rows
+	IconName    string            // game-icon sprite name (optional — omit for no icon panel)
+	Link        string            // optional link URL at bottom
+	LinkText    string            // link label (default: "View details →")
+	Placement   popover.Placement // card placement; zero value means popover.PlacementBottomStart
 }
 
 // Hover renders a rich preview card (kicker, title, description, key-value
@@ -40,11 +41,15 @@ type Props struct {
 // Takes exactly one required Props (not variadic — Props.ID must be set, see
 // Props). Returns a templ.Component emitting two sibling elements: a
 // popover.Trigger (hover type) whose slot is this component's children (the
-// hover target), and a popover.Content (placement right-start, arrow,
+// hover target), and a popover.Content (placement Props.Placement, default bottom-start, arrow,
 // exclusive, 120ms hover in/out delays) holding the generated card markup. Empty
 // Title/Description/LinkText render fallbacks ("Untitled", "No
 // description.", "View details →"); empty Category/Link/IconName omit their
-// sections. Props.Link is emitted via templ.SafeURL.
+// sections. Props.Link is emitted as a plain string so templ's URL sanitizer applies (unsafe schemes become about:invalid).
+//
+// Default placement is below the trigger: the trigger is full width, so a
+// sideways placement has no room on either side and the positioning library's
+// flip cannot rescue it, while bottom/top always has a side with room.
 //
 // Side effects: none server-side — no RandomID, no context writes;
 // deterministic markup from Props and children.
@@ -55,12 +60,16 @@ type Props struct {
 // Because Content is Exclusive, an open hover card closes when another
 // popover opens.
 templ Hover(props Props) {
+	{{ placement := props.Placement }}
+	if placement == "" {
+		{{ placement = popover.PlacementBottomStart }}
+	}
 	@popover.Trigger(popover.TriggerProps{For: props.ID, TriggerType: popover.TriggerTypeHover, Class: "block w-full"}) {
 		{ children... }
 	}
 	@popover.Content(popover.ContentProps{
 		ID:        props.ID,
-		Placement: popover.PlacementRightStart,
+		Placement: placement,
 		ShowArrow: true,
 		// 120ms grace period on both edges: enough time for the pointer to
 		// cross the gap between trigger and card without the hover closing,
@@ -88,7 +97,7 @@ templ Hover(props Props) {
 					</div>
 				}
 				if strings.TrimSpace(props.Link) != "" {
-					<a href={ templ.SafeURL(props.Link) } class="wf-hover-link">
+					<a href={ props.Link } class="wf-hover-link">
 						{ safe(props.LinkText, "View details →") }
 					</a>
 				}

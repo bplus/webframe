@@ -75,7 +75,7 @@ func (p Props) displayTitle() string {
 // glance. Zero-value / omitted props render an empty non-link pill with
 // a muted dot; only the first Props is used and extras are silently
 // ignored. Returns a templ.Component rendering an <a> when Href is set
-// (URL passed through templ.SafeURL) or a <span> otherwise; it takes no
+// (the URL is emitted as a plain string so templ sanitizes unsafe schemes) or a <span> otherwise; it takes no
 // children — content comes from Props.
 //
 // @pure
@@ -125,9 +125,9 @@ func NodePill(props ...Props) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 templ.SafeURL
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.Href))
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(p.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 86, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/nodepill/NodePill.templ`, Line: 86, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
