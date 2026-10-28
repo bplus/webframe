@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"strconv"
+
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/aspectratio"
 	"github.com/bplus/webframe/components/avatar"
@@ -55,65 +57,114 @@ templ Showcase() {
 		Subtitle: "A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.",
 	})
 	@panel.Panel(panel.Props{Title: "Contents"}) {
-		@layout.Inline(layout.InlineProps{Wrap: true}) {
-			<a href="#colors">Colors</a>
-			<a href="#icons">Icons</a>
-			<a href="#buttons">Buttons</a>
-			<a href="#badges">Badges</a>
-			<a href="#cards">Cards</a>
-			<a href="#forms">Form Elements</a>
-			<a href="#dialog">Dialog</a>
-			<a href="#dropdown">Dropdown</a>
-			<a href="#tabs">Tabs</a>
-			<a href="#selectbox">Selectbox</a>
-			<a href="#popover">Popover</a>
-			<a href="#hovercard">Hover Card</a>
-			<a href="#avatar">Avatar</a>
-			<a href="#separator">Separator</a>
-			<a href="#aspectratio">Aspect Ratio</a>
-			<a href="#gameicon">Game Icon</a>
-			<a href="#alpine">Alpine.js</a>
-			<a href="#htmx">HTMX</a>
-			<a href="#actions">Actions</a>
-			<a href="#shell">Shell</a>
-			<a href="#layout">Layout</a>
-			<a href="#panel">Panel</a>
-			<a href="#custom">Custom fences</a>
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Building blocks</strong>
+				<a href="#colors">Colors</a>
+				<a href="#icons">Icons</a>
+				<a href="#buttons">Buttons</a>
+				<a href="#badges">Badges</a>
+				<a href="#cards">Cards</a>
+				<a href="#separator">Separator</a>
+				<a href="#aspectratio">Aspect Ratio</a>
+				<a href="#gameicon">Game Icon</a>
+				<a href="#avatar">Avatar</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Forms</strong>
+				<a href="#form-elements">Form Elements</a>
+				<a href="#selectbox">Selectbox</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Overlays and navigation</strong>
+				<a href="#dialog">Dialog</a>
+				<a href="#dropdown">Dropdown</a>
+				<a href="#tabs">Tabs</a>
+				<a href="#popover">Popover</a>
+				<a href="#hovercard">Hover Card</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Behavior patterns</strong>
+				<a href="#alpine">Alpine.js</a>
+				<a href="#htmx">HTMX</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Page layer</strong>
+				<a href="#actions">Actions</a>
+				<a href="#shell">Shell</a>
+				<a href="#layout">Layout</a>
+				<a href="#panel">Panel</a>
+				<a href="#custom">Custom fences</a>
+			}
 		}
 	}
 	// typographySection was removed in the page-layer batch 1 rewrite; it
 	// returns in batch 5 as a prose specimen.
-	@colorsSection()
-	@iconsSection()
-	@buttonsSection()
-	@badgesSection()
-	@cardsSection()
-	@formsSection()
-	@dialogSection()
-	@dropdownSection()
-	@tabsSection()
-	@selectboxSection()
-	@popoverSection()
-	@hovercardSection()
-	@avatarSection()
-	@separatorSection()
-	@aspectratioSection()
-	@gameiconSection()
-	@alpineSection()
-	@htmxSection()
-	@actionSection()
-	@shellSection()
-	@layoutSection()
-	@panelSection()
-	@customSection()
+	@buildingBlocksGroup()
+	@formsGroup()
+	@overlaysGroup()
+	@patternsGroup()
+	@pageLayerGroup()
+}
+
+// ═══════════════════════════════════════
+// Groups: the five top-level sections (h2), each holding per-topic
+// sections (h3) whose panels are h4.
+// ═══════════════════════════════════════
+templ buildingBlocksGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "building-blocks", Title: "Building blocks"}) {
+		@colorsSection()
+		@iconsSection()
+		@buttonsSection()
+		@badgesSection()
+		@cardsSection()
+		@separatorSection()
+		@aspectratioSection()
+		@gameiconSection()
+		@avatarSection()
+	}
+}
+
+templ formsGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "forms", Title: "Forms"}) {
+		@formsSection()
+		@selectboxSection()
+	}
+}
+
+templ overlaysGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "overlays", Title: "Overlays and navigation"}) {
+		@dialogSection()
+		@dropdownSection()
+		@tabsSection()
+		@popoverSection()
+		@hovercardSection()
+	}
+}
+
+templ patternsGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "patterns", Title: "Behavior patterns"}) {
+		@alpineSection()
+		@htmxSection()
+	}
+}
+
+templ pageLayerGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "page-layer", Title: "Page layer"}) {
+		@actionSection()
+		@shellSection()
+		@layoutSection()
+		@panelSection()
+		@customSection()
+	}
 }
 
 // ═══════════════════════════════════════
 // Colors
 // ═══════════════════════════════════════
 templ colorsSection() {
-	@layout.Section(layout.SectionProps{ID: "colors", Title: "Color Palette", Description: "CSS custom properties via Tailwind v4 @theme. Swap the palette by editing input.css."}) {
-		@panel.Panel(panel.Props{Title: "Primary"}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "colors", Title: "Color Palette", Description: "CSS custom properties via Tailwind v4 @theme. Swap the palette by editing input.css."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Primary"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-100)", Label: "100"})
 				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-300)", Label: "300"})
@@ -123,7 +174,7 @@ templ colorsSection() {
 				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-900)", Label: "900"})
 			}
 		}
-		@panel.Panel(panel.Props{Title: "Accent"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Accent"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-100)", Label: "100"})
 				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-300)", Label: "300"})
@@ -132,7 +183,7 @@ templ colorsSection() {
 				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-900)", Label: "900"})
 			}
 		}
-		@panel.Panel(panel.Props{Title: "Semantic"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Semantic"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				@swatch.Swatch(swatch.Props{Color: "var(--color-background)", Label: "bg"})
 				@swatch.Swatch(swatch.Props{Color: "var(--color-card)", Label: "card"})
@@ -149,7 +200,7 @@ templ colorsSection() {
 // Icons
 // ═══════════════════════════════════════
 templ iconsSection() {
-	@layout.Section(layout.SectionProps{ID: "icons", Title: "Icons (Lucide)", Description: "~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "icons", Title: "Icons (Lucide)", Description: "~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
 				@icon.Check()
@@ -210,8 +261,8 @@ templ iconsSection() {
 // Buttons
 // ═══════════════════════════════════════
 templ buttonsSection() {
-	@layout.Section(layout.SectionProps{ID: "buttons", Title: "Buttons", Description: "All button variants and sizes from the button component."}) {
-		@panel.Panel(panel.Props{Title: "Variants"}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "buttons", Title: "Buttons", Description: "All button variants and sizes from the button component."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Variants"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				@button.Button(button.Props{}) {
 					Default
@@ -233,7 +284,7 @@ templ buttonsSection() {
 				}
 			}
 		}
-		@panel.Panel(panel.Props{Title: "Sizes"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Sizes"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
 				@button.Button(button.Props{Size: button.SizeSm}) {
 					Small
@@ -249,7 +300,7 @@ templ buttonsSection() {
 				}
 			}
 		}
-		@panel.Panel(panel.Props{Title: "States"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "States"}) {
 			@layout.Stack() {
 				@layout.Inline(layout.InlineProps{Wrap: true}) {
 					@button.Button(button.Props{}) {
@@ -264,7 +315,7 @@ templ buttonsSection() {
 				}
 			}
 		}
-		@panel.Panel(panel.Props{Title: "As Link"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "As Link"}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				@button.Button(button.Props{Href: "#buttons"}) {
 					Link Button
@@ -281,7 +332,7 @@ templ buttonsSection() {
 // Badges
 // ═══════════════════════════════════════
 templ badgesSection() {
-	@layout.Section(layout.SectionProps{ID: "badges", Title: "Badges", Description: "Inline label variants."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "badges", Title: "Badges", Description: "Inline label variants."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@badge.Badge(badge.Props{}) {
 				Default
@@ -303,7 +354,7 @@ templ badgesSection() {
 // Cards
 // ═══════════════════════════════════════
 templ cardsSection() {
-	@layout.Section(layout.SectionProps{ID: "cards", Title: "Cards", Description: "Composable card components: Card, Header, Title, Description, Content, Footer."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "cards", Title: "Cards", Description: "Composable card components: Card, Header, Title, Description, Content, Footer."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@card.Card() {
@@ -393,10 +444,10 @@ templ cardsSection() {
 // Form Elements
 // ═══════════════════════════════════════
 templ formsSection() {
-	@layout.Section(layout.SectionProps{ID: "forms", Title: "Form Elements", Description: "Input, Textarea, Checkbox, Radio, Label, and Form layout components."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "form-elements", Title: "Form Elements", Description: "Input, Textarea, Checkbox, Radio, Label, and Form layout components."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@panel.Panel(panel.Props{Title: "Text Inputs"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Text Inputs"}) {
 					@layout.Stack() {
 						@form.Item() {
 							@form.Label() {
@@ -439,7 +490,7 @@ templ formsSection() {
 			}
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@layout.Stack() {
-					@panel.Panel(panel.Props{Title: "Textarea"}) {
+					@panel.Panel(panel.Props{Level: 4, Title: "Textarea"}) {
 						@layout.Stack() {
 							@form.Item() {
 								@form.Label() {
@@ -455,7 +506,7 @@ templ formsSection() {
 							}
 						}
 					}
-					@panel.Panel(panel.Props{Title: "Checkbox"}) {
+					@panel.Panel(panel.Props{Level: 4, Title: "Checkbox"}) {
 						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
 							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
 								@checkbox.Checkbox(checkbox.Props{ID: "cb-terms", Name: "terms"})
@@ -477,7 +528,7 @@ templ formsSection() {
 							}
 						}
 					}
-					@panel.Panel(panel.Props{Title: "Radio"}) {
+					@panel.Panel(panel.Props{Level: 4, Title: "Radio"}) {
 						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
 							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
 								@radio.Radio(radio.Props{ID: "plan-free", Name: "plan", Value: "free"})
@@ -502,7 +553,7 @@ templ formsSection() {
 				}
 			}
 		}
-		@panel.Panel(panel.Props{Title: "Form Layout (Item + ItemFlex)"}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Form Layout (Item + ItemFlex)"}) {
 			@layout.Stack() {
 				@form.ItemFlex() {
 					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
@@ -535,7 +586,7 @@ templ formsSection() {
 // Dialog
 // ═══════════════════════════════════════
 templ dialogSection() {
-	@layout.Section(layout.SectionProps{ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dialog.Dialog() {
 				@dialog.Trigger() {
@@ -615,7 +666,7 @@ templ dialogSection() {
 // Dropdown
 // ═══════════════════════════════════════
 templ dropdownSection() {
-	@layout.Section(layout.SectionProps{ID: "dropdown", Title: "Dropdown Menu", Description: "Click-triggered dropdown with items, groups, separators, and sub-menus."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dropdown", Title: "Dropdown Menu", Description: "Click-triggered dropdown with items, groups, separators, and sub-menus."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dropdown.Dropdown() {
 				@dropdown.Trigger() {
@@ -668,57 +719,65 @@ templ dropdownSection() {
 // Tabs
 // ═══════════════════════════════════════
 templ tabsSection() {
-	@layout.Section(layout.SectionProps{ID: "tabs", Title: "Tabs", Description: "Tab navigation with content panels."}) {
-		@tabs.Tabs() {
-			@tabs.List() {
-				@tabs.Trigger(tabs.TriggerProps{Value: "overview", IsActive: true}) {
-					Overview 
-				}
-				@tabs.Trigger(tabs.TriggerProps{Value: "features"}) {
-					Features 
-				}
-				@tabs.Trigger(tabs.TriggerProps{Value: "code"}) {
-					Code 
-				}
-			}
-			@tabs.Content(tabs.ContentProps{Value: "overview", IsActive: true}) {
-				@card.Card() {
-					@card.Content() {
-						<p>This is the overview tab. Content switches without a page reload.</p>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "tabs", Title: "Tabs", Description: "Tab navigation with content panels, in three sizing modes."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Tallest (default)", Subtitle: "switch tabs: nothing below moves"}) {
+			@threeLengthTabs(tabs.Props{})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Fixed, medium", Subtitle: "the panel scrolls inside"}) {
+			@tabs.Tabs(tabs.Props{Sizing: tabs.SizingFixed, Height: tabs.HeightM}) {
+				@tabs.List() {
+					@tabs.Trigger(tabs.TriggerProps{Value: "thirty", IsActive: true}) {
+						Thirty lines
+					}
+					@tabs.Trigger(tabs.TriggerProps{Value: "one"}) {
+						One line
 					}
 				}
-			}
-			@tabs.Content(tabs.ContentProps{Value: "features"}) {
-				@card.Card() {
-					@card.Content() {
-						<ul>
-							<li>Keyboard accessible (arrow keys)</li>
-							<li>JavaScript-driven show/hide</li>
-							<li>Works with HTMX for lazy loading</li>
-						</ul>
-					}
+				@tabs.Content(tabs.ContentProps{Value: "thirty", IsActive: true}) {
+					@tabLines(30)
 				}
-			}
-			@tabs.Content(tabs.ContentProps{Value: "code"}) {
-				@card.Card() {
-					@card.Content() {
-						<code>
-							{ `@tabs.Tabs() {` }
-							<br/>
-							{ `  @tabs.List() {` }
-							<br/>
-							{ `    @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }` }
-							<br/>
-							{ `  }` }
-							<br/>
-							{ `  @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }` }
-							<br/>
-							{ `}` }
-						</code>
-					}
+				@tabs.Content(tabs.ContentProps{Value: "one"}) {
+					@tabLines(1)
 				}
 			}
 		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Fit", Subtitle: "the page grows and shrinks"}) {
+			@threeLengthTabs(tabs.Props{Sizing: tabs.SizingFit})
+		}
+	}
+}
+
+// threeLengthTabs is a tab group whose three panels are one, five and
+// twelve lines long, so the sizing mode in p is visible on switch.
+templ threeLengthTabs(p tabs.Props) {
+	@tabs.Tabs(p) {
+		@tabs.List() {
+			@tabs.Trigger(tabs.TriggerProps{Value: "short", IsActive: true}) {
+				One line
+			}
+			@tabs.Trigger(tabs.TriggerProps{Value: "medium"}) {
+				Five lines
+			}
+			@tabs.Trigger(tabs.TriggerProps{Value: "long"}) {
+				Twelve lines
+			}
+		}
+		@tabs.Content(tabs.ContentProps{Value: "short", IsActive: true}) {
+			@tabLines(1)
+		}
+		@tabs.Content(tabs.ContentProps{Value: "medium"}) {
+			@tabLines(5)
+		}
+		@tabs.Content(tabs.ContentProps{Value: "long"}) {
+			@tabLines(12)
+		}
+	}
+}
+
+// tabLines renders n numbered one-line paragraphs.
+templ tabLines(n int) {
+	for i := 1; i <= n; i++ {
+		<p>Line { strconv.Itoa(i) } of { strconv.Itoa(n) }</p>
 	}
 }
 
@@ -726,49 +785,22 @@ templ tabsSection() {
 // Selectbox
 // ═══════════════════════════════════════
 templ selectboxSection() {
-	@layout.Section(layout.SectionProps{ID: "selectbox", Title: "Selectbox", Description: "Custom select with search, groups, and multi-select."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "selectbox", Title: "Selectbox", Description: "Custom select with search, groups, and multi-select."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@panel.Panel(panel.Props{Title: "Basic"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Basic"}) {
 					@selectbox.SelectBox() {
 						@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
 							@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
 						}
 						@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-							@selectbox.Group() {
-								@selectbox.Label() {
-									Frontend 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
-									React 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
-									Vue 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
-									Svelte 
-								}
-							}
-							@selectbox.Group() {
-								@selectbox.Label() {
-									Backend 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
-									Go 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
-									Python 
-								}
-								@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
-									Rust 
-								}
-							}
+							@frameworkGroups()
 						}
 					}
 				}
 			}
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@panel.Panel(panel.Props{Title: "With Search"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "With Search"}) {
 					@selectbox.SelectBox() {
 						@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
 							@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
@@ -796,6 +828,51 @@ templ selectboxSection() {
 					}
 				}
 			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Multi-select with pills"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "stack", Multiple: true, ShowPills: true}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Pick several..."})
+						}
+						@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+							@frameworkGroups()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// frameworkGroups is the Frontend / Backend option groups shared by the
+// single and multi-select examples.
+templ frameworkGroups() {
+	@selectbox.Group() {
+		@selectbox.Label() {
+			Frontend 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
+			React 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
+			Vue 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
+			Svelte 
+		}
+	}
+	@selectbox.Group() {
+		@selectbox.Label() {
+			Backend 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+			Go 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+			Python 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+			Rust 
 		}
 	}
 }
@@ -804,7 +881,7 @@ templ selectboxSection() {
 // Popover
 // ═══════════════════════════════════════
 templ popoverSection() {
-	@layout.Section(layout.SectionProps{ID: "popover", Title: "Popover", Description: "Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "popover", Title: "Popover", Description: "Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
 				@button.Button(button.Props{Variant: button.VariantOutline}) {
@@ -812,7 +889,7 @@ templ popoverSection() {
 				}
 			}
 			@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
-				@panel.Panel(panel.Props{Title: "Click-triggered Popover"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Click-triggered Popover"}) {
 					<p><small>This popover opens on click and positions itself below the trigger with an arrow.</small></p>
 				}
 			}
@@ -828,7 +905,7 @@ templ popoverSection() {
 				HoverDelay:    200,
 				HoverOutDelay: 150,
 			}) {
-				@panel.Panel(panel.Props{Title: "Hover-triggered"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Hover-triggered"}) {
 					<p><small>200ms delay before show, 150ms before hide. Configurable via HoverDelay/HoverOutDelay.</small></p>
 				}
 			}
@@ -850,7 +927,7 @@ templ popoverSection() {
 // Hover Card
 // ═══════════════════════════════════════
 templ hovercardSection() {
-	@layout.Section(layout.SectionProps{ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-product",
@@ -912,7 +989,7 @@ templ hovercardSection() {
 // Avatar
 // ═══════════════════════════════════════
 templ avatarSection() {
-	@layout.Section(layout.SectionProps{ID: "avatar", Title: "Avatar", Description: "Circular avatar with image and text fallback."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "avatar", Title: "Avatar", Description: "Circular avatar with image and text fallback."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
 			@avatar.Avatar() {
 				@avatar.Fallback() {
@@ -946,7 +1023,7 @@ templ avatarSection() {
 // Separator
 // ═══════════════════════════════════════
 templ separatorSection() {
-	@layout.Section(layout.SectionProps{ID: "separator", Title: "Separator", Description: "Horizontal and vertical dividers."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "separator", Title: "Separator", Description: "Horizontal and vertical dividers."}) {
 		<p>Content above the separator.</p>
 		@separator.Separator()
 		<p>Content below the separator.</p>
@@ -954,12 +1031,13 @@ templ separatorSection() {
 		@separator.Separator() {
 			OR
 		}
+		<p>Below: three plain words separated by vertical dividers.</p>
 		@layout.Inline() {
-			<span>Left</span>
+			<span>Item one</span>
 			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-			<span>Center</span>
+			<span>Item two</span>
 			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-			<span>Right</span>
+			<span>Item three</span>
 		}
 	}
 }
@@ -968,10 +1046,10 @@ templ separatorSection() {
 // Aspect Ratio
 // ═══════════════════════════════════════
 templ aspectratioSection() {
-	@layout.Section(layout.SectionProps{ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
-				@panel.Panel(panel.Props{Title: "16:9 (Video)"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "16:9 (Video)"}) {
 					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
 						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
 							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
@@ -982,7 +1060,7 @@ templ aspectratioSection() {
 				}
 			}
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
-				@panel.Panel(panel.Props{Title: "3:4 (Portrait)"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "3:4 (Portrait)"}) {
 					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
 						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
 							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
@@ -993,7 +1071,7 @@ templ aspectratioSection() {
 				}
 			}
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
-				@panel.Panel(panel.Props{Title: "1:1 (Square)"}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "1:1 (Square)"}) {
 					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
 						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
 							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
@@ -1011,7 +1089,7 @@ templ aspectratioSection() {
 // Game Icon
 // ═══════════════════════════════════════
 templ gameiconSection() {
-	@layout.Section(layout.SectionProps{ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
 				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
@@ -1060,7 +1138,7 @@ templ gameiconSection() {
 // Alpine.js Patterns
 // ═══════════════════════════════════════
 templ alpineSection() {
-	@layout.Section(layout.SectionProps{ID: "alpine", Title: "Alpine.js Patterns", Description: "Common Alpine.js patterns used with these components."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "alpine", Title: "Alpine.js Patterns", Description: "Common Alpine.js patterns used with these components."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@card.Card() {
@@ -1149,7 +1227,7 @@ templ alpineSection() {
 // HTMX Patterns
 // ═══════════════════════════════════════
 templ htmxSection() {
-	@layout.Section(layout.SectionProps{ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@card.Card() {
@@ -1284,13 +1362,15 @@ templ htmxSection() {
 // Page-layer components: actions, shell, layout, panel, fences
 // ═══════════════════════════════════════
 templ actionSection() {
-	@layout.Section(layout.SectionProps{ID: "actions", Title: "Actions", Description: "One action model rendered as a button or link, with variants, confirmation and HTMX wiring."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "actions", Title: "Actions", Description: "One action model rendered as a button or link, with variants, confirmation and HTMX wiring."}) {
+		<p>Four variants of the same action type: primary, secondary, destructive and ghost. Delete asks for confirmation before it does anything.</p>
 		@action.Group([]action.Action{
 			{Label: "Save", Variant: action.VariantPrimary},
 			{Label: "Cancel", Variant: action.VariantSecondary},
 			{Label: "Delete", Variant: action.VariantDestructive, Confirm: &action.Confirm{Message: "Delete the thing?"}},
 			{Label: "Skip", Variant: action.VariantGhost},
 		})
+		<p>A link (jumps to the Shell section) and an HTMX post; the server's reply appears to the right of the buttons.</p>
 		@action.Group([]action.Action{
 			{Label: "Open docs", Href: "/#shell"},
 			{Label: "Post to server", HxPost: "/api/click", HxTarget: "#click-result"},
@@ -1300,8 +1380,8 @@ templ actionSection() {
 }
 
 templ shellSection() {
-	@layout.Section(layout.SectionProps{ID: "shell", Title: "Shell and page header", Description: "The application frame, breadcrumbs and the page header."}) {
-		@panel.Panel(panel.Props{Title: "The frame around this page"}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "shell", Title: "Shell and page header", Description: "The application frame, breadcrumbs and the page header."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "The frame around this page"}) {
 			<p>The page frame around this showcase is appshell.Shell: the topbar, the More disclosure for overflow navigation, and the theme toggle.</p>
 		}
 		@breadcrumbs.Breadcrumbs(breadcrumbs.Props{Items: []breadcrumbs.Item{
@@ -1326,33 +1406,33 @@ templ shellSection() {
 }
 
 templ layoutAsidePanel() {
-	@panel.Panel(panel.Props{Title: "Aside", Subtitle: "Sticky on wide screens"}) {
+	@panel.Panel(panel.Props{Level: 4, Title: "Aside", Subtitle: "Sticky on wide screens"}) {
 		<p>Supporting content lives here.</p>
 	}
 }
 
 templ layoutLeftPanel() {
-	@panel.Panel(panel.Props{Title: "Left"}) {
+	@panel.Panel(panel.Props{Level: 4, Title: "Left"}) {
 		<p>Navigation or filters.</p>
 	}
 }
 
 templ layoutRightPanel() {
-	@panel.Panel(panel.Props{Title: "Right"}) {
+	@panel.Panel(panel.Props{Level: 4, Title: "Right"}) {
 		<p>Details or help.</p>
 	}
 }
 
 templ layoutSection() {
-	@layout.Section(layout.SectionProps{ID: "layout", Title: "Layout", Description: "Stack, Inline, TwoColumn, ThreeColumn and Divider arrange content without any raw classes."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "layout", Title: "Layout", Description: "Stack, Inline, TwoColumn, ThreeColumn and Divider arrange content without any raw classes."}) {
 		@layout.Stack() {
-			@panel.Panel(panel.Props{Title: "First"}) {
+			@panel.Panel(panel.Props{Level: 4, Title: "First"}) {
 				<p>Stacked panel one.</p>
 			}
-			@panel.Panel(panel.Props{Title: "Second"}) {
+			@panel.Panel(panel.Props{Level: 4, Title: "Second"}) {
 				<p>Stacked panel two.</p>
 			}
-			@panel.Panel(panel.Props{Title: "Third"}) {
+			@panel.Panel(panel.Props{Level: 4, Title: "Third"}) {
 				<p>Stacked panel three.</p>
 			}
 		}
@@ -1389,23 +1469,23 @@ templ layoutSection() {
 }
 
 templ panelSection() {
-	@layout.Section(layout.SectionProps{ID: "panel", Title: "Panel", Description: "A titled surface with variants, optional collapsing and a flush mode for tables."}) {
-		@panel.Panel(panel.Props{Title: "Default", Subtitle: "The standard surface"}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "panel", Title: "Panel", Description: "A titled surface with variants, optional collapsing and a flush mode for tables."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Default", Subtitle: "The standard surface"}) {
 			<p>Default panel body.</p>
 		}
-		@panel.Panel(panel.Props{Title: "Muted", Variant: panel.VariantMuted}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Muted", Variant: panel.VariantMuted}) {
 			<p>Muted panel body.</p>
 		}
-		@panel.Panel(panel.Props{Title: "Danger", Variant: panel.VariantDanger}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Danger", Variant: panel.VariantDanger}) {
 			<p>Danger panel body.</p>
 		}
-		@panel.Panel(panel.Props{Title: "Collapsible, open", Collapsible: true, Open: true}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Collapsible, open", Collapsible: true, Open: true}) {
 			<p>This panel starts open.</p>
 		}
-		@panel.Panel(panel.Props{Title: "Collapsible, closed", Collapsible: true}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Collapsible, closed", Collapsible: true}) {
 			<p>This panel starts closed.</p>
 		}
-		@panel.Panel(panel.Props{Title: "Flush with a table", Flush: true}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Flush with a table", Flush: true}) {
 			@table.Table() {
 				@table.Header() {
 					@table.Row() {
@@ -1441,7 +1521,7 @@ templ panelSection() {
 }
 
 templ customSection() {
-	@layout.Section(layout.SectionProps{ID: "custom", Title: "Custom fences", Description: "The declared escape hatch for markup no component covers."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "custom", Title: "Custom fences", Description: "The declared escape hatch for markup no component covers."}) {
 		<p>Markup no component covers goes inside a <code>customblock.CustomBlock</code> (or a whole page inside a <code>custompage.CustomPage</code>) with a written Reason. Everything inside a fence is exempt from the lint, and every fence is printed by <code>make check-ui</code> so none can hide.</p>
 		<p>This demo declares no fences: the swatch below is an ordinary component, and <code>make check-ui</code> reports zero custom fences for the whole demo.</p>
 		@swatch.Swatch(swatch.Props{Color: "var(--color-border)", Label: "no fence needed"})
