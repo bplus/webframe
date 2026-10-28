@@ -45,7 +45,19 @@ type Report struct {
 // skipDirs are directory names never descended into during a walk.
 var skipDirs = map[string]bool{"third_party": true, "node_modules": true, "vendor": true}
 
-// Lint checks every path. Directories are walked recursively for *.templ,
+// trimEllipsis turns a Go-style package pattern ("./...", "demo/...", "...")
+// into its directory; walks are already recursive.
+func trimEllipsis(p string) string {
+	if p != "..." && !strings.HasSuffix(p, "/...") {
+		return p
+	}
+	if d := strings.TrimSuffix(strings.TrimSuffix(p, "..."), "/"); d != "" {
+		return d
+	}
+	return "."
+}
+
+// Lint checks every path. A path ending in "/..." means its directory. Directories are walked recursively for *.templ,
 // *.go and *.css files (skipping third_party, node_modules, vendor
 // and dot-directories); files are taken as given, whatever their extension. A
 // *.go file gets the Go-side rules and is skipped when it is templ output
@@ -64,9 +76,10 @@ func Lint(paths []string) (Report, error) {
 		}
 	}
 	for _, p := range paths {
+		p = trimEllipsis(p)
 		info, err := os.Stat(p)
 		if err != nil {
-			return Report{}, fmt.Errorf("wflint: %w", err)
+			return Report{}, err
 		}
 		if !info.IsDir() {
 			add(p)
@@ -89,7 +102,7 @@ func Lint(paths []string) (Report, error) {
 			return nil
 		})
 		if err != nil {
-			return Report{}, fmt.Errorf("wflint: walking %s: %w", p, err)
+			return Report{}, fmt.Errorf("walking %s: %w", p, err)
 		}
 	}
 
@@ -97,7 +110,7 @@ func Lint(paths []string) (Report, error) {
 	for _, f := range files {
 		src, err := os.ReadFile(f)
 		if err != nil {
-			return Report{}, fmt.Errorf("wflint: %w", err)
+			return Report{}, err
 		}
 		switch filepath.Ext(f) {
 		case ".go":

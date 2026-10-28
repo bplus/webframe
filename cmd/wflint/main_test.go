@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -50,7 +52,33 @@ func TestRun_BadPathExit2(t *testing.T) {
 	if code != 2 {
 		t.Fatalf("exit = %d, want 2", code)
 	}
-	if !strings.HasPrefix(errs, "wflint: ") {
-		t.Errorf("stderr = %q, want wflint: prefix", errs)
+	if !strings.HasPrefix(errs, "wflint: ") || strings.HasPrefix(errs, "wflint: wflint:") {
+		t.Errorf("stderr = %q, want one wflint: prefix", errs)
+	}
+}
+
+// TestRun_DotDotDot: "./..." (as in go vet ./...) means the current
+// directory, walked recursively.
+func TestRun_DotDotDot(t *testing.T) {
+	clean, err := os.ReadFile(td + "clean.templ.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sub", "clean.templ"), clean, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	for _, arg := range []string{"./...", "...", "sub/..."} {
+		code, out, errs := runArgs(arg)
+		if code != 0 {
+			t.Errorf("%s: exit = %d, want 0; stdout:\n%s\nstderr:\n%s", arg, code, out, errs)
+		}
+		if !strings.Contains(out, "0 violations") {
+			t.Errorf("%s: stdout = %q", arg, out)
+		}
 	}
 }
