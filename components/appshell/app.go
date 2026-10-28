@@ -55,10 +55,25 @@ func PathFromContext(ctx context.Context) string {
 	return p
 }
 
-// IsHX reports whether r was issued by htmx.
+// IsHX reports whether r was issued by htmx (any kind of htmx request,
+// including boosted navigation and history restores).
 func IsHX(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"
 }
+
+// WantsFragment reports whether r wants only the page body. htmx 2 sends
+// HX-Request for boosted links (HX-Boosted) and history restores
+// (HX-History-Restore-Request) too, and swaps those responses into <body>,
+// so they need the full document; only a plain htmx request gets a fragment.
+func WantsFragment(r *http.Request) bool {
+	return IsHX(r) &&
+		r.Header.Get("HX-Boosted") != "true" &&
+		r.Header.Get("HX-History-Restore-Request") != "true"
+}
+
+// varyHeaders lists the request headers Render's output depends on, so a
+// cache never serves a fragment for a full-page request or the reverse.
+const varyHeaders = "HX-Request, HX-Boosted, HX-History-Restore-Request"
 
 // ShellProps builds the Shell Props for r from the App's fields.
 func (a *App) ShellProps(r *http.Request) Props {
@@ -80,13 +95,15 @@ func (a *App) ShellProps(r *http.Request) Props {
 	return p
 }
 
-// Render writes a page: the bare body for an htmx request, otherwise the
-// full Document wrapping Shell wrapping body. It returns the render error
+// Render writes a page: the bare body when WantsFragment(r), otherwise the
+// full Document wrapping Shell wrapping body. It always sets Vary on the
+// htmx request headers. It returns the render error
 // rather than writing a 500 itself.
 func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Add("Vary", varyHeaders)
 	ctx := r.Context()
-	if IsHX(r) {
+	if WantsFragment(r) {
 		return body.Render(ctx, w)
 	}
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {

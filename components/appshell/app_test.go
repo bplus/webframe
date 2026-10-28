@@ -28,19 +28,31 @@ func testApp() *App {
 
 func serve(t *testing.T, a *App, hx bool) string {
 	t.Helper()
+	var h map[string]string
+	if hx {
+		h = map[string]string{"HX-Request": "true"}
+	}
+	return serveHeaders(t, a, h)
+}
+
+func serveHeaders(t *testing.T, a *App, headers map[string]string) string {
+	t.Helper()
 	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := a.Render(w, r, "Movies", pageBody("hello page")); err != nil {
 			t.Errorf("render: %v", err)
 		}
 	}))
 	req := httptest.NewRequest("GET", "/movies", nil)
-	if hx {
-		req.Header.Set("HX-Request", "true")
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q", ct)
+	}
+	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request" {
+		t.Errorf("Vary = %q", v)
 	}
 	return rec.Body.String()
 }
@@ -90,6 +102,20 @@ func TestRender_HXRequestBodyOnly(t *testing.T) {
 	for _, bad := range []string{"<html", "wf-topbar", "<title>"} {
 		if strings.Contains(got, bad) {
 			t.Errorf("unexpected %q in:\n%s", bad, got)
+		}
+	}
+}
+
+func TestRender_BoostedAndHistoryRestoreGetFullDocument(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"boosted":         {"HX-Request": "true", "HX-Boosted": "true"},
+		"history-restore": {"HX-Request": "true", "HX-History-Restore-Request": "true"},
+	} {
+		got := serveHeaders(t, testApp(), headers)
+		for _, want := range []string{"<title>Movies — Demo</title>", "wf-topbar", "hello page"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("%s: missing %q in:\n%s", name, want, got)
+			}
 		}
 	}
 }
