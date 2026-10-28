@@ -69,9 +69,10 @@ type Field struct {
 	// Validate is a URL. When set, the control gets hx-post={Validate},
 	// hx-trigger="blur changed" (TypeSelect, TypeCheckbox, TypeRadio,
 	// TypeToggle: "change"), hx-target="#"+FeedbackID() and
-	// hx-swap="outerHTML". htmx sends the control's own name=value, so the
-	// handler reads r.FormValue(f.Name) and answers with RespondFeedback.
-	// Caller Attributes still win on conflict.
+	// hx-swap="outerHTML" and hx-params={Name}, so even inside a form.Form
+	// (where htmx would otherwise post every field) only this control's
+	// name=value is sent; the handler reads r.FormValue(f.Name) and answers
+	// with RespondFeedback. Caller Attributes still win on conflict.
 	Validate string
 	// Attributes are spread on the control (for TypeSelect: on the hidden
 	// input that carries the value; aria-* for the select go on the button
@@ -168,6 +169,7 @@ func (f Field) validateAttrs() templ.Attributes {
 		"hx-trigger": validateTrigger(f.Type),
 		"hx-target":  "#" + f.FeedbackID(),
 		"hx-swap":    "outerHTML",
+		"hx-params":  f.Name,
 	}
 }
 

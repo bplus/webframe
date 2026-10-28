@@ -94,9 +94,15 @@ func ParseValues(v url.Values, o Options) Spec {
 		s.Sort = raw
 	}
 
-	// Dir.
+	// Dir. DefaultDir belongs to DefaultSort: a URL that names a different
+	// sort without a dir sorts ascending, the same as a fresh header click
+	// (WithSort), so a hand-typed ?sort=name never inherits a Desc default
+	// meant for "updated".
 	s.Dir = o.DefaultDir
 	if s.Dir != Asc && s.Dir != Desc {
+		s.Dir = Asc
+	}
+	if s.Sort != o.DefaultSort {
 		s.Dir = Asc
 	}
 	switch Dir(strings.ToLower(v.Get(s.Param("dir")))) {

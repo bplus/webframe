@@ -194,7 +194,8 @@ func TestField_ValidateEmitsHx(t *testing.T) {
 		`hx-post="/validate/email"`,
 		`hx-trigger="blur changed"`,
 		`hx-target="#field-email-feedback"`,
-		`hx-swap="outerHTML"`)
+		`hx-swap="outerHTML"`,
+		`hx-params="email"`)
 	// Without Validate no hx-* attributes appear at all.
 	plain := render(t, FormField(Field{Name: "email", Label: "Email", Type: TypeEmail}))
 	if strings.Contains(plain, "hx-") {

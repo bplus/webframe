@@ -60,6 +60,19 @@ func TestParse_Defaults(t *testing.T) {
 	}
 }
 
+func TestParse_NewSortDefaultsToAsc(t *testing.T) {
+	o := Options{DefaultSort: "updated", DefaultDir: Desc, AllowedSorts: []string{"updated", "name"}}
+	if got := ParseValues(url.Values{}, o); got.Sort != "updated" || got.Dir != Desc {
+		t.Fatalf("no sort: got %s %s, want updated desc", got.Sort, got.Dir)
+	}
+	if got := ParseValues(url.Values{"sort": {"name"}}, o); got.Sort != "name" || got.Dir != Asc {
+		t.Fatalf("sort=name without dir: got %s %s, want name asc", got.Sort, got.Dir)
+	}
+	if got := ParseValues(url.Values{"sort": {"name"}, "dir": {"desc"}}, o); got.Dir != Desc {
+		t.Fatalf("explicit dir must win: got %s", got.Dir)
+	}
+}
+
 func TestParse_Hostile(t *testing.T) {
 	cases := []struct {
 		name  string

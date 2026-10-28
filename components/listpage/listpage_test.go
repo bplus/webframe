@@ -347,8 +347,9 @@ func TestRespond_TargetedResults(t *testing.T) {
 	if !strings.HasPrefix(body, `<div id="list-results"`) {
 		t.Errorf("body should start with the results div, got:\n%s", body)
 	}
-	// ?sort=name with DefaultDir Desc is name/desc; the header link flips it.
-	wantAll(t, body, "ROWALPHA", "1–3 of 3 items", `aria-sort="descending"`, `href="/items?dir=asc&amp;sort=name"`)
+	// ?sort=name without a dir sorts ascending (DefaultDir belongs to the
+	// default sort key); the header link flips it.
+	wantAll(t, body, "ROWALPHA", "1–3 of 3 items", `aria-sort="ascending"`, `href="/items?dir=desc&amp;sort=name"`)
 	wantNone(t, body, "<h1", "PAGETITLE", "<html", "wf-topbar", "data-tui-filterbar")
 	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Target") {
 		t.Errorf("Vary = %q", v)
