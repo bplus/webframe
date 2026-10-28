@@ -106,6 +106,20 @@ func TestFormFieldRadioGroup(t *testing.T) {
 	}
 }
 
+// TestFormFieldRadioGroupHasControlID: the radiogroup carries ControlID() so
+// an error-summary link to "#"+ControlID() lands on the group; the radios
+// themselves are ControlID()+"-"+i.
+func TestFormFieldRadioGroupHasControlID(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "size", Label: "Size", Type: TypeRadio,
+		Options: []Option{{Label: "A", Value: "a"}, {Label: "B", Value: "b"}},
+	}))
+	mustContain(t, out, `id="field-size" role="radiogroup"`, `id="field-size-0"`, `id="field-size-1"`)
+	if n := strings.Count(out, `id="field-size"`); n != 1 {
+		t.Errorf("got %d id=\"field-size\", want 1: %s", n, out)
+	}
+}
+
 func TestFormFieldCheckbox(t *testing.T) {
 	on := render(t, FormField(Field{Name: "agree", Label: "Agree", Type: TypeCheckbox, Value: "on"}))
 	if n := strings.Count(on, `type="checkbox"`); n != 1 {

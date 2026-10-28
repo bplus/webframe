@@ -164,6 +164,7 @@ templ toggleControl(f Field) {
 
 templ radioControl(f Field) {
 	<div
+		id={ f.ControlID() }
 		role="radiogroup"
 		if f.Label != "" {
 			aria-labelledby={ f.ControlID() + "-label" }

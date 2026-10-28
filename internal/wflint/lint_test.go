@@ -363,7 +363,7 @@ func TestLint_HTMLFromGoString_Mentions(t *testing.T) {
 		}
 		got = append(got, v.Line)
 	}
-	if want := []int{6, 7, 8}; !slices.Equal(got, want) {
+	if want := []int{7, 8, 9, 10}; !slices.Equal(got, want) {
 		t.Errorf("strings_bad.go: html-from-go-string at lines %v, want %v: %+v", got, want, vs)
 	}
 }

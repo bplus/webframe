@@ -35,10 +35,13 @@ var goRuleText = map[string][2]string{
 // quote, which an interpreted literal escapes ("class=\"x\"").
 const quotedValue = `=\\?["'` + "`" + `]`
 
-// markupAttrRe finds a class or style attribute with a quoted value inside a
-// Go string literal. Case-sensitive, and the value must be quoted, so a log
-// format ("class=%s") or SQL ("style= ?") does not match.
-var markupAttrRe = regexp.MustCompile(`\s(?:class|style)` + quotedValue)
+// markupAttrRe finds a class or style attribute inside a Go string literal:
+// either with a quoted value, or with its = ending the literal (the value is
+// concatenated from outside: "<div class=" + q + ">"). Case-sensitive, and
+// anything else after the = is not markup, so a log format ("class=%s") or
+// SQL ("style= ?") does not match. It runs on the literal's contents without
+// the surrounding quotes, so $ is the end of the contents.
+var markupAttrRe = regexp.MustCompile(`\s(?:class|style)(?:` + quotedValue + `|=$)`)
 
 // markupTagRe finds an opening tag of a forbidden element (every element
 // that has a component Hint) inside a Go string literal. Case-sensitive:

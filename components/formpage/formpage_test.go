@@ -110,6 +110,20 @@ func TestBody_ErrorsBannerAndFields(t *testing.T) {
 	mustOrder(t, out, "Please fix", "Name: Name is required", "Status: Pick a status", `data-wf-field="name"`)
 }
 
+// TestBody_RadioErrorLinkTargetExists: an error on a radio field links to
+// "#field-<name>", and the rendered body has an element with that id (the
+// radiogroup), so the link lands somewhere.
+func TestBody_RadioErrorLinkTargetExists(t *testing.T) {
+	p := itemProps()
+	p.Sections[1].Fields = append(p.Sections[1].Fields, formfield.Field{
+		Name: "size", Label: "Size", Type: formfield.TypeRadio,
+		Options: []formfield.Option{{Label: "Small", Value: "s"}, {Label: "Large", Value: "l"}},
+	})
+	p.Errors = map[string]string{"size": "Pick a size"}
+	out := render(t, Body(p))
+	mustContain(t, out, `href="#field-size"`, `id="field-size" role="radiogroup"`, "Size: Pick a size")
+}
+
 func TestBody_SingularError(t *testing.T) {
 	p := itemProps()
 	p.Errors = map[string]string{"name": "Name is required"}
