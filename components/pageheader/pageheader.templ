@@ -59,7 +59,7 @@ templ PageHeader(props ...Props) {
 			</div>
 		}
 		if p.Back != nil {
-			<a href={ templ.SafeURL(p.Back.Href) } class="mb-2 inline-block text-sm text-muted-foreground hover:text-primary">← { p.Back.Label }</a>
+			<a href={ p.Back.Href } class="mb-2 inline-block text-sm text-muted-foreground hover:text-primary">← { p.Back.Label }</a>
 		}
 		<div class="flex flex-wrap items-start justify-between gap-4">
 			<div class="min-w-0">

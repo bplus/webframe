@@ -50,3 +50,10 @@ func TestPageHeader_AllParts(t *testing.T) {
 		t.Errorf("primary must appear after secondary: %s", out)
 	}
 }
+
+func TestPageHeader_BackHrefSanitized(t *testing.T) {
+	out := render(t, Props{Title: "X", Back: &Link{Label: "Back", Href: "javascript:alert(1)"}})
+	if strings.Contains(out, "javascript:") {
+		t.Errorf("javascript: URL not sanitized: %s", out)
+	}
+}

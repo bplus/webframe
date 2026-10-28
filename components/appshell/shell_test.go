@@ -166,3 +166,19 @@ func TestShell_ThemeToggleInMoreList(t *testing.T) {
 		t.Errorf("no toggle and no overflow should render neither toggle nor More:\n%s", got)
 	}
 }
+
+func TestShell_NavHrefsSanitized(t *testing.T) {
+	bad := "javascript:alert(1)"
+	for _, layout := range []Layout{LayoutTopbar, LayoutSidebar} {
+		out := renderShell(t, Props{
+			AppName:  "Demo",
+			HomeHref: bad,
+			Layout:   layout,
+			Nav:      []NavItem{{Label: "Evil", Href: bad}},
+			Groups:   []NavGroup{{Title: "G", Items: []NavItem{{Label: "Evil2", Href: bad}}}},
+		}, nil)
+		if strings.Contains(out, "javascript:") {
+			t.Errorf("layout %v: javascript: URL not sanitized: %s", layout, out)
+		}
+	}
+}
