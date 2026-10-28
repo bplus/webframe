@@ -115,7 +115,10 @@ templ Trigger(props ...TriggerProps) {
 // the trigger at runtime (and may reparent into a
 // data-tui-popover-portal-container element). Children render inside an
 // overflow-hidden inner wrapper; an arrow element is appended when
-// ShowArrow is set.
+// ShowArrow is set. While open, the script also sets --wf-pop-max on this
+// div to the height (px) available on the side it was placed on (Floating UI
+// size step, after flip and shift); children that must never leave the
+// viewport cap themselves with it, as hovercard does.
 //
 // Accepts zero or one ContentProps (extras ignored). Zero-value defaults
 // applied here: Placement -> bottom, Offset 0 -> 8px with arrow / 4px
