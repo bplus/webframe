@@ -38,6 +38,7 @@ Arguments:
 | `--click <selector>` | click before eval/shot, then wait 300ms |
 | `--hover <selector>` | hover before eval/shot, then wait 300ms |
 | `--wait <ms>` | extra wait after networkidle |
+| `--ignore-console <substring>` | repeatable; a console error or page error whose text (including the resource URL) contains the substring is printed with an `(ignored)` marker and does not fail the run |
 
 Light color scheme always. No requests leave the page other than what the page itself makes.
 
@@ -55,7 +56,13 @@ Exit code 1 (with the reason on stderr) when any of:
 
 - the page fails to load (network error, no response, or HTTP status >= 400)
 - `horizontalOverflow` is true
-- a `console.error` or uncaught page error occurred (each one is printed)
+- a `console.error` or uncaught page error occurred (each one is printed with its
+  resource URL), unless it matches an `--ignore-console` substring
+
+The showcase deliberately points one avatar at `/static/img/missing-avatar.png` to
+show the fallback, so `make ui-check` passes `--ignore-console missing-avatar.png`
+for the showcase runs only. Use the flag for errors a demo page produces on purpose,
+never to quiet a real one.
 
 Exit code 2 for a usage error. `make ui-check` is not part of `make check`
 because it needs the dev server running.

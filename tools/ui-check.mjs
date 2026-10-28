@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ui-check: load one demo page in Playwright's Chromium at a device-style
 // viewport, measure it, and fail loud on horizontal overflow, load failures
-// and console errors. See tools/README.md.
+// and console errors (minus any matched by --ignore-console). See tools/README.md.
 //
 //   node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 //
@@ -21,7 +21,10 @@ const USAGE = `usage: node tools/ui-check.mjs --url <u> [options]
   --eval <js>        evaluate this expression in the page after load; prints the JSON result
   --click <selector> click this element before --eval/--shot (waits 300ms after)
   --hover <selector> hover this element before --eval/--shot (waits 300ms after)
-  --wait <ms>        extra wait after networkidle, before click/hover/eval/shot`;
+  --wait <ms>        extra wait after networkidle, before click/hover/eval/shot
+  --ignore-console <substring>
+                     repeatable; a console/page error whose text (incl. resource URL)
+                     contains the substring is printed as "(ignored)" and does not fail the run`;
 
 function fail(code, msg) {
   process.stderr.write(`ui-check: ${msg}\n`);
@@ -29,8 +32,8 @@ function fail(code, msg) {
 }
 
 function parseArgs(argv) {
-  const opts = { width: 1280, height: null, shot: null, eval: null, click: null, hover: null, wait: 0, url: null };
-  const takesValue = new Set(["--url", "--width", "--height", "--shot", "--eval", "--click", "--hover", "--wait"]);
+  const opts = { width: 1280, height: null, shot: null, eval: null, click: null, hover: null, wait: 0, url: null, ignoreConsole: [] };
+  const takesValue = new Set(["--url", "--width", "--height", "--shot", "--eval", "--click", "--hover", "--wait", "--ignore-console"]);
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === "-h" || flag === "--help") {
@@ -41,6 +44,11 @@ function parseArgs(argv) {
     const value = argv[++i];
     if (value === undefined) fail(2, `${flag} needs a value\n${USAGE}`);
     const key = flag.slice(2);
+    if (key === "ignore-console") {
+      if (value === "") fail(2, `${flag} needs a non-empty substring`);
+      opts.ignoreConsole.push(value);
+      continue;
+    }
     if (key === "width" || key === "height" || key === "wait") {
       const n = Number(value);
       if (!Number.isInteger(n) || n < 0 || (key !== "wait" && n === 0)) fail(2, `${flag} must be a positive integer, got ${JSON.stringify(value)}`);
@@ -120,9 +128,10 @@ async function main() {
       process.stderr.write(`ui-check: horizontal overflow: scrollWidth ${scrollWidth} > viewport ${opts.width}\n`);
       failed = true;
     }
-    if (consoleErrors.length > 0) {
-      for (const line of consoleErrors) process.stderr.write(`ui-check: ${line}\n`);
-      failed = true;
+    for (const line of consoleErrors) {
+      const ignored = opts.ignoreConsole.some((sub) => line.includes(sub));
+      process.stderr.write(`ui-check: ${line}${ignored ? " (ignored)" : ""}\n`);
+      if (!ignored) failed = true;
     }
   } finally {
     if (browser) await browser.close();
