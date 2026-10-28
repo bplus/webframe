@@ -1,0 +1,40 @@
+package swatch
+
+import "github.com/bplus/webframe/utils"
+
+// Props configures a Swatch. Color is sanitized via utils.SanitizeColor
+// before landing in an inline style. An empty Label omits the label.
+// Class is merged via utils.TwMerge; Attributes spread onto the root.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Color      string
+	Label      string
+}
+
+// Swatch renders a small color square followed by an optional label.
+// Only the first Props is used.
+//
+// @pure
+templ Swatch(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("inline-flex flex-col items-center gap-1", p.Class) }
+		{ p.Attributes... }
+	>
+		<div
+			class="h-8 w-8 rounded border border-border"
+			style={ "background:" + utils.SanitizeColor(p.Color) }
+		></div>
+		if p.Label != "" {
+			<span class="text-xs text-muted-foreground">{ p.Label }</span>
+		}
+	</div>
+}
