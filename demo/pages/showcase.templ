@@ -1,12 +1,15 @@
 package pages
 
 import (
+	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/aspectratio"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/customblock"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/form"
@@ -15,10 +18,14 @@ import (
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/label"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
 )
@@ -93,6 +100,11 @@ templ Showcase() {
 	@gameiconSection()
 	@alpineSection()
 	@htmxSection()
+	@actionSection()
+	@shellSection()
+	@layoutSection()
+	@panelSection()
+	@customSection()
 }
 
 // ═══════════════════════════════════════
@@ -1309,4 +1321,176 @@ templ htmxSection() {
 			}
 		</div>
 	</section>
+}
+
+// ═══════════════════════════════════════
+// Page-layer components: actions, shell, layout, panel, fences
+// ═══════════════════════════════════════
+
+templ actionSection() {
+	@layout.Section(layout.SectionProps{ID: "actions", Title: "Actions", Description: "One action model rendered as a button or link, with variants, confirmation and HTMX wiring."}) {
+		@action.Group([]action.Action{
+			{Label: "Save", Variant: action.VariantPrimary},
+			{Label: "Cancel", Variant: action.VariantSecondary},
+			{Label: "Delete", Variant: action.VariantDestructive, Confirm: &action.Confirm{Message: "Delete the thing?"}},
+			{Label: "Skip", Variant: action.VariantGhost},
+		})
+		@action.Group([]action.Action{
+			{Label: "Open docs", Href: "/#shell"},
+			{Label: "Post to server", HxPost: "/api/click", HxTarget: "#click-result"},
+		})
+		<span id="click-result"></span>
+	}
+}
+
+templ shellSection() {
+	@layout.Section(layout.SectionProps{ID: "shell", Title: "Shell and page header", Description: "The application frame, breadcrumbs and the page header."}) {
+		@panel.Panel(panel.Props{Title: "The frame around this page"}) {
+			<p>The page frame around this showcase is appshell.Shell: the topbar, the More disclosure for overflow navigation, and the theme toggle.</p>
+		}
+		@breadcrumbs.Breadcrumbs(breadcrumbs.Props{Items: []breadcrumbs.Item{
+			{Label: "Home", Href: "/"},
+			{Label: "Projects", Href: "/#shell"},
+			{Label: "Webframe"},
+		}})
+		@pageheader.PageHeader(pageheader.Props{
+			Title:       "Webframe",
+			Subtitle:    "A Go component library for server-rendered apps.",
+			Breadcrumbs: []breadcrumbs.Item{{Label: "Home", Href: "/"}, {Label: "Projects", Href: "/#shell"}, {Label: "Webframe"}},
+			Back:        &pageheader.Link{Label: "All projects", Href: "/"},
+			Status:      &badge.Props{Variant: badge.VariantOutline},
+			StatusText:  "Active",
+			Primary:     &action.Action{Label: "New release", Variant: action.VariantPrimary},
+			Secondary: []action.Action{
+				{Label: "Settings"},
+				{Label: "Export"},
+			},
+		})
+	}
+}
+
+templ layoutAsidePanel() {
+	@panel.Panel(panel.Props{Title: "Aside", Subtitle: "Sticky on wide screens"}) {
+		<p>Supporting content lives here.</p>
+	}
+}
+
+templ layoutLeftPanel() {
+	@panel.Panel(panel.Props{Title: "Left"}) {
+		<p>Navigation or filters.</p>
+	}
+}
+
+templ layoutRightPanel() {
+	@panel.Panel(panel.Props{Title: "Right"}) {
+		<p>Details or help.</p>
+	}
+}
+
+templ layoutSection() {
+	@layout.Section(layout.SectionProps{ID: "layout", Title: "Layout", Description: "Stack, Inline, TwoColumn, ThreeColumn and Divider arrange content without any raw classes."}) {
+		@layout.Stack() {
+			@panel.Panel(panel.Props{Title: "First"}) {
+				<p>Stacked panel one.</p>
+			}
+			@panel.Panel(panel.Props{Title: "Second"}) {
+				<p>Stacked panel two.</p>
+			}
+			@panel.Panel(panel.Props{Title: "Third"}) {
+				<p>Stacked panel three.</p>
+			}
+		}
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@badge.Badge() {
+				One
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Two
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+				Three
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+				Four
+			}
+			@badge.Badge() {
+				Five
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Six
+			}
+		}
+		@layout.TwoColumn(layout.TwoColumnProps{Aside: layoutAsidePanel(), Sticky: true}) {
+			<p>The main column takes the remaining width. On narrow screens the aside stacks below it. On wide screens the aside stays pinned while this column scrolls, which suits long documents with a table of contents or a summary beside them.</p>
+		}
+		@layout.ThreeColumn(layout.ThreeColumnProps{Left: layoutLeftPanel(), Right: layoutRightPanel()}) {
+			<p>The center column holds the primary content. On narrow screens the two side columns collapse into disclosures.</p>
+		}
+		<p>Content above the divider.</p>
+		@layout.Divider(layout.DividerProps{Label: "or"})
+		<p>Content below the divider.</p>
+	}
+}
+
+templ panelSection() {
+	@layout.Section(layout.SectionProps{ID: "panel", Title: "Panel", Description: "A titled surface with variants, optional collapsing and a flush mode for tables."}) {
+		@panel.Panel(panel.Props{Title: "Default", Subtitle: "The standard surface"}) {
+			<p>Default panel body.</p>
+		}
+		@panel.Panel(panel.Props{Title: "Muted", Variant: panel.VariantMuted}) {
+			<p>Muted panel body.</p>
+		}
+		@panel.Panel(panel.Props{Title: "Danger", Variant: panel.VariantDanger}) {
+			<p>Danger panel body.</p>
+		}
+		@panel.Panel(panel.Props{Title: "Collapsible, open", Collapsible: true, Open: true}) {
+			<p>This panel starts open.</p>
+		}
+		@panel.Panel(panel.Props{Title: "Collapsible, closed", Collapsible: true}) {
+			<p>This panel starts closed.</p>
+		}
+		@panel.Panel(panel.Props{Title: "Flush with a table", Flush: true}) {
+			@table.Table() {
+				@table.Header() {
+					@table.Row() {
+						@table.Head() {
+							Name
+						}
+						@table.Head() {
+							Role
+						}
+					}
+				}
+				@table.Body() {
+					@table.Row() {
+						@table.Cell() {
+							Ada
+						}
+						@table.Cell() {
+							Engineer
+						}
+					}
+					@table.Row() {
+						@table.Cell() {
+							Grace
+						}
+						@table.Cell() {
+							Admiral
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+templ customSection() {
+	@layout.Section(layout.SectionProps{ID: "custom", Title: "Custom fences", Description: "The declared escape hatch for markup no component covers."}) {
+		<p>Everything inside a fence is exempt from the lint, and every fence is printed by make check-ui so none can hide.</p>
+		@customblock.CustomBlock(customblock.Props{Reason: "demo: shows what a declared fence looks like"}) {
+			<div style="padding:12px;border:2px dashed var(--color-border);border-radius:8px">
+				<p>This raw div is inside a declared fence.</p>
+			</div>
+		}
+	}
 }

@@ -17,5 +17,7 @@ var App = &appshell.App{
 		{Label: "Forms", Href: "/#forms"},
 		{Label: "Interactive", Href: "/#interactive"},
 		{Label: "Patterns", Href: "/#patterns"},
+		{Label: "Layout", Href: "/#layout"},
+		{Label: "Actions", Href: "/#actions"},
 	},
 }
