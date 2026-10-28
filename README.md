@@ -43,7 +43,7 @@ byte-stable `output.css` instead of floating to whatever is latest.
 
 ## Page layer
 
-The page layer (`appshell`, `pageheader`, `breadcrumbs`, `layout`, `panel`, `action`, and the `custompage`/`customblock` fences) lets an app build whole pages by composing components. `assets` embeds `static/` for serving. `wflint` enforces the rule below; `make check-ui` runs it and `make check` includes it.
+The page layer (`appshell`, `pageheader`, `breadcrumbs`, `layout`, `panel`, `action`, `formfield`, `autocomplete`, and the `custompage`/`customblock` fences) lets an app build whole pages by composing components. `assets` embeds `static/` for serving. `wflint` enforces the rule below; `make check-ui` runs it and `make check` includes it. `tabs` take a `Sizing` (default `SizingTallest`, so switching never moves the page), `layout.Section` and `panel` take a `Level` (h2 to h4) so nesting reads as nesting, and `hovercard` takes a `Placement` (default bottom-start).
 
 App code never contains anything below the component boundary (no div, no class, no layout decision); composition means choosing and ordering components. The only place that boundary may be crossed is inside a CustomPage or CustomBlock, which must carry a written reason and is printed by every build. A missing component is never a reason to use the fence: stop and file it against webframe.
 

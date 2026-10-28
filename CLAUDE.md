@@ -53,10 +53,12 @@ Apps are built by composing components, never by writing markup. Packages:
 - `components/action` — `Action` type shared by page headers, sections, panels and the user menu
 - `components/appshell` — `Document`, `Shell`, `App`, `Middleware`, `Render`: the page chrome and the per-request wiring
 - `components/breadcrumbs`, `components/pageheader` — trail and page title/actions block
-- `components/layout` — `Stack`, `Inline`, `Section`, `Divider`, `TwoColumn`, `ThreeColumn`
-- `components/panel`, `components/swatch` — framed content block; color swatch
+- `components/layout` — `Stack`, `Inline`, `Section`, `Divider`, `TwoColumn`, `ThreeColumn`; `Section` takes `Level` (h2/h3/h4)
+- `components/panel`, `components/swatch` — framed content block (also takes `Level`); color swatch
+- `components/formfield` — `Field`, `FormField`, `Feedback(id, err, success)`, `Fieldset`: labelled control with help and validation feedback
+- `components/autocomplete` — `Autocomplete`, `Results`, `Script`: HTMX type-ahead picker; first-party `static/js/autocomplete.js`, registered in `appshell.Scripts`
 - `components/custompage`, `components/customblock` — the declared design-exemption fences (see below)
-- `gameicon` has `Size`/`Tone`; `avatar` has `Size`
+- `gameicon` has `Size`/`Tone`; `avatar` has `Size`; `tabs` has `Sizing` (`SizingTallest` default, `SizingFixed` + `Height` S/M/L, `SizingFit`); `hovercard` has `Placement` (default bottom-start)
 
 App pattern: configure one `appshell.App`, wrap the mux in `App.Middleware`, render each page with `App.Render`:
 
