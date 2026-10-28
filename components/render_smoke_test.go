@@ -21,6 +21,7 @@ import (
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/barchart"
 	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
@@ -31,23 +32,31 @@ import (
 	"github.com/bplus/webframe/components/custompage"
 	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/dashboardheader"
+	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/descriptionlist"
+	"github.com/bplus/webframe/components/detailpage"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/figure"
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/formpage"
 	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/graphwidget"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/image"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/lifecyclestepper"
+	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/metricring"
 	"github.com/bplus/webframe/components/nodepill"
 	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/piechart"
 	"github.com/bplus/webframe/components/popover"
@@ -58,10 +67,13 @@ import (
 	"github.com/bplus/webframe/components/slideover"
 	"github.com/bplus/webframe/components/sparkline"
 	"github.com/bplus/webframe/components/statcomparison"
+	"github.com/bplus/webframe/components/stattile"
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/toggle"
+	"github.com/bplus/webframe/components/toolbar"
 	"github.com/bplus/webframe/components/trafficstream"
 )
 
@@ -100,6 +112,12 @@ var componentCases = []componentCase{
 	{name: "autocomplete", constructor: func() templ.Component { return autocomplete.Autocomplete(autocomplete.Props{ID: "x", HxGet: "/q"}) }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
 	{name: "badge", constructor: func() templ.Component { return badge.Badge() }},
+	{
+		name:              "banner",
+		constructor:       func() templ.Component { return banner.Banner() },
+		expectEmpty:       true,
+		expectEmptyReason: "a banner with no title, body or details renders nothing on purpose",
+	},
 	{name: "barchart", constructor: func() templ.Component { return barchart.BarChart() }},
 	{name: "breadcrumbs", constructor: func() templ.Component { return breadcrumbs.Breadcrumbs() }},
 	{name: "button", constructor: func() templ.Component { return button.Button() }},
@@ -110,6 +128,9 @@ var componentCases = []componentCase{
 	{name: "custompage", constructor: func() templ.Component { return custompage.CustomPage() }},
 	{name: "dashboardgrid", constructor: func() templ.Component { return dashboardgrid.Grid() }},
 	{name: "dashboardheader", constructor: func() templ.Component { return dashboardheader.Header() }},
+	{name: "datatable", constructor: func() templ.Component { return datatable.DataTable() }},
+	{name: "descriptionlist", constructor: func() templ.Component { return descriptionlist.DescriptionList() }},
+	{name: "detailpage", constructor: func() templ.Component { return detailpage.Page(detailpage.Props{}) }},
 	{name: "dialog", constructor: func() templ.Component { return dialog.Dialog() }},
 	{
 		name:              "dropdown",
@@ -118,9 +139,11 @@ var componentCases = []componentCase{
 		expectEmptyReason: "Dropdown() only stashes a context value and renders `{ children... }`; with no children supplied, templ.GetChildren falls back to templ.NopComponent (a real, silent empty component — not the leaked-text bug), so zero-value output is legitimately zero bytes.",
 	},
 	{name: "emptystate", constructor: func() templ.Component { return emptystate.EmptyState() }},
+	{name: "figure", constructor: func() templ.Component { return figure.Figure() }},
 	{name: "filterbar", constructor: func() templ.Component { return filterbar.FilterBar() }},
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
 	{name: "formfield", constructor: func() templ.Component { return formfield.FormField(formfield.Field{Name: "x"}) }},
+	{name: "formpage", constructor: func() templ.Component { return formpage.Page(formpage.Props{}) }},
 	{name: "gameicon", constructor: func() templ.Component { return gameicon.GameIcon(gameicon.Props{}) }},
 	{name: "graphwidget", constructor: func() templ.Component { return graphwidget.GraphWidget() }},
 	{name: "hovercard", constructor: func() templ.Component { return hovercard.Hover(hovercard.Props{}) }},
@@ -128,13 +151,16 @@ var componentCases = []componentCase{
 	// predefines one var per Lucide icon (e.g. AArrowDown = Icon("a-arrow-down")),
 	// so calling one of those with zero Props exercises the same rendering path.
 	{name: "icon", constructor: func() templ.Component { return icon.AArrowDown() }},
+	{name: "image", constructor: func() templ.Component { return image.Image() }},
 	{name: "input", constructor: func() templ.Component { return input.Input() }},
 	{name: "label", constructor: func() templ.Component { return label.Label() }},
 	{name: "layout", constructor: func() templ.Component { return layout.Stack() }},
 	{name: "lifecyclestepper", constructor: func() templ.Component { return lifecyclestepper.LifecycleStepper() }},
+	{name: "listpage", constructor: func() templ.Component { return listpage.Page(listpage.Props{}) }},
 	{name: "metricring", constructor: func() templ.Component { return metricring.MetricRing() }},
 	{name: "nodepill", constructor: func() templ.Component { return nodepill.NodePill() }},
 	{name: "pageheader", constructor: func() templ.Component { return pageheader.PageHeader() }},
+	{name: "pagination", constructor: func() templ.Component { return pagination.Pagination() }},
 	{name: "panel", constructor: func() templ.Component { return panel.Panel() }},
 	{name: "piechart", constructor: func() templ.Component { return piechart.PieChart() }},
 	// popover has no top-level Popover(); Content is the substantive floating
@@ -148,12 +174,15 @@ var componentCases = []componentCase{
 	{name: "slideover", constructor: func() templ.Component { return slideover.SlideOver() }},
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
+	{name: "stattile", constructor: func() templ.Component { return stattile.StatTile() }},
 	{name: "swatch", constructor: func() templ.Component { return swatch.Swatch() }},
 	{name: "table", constructor: func() templ.Component { return table.Table() }},
 	// tabs.Content() exercises the empty-Value rendering path covered by the
 	// package-level regression test.
 	{name: "tabs", constructor: func() templ.Component { return tabs.Content() }},
 	{name: "textarea", constructor: func() templ.Component { return textarea.Textarea() }},
+	{name: "toggle", constructor: func() templ.Component { return toggle.Toggle() }},
+	{name: "toolbar", constructor: func() templ.Component { return toolbar.Toolbar() }},
 	{name: "trafficstream", constructor: func() templ.Component { return trafficstream.TrafficStream() }},
 }
 
