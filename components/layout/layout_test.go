@@ -34,7 +34,7 @@ func TestStack_Default(t *testing.T) {
 		t.Fatalf("render: %v", err)
 	}
 	out := buf.String()
-	for _, want := range []string{"flex-col", "gap-4"} {
+	for _, want := range []string{"flex-col", "gap-4", "items-stretch"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in %s", want, out)
 		}
@@ -54,6 +54,16 @@ func TestInline_WrapAndJustify(t *testing.T) {
 	}
 }
 
+func TestInline_Default(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Inline().Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "items-center") {
+		t.Errorf("missing items-center in %s", buf.String())
+	}
+}
+
 func TestSection_TitleAndActions(t *testing.T) {
 	var buf bytes.Buffer
 	c := Section(SectionProps{
@@ -64,7 +74,7 @@ func TestSection_TitleAndActions(t *testing.T) {
 		t.Fatalf("render: %v", err)
 	}
 	out := buf.String()
-	for _, want := range []string{"<h2", "Members", "Invite", "wf-section"} {
+	for _, want := range []string{"<h2", "Members", "Invite", "wf-section", "flex-wrap"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in %s", want, out)
 		}
@@ -76,7 +86,7 @@ func TestDivider_Label(t *testing.T) {
 	if err := Divider(DividerProps{Label: "or"}).Render(context.Background(), &buf); err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	if !strings.Contains(buf.String(), "or") {
+	if !strings.Contains(buf.String(), ">or</span>") {
 		t.Errorf("label missing: %s", buf.String())
 	}
 	buf.Reset()

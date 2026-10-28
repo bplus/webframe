@@ -32,8 +32,8 @@ templ Section(props ...SectionProps) {
 		{ p.Attributes... }
 	>
 		if p.Title != "" || p.Description != "" || len(p.Actions) > 0 {
-			<div class="flex flex-row items-start justify-between gap-4">
-				<div class="flex flex-col gap-1">
+			<div class="flex flex-row flex-wrap items-start justify-between gap-4">
+				<div class="flex min-w-0 flex-col gap-1">
 					if p.Title != "" {
 						<h2 class="text-lg font-semibold text-foreground">{ p.Title }</h2>
 					}

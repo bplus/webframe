@@ -106,7 +106,7 @@ func Section(props ...SectionProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Title != "" || p.Description != "" || len(p.Actions) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"flex flex-row items-start justify-between gap-4\"><div class=\"flex flex-col gap-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"flex flex-row flex-wrap items-start justify-between gap-4\"><div class=\"flex min-w-0 flex-col gap-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
