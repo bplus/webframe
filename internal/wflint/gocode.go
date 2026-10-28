@@ -220,12 +220,24 @@ func isGenerated(file, src string) bool {
 }
 
 // lintGo scans a non-generated Go file for the Go-side rules, with the
-// narrow Props-literal form of props-class.
+// narrow Props-literal form of props-class. A *_test.go file is exempt from
+// html-from-go-string only.
 func lintGo(file, src string) []Violation {
 	if isGenerated(file, src) {
 		return nil
 	}
 	w := &walker{file: file}
 	w.reportGo(parser.Expression{Value: src}, false)
-	return w.out
+	if !strings.HasSuffix(file, "_test.go") {
+		return w.out
+	}
+	// Tests assert on rendered HTML, so markup in their string literals is
+	// expected; every other rule still applies.
+	out := w.out[:0]
+	for _, v := range w.out {
+		if v.Rule != "html-from-go-string" {
+			out = append(out, v)
+		}
+	}
+	return out
 }

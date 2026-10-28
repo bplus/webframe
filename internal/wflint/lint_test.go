@@ -342,6 +342,21 @@ func TestLint_HTMLFromGoString(t *testing.T) {
 	}
 }
 
+// TestLint_HTMLFromGoStringSkipsTests: a *_test.go file may hold markup in
+// string literals (tests assert on rendered HTML); other rules still apply.
+func TestLint_HTMLFromGoStringSkipsTests(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "page_test.go")
+	src := "package x\n\nvar want = `<div class=\"x\">`\nvar raw = templ.Raw(\"<b>\")\n"
+	if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	vs := lintOne(t, f)
+	if len(vs) != 1 || vs[0].Rule != "html-from-go" || vs[0].Line != 4 {
+		t.Errorf("got %+v, want only html-from-go at line 4", vs)
+	}
+}
+
 // TestLint_GeneratedGoNeedsNameAndHeader: a .go file is skipped as generated
 // only when it is named *_templ.go AND carries the templ header, so a
 // hand-written file cannot opt out by adding the comment. The *_templ.go
