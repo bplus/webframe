@@ -1,7 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 
 @source "../../components/**/*.templ";
 @source "../../demo/**/*.templ";
+@source "../../demo/**/*.go";
 
 @theme {
   /* ── Primary: Slate Blue ── */
