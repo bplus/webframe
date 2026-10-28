@@ -1,0 +1,40 @@
+package appshell
+
+import (
+	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/avatar"
+	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/components/dropdown"
+	"github.com/bplus/webframe/components/filterbar"
+	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/label"
+	"github.com/bplus/webframe/components/popover"
+	"github.com/bplus/webframe/components/selectbox"
+	"github.com/bplus/webframe/components/slideover"
+	"github.com/bplus/webframe/components/tabs"
+	"github.com/bplus/webframe/components/textarea"
+)
+
+// Scripts renders the standard script bundle: the Script() tag of tabs,
+// popover, dropdown, dialog, selectbox, input, checkbox, textarea, avatar,
+// label, slideover and filterbar, followed by theme-toggle.js. Document
+// renders it at the end of <body>. It deliberately omits trafficstream and
+// graphwidget; pages using those add their own Script().
+//
+// @boundary
+templ Scripts() {
+	@tabs.Script()
+	@popover.Script()
+	@dropdown.Script()
+	@dialog.Script()
+	@selectbox.Script()
+	@input.Script()
+	@checkbox.Script()
+	@textarea.Script()
+	@avatar.Script()
+	@label.Script()
+	@slideover.Script()
+	@filterbar.Script()
+	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/theme-toggle.js") }></script>
+}

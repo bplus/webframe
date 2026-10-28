@@ -15,6 +15,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/areachart"
 	"github.com/bplus/webframe/components/aspectratio"
 	"github.com/bplus/webframe/components/avatar"
@@ -84,6 +85,7 @@ type componentCase struct {
 }
 
 var componentCases = []componentCase{
+	{name: "appshell", constructor: func() templ.Component { return appshell.Document(appshell.DocProps{}) }},
 	{name: "areachart", constructor: func() templ.Component { return areachart.AreaChart() }},
 	{name: "aspectratio", constructor: func() templ.Component { return aspectratio.AspectRatio() }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
