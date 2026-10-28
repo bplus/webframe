@@ -131,3 +131,39 @@ func TestAutocompleteDefaultsOmitRequiredDisabledLabel(t *testing.T) {
 		t.Errorf("unexpected <label in %s", out)
 	}
 }
+
+func TestAutocomplete_TextName(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", HxGet: "/api/search", TextName: "title"}))
+	mustContain(t, out, `name="title"`)
+	if strings.Contains(out, `name="q"`) {
+		t.Errorf("TextName should replace q: %s", out)
+	}
+}
+
+func TestAutocomplete_DisabledHidden(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", Name: "framework", HxGet: "/api/search", Disabled: true}))
+	hidden := out[strings.Index(out, `<input type="hidden"`):]
+	hidden = hidden[:strings.Index(hidden, ">")+1]
+	if !boolAttr("disabled").MatchString(hidden) {
+		t.Errorf("hidden value input should be disabled: %s", hidden)
+	}
+	enabled := render(t, Autocomplete(Props{ID: "fw", Name: "framework", HxGet: "/api/search"}))
+	h2 := enabled[strings.Index(enabled, `<input type="hidden"`):]
+	h2 = h2[:strings.Index(h2, ">")+1]
+	if boolAttr("disabled").MatchString(h2) {
+		t.Errorf("hidden value input should not be disabled by default: %s", h2)
+	}
+}
+
+func TestAutocomplete_RequiredMarker(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", Name: "framework", HxGet: "/api/search", Required: true}))
+	mustContain(t, out, "data-wf-ac-required")
+	for _, p := range []Props{
+		{ID: "fw", HxGet: "/api/search", Required: true},    // no hidden value: free text, browser required suffices
+		{ID: "fw", Name: "framework", HxGet: "/api/search"}, // not required
+	} {
+		if strings.Contains(render(t, Autocomplete(p)), "data-wf-ac-required") {
+			t.Errorf("unexpected data-wf-ac-required for %+v", p)
+		}
+	}
+}

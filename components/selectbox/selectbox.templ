@@ -35,10 +35,17 @@ type Props struct {
 // template for the multi-select summary with "{n}" replaced by the count
 // (default "{n} items selected"). HasError applies destructive styling and
 // aria-invalid.
+//
+// Attributes spread onto the hidden <input> (the element that carries
+// name/value and any hx-* wiring); ButtonAttributes spread onto the
+// visible <button>, after the built-in data-tui-selectbox-* attributes,
+// so a caller's aria-describedby, aria-invalid or aria-required is on the
+// element screen readers focus and overrides the built-in aria-invalid.
 type TriggerProps struct {
 	ID                string
 	Class             string
 	Attributes        templ.Attributes
+	ButtonAttributes  templ.Attributes
 	Name              string
 	Form              string
 	Disabled          bool
@@ -143,7 +150,9 @@ templ SelectBox(props ...Props) {
 // ShowPills forces Multiple on. Returns a templ.Component.
 //
 // Note: TriggerProps.Attributes is spread onto the hidden input, not the
-// button — put button-level attributes in Class or use the wrapper.
+// button; button-level attributes (aria-describedby, aria-invalid,
+// aria-required) go in ButtonAttributes, which are merged last onto the
+// <button> and win over the built-in values.
 //
 // @temporal-coupling: targets the content ID from ctx set by the enclosing
 // SelectBox (falls back to "fallback-select-content-id" outside one); the
@@ -200,6 +209,7 @@ templ Trigger(props ...TriggerProps) {
 					"tabindex":                               "0",
 					"aria-invalid":                           utils.If(p.HasError, "true"),
 				},
+				p.ButtonAttributes,
 			),
 		}) {
 			<input
