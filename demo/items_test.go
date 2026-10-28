@@ -138,12 +138,16 @@ func TestItems_ResultsSwap(t *testing.T) {
 	if !strings.HasPrefix(strings.TrimSpace(body), `<div id="items-results"`) {
 		t.Errorf("results swap does not start with the results div:\n%s", body[:min(200, len(body))])
 	}
-	wantAll(t, body, `id="items-results"`, "Blade of the Fallen Star", "1–14 of 14 items")
-	wantNone(t, body, "<h1", "<html", "wf-topbar", "wf-sidebar", "Search items")
+	wantAll(t, body, `id="items-results"`, "Blade of the Fallen Star", "1–14 of 14 items",
+		// After the results, out of band: the bar's hidden inputs with the
+		// served sort (so the next filter change keeps it) and the intro.
+		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 11 published · 3 drafts</p>`)
+	wantNone(t, body, "<h1", "<html", "wf-topbar", "wf-sidebar", "Search items", "data-tui-filterbar-hx-get")
 	// Any other htmx target gets the page body without the shell.
 	body = do(h, "GET", "/items", nil, hx("main")).Body.String()
-	wantAll(t, body, "<h1", "Search items")
-	wantNone(t, body, "<html", "wf-sidebar")
+	wantAll(t, body, "<h1", "Search items", `id="items-filterbar"`, `data-tui-filterbar-drop="page"`, `<p id="items-intro"`)
+	wantNone(t, body, "<html", "wf-sidebar", "hx-swap-oob")
 	// A boosted request gets the whole document.
 	body = do(h, "GET", "/items", nil, map[string]string{"HX-Request": "true", "HX-Boosted": "true"}).Body.String()
 	wantAll(t, body, "<!doctype", "wf-shell--sidebar")
@@ -276,7 +280,15 @@ func TestItems_Delete(t *testing.T) {
 	if _, ok := Items.Get("1"); ok {
 		t.Error("item 1 still in the store")
 	}
-	// The intro line on the next full render is live.
+	// The response itself carries the live intro and the bar's hidden
+	// state out of band, and the address bar follows the served state.
+	inOrder(t, body, `id="items-results"`,
+		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">13 items · 10 published · 3 drafts</p>`)
+	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?dir=asc&sort=name" {
+		t.Errorf("HX-Replace-Url = %q", got)
+	}
+	// And the next full render agrees.
 	wantAll(t, do(h, "GET", "/items", nil, nil).Body.String(), "13 items · 10 published · 3 drafts")
 
 	// From the detail page (htmx, no results target): redirect to the list.
@@ -302,9 +314,14 @@ func TestItems_Publish(t *testing.T) {
 		t.Fatalf("POST /items/publish = %d", rec.Code)
 	}
 	body := rec.Body.String()
-	// The draft view now holds the one remaining draft.
-	wantAll(t, body, `id="items-results"`, "Helm of the Last Watch", "1–1 of 1 items")
+	// The draft view now holds the one remaining draft; the intro follows.
+	wantAll(t, body, `id="items-results"`, "Helm of the Last Watch", "1–1 of 1 items",
+		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 13 published · 1 draft</p>`)
 	wantNone(t, body, "Cloak of Whispers", "Amulet of Still Water", "<h1")
+	// The default sort is written too, as the page links write it.
+	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?dir=desc&sort=updated&status=draft" {
+		t.Errorf("HX-Replace-Url = %q", got)
+	}
 	for _, id := range []string{"2", "6"} {
 		if it, _ := Items.Get(id); it.Status != "published" {
 			t.Errorf("item %s status = %q, want published", id, it.Status)

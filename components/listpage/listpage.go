@@ -16,9 +16,21 @@
 // Spec ("items" → items.status, items.q, items.sort) stays namespaced.
 // Filter controls are named by their FilterConfig.ID (the bare filter key
 // listed in listquery.Options.FilterKeys); the search box is "q". The
-// filter bar carries sort, dir and per as hidden inputs (never page) so a
-// filter change keeps the sort and lands on page 1; "Clear filters" keeps
-// them too. Selected state comes from Spec.Filters and Spec.Search.
+// filter bar (id ID+"-filterbar") carries sort, dir and per as hidden
+// inputs (never page) so a filter change keeps the sort and lands on page
+// 1; "Clear filters" keeps them too. Selected state comes from
+// Spec.Filters and Spec.Search.
+//
+// The URL is the list state. Every results-only response (Respond for a
+// request targeting the results region, RespondResults for a mutation)
+// carries, after the results, out-of-band copies of the bar's hidden
+// inputs and of the intro line (hx-swap-oob, matched by id), so a sort
+// chosen from a table header is what the next filter change sends and the
+// intro's counts follow a delete. The bar's URL rewrite drops its own
+// parameters and page (filterbar.Props.Drop) before writing the current
+// values, so a cleared filter leaves the address bar too. The empty
+// state's "Clear filters" drives the bar's own reset (window.tui.filterbar
+// .reset) so the controls clear along with the results.
 //
 // Bulk actions: when Selection and BulkActions are set, a form.Form with id
 // ID+"-bulk" holds one button per action in the toolbar's middle slot (right
@@ -54,18 +66,24 @@ import (
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/utils"
 )
 
 const (
 	defaultID = "list"
 	// searchKey is the search control's bare name; Spec.Param prefixes it.
 	searchKey = "q"
+	// introClass styles the intro <p> in Page and its out-of-band copy
+	// alike, so the replacement does not move anything.
+	introClass = "text-sm text-muted-foreground"
 )
 
 // Props configures Page and Results. ID defaults to "list" and derives
 // every other id: the root <div> is ID, the results region ID+"-results",
-// the table ID+"-table", the bulk form ID+"-bulk". Class merges onto the
-// root <div> via utils.TwMerge; Attributes spread onto it last.
+// the table ID+"-table", the bulk form ID+"-bulk", the filter bar
+// ID+"-filterbar" (its hidden inputs filterbar.HiddenID of that), the
+// intro ID+"-intro". Class merges onto the root <div> via utils.TwMerge;
+// Attributes spread onto it last.
 type Props struct {
 	ID         string
 	Class      string
@@ -148,6 +166,13 @@ func (p Props) tableID() string { return p.id() + "-table" }
 // attribute.
 func (p Props) bulkFormID() string { return p.id() + "-bulk" }
 
+// filterbarID is the filter bar's id; its hidden inputs are
+// filterbar.HiddenID(filterbarID, name).
+func (p Props) filterbarID() string { return p.id() + "-filterbar" }
+
+// introID is the intro <p>'s id, the target of its out-of-band copy.
+func (p Props) introID() string { return p.id() + "-intro" }
+
 // hasFilterBar reports whether anything would render in the filter bar.
 func (p Props) hasFilterBar() bool { return len(p.Filters) > 0 || p.Search != "" }
 
@@ -198,32 +223,36 @@ func (p Props) filterConfigs() []filterbar.FilterConfig {
 }
 
 // hiddenInputs is the list state that rides along with every filter
-// change: sort, dir and per (under the Spec's prefix), taken from
-// Spec.Values so a page size equal to the parsed default is omitted the
-// same way Spec.URL omits it. page, q and filters are never included: a
+// change: sort, dir and per (under the Spec's prefix), with the values
+// Spec.Values writes, so per is "" when the page size equals the parsed
+// default, the same way Spec.URL omits it. All three keys are always
+// present, empty or not: filterbar.min.js skips an empty control, and the
+// out-of-band copy a results response carries (resultsPart) replaces each
+// input by id, which needs an element to replace even when the page
+// loaded with no sort at all. page, q and filters are never included: a
 // filter change lands on page 1 and the controls carry q and the filters.
 func (p Props) hiddenInputs() map[string]string {
 	vals := p.Spec.Values()
-	out := map[string]string{}
+	out := make(map[string]string, 3)
 	for _, key := range []string{"sort", "dir", "per"} {
 		name := p.Spec.Param(key)
-		if v := vals.Get(name); v != "" {
-			out[name] = v
-		}
-	}
-	if len(out) == 0 {
-		return nil
+		out[name] = vals.Get(name)
 	}
 	return out
 }
 
-// filterbarProps assembles the filter bar for the resolved base path.
+// filterbarProps assembles the filter bar for the resolved base path: the
+// bar's id (so its hidden inputs have ids), the controls, the hidden list
+// state, and page as the parameter the bar's URL rewrite drops (a filter
+// change lands on page 1).
 func (p Props) filterbarProps(base string) filterbar.Props {
 	return filterbar.Props{
+		ID:        p.filterbarID(),
 		Filters:   p.filterConfigs(),
 		HxGet:     base,
 		HxTarget:  p.resultsTarget(),
 		Hidden:    p.hiddenInputs(),
+		Drop:      []string{p.Spec.Param("page")},
 		ShowReset: true,
 	}
 }
@@ -252,31 +281,46 @@ func (p Props) bulkAction(a action.Action) action.Action {
 
 // empty resolves the Empty default: the caller's props when any field is
 // set; otherwise, when filters are active, "No matches" with a hint and a
-// "Clear filters" link whose URL is Spec.URL(base, WithoutFilters()) (no
-// q, no filters; sort and page size kept) as both href and hx-get, targeting
-// the results region with hx-push-url so the address bar resets too; and the
-// zero value (datatable renders "Nothing here yet") when not.
+// "Clear filters" link whose href is Spec.URL(base, WithoutFilters()) (no
+// q, no filters; sort and page size kept); and the zero value (datatable
+// renders "Nothing here yet") when not.
+//
+// With a filter bar on the page the link's click (Alpine, x-on:click
+// .prevent) calls window.tui.filterbar.reset on the bar, which clears the
+// bar's controls, keeps its hidden inputs, re-requests the results region
+// over htmx and rewrites the URL: the bar then shows what the results
+// show. The href stays as the no-JS fallback. The link carries no hx-get
+// then, since the reset issues the request and a second one from the link
+// would fetch the same results twice. Without a filter bar (filters came
+// from the URL alone) the link is a plain htmx link like the sort and page
+// links: hx-get to the same URL, targeting the results with hx-push-url.
 func (p Props) empty(base string) emptystate.Props {
 	e := p.Empty
 	if e.Title != "" || e.Description != "" || e.Icon != "" || e.Action != nil {
 		return e
 	}
-	if p.Spec.HasFilters() {
-		clear := p.Spec.URL(base, listquery.WithoutFilters())
-		e.Title = "No matches"
-		e.Description = "Nothing matches your filters."
-		// A plain-link action with the hx-* trio as Attributes renders
-		// <a href hx-get hx-target hx-push-url>, the same shape as the sort
-		// and page links (an Hx* field would make action.Button drop the
-		// href and render a <button>).
-		e.Action = &action.Action{
-			Label: "Clear filters",
-			Href:  clear,
-			Attributes: templ.Attributes{
-				"hx-get":      clear,
-				"hx-target":   p.resultsTarget(),
-				"hx-push-url": "true",
-			},
+	if !p.Spec.HasFilters() {
+		return e
+	}
+	clear := p.Spec.URL(base, listquery.WithoutFilters())
+	e.Title = "No matches"
+	e.Description = "Nothing matches your filters."
+	// A plain-link action with Attributes renders <a href …>; an Hx* field
+	// would make action.Button drop the href and render a <button>.
+	e.Action = &action.Action{Label: "Clear filters", Href: clear}
+	if p.hasFilterBar() {
+		// x-data makes the link an Alpine root, so the handler is live on
+		// the first page load too (Alpine starts from [x-data] elements;
+		// swapped-in content is initialized by the shell's afterSwap hook).
+		e.Action.Attributes = templ.Attributes{
+			"x-data":             true,
+			"x-on:click.prevent": "window.tui.filterbar.reset(document.getElementById('" + utils.EscapeJS(p.filterbarID()) + "'))",
+		}
+	} else {
+		e.Action.Attributes = templ.Attributes{
+			"hx-get":      clear,
+			"hx-target":   p.resultsTarget(),
+			"hx-push-url": "true",
 		}
 	}
 	return e
@@ -314,16 +358,38 @@ func (p Props) paginationProps() pagination.Props {
 
 // Respond writes the list page for r through the appshell.App installed by
 // (*App).Middleware: a plain htmx request whose HX-Target is ResultsID()
-// receives only Results(p); any other plain htmx request receives the page
-// body (Page(p), no shell); a boosted, history-restore or non-htmx request
-// receives the whole document. It returns an error naming Middleware when
-// no App is in the context, writing nothing. Render errors are returned,
-// not written as a 500.
+// receives only the results part (Results(p) followed by the out-of-band
+// copies of the filter bar's hidden inputs and the intro, see the package
+// doc); any other plain htmx request receives the page body (Page(p), no
+// shell); a boosted, history-restore or non-htmx request receives the
+// whole document. It returns an error naming Middleware when no App is in
+// the context, writing nothing. Render errors are returned, not written as
+// a 500.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
 		return err
 	}
-	parts := map[string]templ.Component{p.ResultsID(): Results(p)}
+	parts := map[string]templ.Component{p.ResultsID(): resultsPart(p)}
 	return app.RenderParts(w, r, title, Page(p), parts)
+}
+
+// RespondResults writes only the results part for r (Results(p) followed
+// by the out-of-band copies of the filter bar's hidden inputs and the
+// intro): the response to a mutation issued from inside the list (a row's
+// DELETE, a bulk POST) after the handler re-applied the Spec it got from
+// listquery.ParseCurrent. It sets Content-Type and HX-Replace-Url to
+// p.Spec.URL(base), so the address bar follows the state actually served
+// (the page listquery.Apply clamped to after the last row of a page was
+// deleted). base is p.Base, else the path of listquery.CurrentURL(r): the
+// page the user is looking at, not the mutation's own path; it also
+// becomes Base for the sort and page links rendered. No appshell.App is
+// needed. Render errors are returned, not written as a 500.
+func RespondResults(w http.ResponseWriter, r *http.Request, p Props) error {
+	if p.Base == "" {
+		p.Base = listquery.CurrentURL(r).Path
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("HX-Replace-Url", p.Spec.URL(p.Base))
+	return resultsPart(p).Render(r.Context(), w)
 }

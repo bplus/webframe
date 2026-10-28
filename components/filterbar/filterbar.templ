@@ -1,6 +1,10 @@
 package filterbar
 
-import "github.com/bplus/webframe/utils"
+import (
+	"strings"
+
+	"github.com/bplus/webframe/utils"
+)
 
 // FilterType selects which control a FilterConfig renders inside the
 // bar. A FilterConfig with an unrecognized or empty Type renders
@@ -67,8 +71,16 @@ type Props struct {
 	// parameters along with every filter change. Meant for list state
 	// that is not a filter — sort, dir, per — so changing a filter keeps
 	// the sort. "Clear filters" leaves hidden inputs alone. nil renders
-	// nothing.
+	// nothing. With Props.ID set each input also gets id HiddenID(ID,
+	// name), so a response that swaps another region can replace the
+	// bar's hidden state out of band (HiddenOOB).
 	Hidden map[string]string
+	// Drop lists query parameter names (beyond the bar's own controls)
+	// that filterbar.min.js removes from the page URL on every change,
+	// rendered comma-joined as data-tui-filterbar-drop. A list page
+	// names its page parameter: a filter change lands on page 1, so a
+	// stale page= must leave the URL with it. nil renders nothing.
+	Drop []string
 }
 
 // FilterBar renders a horizontal bar of filter controls (selects,
@@ -79,7 +91,11 @@ type Props struct {
 // values comma-joined), issues htmx.ajax GET to HxGet, and swaps the
 // response into HxTarget using HxSwap (default "innerHTML"). The
 // script also dispatches a bubbling "filterbar-change" CustomEvent and
-// mirrors the params into the page URL via history.replaceState.
+// mirrors the params into the page URL via history.replaceState: it
+// first removes every parameter named by one of the bar's controls
+// (hidden inputs included) and every name in Props.Drop, then writes
+// the non-empty values, so a cleared control leaves the URL while
+// parameters the bar does not own stay.
 //
 // Accepts zero or one Props (elements past the first are ignored).
 // The markup itself only carries data-tui-filterbar-* attributes;
@@ -98,6 +114,11 @@ type Props struct {
 // Props.Hidden entries render first, as hidden inputs in sorted key
 // order; they take no space, so the bar's phone-width wrapping is
 // unchanged by them.
+//
+// Exposed on window as tui.filterbar: getParams(bar), trigger(bar) and
+// reset(bar), where bar is the root <div>; reset clears every control
+// but the hidden inputs and then triggers the update, exactly as the
+// "Clear filters" button does.
 templ FilterBar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -115,6 +136,9 @@ templ FilterBar(props ...Props) {
 		data-tui-filterbar-hx-get={ p.HxGet }
 		data-tui-filterbar-hx-target={ p.HxTarget }
 		data-tui-filterbar-hx-swap={ hxSwap }
+		if len(p.Drop) > 0 {
+			data-tui-filterbar-drop={ strings.Join(p.Drop, ",") }
+		}
 		class={
 			utils.TwMerge(
 				"flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg",
@@ -124,7 +148,7 @@ templ FilterBar(props ...Props) {
 		{ p.Attributes... }
 	>
 		for _, k := range sortedKeys(p.Hidden) {
-			<input type="hidden" name={ k } value={ p.Hidden[k] } data-tui-filterbar-control/>
+			@hiddenInput(p.ID, k, p.Hidden[k], false)
 		}
 		for _, f := range p.Filters {
 			switch f.Type {
@@ -146,6 +170,43 @@ templ FilterBar(props ...Props) {
 			</button>
 		}
 	</div>
+}
+
+// hiddenInput is one hidden control: an id only when the bar has one
+// (HiddenID), the control marker so filterbar.min.js reads it, and
+// hx-swap-oob="true" when rendered by HiddenOOB.
+templ hiddenInput(barID, name, value string, oob bool) {
+	<input
+		type="hidden"
+		if barID != "" {
+			id={ HiddenID(barID, name) }
+		}
+		name={ name }
+		value={ value }
+		data-tui-filterbar-control
+		if oob {
+			hx-swap-oob="true"
+		}
+	/>
+}
+
+// HiddenOOB renders a bar's hidden inputs again, each with
+// hx-swap-oob="true", for a response that swaps some other region of
+// the page: htmx replaces the bar's inputs of the same id (HiddenID)
+// with these before swapping the region, so list state that changed
+// outside the bar (a sort chosen from a table header) is what the next
+// filter change sends. barID is the bar's Props.ID and hidden the same
+// map FilterBar rendered, with the current values; keys must match the
+// bar's, since an id with no element to replace is dropped by htmx.
+// Render it at the top level of the response, after the swapped
+// region. Nothing renders without a barID or with an empty map; the
+// inputs are invisible, so nothing on the page moves.
+templ HiddenOOB(barID string, hidden map[string]string) {
+	if barID != "" {
+		for _, k := range sortedKeys(hidden) {
+			@hiddenInput(barID, k, hidden[k], true)
+		}
+	}
 }
 
 templ filterSelect(f FilterConfig) {

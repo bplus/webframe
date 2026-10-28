@@ -12,10 +12,12 @@
 //
 // Parsing is hostile-input safe: unknown sorts fall back to DefaultSort,
 // unknown directions to DefaultDir, non-numeric or non-positive pages to 1,
-// and page sizes clamp to 1..MaxPageSize. Nothing panics on any input.
+// pages above MaxPage to MaxPage, and page sizes clamp to 1..MaxPageSize.
+// Nothing panics on any input.
 package listquery
 
 import (
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,6 +36,14 @@ const (
 	defaultPageSize = 25
 	defaultMaxSize  = 100
 )
+
+// MaxPage is the ceiling on Spec.Page: ParseValues caps a larger page
+// parameter here, and Offset caps Page and PageSize here again before
+// multiplying, so a hand-typed ?page=4611686018427387904&per=100 yields a
+// large offset (no rows) instead of overflowing into a negative one.
+// (MaxPage-1)*MaxPage fits in an int64; on a 32-bit int the offset tops out
+// at math.MaxInt.
+const MaxPage = math.MaxInt32
 
 // Spec is one list's state as read from the URL. The zero value means page 1,
 // the default page size (25), no sort, no search, no filters.
@@ -78,10 +88,41 @@ func Parse(r *http.Request, o Options) Spec {
 	return ParseValues(r.URL.Query(), o)
 }
 
-// ParseValues reads the list state from v. Every value is validated: Page >= 1,
-// 1 <= PageSize <= MaxPageSize, Dir ∈ {asc, desc}, Sort ∈ AllowedSorts ∪
-// {DefaultSort}, Filters ⊆ FilterKeys. Repeated scalar parameters take the
-// first value; Search is kept verbatim as text (escaping is the renderer's job).
+// CurrentURL returns the URL the user is looking at: the HX-Current-URL
+// header htmx sends with every request, parsed, or a copy of r.URL when the
+// header is absent or does not parse. It is never nil (a nil request yields
+// an empty URL). A mutation issued from inside a list (a row's DELETE, a
+// bulk POST) has a request URL that says nothing about the list's state;
+// the page's URL holds it.
+func CurrentURL(r *http.Request) *url.URL {
+	if r == nil {
+		return &url.URL{}
+	}
+	if cur := r.Header.Get("HX-Current-URL"); cur != "" {
+		if u, err := url.Parse(cur); err == nil {
+			return u
+		}
+	}
+	if r.URL == nil {
+		return &url.URL{}
+	}
+	u := *r.URL
+	return &u
+}
+
+// ParseCurrent reads the list state from CurrentURL(r)'s query: the
+// HX-Current-URL header's query when htmx sent one, else r's own query, with
+// the same validation as ParseValues. Handlers that mutate from inside a
+// list re-render it for this Spec.
+func ParseCurrent(r *http.Request, o Options) Spec {
+	return ParseValues(CurrentURL(r).Query(), o)
+}
+
+// ParseValues reads the list state from v. Every value is validated: 1 <=
+// Page <= MaxPage, 1 <= PageSize <= MaxPageSize, Dir ∈ {asc, desc}, Sort ∈
+// AllowedSorts ∪ {DefaultSort}, Filters ⊆ FilterKeys. Repeated scalar
+// parameters take the first value; Search is kept verbatim as text (escaping
+// is the renderer's job).
 func ParseValues(v url.Values, o Options) Spec {
 	s := Spec{prefix: o.Prefix}
 	if v == nil {
@@ -133,10 +174,10 @@ func ParseValues(v url.Values, o Options) Spec {
 	}
 	s.PageSize = size
 
-	// Page.
+	// Page, capped at MaxPage.
 	s.Page = 1
 	if n, ok := positiveInt(v.Get(s.Param("page"))); ok {
-		s.Page = n
+		s.Page = min(n, MaxPage)
 	}
 
 	// Search, verbatim.
@@ -216,8 +257,19 @@ func (s Spec) pageSize() int {
 	return s.PageSize
 }
 
-// Offset returns (Page-1)*PageSize for SQL callers.
-func (s Spec) Offset() int { return (s.page() - 1) * s.pageSize() }
+// Offset returns (Page-1)*PageSize for SQL callers. Page and PageSize are
+// each capped at MaxPage first and the product is computed in 64 bits, so a
+// hand-built Spec with absurd values yields a large offset, never a wrapped
+// negative one.
+func (s Spec) Offset() int {
+	page := int64(min(s.page(), MaxPage))
+	size := int64(min(s.pageSize(), MaxPage))
+	off := (page - 1) * size
+	if off > math.MaxInt {
+		off = math.MaxInt
+	}
+	return int(off)
+}
 
 // Limit returns PageSize for SQL callers (25 for the zero value).
 func (s Spec) Limit() int { return s.pageSize() }

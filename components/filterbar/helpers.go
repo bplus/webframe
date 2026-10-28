@@ -78,6 +78,32 @@ func splitComma(vals []string) []string {
 	return out
 }
 
+// HiddenID is the id FilterBar gives the hidden input named name in the bar
+// whose Props.ID is barID: barID+"-hidden-"+name, with every character of
+// name outside [A-Za-z0-9_-] replaced by "-" ("items.sort" →
+// "bar-hidden-items-sort"). The id has to work in a CSS selector because
+// htmx resolves an hx-swap-oob target as querySelectorAll("#"+id), where a
+// "." would read as a class. HiddenOOB applies the same rule, so the two
+// always agree. "" when barID is "".
+func HiddenID(barID, name string) string {
+	if barID == "" {
+		return ""
+	}
+	var b strings.Builder
+	b.Grow(len(barID) + 8 + len(name))
+	b.WriteString(barID)
+	b.WriteString("-hidden-")
+	for _, r := range name {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('-')
+		}
+	}
+	return b.String()
+}
+
 // sortedKeys returns m's keys in ascending order so hidden inputs render
 // deterministically. nil or empty m yields nil.
 func sortedKeys(m map[string]string) []string {
