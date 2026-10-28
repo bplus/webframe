@@ -9,7 +9,6 @@ import (
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
-	"github.com/bplus/webframe/components/customblock"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/form"
@@ -1373,11 +1372,8 @@ templ panelSection() {
 
 templ customSection() {
 	@layout.Section(layout.SectionProps{ID: "custom", Title: "Custom fences", Description: "The declared escape hatch for markup no component covers."}) {
-		<p>Everything inside a fence is exempt from the lint, and every fence is printed by make check-ui so none can hide.</p>
-		@customblock.CustomBlock(customblock.Props{Reason: "demo: shows what a declared fence looks like"}) {
-			<div style="padding:12px;border:2px dashed var(--color-border);border-radius:8px">
-				<p>This raw div is inside a declared fence.</p>
-			</div>
-		}
+		<p>Markup no component covers goes inside a <code>customblock.CustomBlock</code> (or a whole page inside a <code>custompage.CustomPage</code>) with a written Reason. Everything inside a fence is exempt from the lint, and every fence is printed by <code>make check-ui</code> so none can hide.</p>
+		<p>This demo declares no fences: the swatch below is an ordinary component, and <code>make check-ui</code> reports zero custom fences for the whole demo.</p>
+		@swatch.Swatch(swatch.Props{Color: "var(--color-border)", Label: "no fence needed"})
 	}
 }
