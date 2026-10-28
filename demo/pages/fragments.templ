@@ -1,0 +1,68 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/panel"
+)
+
+// The fragments below are the htmx responses of the demo's interaction
+// examples (served by demo/handlers.go). They compose components only, so
+// the handlers never build HTML from Go strings.
+
+// ClickButton is the replacement button for the click-to-update demo: it
+// posts back to /api/click with the count in hx-vals and swaps itself out.
+templ ClickButton(n int) {
+	@button.Button(button.Props{Attributes: templ.Attributes{
+		"hx-post": "/api/click",
+		"hx-swap": "outerHTML",
+		"hx-vals": fmt.Sprintf(`{"count":"%d"}`, n),
+	}}) {
+		Clicked { strconv.Itoa(n) } times
+	}
+}
+
+// SearchResults lists the matching names for the live-search demo, or a
+// "No results found" line when there are none.
+templ SearchResults(items []string) {
+	@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+		for _, item := range items {
+			<p>{ item }</p>
+		}
+		if len(items) == 0 {
+			<small>No results found</small>
+		}
+	}
+}
+
+// ValidationFeedback is the blur-validation result: the error message as a
+// destructive badge, or "Looks good!" when errMsg is empty.
+templ ValidationFeedback(errMsg string) {
+	if errMsg != "" {
+		@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+			{ errMsg }
+		}
+	} else {
+		<small>Looks good!</small>
+	}
+}
+
+// Toast is the out-of-band toast: htmx appends the Stack's content to
+// #toast-container, and Alpine removes the panel after 4 seconds (long
+// enough to read, short enough that toasts don't pile up).
+templ Toast(variant badge.Variant, label, msg string) {
+	@layout.Stack(layout.StackProps{Attributes: templ.Attributes{"hx-swap-oob": "beforeend:#toast-container"}}) {
+		@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-data": "", "x-init": "setTimeout(() => $el.remove(), 4000)"}}) {
+			@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
+				@badge.Badge(badge.Props{Variant: variant}) {
+					{ label }
+				}
+				<span>{ msg }</span>
+			}
+		}
+	}
+}

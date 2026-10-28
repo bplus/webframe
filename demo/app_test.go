@@ -46,3 +46,43 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 		t.Errorf("GET /static/css/output.css = %d, want 200", code)
 	}
 }
+
+// TestInteractionFragments: the htmx demo endpoints answer with rendered
+// components (no full page), carrying the hx wiring each demo relies on.
+func TestInteractionFragments(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/click", HandleClick)
+	mux.HandleFunc("GET /api/search", HandleSearch)
+	mux.HandleFunc("POST /api/validate", HandleValidate)
+	mux.HandleFunc("POST /api/toast", HandleToast)
+	h := App.Middleware(mux)
+
+	for _, c := range []struct {
+		method, target string
+		want, notWant  []string
+	}{
+		{"POST", "/api/click?count=1", []string{"Clicked 2 times", `hx-post="/api/click"`, `{&#34;count&#34;:&#34;2&#34;}`}, nil},
+		{"GET", "/api/search?q=re", []string{"React", "Remix", "Express"}, []string{"Vue", "No results found"}},
+		{"GET", "/api/search?q=zzz", []string{"No results found"}, []string{"React"}},
+		{"POST", "/api/validate?field=email&value=nope", []string{"Enter a valid email address"}, []string{"Looks good!"}},
+		{"POST", "/api/validate?field=name&value=Bo", []string{"Looks good!"}, nil},
+		{"POST", "/api/toast?variant=error", []string{`hx-swap-oob="beforeend:#toast-container"`, "Something went wrong", "x-init="}, nil},
+	} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(c.method, c.target, nil))
+		body := rec.Body.String()
+		if rec.Code != 200 {
+			t.Errorf("%s %s = %d", c.method, c.target, rec.Code)
+		}
+		for _, w := range c.want {
+			if !strings.Contains(body, w) {
+				t.Errorf("%s %s: missing %q in:\n%s", c.method, c.target, w, body)
+			}
+		}
+		for _, w := range append(c.notWant, "<html", "wf-topbar") {
+			if strings.Contains(body, w) {
+				t.Errorf("%s %s: unexpected %q in:\n%s", c.method, c.target, w, body)
+			}
+		}
+	}
+}

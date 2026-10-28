@@ -66,7 +66,7 @@ err := App.Render(w, r, "Showcase", pages.Showcase()) // full page, or body only
 
 **`assets`** embeds `static/`: `assets.Mount(mux)` serves it, `assets.Handler()` returns the handler, `assets.URL(path)` builds a URL.
 
-**`wflint`** (`internal/wflint`, run via `cmd/wflint`) lints app code (`.templ`, Go, CSS) and rejects raw block HTML, `class`, `style`, `<style>`, `Class:` in Props literals, class/style attribute maps, `templ.Raw`, and Alpine class/style bindings. Only text-level elements and component calls are allowed. The sole exemption is a `CustomPage` or `CustomBlock` fence, which needs a written reason; the lint prints every fence on every run. Flags: `-json` for a JSON report; exit 1 on violations, 2 on bad usage. `make check-ui` runs `go run ./cmd/wflint ./demo` and is part of `make check`. The demo runs on the shell and passes with zero fences.
+**`wflint`** (`internal/wflint`, run via `cmd/wflint`) lints app code (`.templ`, Go, CSS) and rejects raw block HTML, `class`, `style`, `<style>`, `Class:` in Props literals, class/style attribute maps, `templ.Raw`, Go string literals holding HTML markup (`html-from-go-string`), and Alpine class/style bindings. Only text-level elements and component calls are allowed. The sole exemption is a `CustomPage` or `CustomBlock` fence, which needs a written reason; the lint prints every fence on every run. Flags: `-json` for a JSON report; exit 1 on violations, 2 on bad usage. `make check-ui` runs `go run ./cmd/wflint ./demo` and is part of `make check`. The demo runs on the shell and passes with zero fences.
 
 ### The rule for app code
 
@@ -74,7 +74,7 @@ App code never contains anything below the component boundary (no div, no class,
 
 ### CSS source pinning
 
-`static/css/input.css` uses `@import "tailwindcss" source(none)` and pins sources to `components/**/*.templ`, `demo/**/*.templ`, `demo/**/*.go`, so markdown and JS can never change `output.css`. Class-less text gets element typography from `:where(.wf-content)` rules there.
+`static/css/input.css` uses `@import "tailwindcss" source(none)` and pins sources to `components/**/*.templ` and `demo/**/*.templ` (demo Go code holds no class strings; the wflint `html-from-go-string` rule keeps it that way), so markdown and JS can never change `output.css`. Class-less text gets element typography from `:where(.wf-content)` rules there.
 
 Legacy consumer classes: three older apps still write Tailwind classes in their own `internal/web/**/*.templ` files, and `source(none)` no longer scans them. `input.css` keeps them compiling with one `@source inline("...")` line under the "Legacy consumer classes" heading, listing every token those apps use (in `class="..."` attributes and `Class: "..."` Props literals) that is not otherwise in `output.css`. Remove an app's tokens when that app migrates to `appshell`; delete the line when all three have.
 

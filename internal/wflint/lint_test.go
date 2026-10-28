@@ -3,6 +3,7 @@ package wflint
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -310,6 +311,33 @@ func TestLint_GoFiles(t *testing.T) {
 	for i, w := range want {
 		if vs[i].Rule != w.rule || vs[i].Line != w.line || vs[i].File != "testdata/handler.go" {
 			t.Errorf("[%d] got %s at line %d, want %s at line %d", i, vs[i].Rule, vs[i].Line, w.rule, w.line)
+		}
+	}
+}
+
+// TestLint_HTMLFromGoString: a Go string literal holding a class= or
+// style= attribute or a forbidden element's opening tag is reported at the
+// literal, in .go files and in the Go sections of .templ files; comments,
+// rune literals, allowed elements and look-alikes are not.
+func TestLint_HTMLFromGoString(t *testing.T) {
+	for file, wantLines := range map[string][]int{
+		"testdata/htmlstring.templ.txt": {3, 6, 12, 14},
+		"testdata/htmlstring.go":        {7, 13},
+	} {
+		vs := lintOne(t, file)
+		var got []int
+		for _, v := range vs {
+			if v.Rule != "html-from-go-string" {
+				t.Errorf("%s: unexpected %+v", file, v)
+				continue
+			}
+			if v.Hint != "render a webframe component instead" {
+				t.Errorf("%s: Hint = %q", file, v.Hint)
+			}
+			got = append(got, v.Line)
+		}
+		if !slices.Equal(got, wantLines) {
+			t.Errorf("%s: html-from-go-string at lines %v, want %v", file, got, wantLines)
 		}
 	}
 }

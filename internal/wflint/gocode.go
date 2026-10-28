@@ -25,9 +25,64 @@ var (
 )
 
 var goRuleText = map[string][2]string{
-	"html-from-go": {"building HTML from Go strings (templ.Raw, templ.FromGoHTML, templ.ComponentFunc) is not allowed in app code", "prose for content HTML"},
-	"props-class":  {"Class: is not allowed in webframe Props in app code; styling belongs inside webframe components", ""},
-	"attrs-map":    {`an attribute map (templ.Attributes or map[string]any) with a "class" or "style" key is not allowed in app code`, ""},
+	"html-from-go":        {"building HTML from Go strings (templ.Raw, templ.FromGoHTML, templ.ComponentFunc) is not allowed in app code", "prose for content HTML"},
+	"props-class":         {"Class: is not allowed in webframe Props in app code; styling belongs inside webframe components", ""},
+	"attrs-map":           {`an attribute map (templ.Attributes or map[string]any) with a "class" or "style" key is not allowed in app code`, ""},
+	"html-from-go-string": {"a Go string literal holding HTML markup (a class= or style= attribute, or a block element such as <div>) is not allowed in app code", "render a webframe component instead"},
+}
+
+// markupAttrRe finds a class or style attribute inside a Go string literal.
+var markupAttrRe = regexp.MustCompile(`(?i)\s(?:class|style)=`)
+
+// markupTagRe finds an opening tag of a forbidden element (every element
+// that has a component Hint) inside a Go string literal.
+var markupTagRe = func() *regexp.Regexp {
+	names := make([]string, 0, len(Hints))
+	for n := range Hints {
+		names = append(names, regexp.QuoteMeta(n))
+	}
+	sort.Strings(names)
+	return regexp.MustCompile(`(?i)<(?:` + strings.Join(names, "|") + `)(?:[\s/>]|$)`)
+}()
+
+// goStringLits returns the byte offset of every interpreted ("...") and raw
+// (`...`) string literal in Go source src, with its contents. Comments and
+// rune literals are skipped.
+func goStringLits(src string) (offs []int, vals []string) {
+	for i := 0; i < len(src); i++ {
+		switch c := src[i]; {
+		case c == '/' && i+1 < len(src) && src[i+1] == '/':
+			for i < len(src) && src[i] != '\n' {
+				i++
+			}
+		case c == '/' && i+1 < len(src) && src[i+1] == '*':
+			end := strings.Index(src[i+2:], "*/")
+			if end < 0 {
+				return
+			}
+			i += end + 3
+		case c == '\'':
+			for i++; i < len(src) && src[i] != '\'' && src[i] != '\n'; i++ {
+				if src[i] == '\\' {
+					i++
+				}
+			}
+		case c == '"':
+			start := i
+			for i++; i < len(src) && src[i] != '"' && src[i] != '\n'; i++ {
+				if src[i] == '\\' {
+					i++
+				}
+			}
+			offs, vals = append(offs, start), append(vals, src[start+1:min(i, len(src))])
+		case c == '`':
+			start := i
+			for i++; i < len(src) && src[i] != '`'; i++ {
+			}
+			offs, vals = append(offs, start), append(vals, src[start+1:min(i, len(src))])
+		}
+	}
+	return
 }
 
 // goFinding is one rule breach at a byte offset into a Go source.
@@ -38,7 +93,8 @@ type goFinding struct {
 
 // goFindings returns every breach in src, sorted by offset. With component
 // (src is a @component(...) or {! } call expression), any Class: is a
-// props-class; otherwise only a Class: inside a Props literal is.
+// props-class; otherwise only a Class: inside a Props literal is, and Go
+// string literals holding HTML markup are reported as html-from-go-string.
 func goFindings(src string, component bool) []goFinding {
 	var out []goFinding
 	seen := map[goFinding]bool{}
@@ -57,6 +113,12 @@ func goFindings(src string, component bool) []goFinding {
 			add(loc[0], "props-class")
 		}
 	} else {
+		offs, vals := goStringLits(src)
+		for i, v := range vals {
+			if markupAttrRe.MatchString(v) || markupTagRe.MatchString(v) {
+				add(offs[i], "html-from-go-string")
+			}
+		}
 		for _, loc := range propsLitRe.FindAllStringIndex(src, -1) {
 			open := loc[1] - 1
 			body := braceBody(src[open:])

@@ -413,9 +413,6 @@
   .ml-2 {
     margin-left: calc(var(--spacing) * 2);
   }
-  .ml-4 {
-    margin-left: calc(var(--spacing) * 4);
-  }
   .ml-auto {
     margin-left: auto;
   }
@@ -876,10 +873,6 @@
     border-left-style: var(--tw-border-style);
     border-left-width: 1px;
   }
-  .border-l-4 {
-    border-left-style: var(--tw-border-style);
-    border-left-width: 4px;
-  }
   .border-dashed {
     --tw-border-style: dashed;
     border-style: dashed;
@@ -888,17 +881,11 @@
     --tw-border-style: dotted;
     border-style: dotted;
   }
-  .border-amber-500 {
-    border-color: var(--color-amber-500);
-  }
   .border-border {
     border-color: var(--color-border);
   }
   .border-destructive {
     border-color: var(--color-destructive);
-  }
-  .border-emerald-500 {
-    border-color: var(--color-emerald-500);
   }
   .border-input {
     border-color: var(--color-input);
@@ -914,12 +901,6 @@
   }
   .bg-amber-500 {
     background-color: var(--color-amber-500);
-  }
-  .bg-amber-500\/10 {
-    background-color: color-mix(in srgb, oklch(76.9% 0.188 70.08) 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-amber-500) 10%, transparent);
-    }
   }
   .bg-background {
     background-color: var(--color-background);
@@ -954,20 +935,8 @@
       background-color: color-mix(in oklab, var(--color-destructive) 5%, transparent);
     }
   }
-  .bg-destructive\/10 {
-    background-color: color-mix(in srgb, #E34948 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-destructive) 10%, transparent);
-    }
-  }
   .bg-emerald-500 {
     background-color: var(--color-emerald-500);
-  }
-  .bg-emerald-500\/10 {
-    background-color: color-mix(in srgb, oklch(69.6% 0.17 162.48) 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-emerald-500) 10%, transparent);
-    }
   }
   .bg-green-500 {
     background-color: var(--color-green-500);
@@ -992,12 +961,6 @@
   }
   .bg-primary {
     background-color: var(--color-primary);
-  }
-  .bg-primary\/10 {
-    background-color: color-mix(in srgb, #4A3AA7 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
-    }
   }
   .bg-purple-500 {
     background-color: var(--color-purple-500);
@@ -1214,9 +1177,6 @@
   }
   .text-destructive {
     color: var(--color-destructive);
-  }
-  .text-emerald-500 {
-    color: var(--color-emerald-500);
   }
   .text-foreground {
     color: var(--color-foreground);

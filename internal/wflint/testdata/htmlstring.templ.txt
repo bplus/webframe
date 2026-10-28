@@ -1,0 +1,14 @@
+package testdata
+
+var frag = `<section>x</section>`
+
+templ HTMLString() {
+	{{ s := "<p class=\"x\">a</p>" }}
+	{{ ok := "<p>plain</p> and <a href=\"/x\">link</a>" }}
+	<p>{ s }</p>
+}
+
+// "<div>" in a comment is fine
+var styled = "<span style=\"color:red\">"
+var nilText = "<nil>"
+var h2 = "<H2>"
