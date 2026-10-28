@@ -1,0 +1,24 @@
+package pages
+
+import "github.com/bplus/webframe/components/descriptionlist"
+
+// The Items app's pages are declared in Go (demo/items_handlers.go) as
+// listpage, detailpage and formpage Props; only the two tab fragments
+// below need a template, and both are component calls or allowed text.
+
+// ItemNotes is the Notes tab panel of an item's detail page: the item's
+// notes as one paragraph, or a placeholder sentence when it has none.
+templ ItemNotes(notes string) {
+	if notes != "" {
+		<p>{ notes }</p>
+	} else {
+		<p>No notes yet.</p>
+	}
+}
+
+// ItemHistory is the History tab panel, loaded lazily (GET
+// /items/{id}/history): a dense description list whose labels are dates
+// and whose values are what happened.
+templ ItemHistory(lines []descriptionlist.Item) {
+	@descriptionlist.DescriptionList(descriptionlist.Props{Items: lines, Dense: true})
+}

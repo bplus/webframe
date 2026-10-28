@@ -149,6 +149,118 @@ func TestItems_ResultsSwap(t *testing.T) {
 	wantAll(t, body, "<!doctype", "wf-shell--sidebar")
 }
 
+func TestItems_CreateErrors(t *testing.T) {
+	h := itemsHandler(t)
+	form := url.Values{"name": {"ab"}, "status": {"draft"}, "notes": {"keep me"}}
+	rec := do(h, "POST", "/items", form, hx("item-form"))
+	if rec.Code != 200 {
+		t.Fatalf("POST /items with errors = %d, want 200 (htmx does not swap 4xx)", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.HasPrefix(strings.TrimSpace(body), "<form") {
+		t.Errorf("form swap does not start with <form:\n%s", body[:min(200, len(body))])
+	}
+	wantAll(t, body,
+		"Please fix the 2 errors below.",
+		"Name must be at least 3 characters", "Choose a type",
+		`value="ab"`, "keep me", `aria-invalid="true"`,
+		`hx-post="/items"`, `hx-target="#item-form"`, `hx-swap="outerHTML"`,
+		`hx-post="/items/validate"`,
+	)
+	wantNone(t, body, "<h1", "<html")
+	if n := strings.Count(body, `aria-invalid="true"`); n != 2 {
+		t.Errorf("aria-invalid count = %d, want 2", n)
+	}
+	if rec.Header().Get("HX-Redirect") != "" {
+		t.Error("error re-render must not redirect")
+	}
+	// A plain (non-htmx) POST with errors renders the whole document.
+	body = do(h, "POST", "/items", url.Values{"name": {"Blade of the Fallen Star"}, "type": {"weapon"}, "status": {"draft"}}, nil).Body.String()
+	wantAll(t, body, "<!doctype", "Please fix the 1 error below.", "already exists", `value="Blade of the Fallen Star"`)
+	if total, _, _ := Items.Counts(); total != 14 {
+		t.Errorf("store changed on an invalid submit: %d items", total)
+	}
+}
+
+func TestItems_CreateSuccessRedirects(t *testing.T) {
+	h := itemsHandler(t)
+	form := url.Values{"name": {"  Sunforged Maul "}, "type": {"weapon"}, "status": {"draft"}, "remixable": {"on"}, "notes": {"Hits hard."}}
+	rec := do(h, "POST", "/items", form, nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items/15" {
+		t.Fatalf("POST /items = %d Location %q, want 303 /items/15", rec.Code, rec.Header().Get("Location"))
+	}
+	if strings.Contains(rec.Body.String(), "success") {
+		t.Error("success response must carry no success message")
+	}
+	it, ok := Items.Get("15")
+	if !ok || it.Name != "Sunforged Maul" || it.Type != "weapon" || !it.Remixable || it.Notes != "Hits hard." {
+		t.Errorf("stored item = %+v", it)
+	}
+	body := do(h, "GET", "/items/15", nil, nil).Body.String()
+	wantAll(t, body, "Sunforged Maul", "Hits hard.")
+
+	// An htmx submit gets HX-Redirect with an empty 200.
+	form.Set("name", "Second Maul")
+	rec = do(h, "POST", "/items", form, hx("item-form"))
+	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/items/16" {
+		t.Errorf("htmx POST /items = %d HX-Redirect %q, want 200 /items/16", rec.Code, rec.Header().Get("HX-Redirect"))
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("htmx redirect body = %q, want empty", rec.Body.String())
+	}
+
+	// Editing: the form carries the values; a save redirects to the item.
+	body = do(h, "GET", "/items/15/edit", nil, nil).Body.String()
+	wantAll(t, body, `value="Sunforged Maul"`, "Save", `hx-post="/items/validate?id=15"`, `href="/items/15"`, "Hits hard.")
+	rec = do(h, "POST", "/items/15", url.Values{"name": {"Sunforged Maul"}, "type": {"armor"}, "status": {"published"}}, hx("item-form"))
+	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/items/15" {
+		t.Errorf("htmx POST /items/15 = %d HX-Redirect %q", rec.Code, rec.Header().Get("HX-Redirect"))
+	}
+	if it, _ := Items.Get("15"); it.Type != "armor" || it.Status != "published" || it.Remixable {
+		t.Errorf("updated item = %+v", it)
+	}
+}
+
+func TestItems_Validate(t *testing.T) {
+	h := itemsHandler(t)
+	cases := []struct {
+		name    string
+		target  string
+		form    url.Values
+		headers map[string]string
+		want    []string
+		notWant []string
+	}{
+		{"short name", "/items/validate", url.Values{"name": {"ab"}}, hx(""),
+			[]string{`id="field-name-feedback"`, "Name must be at least 3 characters", `role="alert"`}, nil},
+		{"taken name", "/items/validate", url.Values{"name": {"blade of the fallen star"}}, hx(""),
+			[]string{`id="field-name-feedback"`, "already exists"}, nil},
+		{"own name while editing", "/items/validate?id=1", url.Values{"name": {"Blade of the Fallen Star"}}, hx(""),
+			[]string{`id="field-name-feedback"`}, []string{"already exists", "<p"}},
+		{"valid name is an empty slot", "/items/validate", url.Values{"name": {"Totally New"}}, hx(""),
+			[]string{`id="field-name-feedback"`}, []string{"<p", "alert"}},
+		{"missing type", "/items/validate", url.Values{"type": {""}}, hx(""),
+			[]string{`id="field-type-feedback"`, "Choose a type"}, nil},
+		{"whole form posted, trigger named", "/items/validate", url.Values{"name": {"Fine Name"}, "type": {""}, "status": {"draft"}},
+			map[string]string{"HX-Request": "true", "HX-Trigger-Name": "type"},
+			[]string{`id="field-type-feedback"`, "Choose a type"}, []string{"field-name-feedback"}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			rec := do(h, "POST", c.target, c.form, c.headers)
+			if rec.Code != 200 {
+				t.Fatalf("code = %d", rec.Code)
+			}
+			body := rec.Body.String()
+			wantAll(t, body, c.want...)
+			wantNone(t, body, append(c.notWant, "<html", "<form")...)
+		})
+	}
+	if rec := do(h, "POST", "/items/validate", url.Values{"bogus": {"x"}}, hx("")); rec.Code != 400 {
+		t.Errorf("unknown field = %d, want 400", rec.Code)
+	}
+}
+
 func TestItems_Delete(t *testing.T) {
 	h := itemsHandler(t)
 	headers := hx("items-results")
@@ -204,6 +316,53 @@ func TestItems_Publish(t *testing.T) {
 	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `id="items-results"`) {
 		t.Errorf("empty publish = %d", rec.Code)
 	}
+}
+
+func TestItems_DetailAndHistory(t *testing.T) {
+	h := itemsHandler(t)
+	rec := do(h, "GET", "/items/1", nil, nil)
+	if rec.Code != 200 {
+		t.Fatalf("GET /items/1 = %d", rec.Code)
+	}
+	body := rec.Body.String()
+	wantAll(t, body,
+		"<!doctype", "wf-shell--sidebar", "Blade of the Fallen Star — Webframe</title>",
+		"← Items", `href="/items"`, "Published",
+		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="Delete this item?"`,
+		"<dt", "Type", "Weapon", "Starfall Pack", "Updated", "2d ago", `>1<`,
+		"Notes", "Seeded from the 2026-10-21 dashboard sketch.",
+		"History", `hx-get="/items/1/history"`, `hx-trigger="click once"`, `hx-target="#history-panel"`,
+		`id="history-panel"`,
+	)
+	// Items stays the active sidebar item on a detail page (Match).
+	if !strings.Contains(body, `aria-current="page"`) {
+		t.Error("no active sidebar item on /items/1")
+	}
+	wantNone(t, body, "Status set to")
+
+	// The history fragment: three dated lines, no shell.
+	rec = do(h, "GET", "/items/1/history", nil, hx("history-panel"))
+	if rec.Code != 200 {
+		t.Fatalf("GET /items/1/history = %d", rec.Code)
+	}
+	body = rec.Body.String()
+	if n := strings.Count(body, "<dt"); n != 3 {
+		t.Errorf("history has %d <dt, want 3", n)
+	}
+	wantAll(t, body, "Updated", "Status set to published", "Created")
+	wantNone(t, body, "<html", "<h1", "wf-sidebar")
+
+	// An item with no pack shows the muted dash; unknown ids are 404.
+	wantAll(t, do(h, "GET", "/items/2", nil, nil).Body.String(), "—", "Draft")
+	for _, path := range []string{"/items/999", "/items/999/edit", "/items/999/history"} {
+		if rec := do(h, "GET", path, nil, nil); rec.Code != 404 {
+			t.Errorf("GET %s = %d, want 404", path, rec.Code)
+		}
+	}
+	// The create form.
+	body = do(h, "GET", "/items/new", nil, nil).Body.String()
+	wantAll(t, body, "New item — Webframe</title>", "Create item", "Cancel", `href="/items"`, "Details", "Notes", "Remixable", `role="switch"`, `hx-post="/items/validate"`)
+	wantNone(t, body, "Please fix")
 }
 
 func TestItems_SidebarRedirect(t *testing.T) {
