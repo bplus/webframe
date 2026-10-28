@@ -123,3 +123,11 @@ the CSS variable `--wf-pop-max` on the floating element (the bundled
 `window.FloatingUIDOM.size` was already present, just unused). Nothing else
 in the file changed; re-installing the component from templUI would drop
 this edit, so re-apply it (grep for `--wf-pop-max`) after any upgrade.
+
+Batch 2 (Task B4, `filterbar.Props.Hidden`) makes one local edit to
+`filterbar.min.js`: `resetAll` skips controls whose `type` is `hidden`
+(`if(el.type==="hidden"){return}`) before clearing the rest. Hidden inputs
+carry list state that is not a filter (sort, dir, per), so "Clear filters"
+clears the filters and leaves them in place; `collectParams` already read
+every `[data-tui-filterbar-control]` by `name`, so hidden inputs ride along
+with no other change. Nothing else in the file changed.
