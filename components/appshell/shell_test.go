@@ -140,3 +140,29 @@ func TestShell_RendersChildrenInMain(t *testing.T) {
 		t.Errorf("want <main < wf-flash < child < </main>; got %d %d %d %d", mainStart, flash, child, mainEnd)
 	}
 }
+
+func TestShell_ThemeToggleInMoreList(t *testing.T) {
+	// Two nav items: nothing overflows, but the phone-width toggle still
+	// needs the More list, so it renders as a phone-only disclosure.
+	nav := []NavItem{{Label: "Alpha", Href: "/a"}, {Label: "Bravo", Href: "/b"}}
+	got := renderShell(t, Props{AppName: "A", Nav: nav, ThemeToggle: true}, nil)
+	if !strings.Contains(got, `class="wf-nav-more wf-nav-more--phone-only"`) {
+		t.Errorf("More should render phone-only when only the toggle needs it:\n%s", got)
+	}
+	inMenu := `<button type="button" data-theme-toggle class="wf-theme-toggle wf-theme-toggle--in-menu">Dark Mode</button>`
+	i := strings.Index(got, inMenu)
+	if i < 0 {
+		t.Fatalf("missing in-menu theme toggle:\n%s", got)
+	}
+	if end := strings.Index(got, "</details>"); end < 0 || i > end {
+		t.Errorf("in-menu toggle should sit inside the More disclosure (idx %d, </details> %d)", i, end)
+	}
+	if n := strings.Count(got, "data-theme-toggle"); n != 2 {
+		t.Errorf("want 2 theme toggles (topbar + More list), got %d", n)
+	}
+
+	got = renderShell(t, Props{AppName: "A", Nav: nav}, nil)
+	if strings.Contains(got, "data-theme-toggle") || strings.Contains(got, "wf-nav-more") {
+		t.Errorf("no toggle and no overflow should render neither toggle nor More:\n%s", got)
+	}
+}
