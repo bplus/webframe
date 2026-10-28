@@ -109,8 +109,8 @@ func renderSection(t *testing.T, level int) string {
 
 func TestSectionLevelDefaultsToH2(t *testing.T) {
 	out := renderSection(t, 0)
-	if !strings.Contains(out, `<h2 class="text-xl font-semibold`) || !strings.Contains(out, "</h2>") {
-		t.Errorf("want h2 text-xl in %s", out)
+	if !strings.Contains(out, `<h2 class="text-2xl font-semibold`) || !strings.Contains(out, "</h2>") {
+		t.Errorf("want h2 text-2xl in %s", out)
 	}
 }
 
@@ -125,7 +125,7 @@ func TestSectionLevelClamps(t *testing.T) {
 	if out := renderSection(t, 9); !strings.Contains(out, `<h4 class="text-base font-semibold`) || !strings.Contains(out, "</h4>") {
 		t.Errorf("level 9 want h4 in %s", out)
 	}
-	if out := renderSection(t, 1); !strings.Contains(out, `<h2 class="text-xl font-semibold`) || strings.Contains(out, "<h1") {
+	if out := renderSection(t, 1); !strings.Contains(out, `<h2 class="text-2xl font-semibold`) || strings.Contains(out, "<h1") {
 		t.Errorf("level 1 want h2 in %s", out)
 	}
 }

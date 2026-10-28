@@ -15,6 +15,8 @@ type SectionProps struct {
 	Actions     []action.Action
 	// Level is the heading level of the title: 0 or 2 renders h2, 3 h3,
 	// 4 or more h4. 1 is treated as 2 (the page title is pageheader's h1).
+	// Sizes step down from the text-3xl page title: h2 text-2xl, h3
+	// text-lg, h4 text-base (30 / 24 / 18 / 16px).
 	Level int
 }
 
@@ -56,7 +58,7 @@ templ Section(props ...SectionProps) {
 							case "h3":
 								<h3 class="text-lg font-semibold text-foreground">{ p.Title }</h3>
 							default:
-								<h2 class="text-xl font-semibold text-foreground">{ p.Title }</h2>
+								<h2 class="text-2xl font-semibold text-foreground">{ p.Title }</h2>
 						}
 					}
 					if p.Description != "" {

@@ -23,6 +23,8 @@ type SectionProps struct {
 	Actions     []action.Action
 	// Level is the heading level of the title: 0 or 2 renders h2, 3 h3,
 	// 4 or more h4. 1 is treated as 2 (the page title is pageheader's h1).
+	// Sizes step down from the text-3xl page title: h2 text-2xl, h3
+	// text-lg, h4 text-base (30 / 24 / 18 / 16px).
 	Level int
 }
 
@@ -84,7 +86,7 @@ func Section(props ...SectionProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 44, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 46, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -135,7 +137,7 @@ func Section(props ...SectionProps) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 55, Col: 69}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 57, Col: 69}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -153,7 +155,7 @@ func Section(props ...SectionProps) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 57, Col: 67}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 59, Col: 67}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -164,14 +166,14 @@ func Section(props ...SectionProps) templ.Component {
 						return templ_7745c5c3_Err
 					}
 				default:
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<h2 class=\"text-xl font-semibold text-foreground\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<h2 class=\"text-2xl font-semibold text-foreground\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 59, Col: 67}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 61, Col: 68}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -191,7 +193,7 @@ func Section(props ...SectionProps) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 63, Col: 62}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/section.templ`, Line: 65, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

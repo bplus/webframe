@@ -67,3 +67,15 @@ func TestPageHeader_ActionsWrapperCanShrink(t *testing.T) {
 		t.Errorf("actions wrapper missing min-w-0 max-w-full: %s", out)
 	}
 }
+
+func TestPageHeader_TitleIsText3xl(t *testing.T) {
+	out := render(t, Props{Title: "Invoices"})
+	for _, want := range []string{"text-3xl", "font-semibold", "tracking-tight"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q on title: %s", want, out)
+		}
+	}
+	if strings.Contains(out, "text-2xl") {
+		t.Errorf("title still text-2xl: %s", out)
+	}
+}
