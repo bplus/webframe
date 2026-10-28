@@ -890,27 +890,28 @@ templ avatarSection() {
 	@layout.Section(layout.SectionProps{ID: "avatar", Title: "Avatar", Description: "Circular avatar with image and text fallback."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
 			@avatar.Avatar() {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=1", Alt: "User"})
 				@avatar.Fallback() {
 					JD
 				}
 			}
 			@avatar.Avatar() {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=5", Alt: "User"})
 				@avatar.Fallback() {
 					AK
 				}
 			}
-			@avatar.Avatar() {
-				@avatar.Fallback() {
-					WF
-				}
-			}
 			@avatar.Avatar(avatar.Props{Size: avatar.SizeLg}) {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=12", Alt: "User"})
 				@avatar.Fallback() {
 					LG
 				}
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@avatar.Avatar() {
+					@avatar.Image(avatar.ImageProps{Src: "/static/img/missing-avatar.png", Alt: "User"})
+					@avatar.Fallback() {
+						WF
+					}
+				}
+				<small>Image intentionally absent, so the initials fallback shows</small>
 			}
 		}
 	}
