@@ -1,0 +1,107 @@
+package layout
+
+import "github.com/bplus/webframe/utils"
+
+// TwoColumnProps configures a TwoColumn. A nil Aside renders no aside
+// element.
+type TwoColumnProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Aside      templ.Component
+	Side       Side
+	AsideWidth AsideWidth
+	Sticky     bool
+}
+
+// ThreeColumnProps configures a ThreeColumn. A nil Left or Right
+// renders nothing for that side.
+type ThreeColumnProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Left       templ.Component
+	Right      templ.Component
+	LeftWidth  AsideWidth
+	RightWidth AsideWidth
+}
+
+// detailsOpenClass keeps a closed <details> readable from md up without
+// JS by overriding the content-visibility the browser applies to it.
+const detailsOpenClass = "md:[&::details-content]:[content-visibility:visible] md:[&::details-content]:block"
+
+func sideOrderClass(s Side) string {
+	if s == SideLeft {
+		return "md:order-first"
+	}
+	return ""
+}
+
+func stickyClass(sticky bool) string {
+	if sticky {
+		return "md:sticky md:top-16 md:self-start"
+	}
+	return ""
+}
+
+// TwoColumn lays children out as the main column with an optional
+// aside. On phones the aside stacks under the main column.
+//
+// @pure
+templ TwoColumn(props ...TwoColumnProps) {
+	{{ var p TwoColumnProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex flex-col md:flex-row gap-6", p.Class) }
+		{ p.Attributes... }
+	>
+		<div class="flex-1 min-w-0">
+			{ children... }
+		</div>
+		if p.Aside != nil {
+			<aside class={ utils.TwMerge("shrink-0", asideWidthClass(p.AsideWidth), sideOrderClass(p.Side), stickyClass(p.Sticky)) }>
+				@p.Aside
+			</aside>
+		}
+	</div>
+}
+
+// ThreeColumn lays children out as the center column between optional
+// left and right side columns. On phones each side collapses into a
+// disclosure; from md up they are open.
+//
+// @pure
+templ ThreeColumn(props ...ThreeColumnProps) {
+	{{ var p ThreeColumnProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex flex-col md:flex-row gap-6", p.Class) }
+		{ p.Attributes... }
+	>
+		if p.Left != nil {
+			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.LeftWidth), detailsOpenClass) } x-data="{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }" :open="open">
+				<summary class="md:hidden">Left</summary>
+				@p.Left
+			</details>
+		}
+		<div class="flex-1 min-w-0">
+			{ children... }
+		</div>
+		if p.Right != nil {
+			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.RightWidth), detailsOpenClass) } x-data="{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }" :open="open">
+				<summary class="md:hidden">Right</summary>
+				@p.Right
+			</details>
+		}
+	</div>
+}

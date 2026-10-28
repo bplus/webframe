@@ -5,13 +5,18 @@ package demo
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/bplus/webframe/demo/pages"
+	"unicode"
 
 	"github.com/a-h/templ"
+
+	"github.com/bplus/webframe/components/autocomplete"
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/demo/pages"
 )
 
 // HandleShowcase renders the component showcase gallery page — the demo
@@ -21,7 +26,9 @@ import (
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleShowcase(w http.ResponseWriter, r *http.Request) {
-	templ.Handler(pages.Showcase()).ServeHTTP(w, r)
+	if err := App.Render(w, r, "Showcase", pages.Showcase()); err != nil {
+		log.Printf("demo: render showcase: %v", err)
+	}
 }
 
 // HandleTraffic renders the live traffic stream demo page (GET /traffic). The
@@ -31,7 +38,20 @@ func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleTraffic(w http.ResponseWriter, r *http.Request) {
-	templ.Handler(pages.Traffic()).ServeHTTP(w, r)
+	if err := App.Render(w, r, "Traffic", pages.Traffic()); err != nil {
+		log.Printf("demo: render traffic: %v", err)
+	}
+}
+
+// HandleSidebar renders the sidebar-layout demo page (GET /sidebar) through
+// SidebarApp, a second appshell.App configured with LayoutSidebar.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
+func HandleSidebar(w http.ResponseWriter, r *http.Request) {
+	if err := SidebarApp.Render(w, r, "Sidebar", pages.Sidebar()); err != nil {
+		log.Printf("demo: render sidebar: %v", err)
+	}
 }
 
 // HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one
@@ -93,53 +113,71 @@ func HandleClick(w http.ResponseWriter, r *http.Request) {
 		fmt.Sscanf(count, "%d", &n)
 		n++
 	}
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, `<button hx-post="/api/click" hx-swap="outerHTML" hx-vals='{"count":"%d"}' class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">Clicked %d times</button>`, n, n)
+	fragment(w, r, "click", pages.ClickButton(n))
 }
 
-// HandleSearch returns filtered results (demonstrates hx-get + debounce).
-// Filters a hard-coded framework-name list by case-insensitive substring match
-// on the "q" query param. An empty q returns the full list; zero matches
-// return a "No results found" placeholder item instead of an empty <ul>.
+// HandleSearch answers the autocomplete demo (GET /api/search?q=...): it
+// filters a hard-coded framework-name list by case-insensitive substring
+// match on q and renders autocomplete.Results, one option per match with
+// Label = the name and Value = slug(name). An empty q returns the full list;
+// zero matches render the component's "No matches" row.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
-// @ai-context the query value is never echoed into the response — only the
-// static list items are — which is why the raw Fprintf here is XSS-safe; do
-// not copy this pattern for user-supplied output
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.ToLower(r.URL.Query().Get("q"))
-	items := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
-
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, `<ul class="space-y-1">`)
-	found := 0
-	for _, item := range items {
-		if q == "" || strings.Contains(strings.ToLower(item), q) {
-			fmt.Fprintf(w, `<li class="px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors cursor-default">%s</li>`, item)
-			found++
+	names := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
+	var found []autocomplete.Item
+	for _, name := range names {
+		if q == "" || strings.Contains(strings.ToLower(name), q) {
+			found = append(found, autocomplete.Item{Label: name, Value: slug(name)})
 		}
 	}
-	if found == 0 {
-		fmt.Fprint(w, `<li class="px-3 py-2 text-sm text-muted-foreground">No results found</li>`)
-	}
-	fmt.Fprint(w, `</ul>`)
+	fragment(w, r, "search", autocomplete.Results(found))
 }
 
-// HandleValidate returns field validation feedback (demonstrates hx-post on
-// blur). Only two fields have rules — "email" (non-empty, contains '@') and
-// "name" (at least 2 bytes — byte length, not runes, so a single multibyte
-// character like "é" passes) — and any other "field" value falls through
-// with no error, rendering the success message. The submitted value is never
-// echoed back, so no output escaping is needed.
+// slug lowercases s, turns every run of non-alphanumeric characters into a
+// single "-", and trims leading and trailing "-" ("Next.js" -> "next-js").
+//
+// @pure
+func slug(s string) string {
+	var b strings.Builder
+	dash := false
+	for _, c := range strings.ToLower(s) {
+		if unicode.IsLetter(c) || unicode.IsDigit(c) {
+			b.WriteRune(c)
+			dash = false
+		} else if !dash {
+			b.WriteByte('-')
+			dash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+// HandlePicked answers the autocomplete form's submit (POST /api/picked):
+// it echoes the hidden "framework" value and the visible "q" text the form
+// sent, so the demo shows which of the two a real form would receive.
+//
+// @boundary HTTP
+// @side-effects writes HTML response
+func HandlePicked(w http.ResponseWriter, r *http.Request) {
+	fragment(w, r, "picked", pages.PickedResult(r.FormValue("framework"), r.FormValue("q")))
+}
+
+// HandleValidate returns one field's validation feedback (demonstrates
+// hx-post on blur). Only two fields have rules — "email" (non-empty,
+// contains '@') and "name" (at least 2 bytes — byte length, not runes, so a
+// single multibyte character like "é" passes); any other "field" value has
+// no rules. It renders formfield.Feedback with id "field-<field>-feedback",
+// the slot the field's hx-target swaps: the error message, or an empty slot
+// (which takes no space) when the value is valid.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	field := r.FormValue("field")
 	value := r.FormValue("value")
-
-	w.Header().Set("Content-Type", "text/html")
 
 	var errMsg string
 	switch field {
@@ -156,59 +194,40 @@ func HandleValidate(w http.ResponseWriter, r *http.Request) {
 			errMsg = "Name must be at least 2 characters"
 		}
 	}
+	fragment(w, r, "validate", formfield.Feedback("field-"+field+"-feedback", errMsg, ""))
+}
 
-	if errMsg != "" {
-		fmt.Fprintf(w, `<p class="text-sm text-destructive mt-1">%s</p>`, errMsg)
-	} else {
-		fmt.Fprintf(w, `<p class="text-sm text-emerald-500 mt-1">Looks good!</p>`)
-	}
+// toastKinds maps a toast variant to its badge variant, label and message.
+var toastKinds = map[string]struct {
+	variant    badge.Variant
+	label, msg string
+}{
+	"success": {badge.VariantDefault, "Success", "Operation completed successfully!"},
+	"error":   {badge.VariantDestructive, "Error", "Something went wrong. Please try again."},
+	"info":    {badge.VariantSecondary, "Info", "Here's some useful information."},
+	"warning": {badge.VariantOutline, "Warning", "Careful — this action cannot be undone."},
 }
 
 // HandleToast returns a toast notification (demonstrates hx-swap-oob). The
-// "variant" form value picks the message and accent color; empty defaults to
-// "success". The response swaps out-of-band into #toast-container and relies
-// on Alpine.js (x-data/x-init) to auto-dismiss after 4 seconds — the data-ts
-// attribute forces the swapped node to differ each call so re-triggering works.
+// "variant" form value picks the message and badge; empty or unknown
+// defaults to "success". The response is appended out-of-band to
+// #toast-container and removes itself after 4 seconds (see pages.Toast).
 //
 // @boundary HTTP
 // @side-effects writes HTML response
-// @ai-context an unrecognized non-empty variant is NOT defaulted: both map
-// lookups miss and the toast renders with an empty message and no accent color
 func HandleToast(w http.ResponseWriter, r *http.Request) {
-	variant := r.FormValue("variant")
-	if variant == "" {
-		variant = "success"
+	k, ok := toastKinds[r.FormValue("variant")]
+	if !ok {
+		k = toastKinds["success"]
 	}
+	fragment(w, r, "toast", pages.Toast(k.variant, k.label, k.msg))
+}
 
-	messages := map[string]string{
-		"success": "Operation completed successfully!",
-		"error":   "Something went wrong. Please try again.",
-		"info":    "Here's some useful information.",
-		"warning": "Careful — this action cannot be undone.",
+// fragment writes an htmx response fragment, logging a render error (the
+// status line is already sent by then).
+func fragment(w http.ResponseWriter, r *http.Request, name string, c templ.Component) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := c.Render(r.Context(), w); err != nil {
+		log.Printf("demo: render %s: %v", name, err)
 	}
-
-	colors := map[string]string{
-		"success": "border-emerald-500 bg-emerald-500/10",
-		"error":   "border-destructive bg-destructive/10",
-		"info":    "border-primary bg-primary/10",
-		"warning": "border-amber-500 bg-amber-500/10",
-	}
-
-	msg := messages[variant]
-	color := colors[variant]
-	ts := time.Now().UnixMilli()
-
-	w.Header().Set("Content-Type", "text/html")
-	// 4s auto-dismiss: enough time to read the message, short enough that
-	// toasts don't pile up if several are triggered in a row.
-	fmt.Fprintf(w, `<div id="toast-container" hx-swap-oob="innerHTML">
-	<div x-data="{ show: true }" x-show="show" x-transition
-		x-init="setTimeout(() => show = false, 4000)"
-		class="border-l-4 rounded-md px-4 py-3 shadow-lg text-sm %s" data-ts="%d">
-		<div class="flex items-center justify-between">
-			<span>%s</span>
-			<button @click="show = false" class="ml-4 text-muted-foreground hover:text-foreground">&times;</button>
-		</div>
-	</div>
-</div>`, color, ts, msg)
 }

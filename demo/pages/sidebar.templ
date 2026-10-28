@@ -1,0 +1,27 @@
+package pages
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/panel"
+)
+
+// Sidebar is the body of the sidebar-layout demo page (GET /sidebar). The
+// page is rendered through demo.SidebarApp, an appshell.App with
+// Layout: LayoutSidebar, so this body sits beside the grouped sidebar
+// instead of under the topbar.
+templ Sidebar() {
+	@pageheader.PageHeader(pageheader.Props{
+		Title:     "Sidebar layout",
+		Subtitle:  "The same shell with Layout: appshell.LayoutSidebar and two navigation groups.",
+		Secondary: []action.Action{{Label: "Back to showcase", Href: "/", Variant: action.VariantSecondary}},
+	})
+	@panel.Panel(panel.Props{Title: "How it behaves"}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			<p>From 768px up the sidebar is a fixed left column holding the app name, the "Mine" and "Discover" groups, and the theme toggle at the bottom.</p>
+			<p>Under 768px it collapses into a "Menu" disclosure above this content.</p>
+			<p>The sidebar is a <code>&lt;details&gt;</code> element: Alpine opens it while a <code>(min-width: 768px)</code> media query matches, and CSS keeps it visible at that width when JavaScript is off.</p>
+		}
+	}
+}

@@ -24,20 +24,39 @@ make build
 make dev
 make generate
 make css
+make check-ui
 ```
 
 The demo app runs on `http://localhost:3333`.
 
-Run `make check` before pushing. It composes three sub-targets, in order:
+Run `make check` before pushing. It composes four sub-targets, in order:
 
 - `check-generate` — regenerates templ output and Tailwind's `static/css/output.css`,
   then fails on drift in either
 - `check-vet` — `go vet ./...`
 - `check-test` — `go test ./...`
+- `check-ui` — `go run ./cmd/wflint ./demo`, the UI lint (see Page layer)
 
 The Tailwind CLI version is pinned via `@tailwindcss/cli` in `package.json`/
 `package-lock.json` (currently 4.3.3) so `npx @tailwindcss/cli` produces a
 byte-stable `output.css` instead of floating to whatever is latest.
+
+## Page layer
+
+The page layer (`appshell`, `pageheader`, `breadcrumbs`, `layout`, `panel`, `action`, `formfield`, `autocomplete`, and the `custompage`/`customblock` fences) lets an app build whole pages by composing components. `assets` embeds `static/` for serving. `wflint` enforces the rule below; `make check-ui` runs it and `make check` includes it. `tabs` takes a `Sizing` (default `SizingTallest`, so switching never moves the page), `layout.Section` and `panel` take a `Level` (h2 to h4) so nesting reads as nesting, and `hovercard` takes a `Placement` (default bottom-start).
+
+**Changed defaults in batch 1b:** `tabs` are now as tall as their tallest panel by default (set `Sizing: tabs.SizingFit` for the old grow-and-shrink behavior), hover cards open below by default (set `Placement` to choose), `layout.Section` Level 2 headings are `text-2xl` and the page title is `text-3xl`. Consumers pinned to v0.1.0 (one app uses tabs and hovercard) will see these changes when they upgrade.
+
+App code never contains anything below the component boundary (no div, no class, no layout decision); composition means choosing and ordering components. The only place that boundary may be crossed is inside a CustomPage or CustomBlock, which must carry a written reason and is printed by every build. A missing component is never a reason to use the fence: stop and file it against webframe.
+
+```go
+var App = &appshell.App{Name: "Demo", HomeHref: "/"}
+http.ListenAndServe(addr, App.Middleware(mux))
+// in a handler:
+err := App.Render(w, r, "Showcase", pages.Showcase())
+```
+
+Consumers: several server-rendered Go apps.
 
 ## Conventions
 

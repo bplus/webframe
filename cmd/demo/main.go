@@ -8,42 +8,37 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/bplus/webframe/assets"
 	"github.com/bplus/webframe/demo"
 )
 
-// main wires all demo routes — /static/ file serving, the showcase and traffic
+// main wires all demo routes — /static/ serving from embedded assets, the showcase and traffic
 // pages, and the HTMX/SSE API endpoints — onto a ServeMux and serves them on
 // the hard-coded address :3333. It blocks forever; log.Fatal exits the process
 // if the listener cannot bind (e.g. port already in use).
 //
 // @boundary HTTP - listens on :3333
-// @boundary filesystem - static file server is rooted at "static" relative
-// to the process's current working directory, so this must be run from the
-// repo root (e.g. `go run ./cmd/demo`, not from inside cmd/demo). Starting it
-// from the wrong directory does not fail fast: the server binds and serves
-// pages fine, but every /static/ asset 404s and components that depend on
-// their JS (popover, dropdown, dialog, etc.) appear inert with no console
-// error pointing at the real cause.
 // @side-effects binds a TCP port, writes startup line to stdout
 func main() {
 	mux := http.NewServeMux()
 
-	// Static files
-	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
+	// Static files, served from the assets package's embedded copy
+	assets.Mount(mux)
 
 	// Pages
 	mux.HandleFunc("GET /{$}", demo.HandleShowcase)
 	mux.HandleFunc("GET /traffic", demo.HandleTraffic)
+	mux.HandleFunc("GET /sidebar", demo.HandleSidebar)
 
 	// HTMX demo endpoints
 	mux.HandleFunc("GET /api/traffic/stream", demo.HandleTrafficStream)
 	mux.HandleFunc("POST /api/click", demo.HandleClick)
 	mux.HandleFunc("GET /api/search", demo.HandleSearch)
 	mux.HandleFunc("POST /api/validate", demo.HandleValidate)
+	mux.HandleFunc("POST /api/picked", demo.HandlePicked)
 	mux.HandleFunc("POST /api/toast", demo.HandleToast)
 
 	addr := ":3333"
 	fmt.Printf("Webframe running at http://localhost%s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, demo.App.Middleware(mux)))
 }

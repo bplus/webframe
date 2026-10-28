@@ -1,0 +1,61 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/panel"
+)
+
+// The fragments below are the htmx responses of the demo's interaction
+// examples (served by demo/handlers.go). They compose components only, so
+// the handlers never build HTML from Go strings.
+
+// ClickButton is the replacement button for the click-to-update demo: it
+// posts back to /api/click with the count in hx-vals and swaps itself out.
+templ ClickButton(n int) {
+	@button.Button(button.Props{Attributes: templ.Attributes{
+		"hx-post": "/api/click",
+		"hx-swap": "outerHTML",
+		"hx-vals": fmt.Sprintf(`{"count":"%d"}`, n),
+	}}) {
+		Clicked { strconv.Itoa(n) } times
+	}
+}
+
+// PickedResult is the autocomplete form's submit reply: a badge showing
+// the hidden framework value the form sent ("framework=" alone, plus a
+// "nothing picked" note, when the user typed without picking), followed by
+// the visible text box value q.
+templ PickedResult(value, text string) {
+	@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter, Wrap: true}) {
+		@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+			framework={ value }
+		}
+		if value == "" {
+			<small>nothing picked</small>
+		}
+		if text != "" {
+			<small>q={ text }</small>
+		}
+	}
+}
+
+// Toast is the out-of-band toast: htmx appends the Stack's content to
+// #toast-container, and Alpine removes the panel after 4 seconds (long
+// enough to read, short enough that toasts don't pile up).
+templ Toast(variant badge.Variant, label, msg string) {
+	@layout.Stack(layout.StackProps{Attributes: templ.Attributes{"hx-swap-oob": "beforeend:#toast-container"}}) {
+		@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-data": "", "x-init": "setTimeout(() => $el.remove(), 4000)"}}) {
+			@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
+				@badge.Badge(badge.Props{Variant: variant}) {
+					{ label }
+				}
+				<span>{ msg }</span>
+			}
+		}
+	}
+}

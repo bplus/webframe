@@ -1,0 +1,20 @@
+package testdata
+
+templ Fenced(s string) {
+	@custompage.CustomPage(custompage.Props{Reason: "landing page with \"hero\""}) {
+		<div class="x" style="y">
+			<style>
+				p { color: red; }
+			</style>
+			@customblock.CustomBlock(customblock.Props{Reason: "inner"}) {
+				<div>inner</div>
+			}
+			@card.Card(card.Props{Class: "p-2"})
+			{ templ.Raw(s) }
+			<p :class="x">bound</p>
+		</div>
+	}
+	@customblock.CustomBlock() {
+		<p>no reason</p>
+	}
+}

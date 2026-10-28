@@ -14,15 +14,21 @@ import (
 
 	"github.com/a-h/templ"
 
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/areachart"
 	"github.com/bplus/webframe/components/aspectratio"
+	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/barchart"
+	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
 	"github.com/bplus/webframe/components/copybutton"
+	"github.com/bplus/webframe/components/customblock"
+	"github.com/bplus/webframe/components/custompage"
 	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/dashboardheader"
 	"github.com/bplus/webframe/components/dialog"
@@ -30,15 +36,19 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/graphwidget"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/label"
+	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/lifecyclestepper"
 	"github.com/bplus/webframe/components/metricring"
 	"github.com/bplus/webframe/components/nodepill"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/piechart"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/components/progressbar"
@@ -48,6 +58,7 @@ import (
 	"github.com/bplus/webframe/components/slideover"
 	"github.com/bplus/webframe/components/sparkline"
 	"github.com/bplus/webframe/components/statcomparison"
+	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
@@ -83,15 +94,20 @@ type componentCase struct {
 }
 
 var componentCases = []componentCase{
+	{name: "appshell", constructor: func() templ.Component { return appshell.Shell() }},
 	{name: "areachart", constructor: func() templ.Component { return areachart.AreaChart() }},
 	{name: "aspectratio", constructor: func() templ.Component { return aspectratio.AspectRatio() }},
+	{name: "autocomplete", constructor: func() templ.Component { return autocomplete.Autocomplete(autocomplete.Props{ID: "x", HxGet: "/q"}) }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
 	{name: "badge", constructor: func() templ.Component { return badge.Badge() }},
 	{name: "barchart", constructor: func() templ.Component { return barchart.BarChart() }},
+	{name: "breadcrumbs", constructor: func() templ.Component { return breadcrumbs.Breadcrumbs() }},
 	{name: "button", constructor: func() templ.Component { return button.Button() }},
 	{name: "card", constructor: func() templ.Component { return card.Card() }},
 	{name: "checkbox", constructor: func() templ.Component { return checkbox.Checkbox() }},
 	{name: "copybutton", constructor: func() templ.Component { return copybutton.CopyButton() }},
+	{name: "customblock", constructor: func() templ.Component { return customblock.CustomBlock() }},
+	{name: "custompage", constructor: func() templ.Component { return custompage.CustomPage() }},
 	{name: "dashboardgrid", constructor: func() templ.Component { return dashboardgrid.Grid() }},
 	{name: "dashboardheader", constructor: func() templ.Component { return dashboardheader.Header() }},
 	{name: "dialog", constructor: func() templ.Component { return dialog.Dialog() }},
@@ -104,6 +120,7 @@ var componentCases = []componentCase{
 	{name: "emptystate", constructor: func() templ.Component { return emptystate.EmptyState() }},
 	{name: "filterbar", constructor: func() templ.Component { return filterbar.FilterBar() }},
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
+	{name: "formfield", constructor: func() templ.Component { return formfield.FormField(formfield.Field{Name: "x"}) }},
 	{name: "gameicon", constructor: func() templ.Component { return gameicon.GameIcon(gameicon.Props{}) }},
 	{name: "graphwidget", constructor: func() templ.Component { return graphwidget.GraphWidget() }},
 	{name: "hovercard", constructor: func() templ.Component { return hovercard.Hover(hovercard.Props{}) }},
@@ -113,20 +130,25 @@ var componentCases = []componentCase{
 	{name: "icon", constructor: func() templ.Component { return icon.AArrowDown() }},
 	{name: "input", constructor: func() templ.Component { return input.Input() }},
 	{name: "label", constructor: func() templ.Component { return label.Label() }},
+	{name: "layout", constructor: func() templ.Component { return layout.Stack() }},
 	{name: "lifecyclestepper", constructor: func() templ.Component { return lifecyclestepper.LifecycleStepper() }},
 	{name: "metricring", constructor: func() templ.Component { return metricring.MetricRing() }},
 	{name: "nodepill", constructor: func() templ.Component { return nodepill.NodePill() }},
+	{name: "pageheader", constructor: func() templ.Component { return pageheader.PageHeader() }},
+	{name: "panel", constructor: func() templ.Component { return panel.Panel() }},
 	{name: "piechart", constructor: func() templ.Component { return piechart.PieChart() }},
 	// popover has no top-level Popover(); Content is the substantive floating
 	// panel and the best single representative of the package.
 	{name: "popover", constructor: func() templ.Component { return popover.Content() }},
 	{name: "progressbar", constructor: func() templ.Component { return progressbar.ProgressBar() }},
+	{name: "action", constructor: func() templ.Component { return action.Button(action.Action{Label: "Go"}) }},
 	{name: "radio", constructor: func() templ.Component { return radio.Radio() }},
 	{name: "selectbox", constructor: func() templ.Component { return selectbox.SelectBox() }},
 	{name: "separator", constructor: func() templ.Component { return separator.Separator() }},
 	{name: "slideover", constructor: func() templ.Component { return slideover.SlideOver() }},
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
+	{name: "swatch", constructor: func() templ.Component { return swatch.Swatch() }},
 	{name: "table", constructor: func() templ.Component { return table.Table() }},
 	// tabs.Content() exercises the empty-Value rendering path covered by the
 	// package-level regression test.

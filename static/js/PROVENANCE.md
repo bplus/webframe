@@ -56,7 +56,7 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These 3 files carry none of the templUI header markers, and their
+These 4 files carry none of the templUI header markers, and their
 introducing commits directly describe original component work rather than
 vendoring or installing something — evidence is strong enough to call these
 confirmed local, not just inferred:
@@ -66,6 +66,7 @@ confirmed local, not just inferred:
 | `graphwidget.min.js` | Local | Introduced in `eaccae72` ("feat: add GraphWidget component with vendored 3d-force-graph"), which explicitly distinguishes the *vendored* `3d-force-graph.min.js` from this hand-written glue script. No `.templ` version header (`components/graphwidget/graphwidget.templ` has none). Content is readable (not obfuscated), consistent with in-repo authorship. | Part of the webframe module; the repo has no separate top-level `LICENSE` file for its own code. |
 | `trafficstream.min.js` | Local | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
 | `theme-toggle.js` | Local | The only standalone `.js` file, and fully readable. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
+| `autocomplete.js` | Local | Written for webframe in page-layer batch 1b (autocomplete component, paired with `components/autocomplete/autocomplete.templ`). Unminified, first-party; depends only on HTMX's `htmx:beforeRequest` / `htmx:afterSwap` events. | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -106,3 +107,10 @@ above were verified against a live-fetched LICENSE file, since this
 investigation ran with no network access; (2) `filterbar.min.js` /
 `slideover.min.js` need that same live check against templui.io's current
 component list before their Source can move out of UNKNOWN.
+
+## Page layer
+
+Batch 1 of the page layer vendored no new JavaScript. This heading is the slot for later batches that do.
+
+Batch 1b adds `autocomplete.js`, first-party and unminified, listed under
+Local above. The counts in the Summary predate it.

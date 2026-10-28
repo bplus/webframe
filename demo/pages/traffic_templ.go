@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/trafficstream"
-	"github.com/bplus/webframe/demo/layouts"
 )
 
 // Traffic renders the traffic stream demo page: a heading plus one
@@ -23,8 +23,8 @@ import (
 // provider/event filter options, and two seed InitialRows sharing a trace
 // ID; trafficstream.Script() is included so the panel actually connects.
 //
-// Returns a templ.Component producing the complete HTML document via
-// layouts.Base("Traffic Stream").
+// Returns a templ.Component producing the page body only; the document and
+// shell are supplied by demo.App.Render.
 //
 // @boundary the rendered page opens an SSE (EventSource) connection to
 // /api/traffic/stream in the browser
@@ -50,59 +50,40 @@ func Traffic() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-			if !templ_7745c5c3_IsBuffer {
-				defer func() {
-					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err == nil {
-						templ_7745c5c3_Err = templ_7745c5c3_BufErr
-					}
-				}()
-			}
-			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mb-8 space-y-2 border-b border-border pb-6\"><h1 class=\"text-4xl font-bold tracking-tight\">Traffic Stream</h1><p class=\"max-w-3xl text-muted-foreground\">A live operator surface for watching request and response activity, filtering by provider and event type, and pausing the feed without losing context.</p></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = trafficstream.TrafficStream(trafficstream.Props{
-				StreamURL:       "/api/traffic/stream",
-				Height:          560,
-				ProviderOptions: []string{"anthropic", "openai", "gemini", "local"},
-				EventOptions:    []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"},
-				InitialRows: []trafficstream.Row{{
-					Time:      "12:00:01",
-					Provider:  "anthropic",
-					Direction: "request",
-					Event:     "request.received",
-					Status:    "",
-					TraceID:   "trace-demo-001",
-					Summary:   "POST /v1/messages",
-				}, {
-					Time:      "12:00:02",
-					Provider:  "anthropic",
-					Direction: "response",
-					Event:     "proxy.forward_end",
-					Status:    "200",
-					TraceID:   "trace-demo-001",
-					Summary:   "Completed upstream round-trip",
-				}},
-			}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = trafficstream.Script().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			return nil
-		})
-		templ_7745c5c3_Err = layouts.Base("Traffic Stream").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = pageheader.PageHeader(pageheader.Props{
+			Title:    "Traffic Stream",
+			Subtitle: "A live operator surface for watching request and response activity, filtering by provider and event type, and pausing the feed without losing context.",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = trafficstream.TrafficStream(trafficstream.Props{
+			StreamURL:       "/api/traffic/stream",
+			Height:          560,
+			ProviderOptions: []string{"anthropic", "openai", "gemini", "local"},
+			EventOptions:    []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"},
+			InitialRows: []trafficstream.Row{{
+				Time:      "12:00:01",
+				Provider:  "anthropic",
+				Direction: "request",
+				Event:     "request.received",
+				Status:    "",
+				TraceID:   "trace-demo-001",
+				Summary:   "POST /v1/messages",
+			}, {
+				Time:      "12:00:02",
+				Provider:  "anthropic",
+				Direction: "response",
+				Event:     "proxy.forward_end",
+				Status:    "200",
+				TraceID:   "trace-demo-001",
+				Summary:   "Completed upstream round-trip",
+			}},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = trafficstream.Script().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,0 +1,58 @@
+package breadcrumbs
+
+import "github.com/bplus/webframe/utils"
+
+// Item is one breadcrumb step. Href is used for every item except the last.
+type Item struct {
+	Label string
+	Href  string
+}
+
+// Props configures Breadcrumbs. Class is merged via utils.TwMerge;
+// Attributes spread onto the root <nav>.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Items      []Item
+}
+
+// Breadcrumbs renders a navigation trail. Every item but the last is a
+// link; the last is a <span aria-current="page">. Separators are "/"
+// in aria-hidden spans. Zero items renders an empty <nav>; only the
+// first Props is used.
+//
+// @pure
+templ Breadcrumbs(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<nav
+		aria-label="Breadcrumb"
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("", p.Class) }
+		{ p.Attributes... }
+	>
+		if len(p.Items) > 0 {
+			<ol class="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+				for i, it := range p.Items {
+					<li class="flex items-center gap-1">
+						if i < len(p.Items)-1 {
+							if it.Href != "" {
+								<a href={ it.Href } class="hover:text-primary">{ it.Label }</a>
+							} else {
+								<span>{ it.Label }</span>
+							}
+							<span aria-hidden="true">/</span>
+						} else {
+							<span aria-current="page" class="text-foreground">{ it.Label }</span>
+						}
+					</li>
+				}
+			</ol>
+		}
+	</nav>
+}

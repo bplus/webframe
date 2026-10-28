@@ -1,0 +1,9 @@
+package testdata
+
+templ Elements() {
+	<div class="wrap" style="x">
+		<h1>Title</h1>
+		<table></table>
+		<button onclick="go()">Go</button>
+	</div>
+}

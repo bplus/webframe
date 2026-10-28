@@ -1,0 +1,15 @@
+package testdata
+
+templ Attrs(attrs templ.Attributes, key string) {
+	<p class="x">classy</p>
+	<a style="">styled</a>
+	<span { attrs... }>spread</span>
+	<a { key }="v">dynamic</a>
+	<p onclick="">handler</p>
+	<style>
+		p { color: red; }
+	</style>
+	<a hx-get="/x" x-show="open" data-id="1" aria-label="y">ok</a>
+	<script defer nonce={ templ.GetNonce(ctx) } src={ "/app.js" }></script>
+	<script class="s" style="t"></script>
+}

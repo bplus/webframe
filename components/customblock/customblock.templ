@@ -1,0 +1,38 @@
+package customblock
+
+// Props configures a CustomBlock. There is deliberately no Class or
+// Attributes field: this component is the one declared exemption from
+// the no-raw-HTML/classes/styles rule, and it stays minimal on purpose.
+// Reason is required by convention; an empty Reason renders
+// data-wf-missing-reason="true" so the omission is visible on the page.
+type Props struct {
+	ID     string
+	Reason string // Required: why this block cannot use design-system components
+}
+
+// CustomBlock renders a plain <div data-wf-custom="block"> fence around
+// hand-written markup that the design-system lint would otherwise
+// reject. The lint detects it by the call customblock.CustomBlock( and by
+// the data-wf-custom attribute. The root carries data-wf-reason, and
+// data-wf-missing-reason="true" only when Reason is empty. No classes
+// are applied to the root. Only the first Props is used.
+//
+// @pure
+templ CustomBlock(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		data-wf-custom="block"
+		data-wf-reason={ p.Reason }
+		if p.Reason == "" {
+			data-wf-missing-reason="true"
+		}
+	>
+		{ children... }
+	</div>
+}

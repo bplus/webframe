@@ -1,27 +1,38 @@
 package pages
 
 import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/aspectratio"
+	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/label"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/swatch"
+	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
-	"github.com/bplus/webframe/demo/layouts"
 )
 
 // Showcase renders the full component reference page — every webframe
@@ -32,725 +43,970 @@ import (
 // It takes no parameters and no children; all content is static demo data
 // composed from the unexported per-topic section templates below.
 //
-// Returns a templ.Component producing the complete HTML document via
-// layouts.Base("Component Showcase").
+// Returns a templ.Component producing the page body only; the document and
+// shell are supplied by demo.App.Render.
 //
 // Rendering is static, but the emitted markup wires live browser behavior:
 // Alpine x-data examples, and HTMX demos that POST/GET /api/click,
-// /api/search, /api/validate, and /api/toast (handled in demo/handlers.go),
-// all relying on the scripts loaded by Base.
+// /api/search, /api/picked, /api/validate, and /api/toast (handled in
+// demo/handlers.go),
+// all relying on the scripts loaded by appshell.Document.
 //
 // @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
 // the library's importable API
 templ Showcase() {
-	@layouts.Base("Component Showcase") {
-		<!-- Hero -->
-		<div class="text-center py-8 mb-8 border-b border-border">
-			<h1 class="text-4xl font-bold tracking-tight mb-2">Webframe Components</h1>
-			<p class="text-muted-foreground text-lg">
-				A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.
-			</p>
-		</div>
+	@pageheader.PageHeader(pageheader.Props{
+		Title:    "Webframe Components",
+		Subtitle: "A reference sheet of templUI components with Tailwind v4, Alpine.js, and HTMX.",
+	})
+	@panel.Panel(panel.Props{Level: 2, Title: "Contents"}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Building blocks</strong>
+				<a href="#colors">Colors</a>
+				<a href="#icons">Icons</a>
+				<a href="#buttons">Buttons</a>
+				<a href="#badges">Badges</a>
+				<a href="#cards">Cards</a>
+				<a href="#separator">Separator</a>
+				<a href="#aspectratio">Aspect Ratio</a>
+				<a href="#gameicon">Game Icon</a>
+				<a href="#avatar">Avatar</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Forms</strong>
+				<a href="#form-elements">Form Elements</a>
+				<a href="#formfields">Form Fields</a>
+				<a href="#selectbox">Selectbox</a>
+				<a href="#autocomplete">Autocomplete</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Overlays and navigation</strong>
+				<a href="#dialog">Dialog</a>
+				<a href="#dropdown">Dropdown</a>
+				<a href="#tabs">Tabs</a>
+				<a href="#popover">Popover</a>
+				<a href="#hovercard">Hover Card</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Behavior patterns</strong>
+				<a href="#alpine">Alpine.js</a>
+				<a href="#htmx">HTMX</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Page layer</strong>
+				<a href="#actions">Actions</a>
+				<a href="#shell">Shell</a>
+				<a href="#layout">Layout</a>
+				<a href="#panel">Panel</a>
+				<a href="#custom">Custom fences</a>
+			}
+		}
+	}
+	// typographySection was removed in the page-layer batch 1 rewrite; it
+	// returns in batch 5 as a prose specimen.
+	@buildingBlocksGroup()
+	@formsGroup()
+	@overlaysGroup()
+	@patternsGroup()
+	@pageLayerGroup()
+}
 
-		<!-- Table of Contents -->
-		<nav class="mb-12 p-4 rounded-lg bg-card border border-border">
-			<h2 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contents</h2>
-			<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-				<a href="#typography" class="hover:text-primary transition-colors">Typography</a>
-				<a href="#colors" class="hover:text-primary transition-colors">Colors</a>
-				<a href="#icons" class="hover:text-primary transition-colors">Icons</a>
-				<a href="#buttons" class="hover:text-primary transition-colors">Buttons</a>
-				<a href="#badges" class="hover:text-primary transition-colors">Badges</a>
-				<a href="#cards" class="hover:text-primary transition-colors">Cards</a>
-				<a href="#forms" class="hover:text-primary transition-colors">Form Elements</a>
-				<a href="#dialog" class="hover:text-primary transition-colors">Dialog</a>
-				<a href="#dropdown" class="hover:text-primary transition-colors">Dropdown</a>
-				<a href="#tabs" class="hover:text-primary transition-colors">Tabs</a>
-				<a href="#selectbox" class="hover:text-primary transition-colors">Selectbox</a>
-				<a href="#popover" class="hover:text-primary transition-colors">Popover</a>
-				<a href="#hovercard" class="hover:text-primary transition-colors">Hover Card</a>
-				<a href="#avatar" class="hover:text-primary transition-colors">Avatar</a>
-				<a href="#separator" class="hover:text-primary transition-colors">Separator</a>
-				<a href="#aspectratio" class="hover:text-primary transition-colors">Aspect Ratio</a>
-				<a href="#gameicon" class="hover:text-primary transition-colors">Game Icon</a>
-				<a href="#alpine" class="hover:text-primary transition-colors">Alpine.js</a>
-				<a href="#htmx" class="hover:text-primary transition-colors">HTMX</a>
-			</div>
-		</nav>
-
-		@typographySection()
+// ═══════════════════════════════════════
+// Groups: the five top-level sections (h2), each holding per-topic
+// sections (h3) whose panels are h4.
+// ═══════════════════════════════════════
+templ buildingBlocksGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "building-blocks", Title: "Building blocks"}) {
 		@colorsSection()
 		@iconsSection()
 		@buttonsSection()
 		@badgesSection()
 		@cardsSection()
-		@formsSection()
-		@dialogSection()
-		@dropdownSection()
-		@tabsSection()
-		@selectboxSection()
-		@popoverSection()
-		@hovercardSection()
-		@avatarSection()
 		@separatorSection()
 		@aspectratioSection()
 		@gameiconSection()
+		@avatarSection()
+	}
+}
+
+templ formsGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "forms", Title: "Forms"}) {
+		@formsSection()
+		@formfieldsSection()
+		@selectboxSection()
+		@autocompleteSection()
+	}
+}
+
+templ overlaysGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "overlays", Title: "Overlays and navigation"}) {
+		@dialogSection()
+		@dropdownSection()
+		@tabsSection()
+		@popoverSection()
+		@hovercardSection()
+	}
+}
+
+templ patternsGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "patterns", Title: "Behavior patterns"}) {
 		@alpineSection()
 		@htmxSection()
 	}
 }
 
-// ═══════════════════════════════════════
-// Typography
-// ═══════════════════════════════════════
-
-templ typographySection() {
-	<section id="typography" class="wf-section">
-		<h2 class="wf-section-title">Typography</h2>
-		<p class="wf-section-desc">Font scale and text styles using Inter.</p>
-
-		<div class="space-y-4">
-			<h1 class="text-4xl font-bold tracking-tight">Heading 1 — text-4xl</h1>
-			<h2 class="text-3xl font-bold">Heading 2 — text-3xl</h2>
-			<h3 class="text-2xl font-semibold">Heading 3 — text-2xl</h3>
-			<h4 class="text-xl font-semibold">Heading 4 — text-xl</h4>
-			<h5 class="text-lg font-medium">Heading 5 — text-lg</h5>
-			<p class="text-base">Body text — text-base. The quick brown fox jumps over the lazy dog.</p>
-			<p class="text-sm text-muted-foreground">Small/muted text — text-sm text-muted-foreground.</p>
-			<p class="text-xs text-muted-foreground">Extra small — text-xs. Used for labels and captions.</p>
-			<code class="wf-code inline text-sm">code — font-mono</code>
-		</div>
-	</section>
+templ pageLayerGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "page-layer", Title: "Page layer"}) {
+		@actionSection()
+		@shellSection()
+		@layoutSection()
+		@panelSection()
+		@customSection()
+	}
 }
 
 // ═══════════════════════════════════════
 // Colors
 // ═══════════════════════════════════════
-
 templ colorsSection() {
-	<section id="colors" class="wf-section">
-		<h2 class="wf-section-title">Color Palette</h2>
-		<p class="wf-section-desc">CSS custom properties via Tailwind v4 @theme. Swap the palette by editing input.css.</p>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Primary</h3>
-		<div class="flex gap-3 flex-wrap mb-6">
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-100"></div><span class="wf-swatch-label">100</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-300"></div><span class="wf-swatch-label">300</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-500"></div><span class="wf-swatch-label">500</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-600"></div><span class="wf-swatch-label">600</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-700"></div><span class="wf-swatch-label">700</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary-900"></div><span class="wf-swatch-label">900</span></div>
-		</div>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Accent</h3>
-		<div class="flex gap-3 flex-wrap mb-6">
-			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-100"></div><span class="wf-swatch-label">100</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-300"></div><span class="wf-swatch-label">300</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-500"></div><span class="wf-swatch-label">500</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-700"></div><span class="wf-swatch-label">700</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-accent-900"></div><span class="wf-swatch-label">900</span></div>
-		</div>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Semantic</h3>
-		<div class="flex gap-3 flex-wrap">
-			<div class="wf-swatch"><div class="wf-swatch-color bg-background border"></div><span class="wf-swatch-label">bg</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-card border"></div><span class="wf-swatch-label">card</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-muted"></div><span class="wf-swatch-label">muted</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-primary"></div><span class="wf-swatch-label">primary</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-secondary"></div><span class="wf-swatch-label">secondary</span></div>
-			<div class="wf-swatch"><div class="wf-swatch-color bg-destructive"></div><span class="wf-swatch-label">destructive</span></div>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "colors", Title: "Color Palette", Description: "CSS custom properties via Tailwind v4 @theme. Swap the palette by editing input.css."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Primary"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-100)", Label: "100"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-300)", Label: "300"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-500)", Label: "500"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-600)", Label: "600"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-700)", Label: "700"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary-900)", Label: "900"})
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Accent"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-100)", Label: "100"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-300)", Label: "300"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-500)", Label: "500"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-700)", Label: "700"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-accent-900)", Label: "900"})
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Semantic"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@swatch.Swatch(swatch.Props{Color: "var(--color-background)", Label: "bg"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-card)", Label: "card"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-muted)", Label: "muted"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-primary)", Label: "primary"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-secondary)", Label: "secondary"})
+				@swatch.Swatch(swatch.Props{Color: "var(--color-destructive)", Label: "destructive"})
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Icons
 // ═══════════════════════════════════════
-
 templ iconsSection() {
-	<section id="icons" class="wf-section">
-		<h2 class="wf-section-title">Icons (Lucide)</h2>
-		<p class="wf-section-desc">~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox.</p>
-
-		<div class="wf-demo-row mb-6">
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Check()</div>
-				<span class="text-xs text-muted-foreground">Check</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.X()</div>
-				<span class="text-xs text-muted-foreground">X</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.ChevronDown()</div>
-				<span class="text-xs text-muted-foreground">ChevronDown</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Search()</div>
-				<span class="text-xs text-muted-foreground">Search</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Plus()</div>
-				<span class="text-xs text-muted-foreground">Plus</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Minus()</div>
-				<span class="text-xs text-muted-foreground">Minus</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Eye()</div>
-				<span class="text-xs text-muted-foreground">Eye</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.EyeOff()</div>
-				<span class="text-xs text-muted-foreground">EyeOff</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Settings()</div>
-				<span class="text-xs text-muted-foreground">Settings</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Trash2()</div>
-				<span class="text-xs text-muted-foreground">Trash2</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Copy()</div>
-				<span class="text-xs text-muted-foreground">Copy</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				<div class="p-2 rounded-md border border-border">@icon.Download()</div>
-				<span class="text-xs text-muted-foreground">Download</span>
-			</div>
-		</div>
-
-		<div class="wf-code text-xs">
+	@layout.Section(layout.SectionProps{Level: 3, ID: "icons", Title: "Icons (Lucide)", Description: "~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Check()
+				<small>Check</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.X()
+				<small>X</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.ChevronDown()
+				<small>ChevronDown</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Search()
+				<small>Search</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Plus()
+				<small>Plus</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Minus()
+				<small>Minus</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Eye()
+				<small>Eye</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.EyeOff()
+				<small>EyeOff</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Settings()
+				<small>Settings</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Trash2()
+				<small>Trash2</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Copy()
+				<small>Copy</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@icon.Download()
+				<small>Download</small>
+			}
+		}
+		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
 			<code>{ `@icon.Check()  // renders inline SVG, cached in-process` }</code>
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Buttons
 // ═══════════════════════════════════════
-
 templ buttonsSection() {
-	<section id="buttons" class="wf-section">
-		<h2 class="wf-section-title">Buttons</h2>
-		<p class="wf-section-desc">All button variants and sizes from the button component.</p>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Variants</h3>
-		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{}) { Default }
-			@button.Button(button.Props{Variant: button.VariantDestructive}) { Destructive }
-			@button.Button(button.Props{Variant: button.VariantOutline}) { Outline }
-			@button.Button(button.Props{Variant: button.VariantSecondary}) { Secondary }
-			@button.Button(button.Props{Variant: button.VariantGhost}) { Ghost }
-			@button.Button(button.Props{Variant: button.VariantLink}) { Link }
-		</div>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Sizes</h3>
-		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{Size: button.SizeSm}) { Small }
-			@button.Button(button.Props{}) { Default }
-			@button.Button(button.Props{Size: button.SizeLg}) { Large }
-			@button.Button(button.Props{Size: button.SizeIcon}) { + }
-		</div>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">States</h3>
-		<div class="wf-demo-row mb-6">
-			@button.Button(button.Props{}) { Enabled }
-			@button.Button(button.Props{Disabled: true}) { Disabled }
-			@button.Button(button.Props{FullWidth: true}) { Full Width }
-		</div>
-
-		<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">As Link</h3>
-		<div class="wf-demo-row">
-			@button.Button(button.Props{Href: "#buttons"}) { Link Button }
-			@button.Button(button.Props{Href: "#buttons", Variant: button.VariantOutline}) { Outline Link }
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "buttons", Title: "Buttons", Description: "All button variants and sizes from the button component."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Variants"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@button.Button(button.Props{}) {
+					Default
+				}
+				@button.Button(button.Props{Variant: button.VariantDestructive}) {
+					Destructive
+				}
+				@button.Button(button.Props{Variant: button.VariantOutline}) {
+					Outline
+				}
+				@button.Button(button.Props{Variant: button.VariantSecondary}) {
+					Secondary
+				}
+				@button.Button(button.Props{Variant: button.VariantGhost}) {
+					Ghost
+				}
+				@button.Button(button.Props{Variant: button.VariantLink}) {
+					Link
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Sizes"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
+				@button.Button(button.Props{Size: button.SizeSm}) {
+					Small
+				}
+				@button.Button(button.Props{}) {
+					Default
+				}
+				@button.Button(button.Props{Size: button.SizeLg}) {
+					Large
+				}
+				@button.Button(button.Props{Size: button.SizeIcon}) {
+					+
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "States"}) {
+			@layout.Stack() {
+				@layout.Inline(layout.InlineProps{Wrap: true}) {
+					@button.Button(button.Props{}) {
+						Enabled
+					}
+					@button.Button(button.Props{Disabled: true}) {
+						Disabled
+					}
+				}
+				@button.Button(button.Props{FullWidth: true}) {
+					Full Width
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "As Link"}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@button.Button(button.Props{Href: "#buttons"}) {
+					Link Button
+				}
+				@button.Button(button.Props{Href: "#buttons", Variant: button.VariantOutline}) {
+					Outline Link
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Badges
 // ═══════════════════════════════════════
-
 templ badgesSection() {
-	<section id="badges" class="wf-section">
-		<h2 class="wf-section-title">Badges</h2>
-		<p class="wf-section-desc">Inline label variants.</p>
-
-		<div class="wf-demo-row">
-			@badge.Badge(badge.Props{}) { Default }
-			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Secondary }
-			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Destructive }
-			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) { Outline }
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "badges", Title: "Badges", Description: "Inline label variants."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@badge.Badge(badge.Props{}) {
+				Default
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Secondary
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+				Destructive
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+				Outline
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Cards
 // ═══════════════════════════════════════
-
 templ cardsSection() {
-	<section id="cards" class="wf-section">
-		<h2 class="wf-section-title">Cards</h2>
-		<p class="wf-section-desc">Composable card components: Card, Header, Title, Description, Content, Footer.</p>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Basic card -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Basic Card }
-					@card.Description() { A simple card with header and content. }
-				}
-				@card.Content() {
-					<p class="text-sm">Card body content goes here. This is a versatile container for any grouped content.</p>
-				}
-			}
-
-			<!-- Card with footer -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Card with Footer }
-					@card.Description() { Includes action buttons in the footer. }
-				}
-				@card.Content() {
-					<p class="text-sm">Some content that needs actions below it.</p>
-				}
-				@card.Footer() {
-					<div class="flex gap-2">
-						@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) { Cancel }
-						@button.Button(button.Props{Size: button.SizeSm}) { Save }
-					</div>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "cards", Title: "Cards", Description: "Composable card components: Card, Header, Title, Description, Content, Footer."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Basic Card
+						}
+						@card.Description() {
+							A simple card with header and content.
+						}
+					}
+					@card.Content() {
+						<p>Card body content goes here. This is a versatile container for any grouped content.</p>
+					}
 				}
 			}
-
-			<!-- Card as form -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Login }
-					@card.Description() { Enter your credentials below. }
-				}
-				@card.Content() {
-					<div class="space-y-4">
-						<div>
-							@label.Label(label.Props{}) { Email }
-							@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
-						</div>
-						<div>
-							@label.Label(label.Props{}) { Password }
-							@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
-						</div>
-					</div>
-				}
-				@card.Footer() {
-					@button.Button(button.Props{FullWidth: true}) { Sign In }
-				}
-			}
-
-			<!-- Minimal card -->
-			@card.Card() {
-				@card.Content() {
-					<p class="text-sm text-muted-foreground">A card with only content — no header or footer. Good for simple containers.</p>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Card with Footer
+						}
+						@card.Description() {
+							Includes action buttons in the footer.
+						}
+					}
+					@card.Content() {
+						<p>Some content that needs actions below it.</p>
+					}
+					@card.Footer() {
+						@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
+								Cancel
+							}
+							@button.Button(button.Props{Size: button.SizeSm}) {
+								Save
+							}
+						}
+					}
 				}
 			}
-		</div>
-	</section>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Login
+						}
+						@card.Description() {
+							Enter your credentials below.
+						}
+					}
+					@card.Content() {
+						@layout.Stack() {
+							@form.Item() {
+								@label.Label(label.Props{For: "card-login-email"}) {
+									Email
+								}
+								@input.Input(input.Props{ID: "card-login-email", Type: input.TypeEmail, Placeholder: "you@example.com"})
+							}
+							@form.Item() {
+								@label.Label(label.Props{For: "card-login-password"}) {
+									Password
+								}
+								@input.Input(input.Props{ID: "card-login-password", Type: input.TypePassword, Placeholder: "••••••••"})
+							}
+						}
+					}
+					@card.Footer() {
+						@button.Button(button.Props{FullWidth: true}) {
+							Sign In
+						}
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Content() {
+						<p><small>A card with only content — no header or footer. Good for simple containers.</small></p>
+					}
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Form Elements
 // ═══════════════════════════════════════
-
 templ formsSection() {
-	<section id="forms" class="wf-section">
-		<h2 class="wf-section-title">Form Elements</h2>
-		<p class="wf-section-desc">Input, Textarea, Checkbox, Radio, Label, and Form layout components.</p>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- Text inputs -->
-			<div class="space-y-4">
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Text Inputs</h3>
-
-				@form.Item() {
-					@form.Label() { Default Input }
-					@input.Input(input.Props{Placeholder: "Type something..."})
-					@form.Description() { A standard text input. }
-				}
-
-				@form.Item() {
-					@form.Label() { Email }
-					@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
-				}
-
-				@form.Item() {
-					@form.Label() { Password (with toggle) }
-					@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
-				}
-
-				@form.Item() {
-					@form.Label() { Disabled }
-					@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
-				}
-
-				@form.Item() {
-					@form.Label() { With Error }
-					@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
-					@form.Message(form.MessageProps{Variant: form.MessageVariantError}) { This field is required }
-				}
-			</div>
-
-			<!-- Textarea + checks -->
-			<div class="space-y-4">
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Textarea</h3>
-
-				@form.Item() {
-					@form.Label() { Description }
-					@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
-				}
-
-				@form.Item() {
-					@form.Label() { Auto-resize }
-					@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
-				}
-
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Checkbox</h3>
-
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "terms"})
-						Accept terms and conditions
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "newsletter", Checked: true})
-						Subscribe to newsletter
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "disabled-cb", Disabled: true})
-						Disabled option
-					</label>
-				</div>
-
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Radio</h3>
-
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "free"})
-						Free
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "pro", Checked: true})
-						Pro
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "enterprise"})
-						Enterprise
-					</label>
-				</div>
-			</div>
-		</div>
-
-		<!-- Form layout demo -->
-		<div class="mt-8">
-			<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Form Layout (Item + ItemFlex)</h3>
-			@card.Card() {
-				@card.Content() {
-					<div class="space-y-4">
-						@form.ItemFlex() {
-							<div class="flex-1">
-								@form.Label() { Full Name }
-								@form.Description() { Your display name. }
-							</div>
-							@input.Input(input.Props{Placeholder: "Jane Smith", Class: "max-w-xs"})
+	@layout.Section(layout.SectionProps{Level: 3, ID: "form-elements", Title: "Form Elements", Description: "Input, Textarea, Checkbox, Radio, Label, and Form layout components."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Text Inputs"}) {
+					@layout.Stack() {
+						@form.Item() {
+							@form.Label() {
+								Default Input
+							}
+							@input.Input(input.Props{Placeholder: "Type something..."})
+							@form.Description() {
+								A standard text input.
+							}
 						}
-						@form.ItemFlex() {
-							<div class="flex-1">
-								@form.Label() { Notifications }
-								@form.Description() { Receive email notifications. }
-							</div>
-							@checkbox.Checkbox(checkbox.Props{Name: "notifications"})
+						@form.Item() {
+							@form.Label() {
+								Email
+							}
+							@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
 						}
-					</div>
+						@form.Item() {
+							@form.Label() {
+								Password (with toggle)
+							}
+							@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
+						}
+						@form.Item() {
+							@form.Label() {
+								Disabled
+							}
+							@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
+						}
+						@form.Item() {
+							@form.Label() {
+								With Error
+							}
+							@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
+							@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
+								This field is required
+							}
+						}
+					}
 				}
 			}
-		</div>
-	</section>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@layout.Stack() {
+					@panel.Panel(panel.Props{Level: 4, Title: "Textarea"}) {
+						@layout.Stack() {
+							@form.Item() {
+								@form.Label() {
+									Description
+								}
+								@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
+							}
+							@form.Item() {
+								@form.Label() {
+									Auto-resize
+								}
+								@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
+							}
+						}
+					}
+					@panel.Panel(panel.Props{Level: 4, Title: "Checkbox"}) {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-terms", Name: "terms"})
+								@label.Label(label.Props{For: "cb-terms"}) {
+									Accept terms and conditions
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-newsletter", Name: "newsletter", Checked: true})
+								@label.Label(label.Props{For: "cb-newsletter"}) {
+									Subscribe to newsletter
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@checkbox.Checkbox(checkbox.Props{ID: "cb-disabled", Name: "disabled-cb", Disabled: true})
+								@label.Label(label.Props{For: "cb-disabled"}) {
+									Disabled option
+								}
+							}
+						}
+					}
+					@panel.Panel(panel.Props{Level: 4, Title: "Radio"}) {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-free", Name: "plan", Value: "free"})
+								@label.Label(label.Props{For: "plan-free"}) {
+									Free
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-pro", Name: "plan", Value: "pro", Checked: true})
+								@label.Label(label.Props{For: "plan-pro"}) {
+									Pro
+								}
+							}
+							@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+								@radio.Radio(radio.Props{ID: "plan-enterprise", Name: "plan", Value: "enterprise"})
+								@label.Label(label.Props{For: "plan-enterprise"}) {
+									Enterprise
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Form Layout (Item + ItemFlex)"}) {
+			@layout.Stack() {
+				@form.ItemFlex() {
+					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+						@form.Label() {
+							Full Name
+						}
+						@form.Description() {
+							Your display name.
+						}
+					}
+					@input.Input(input.Props{Placeholder: "Jane Smith"})
+				}
+				@form.ItemFlex() {
+					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+						@form.Label() {
+							Notifications
+						}
+						@form.Description() {
+							Receive email notifications.
+						}
+					}
+					@checkbox.Checkbox(checkbox.Props{Name: "notifications"})
+				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Form Fields
+// ═══════════════════════════════════════
+templ formfieldsSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "formfields", Title: "Form Fields", Description: "formfield.FormField renders label, control, help and feedback from one Field value; Fieldset lays fields out in two columns on wide screens and one on phones."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Every field type"}) {
+			@formfield.Fieldset(formfield.FieldsetProps{
+				Legend: "Profile",
+				Fields: []formfield.Field{
+					{Name: "fullname", Label: "Full name", Placeholder: "Jane Smith", Required: true},
+					{Name: "profile-email", Label: "Email", Type: formfield.TypeEmail, Placeholder: "you@example.com", Help: "We only use this to send receipts."},
+					{Name: "bio", Label: "Bio", Type: formfield.TypeTextarea, Placeholder: "Tell us about yourself..."},
+					{Name: "role", Label: "Role", Type: formfield.TypeSelect, Options: []formfield.Option{
+						{Label: "Engineer", Value: "engineer"},
+						{Label: "Designer", Value: "designer"},
+						{Label: "Manager", Value: "manager"},
+					}},
+					{Name: "contact", Label: "Preferred contact", Type: formfield.TypeRadio, Value: "email", Options: []formfield.Option{
+						{Label: "Email", Value: "email"},
+						{Label: "Phone", Value: "phone"},
+					}},
+					{Name: "updates", Label: "Send me product updates", Type: formfield.TypeCheckbox},
+					{Name: "age", Label: "Age", Type: formfield.TypeNumber, Width: formfield.WidthHalf},
+					{Name: "start", Label: "Start date", Type: formfield.TypeDate, Width: formfield.WidthHalf},
+				},
+			})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Feedback"}) {
+			@layout.Stack() {
+				<p>Success text is opt-in: a field shows it only when its Success is set. A field with neither an error nor success text has an empty feedback slot, and an empty slot takes no space.</p>
+				@formfield.Fieldset(formfield.FieldsetProps{
+					Legend: "With an error",
+					Fields: []formfield.Field{
+						{Name: "username", Label: "Username", Value: "ab", Error: "Username must be at least 3 characters"},
+						{Name: "display", Label: "Display name", Value: "Ada", Success: "Saved"},
+					},
+				})
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Autocomplete
+// ═══════════════════════════════════════
+templ autocompleteSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "autocomplete", Title: "Autocomplete", Description: "Type-ahead backed by the server. The visible text is what you typed or picked; the hidden framework field holds the picked option's value, and that is what the form submits."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Pick a framework", Subtitle: "Submit shows what the server received: the hidden framework value and the visible text q."}) {
+			@layout.Stack() {
+				@autocomplete.Autocomplete(autocomplete.Props{
+					ID:          "fw",
+					Name:        "framework",
+					Label:       "Framework",
+					Placeholder: "Type to search frameworks…",
+					HxGet:       "/api/search",
+					Attributes:  templ.Attributes{"id": "fw-root"},
+				})
+				@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
+					@action.Button(action.Action{
+						Label:      "Submit",
+						HxPost:     "/api/picked",
+						HxTarget:   "#picked-result",
+						Attributes: templ.Attributes{"hx-include": "#fw-root"},
+					})
+					<span id="picked-result"></span>
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Dialog
 // ═══════════════════════════════════════
-
 templ dialogSection() {
-	<section id="dialog" class="wf-section">
-		<h2 class="wf-section-title">Dialog</h2>
-		<p class="wf-section-desc">Modal dialogs with trigger, content, header, footer.</p>
-
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dialog.Dialog() {
 				@dialog.Trigger() {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Open Dialog }
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Open Dialog 
+					}
 				}
 				@dialog.Content() {
 					@dialog.Header() {
-						@dialog.Title() { Confirm Action }
-						@dialog.Description() { Are you sure you want to proceed? This action cannot be undone. }
+						@dialog.Title() {
+							Confirm Action 
+						}
+						@dialog.Description() {
+							Are you sure you want to proceed? This action cannot be undone. 
+						}
 					}
 					@dialog.Footer() {
 						@dialog.Close() {
-							@button.Button(button.Props{Variant: button.VariantOutline}) { Cancel }
+							@button.Button(button.Props{Variant: button.VariantOutline}) {
+								Cancel 
+							}
 						}
 						@dialog.Close() {
-							@button.Button(button.Props{}) { Confirm }
+							@button.Button(button.Props{}) {
+								Confirm 
+							}
 						}
 					}
 				}
 			}
-
 			@dialog.Dialog() {
 				@dialog.Trigger() {
-					@button.Button(button.Props{}) { Form Dialog }
+					@button.Button(button.Props{}) {
+						Form Dialog 
+					}
 				}
 				@dialog.Content() {
 					@dialog.Header() {
-						@dialog.Title() { Edit Profile }
-						@dialog.Description() { Update your profile information below. }
+						@dialog.Title() {
+							Edit Profile 
+						}
+						@dialog.Description() {
+							Update your profile information below. 
+						}
 					}
-					<div class="space-y-4 py-4">
+					@layout.Stack() {
 						@form.Item() {
-							@form.Label() { Name }
+							@form.Label() {
+								Name 
+							}
 							@input.Input(input.Props{Placeholder: "Your name"})
 						}
 						@form.Item() {
-							@form.Label() { Bio }
+							@form.Label() {
+								Bio 
+							}
 							@textarea.Textarea(textarea.Props{Placeholder: "Tell us about yourself...", Rows: 3})
 						}
-					</div>
+					}
 					@dialog.Footer() {
 						@dialog.Close() {
-							@button.Button(button.Props{Variant: button.VariantOutline}) { Cancel }
+							@button.Button(button.Props{Variant: button.VariantOutline}) {
+								Cancel 
+							}
 						}
-						@button.Button(button.Props{}) { Save Changes }
+						@button.Button(button.Props{}) {
+							Save Changes 
+						}
 					}
 				}
 			}
-		</div>
-
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Dropdown
 // ═══════════════════════════════════════
-
 templ dropdownSection() {
-	<section id="dropdown" class="wf-section">
-		<h2 class="wf-section-title">Dropdown Menu</h2>
-		<p class="wf-section-desc">Click-triggered dropdown with items, groups, separators, and sub-menus.</p>
-
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dropdown", Title: "Dropdown Menu", Description: "Click-triggered dropdown with items, groups, separators, and sub-menus."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dropdown.Dropdown() {
 				@dropdown.Trigger() {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Open Menu }
+					@button.Button(button.Props{Variant: button.VariantOutline}) {
+						Open Menu 
+					}
 				}
 				@dropdown.Content() {
-					@dropdown.Label() { My Account }
-					@dropdown.Separator()
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Profile }
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Settings }
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
-						Keyboard Shortcuts
-						@dropdown.Shortcut() { ⌘K }
+					@dropdown.Label() {
+						My Account 
 					}
 					@dropdown.Separator()
-					@dropdown.Sub() {
-						@dropdown.SubTrigger() { More Options }
-						@dropdown.SubContent() {
-							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Import }
-							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Export }
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Profile 
+					}
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Settings 
+					}
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Keyboard Shortcuts
+						@dropdown.Shortcut() {
+							⌘K 
 						}
 					}
 					@dropdown.Separator()
-					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) { Log Out }
+					@dropdown.Sub() {
+						@dropdown.SubTrigger() {
+							More Options 
+						}
+						@dropdown.SubContent() {
+							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+								Import 
+							}
+							@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+								Export 
+							}
+						}
+					}
+					@dropdown.Separator()
+					@dropdown.Item(dropdown.ItemProps{Href: "#dropdown"}) {
+						Log Out 
+					}
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Tabs
 // ═══════════════════════════════════════
-
 templ tabsSection() {
-	<section id="tabs" class="wf-section">
-		<h2 class="wf-section-title">Tabs</h2>
-		<p class="wf-section-desc">Tab navigation with content panels.</p>
-
-		@tabs.Tabs() {
-			@tabs.List() {
-				@tabs.Trigger(tabs.TriggerProps{Value: "overview", IsActive: true}) { Overview }
-				@tabs.Trigger(tabs.TriggerProps{Value: "features"}) { Features }
-				@tabs.Trigger(tabs.TriggerProps{Value: "code"}) { Code }
-			}
-			@tabs.Content(tabs.ContentProps{Value: "overview", IsActive: true}) {
-				@card.Card() {
-					@card.Content() {
-						<p class="text-sm">This is the overview tab. Content switches without a page reload.</p>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "tabs", Title: "Tabs", Description: "Tab navigation with content panels, in three sizing modes."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Tallest (default)", Subtitle: "switch tabs: nothing below moves"}) {
+			@threeLengthTabs(tabs.Props{})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Fixed, medium", Subtitle: "the panel scrolls inside"}) {
+			@tabs.Tabs(tabs.Props{Sizing: tabs.SizingFixed, Height: tabs.HeightM}) {
+				@tabs.List() {
+					@tabs.Trigger(tabs.TriggerProps{Value: "thirty", IsActive: true}) {
+						Thirty lines
+					}
+					@tabs.Trigger(tabs.TriggerProps{Value: "one"}) {
+						One line
 					}
 				}
-			}
-			@tabs.Content(tabs.ContentProps{Value: "features"}) {
-				@card.Card() {
-					@card.Content() {
-						<ul class="text-sm space-y-1 list-disc list-inside">
-							<li>Keyboard accessible (arrow keys)</li>
-							<li>JavaScript-driven show/hide</li>
-							<li>Works with HTMX for lazy loading</li>
-						</ul>
-					}
+				@tabs.Content(tabs.ContentProps{Value: "thirty", IsActive: true}) {
+					@tabLines(30)
 				}
-			}
-			@tabs.Content(tabs.ContentProps{Value: "code"}) {
-				@card.Card() {
-					@card.Content() {
-						<pre class="wf-code">{ `@tabs.Tabs() {
-  @tabs.List() {
-    @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }
-  }
-  @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }
-}` }</pre>
-					}
+				@tabs.Content(tabs.ContentProps{Value: "one"}) {
+					@tabLines(1)
 				}
 			}
 		}
-	</section>
+		@panel.Panel(panel.Props{Level: 4, Title: "Fit", Subtitle: "the page grows and shrinks"}) {
+			@threeLengthTabs(tabs.Props{Sizing: tabs.SizingFit})
+		}
+	}
+}
+
+// threeLengthTabs is a tab group whose three panels are one, five and
+// twelve lines long, so the sizing mode in p is visible on switch.
+templ threeLengthTabs(p tabs.Props) {
+	@tabs.Tabs(p) {
+		@tabs.List() {
+			@tabs.Trigger(tabs.TriggerProps{Value: "short", IsActive: true}) {
+				One line
+			}
+			@tabs.Trigger(tabs.TriggerProps{Value: "medium"}) {
+				Five lines
+			}
+			@tabs.Trigger(tabs.TriggerProps{Value: "long"}) {
+				Twelve lines
+			}
+		}
+		@tabs.Content(tabs.ContentProps{Value: "short", IsActive: true}) {
+			@tabLines(1)
+		}
+		@tabs.Content(tabs.ContentProps{Value: "medium"}) {
+			@tabLines(5)
+		}
+		@tabs.Content(tabs.ContentProps{Value: "long"}) {
+			@tabLines(12)
+		}
+	}
+}
+
+// tabLines renders n numbered one-line paragraphs.
+templ tabLines(n int) {
+	for i := 1; i <= n; i++ {
+		<p>Line { strconv.Itoa(i) } of { strconv.Itoa(n) }</p>
+	}
 }
 
 // ═══════════════════════════════════════
 // Selectbox
 // ═══════════════════════════════════════
-
 templ selectboxSection() {
-	<section id="selectbox" class="wf-section">
-		<h2 class="wf-section-title">Selectbox</h2>
-		<p class="wf-section-desc">Custom select with search, groups, and multi-select.</p>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<div>
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Basic</h3>
-				@selectbox.SelectBox() {
-					@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
-						@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
-					}
-					@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-						@selectbox.Group() {
-							@selectbox.Label() { Frontend }
-							@selectbox.Item(selectbox.ItemProps{Value: "react"}) { React }
-							@selectbox.Item(selectbox.ItemProps{Value: "vue"}) { Vue }
-							@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) { Svelte }
+	@layout.Section(layout.SectionProps{Level: 3, ID: "selectbox", Title: "Selectbox", Description: "Custom select with search, groups, and multi-select."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Basic"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
 						}
-						@selectbox.Group() {
-							@selectbox.Label() { Backend }
-							@selectbox.Item(selectbox.ItemProps{Value: "go"}) { Go }
-							@selectbox.Item(selectbox.ItemProps{Value: "python"}) { Python }
-							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) { Rust }
+						@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+							@frameworkGroups()
 						}
 					}
 				}
-			</div>
-
-			<div>
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">With Search</h3>
-				@selectbox.SelectBox() {
-					@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
-						@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
-					}
-					@selectbox.Content() {
-						@selectbox.Item(selectbox.ItemProps{Value: "go"}) { Go }
-						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) { Rust }
-						@selectbox.Item(selectbox.ItemProps{Value: "python"}) { Python }
-						@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) { TypeScript }
-						@selectbox.Item(selectbox.ItemProps{Value: "java"}) { Java }
-						@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) { C# }
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "With Search"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
+						}
+						@selectbox.Content() {
+							@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+								Go 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+								Rust 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+								Python 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
+								TypeScript 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
+								Java 
+							}
+							@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
+								C# 
+							}
+						}
 					}
 				}
-			</div>
-		</div>
-	</section>
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Multi-select with pills"}) {
+					@selectbox.SelectBox() {
+						@selectbox.Trigger(selectbox.TriggerProps{Name: "stack", Multiple: true, ShowPills: true}) {
+							@selectbox.Value(selectbox.ValueProps{Placeholder: "Pick several..."})
+						}
+						@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+							@frameworkGroups()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// frameworkGroups is the Frontend / Backend option groups shared by the
+// single and multi-select examples.
+templ frameworkGroups() {
+	@selectbox.Group() {
+		@selectbox.Label() {
+			Frontend 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
+			React 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
+			Vue 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
+			Svelte 
+		}
+	}
+	@selectbox.Group() {
+		@selectbox.Label() {
+			Backend 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+			Go 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+			Python 
+		}
+		@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+			Rust 
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Popover
 // ═══════════════════════════════════════
-
 templ popoverSection() {
-	<section id="popover" class="wf-section">
-		<h2 class="wf-section-title">Popover</h2>
-		<p class="wf-section-desc">Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement.</p>
-
-		<div class="wf-demo-row">
-			<!-- Click popover -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
-					@button.Button(button.Props{Variant: button.VariantOutline}) { Click Popover }
+	@layout.Section(layout.SectionProps{Level: 3, ID: "popover", Title: "Popover", Description: "Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
+				@button.Button(button.Props{Variant: button.VariantOutline}) {
+					Click Popover
 				}
-				@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
-					<div class="p-4 max-w-xs">
-						<h4 class="font-semibold text-sm mb-1">Click-triggered Popover</h4>
-						<p class="text-xs text-muted-foreground">This popover opens on click and positions itself below the trigger with an arrow.</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Click-triggered Popover"}) {
+					<p><small>This popover opens on click and positions itself below the trigger with an arrow.</small></p>
 				}
-			</div>
-
-			<!-- Hover popover -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-hover", TriggerType: popover.TriggerTypeHover}) {
-					@button.Button(button.Props{Variant: button.VariantSecondary}) { Hover Popover }
+			}
+			@popover.Trigger(popover.TriggerProps{For: "pop-hover", TriggerType: popover.TriggerTypeHover}) {
+				@button.Button(button.Props{Variant: button.VariantSecondary}) {
+					Hover Popover
 				}
-				@popover.Content(popover.ContentProps{
-					ID:            "pop-hover",
-					Placement:     popover.PlacementTop,
-					ShowArrow:     true,
-					HoverDelay:    200,
-					HoverOutDelay: 150,
-				}) {
-					<div class="p-4 max-w-xs">
-						<h4 class="font-semibold text-sm mb-1">Hover-triggered</h4>
-						<p class="text-xs text-muted-foreground">200ms delay before show, 150ms before hide. Configurable via HoverDelay/HoverOutDelay.</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{
+				ID:            "pop-hover",
+				Placement:     popover.PlacementTop,
+				ShowArrow:     true,
+				HoverDelay:    200,
+				HoverOutDelay: 150,
+			}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Hover-triggered"}) {
+					<p><small>200ms delay before show, 150ms before hide. Configurable via HoverDelay/HoverOutDelay.</small></p>
 				}
-			</div>
-
-			<!-- Right placement -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-right"}) {
-					@button.Button(button.Props{Variant: button.VariantGhost}) { Right Side }
+			}
+			@popover.Trigger(popover.TriggerProps{For: "pop-right"}) {
+				@button.Button(button.Props{Variant: button.VariantGhost}) {
+					Right Side
 				}
-				@popover.Content(popover.ContentProps{ID: "pop-right", Placement: popover.PlacementRight, ShowArrow: true}) {
-					<div class="p-4">
-						<p class="text-xs text-muted-foreground">Placement: Right</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{ID: "pop-right", Placement: popover.PlacementRight, ShowArrow: true}) {
+				@panel.Panel() {
+					<p><small>Placement: Right</small></p>
 				}
-			</div>
-		</div>
-
-	</section>
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Hover Card
 // ═══════════════════════════════════════
-
 templ hovercardSection() {
-	<section id="hovercard" class="wf-section">
-		<h2 class="wf-section-title">Hover Card</h2>
-		<p class="wf-section-desc">Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon.</p>
-
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-			<!-- Product hover card -->
+	@layout.Section(layout.SectionProps{Level: 3, ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-product",
 				Title:       "Flame Tongue Greatsword",
@@ -766,13 +1022,11 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — Product Card</p>
-						<p class="text-xs text-muted-foreground">Shows item details with metadata rows and icon</p>
+						<p><strong>Hover me — Product Card</strong></p>
+						<p><small>Shows item details with metadata rows and icon</small></p>
 					}
 				}
 			}
-
-			<!-- User profile hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-user",
 				Title:       "Jane Developer",
@@ -788,13 +1042,11 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — User Profile</p>
-						<p class="text-xs text-muted-foreground">No icon panel — text-only hover card</p>
+						<p><strong>Hover me — User Profile</strong></p>
+						<p><small>No icon panel — text-only hover card</small></p>
 					}
 				}
 			}
-
-			<!-- Minimal hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-minimal",
 				Title:       "Quick Tooltip",
@@ -802,348 +1054,520 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — Minimal</p>
-						<p class="text-xs text-muted-foreground">Title + description only</p>
+						<p><strong>Hover me — Minimal</strong></p>
+						<p><small>Title + description only</small></p>
 					}
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Avatar
 // ═══════════════════════════════════════
-
 templ avatarSection() {
-	<section id="avatar" class="wf-section">
-		<h2 class="wf-section-title">Avatar</h2>
-		<p class="wf-section-desc">Circular avatar with image and text fallback.</p>
-
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{Level: 3, ID: "avatar", Title: "Avatar", Description: "Circular avatar with image and text fallback."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
 			@avatar.Avatar() {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=1", Alt: "User"})
-				@avatar.Fallback() { JD }
+				@avatar.Fallback() {
+					JD
+				}
 			}
 			@avatar.Avatar() {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=5", Alt: "User"})
-				@avatar.Fallback() { AK }
+				@avatar.Fallback() {
+					AK
+				}
 			}
-			@avatar.Avatar() {
-				@avatar.Fallback() { WF }
+			@avatar.Avatar(avatar.Props{Size: avatar.SizeLg}) {
+				@avatar.Fallback() {
+					LG
+				}
 			}
-			@avatar.Avatar(avatar.Props{Class: "h-16 w-16"}) {
-				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=12", Alt: "User"})
-				@avatar.Fallback() { LG }
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@avatar.Avatar() {
+					@avatar.Image(avatar.ImageProps{Src: "/static/img/missing-avatar.png", Alt: "User"})
+					@avatar.Fallback() {
+						WF
+					}
+				}
+				<small>Image intentionally absent, so the initials fallback shows</small>
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Separator
 // ═══════════════════════════════════════
-
 templ separatorSection() {
-	<section id="separator" class="wf-section">
-		<h2 class="wf-section-title">Separator</h2>
-		<p class="wf-section-desc">Horizontal and vertical dividers.</p>
-
-		<div class="space-y-4">
-			<p class="text-sm">Content above the separator.</p>
-			@separator.Separator()
-			<p class="text-sm">Content below the separator.</p>
-
-			@separator.Separator(separator.Props{Decoration: separator.DecorationDashed})
-
-			@separator.Separator() {
-				<span class="text-xs text-muted-foreground px-2">OR</span>
-			}
-
-			<div class="flex items-center gap-4 h-8">
-				<span class="text-sm">Left</span>
-				@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-				<span class="text-sm">Center</span>
-				@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-				<span class="text-sm">Right</span>
-			</div>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "separator", Title: "Separator", Description: "Horizontal and vertical dividers."}) {
+		<p>Content above the separator.</p>
+		@separator.Separator()
+		<p>Content below the separator.</p>
+		@separator.Separator(separator.Props{Decoration: separator.DecorationDashed})
+		@separator.Separator() {
+			OR
+		}
+		<p>Below: three plain words separated by vertical dividers.</p>
+		@layout.Inline() {
+			<span>Item one</span>
+			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
+			<span>Item two</span>
+			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
+			<span>Item three</span>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Aspect Ratio
 // ═══════════════════════════════════════
-
 templ aspectratioSection() {
-	<section id="aspectratio" class="wf-section">
-		<h2 class="wf-section-title">Aspect Ratio</h2>
-		<p class="wf-section-desc">Container that maintains a fixed aspect ratio. Useful for images, videos, maps.</p>
-
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">16:9 (Video)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						16:9
-					</div>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "16:9 (Video)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>16:9</small>
+							}
+						}
+					}
 				}
-			</div>
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">3:4 (Portrait)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						3:4
-					</div>
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "3:4 (Portrait)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>3:4</small>
+							}
+						}
+					}
 				}
-			</div>
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">1:1 (Square)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						1:1
-					</div>
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 4}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "1:1 (Square)"}) {
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+						@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
+							@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+								<small>1:1</small>
+							}
+						}
+					}
 				}
-			</div>
-		</div>
-	</section>
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Game Icon
 // ═══════════════════════════════════════
-
 templ gameiconSection() {
-	<section id="gameicon" class="wf-section">
-		<h2 class="wf-section-title">Game Icon (SVG Sprite)</h2>
-		<p class="wf-section-desc">SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set.</p>
-
-		<div class="wf-demo-row">
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">broadsword</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">armor-vest</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">gem-pendant</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "ring", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">ring</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">cloak-dagger</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "shield", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">shield</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Class: "w-10 h-10 text-primary"})
-				<span class="text-xs text-muted-foreground">swords-emblem <span class="text-primary-500">(tinted)</span></span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Class: "w-10 h-10 text-accent-500"})
-				<span class="text-xs text-muted-foreground">bottled-bolt <span class="text-accent-500">(tinted)</span></span>
-			</div>
-		</div>
-
-		<div class="wf-code text-xs mt-4">
-			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})` }</code>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
+				<small>broadsword</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Size: gameicon.SizeLg})
+				<small>armor-vest</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Size: gameicon.SizeLg})
+				<small>gem-pendant</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "ring", Size: gameicon.SizeLg})
+				<small>ring</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Size: gameicon.SizeLg})
+				<small>cloak-dagger</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg})
+				<small>shield</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Size: gameicon.SizeLg, Tone: gameicon.TonePrimary})
+				<small>swords-emblem (primary)</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
+				<small>bottled-bolt (accent)</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg, Tone: gameicon.ToneForeground})
+				<small>shield (foreground)</small>
+			}
+		}
+		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
+			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})` }</code>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Alpine.js Patterns
 // ═══════════════════════════════════════
-
 templ alpineSection() {
-	<section id="alpine" class="wf-section">
-		<h2 class="wf-section-title">Alpine.js Patterns</h2>
-		<p class="wf-section-desc">Common Alpine.js patterns used with these components.</p>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Toggle visibility -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Toggle (x-show) }
-				}
-				@card.Content() {
-					<div x-data="{ open: false }">
-						@button.Button(button.Props{
-							Attributes: templ.Attributes{"@click": "open = !open"},
-							Size:       button.SizeSm,
-						}) { Toggle Content }
-						<div x-show="open" x-transition x-cloak class="mt-3 p-3 rounded-md bg-muted text-sm">
-							This content is toggled with <code class="font-mono text-xs">x-show</code> and <code class="font-mono text-xs">x-transition</code>.
-						</div>
-					</div>
-				}
-			}
-
-			<!-- Counter with x-data -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Reactive State (x-data) }
-				}
-				@card.Content() {
-					<div x-data="{ count: 0 }" class="flex items-center gap-4">
-						<button @click="count--" class="inline-flex items-center justify-center rounded-md border border-input bg-background h-8 w-8 text-sm hover:bg-accent transition-colors">-</button>
-						<span x-text="count" class="text-2xl font-bold tabular-nums w-12 text-center">0</span>
-						<button @click="count++" class="inline-flex items-center justify-center rounded-md border border-input bg-background h-8 w-8 text-sm hover:bg-accent transition-colors">+</button>
-					</div>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "alpine", Title: "Alpine.js Patterns", Description: "Common Alpine.js patterns used with these components."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Toggle (x-show)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+							@button.Button(button.Props{
+								Attributes: templ.Attributes{"x-on:click": "open = !open"},
+								Size:       button.SizeSm,
+							}) {
+								Toggle Content
+							}
+							@panel.Panel(panel.Props{Variant: panel.VariantMuted, Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-cloak": true}}) {
+								<p>This content is toggled with <code>x-show</code> and <code>x-transition</code>.</p>
+							}
+						}
+					}
 				}
 			}
-
-			<!-- Two-way binding -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Two-way Binding (x-model) }
-				}
-				@card.Content() {
-					<div x-data="{ name: '' }">
-						@input.Input(input.Props{
-							Placeholder: "Type your name...",
-							Attributes:  templ.Attributes{"x-model": "name"},
-						})
-						<p class="mt-2 text-sm text-muted-foreground">
-							Hello, <span x-text="name || 'stranger'" class="font-medium text-foreground"></span>!
-						</p>
-					</div>
-				}
-			}
-
-			<!-- Dropdown with click.outside -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Click Outside (@@click.outside) }
-				}
-				@card.Content() {
-					<div x-data="{ open: false }" class="relative">
-						<button @click="open = !open" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors">
-							<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
-						</button>
-						<div x-show="open" x-transition @click.outside="open = false" x-cloak
-							class="absolute top-full mt-2 p-4 rounded-md border border-border bg-popover shadow-lg text-sm z-10">
-							Click outside this panel to close it.
-						</div>
-					</div>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Reactive State (x-data)
+						}
+					}
+					@card.Content() {
+						@layout.Inline(layout.InlineProps{Align: layout.AlignCenter, Attributes: templ.Attributes{"x-data": "{ count: 0 }"}}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count--", "aria-label": "Decrement"}}) {
+								-
+							}
+							<strong x-text="count">0</strong>
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count++", "aria-label": "Increment"}}) {
+								+
+							}
+						}
+					}
 				}
 			}
-		</div>
-	</section>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Two-way Binding (x-model)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Attributes: templ.Attributes{"x-data": "{ name: '' }"}}) {
+							@input.Input(input.Props{
+								Placeholder: "Type your name...",
+								Attributes:  templ.Attributes{"x-model": "name"},
+							})
+							<p><small>Hello, <strong x-text="name || 'stranger'"></strong>!</small></p>
+						}
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Click Outside (x-on:click.outside)
+						}
+					}
+					@card.Content() {
+						@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+							@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm, Attributes: templ.Attributes{"x-on:click": "open = !open"}}) {
+								<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
+							}
+							@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-on:click.outside": "open = false", "x-cloak": true}}) {
+								<p>Click outside this panel to close it.</p>
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // HTMX Patterns
 // ═══════════════════════════════════════
-
 templ htmxSection() {
-	<section id="htmx" class="wf-section">
-		<h2 class="wf-section-title">HTMX Patterns</h2>
-		<p class="wf-section-desc">Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps.</p>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Click counter -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Click to Update (hx-post + hx-swap) }
-				}
-				@card.Content() {
-					<p class="text-sm text-muted-foreground mb-3">Button replaces itself with server response.</p>
-					<button hx-post="/api/click" hx-swap="outerHTML" hx-vals='{"count":"0"}'
-						class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-						Click me
-					</button>
-				}
-			}
-
-			<!-- Live search -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Live Search (hx-get + debounce) }
-				}
-				@card.Content() {
-					<input type="search" name="q"
-						hx-get="/api/search"
-						hx-trigger="input changed delay:300ms, search"
-						hx-target="#search-results"
-						placeholder="Search frameworks..."
-						class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
-					<div id="search-results" class="mt-3 max-h-48 overflow-y-auto rounded-md border border-border">
-						<ul class="space-y-1 p-1">
-							<li class="px-3 py-2 text-sm text-muted-foreground">Type to search...</li>
-						</ul>
-					</div>
+	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-update, blur validation, out-of-band swaps. Live search lives in the Autocomplete section."}) {
+		@dashboardgrid.Grid() {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Click to Update (hx-post + hx-swap)
+						}
+						@card.Description() {
+							Button replaces itself with server response.
+						}
+					}
+					@card.Content() {
+						@button.Button(button.Props{Attributes: templ.Attributes{
+							"hx-post": "/api/click",
+							"hx-swap": "outerHTML",
+							"hx-vals": `{"count":"0"}`,
+						}}) {
+							Click me
+						}
+					}
 				}
 			}
-
-			<!-- Field validation on blur -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Blur Validation (hx-post + hx-trigger="blur") }
-				}
-				@card.Content() {
-					<div class="space-y-4">
-						<div>
-							@label.Label(label.Props{}) { Email }
-							<input type="email" name="value"
-								hx-post="/api/validate"
-								hx-trigger="blur"
-								hx-target="#email-feedback"
-								hx-vals='{"field":"email"}'
-								placeholder="you@example.com"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
-							<div id="email-feedback"></div>
-						</div>
-						<div>
-							@label.Label(label.Props{}) { Name }
-							<input type="text" name="value"
-								hx-post="/api/validate"
-								hx-trigger="blur"
-								hx-target="#name-feedback"
-								hx-vals='{"field":"name"}'
-								placeholder="Your name"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
-							<div id="name-feedback"></div>
-						</div>
-					</div>
-				}
-			}
-
-			<!-- Toast via OOB swap -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() { Toast (hx-swap-oob) }
-				}
-				@card.Content() {
-					<p class="text-sm text-muted-foreground mb-3">Server responds with out-of-band HTML injected into #toast-container.</p>
-					<div class="flex gap-2 flex-wrap">
-						<button hx-post="/api/toast" hx-vals='{"variant":"success"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors">
-							Success
-						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"error"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:bg-destructive/90 transition-colors">
-							Error
-						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"info"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors">
-							Info
-						</button>
-						<button hx-post="/api/toast" hx-vals='{"variant":"warning"}' hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 transition-colors">
-							Warning
-						</button>
-					</div>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Blur Validation (hx-post + hx-trigger="blur")
+						}
+					}
+					@card.Content() {
+						@layout.Stack() {
+							@formfield.FormField(formfield.Field{
+								ID:          "field-email",
+								Name:        "value",
+								Label:       "Email",
+								Type:        formfield.TypeEmail,
+								Placeholder: "you@example.com",
+								Attributes: templ.Attributes{
+									"hx-post":    "/api/validate",
+									"hx-trigger": "blur",
+									"hx-swap":    "outerHTML",
+									"hx-target":  "#field-email-feedback",
+									"hx-vals":    `{"field":"email"}`,
+								},
+							})
+							@formfield.FormField(formfield.Field{
+								ID:          "field-name",
+								Name:        "value",
+								Label:       "Name",
+								Placeholder: "Your name",
+								Attributes: templ.Attributes{
+									"hx-post":    "/api/validate",
+									"hx-trigger": "blur",
+									"hx-swap":    "outerHTML",
+									"hx-target":  "#field-name-feedback",
+									"hx-vals":    `{"field":"name"}`,
+								},
+							})
+						}
+					}
 				}
 			}
-		</div>
-	</section>
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@card.Card() {
+					@card.Header() {
+						@card.Title() {
+							Toast (hx-swap-oob)
+						}
+						@card.Description() {
+							Server responds with out-of-band HTML injected into #toast-container.
+						}
+					}
+					@card.Content() {
+						@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
+							@button.Button(button.Props{Size: button.SizeSm, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"success"}`, "hx-swap": "none"}}) {
+								Success
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantDestructive, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"error"}`, "hx-swap": "none"}}) {
+								Error
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"info"}`, "hx-swap": "none"}}) {
+								Info
+							}
+							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"warning"}`, "hx-swap": "none"}}) {
+								Warning
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Page-layer components: actions, shell, layout, panel, fences
+// ═══════════════════════════════════════
+templ actionSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "actions", Title: "Actions", Description: "One action model rendered as a button or link, with variants, confirmation and HTMX wiring."}) {
+		<p>Four variants of the same action type: primary, secondary, destructive and ghost. Delete asks for confirmation before it does anything.</p>
+		@action.Group([]action.Action{
+			{Label: "Save", Variant: action.VariantPrimary},
+			{Label: "Cancel", Variant: action.VariantSecondary},
+			{Label: "Delete", Variant: action.VariantDestructive, Confirm: &action.Confirm{Message: "Delete the thing?"}},
+			{Label: "Skip", Variant: action.VariantGhost},
+		})
+		<p>A link (jumps to the Shell section) and an HTMX post; the server's reply appears to the right of the buttons.</p>
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@action.Group([]action.Action{
+				{Label: "Open docs", Href: "/#shell"},
+				{Label: "Post to server", HxPost: "/api/click", HxTarget: "#click-result"},
+			})
+			<span id="click-result"></span>
+		}
+	}
+}
+
+templ shellSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "shell", Title: "Shell and page header", Description: "The application frame, breadcrumbs and the page header."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "The frame around this page"}) {
+			<p>The page frame around this showcase is appshell.Shell: the topbar, the More disclosure for overflow navigation, and the theme toggle.</p>
+		}
+		@breadcrumbs.Breadcrumbs(breadcrumbs.Props{Items: []breadcrumbs.Item{
+			{Label: "Home", Href: "/"},
+			{Label: "Projects", Href: "/#shell"},
+			{Label: "Webframe"},
+		}})
+		@pageheader.PageHeader(pageheader.Props{
+			Title:       "Webframe",
+			Subtitle:    "A Go component library for server-rendered apps.",
+			Breadcrumbs: []breadcrumbs.Item{{Label: "Home", Href: "/"}, {Label: "Projects", Href: "/#shell"}, {Label: "Webframe"}},
+			Back:        &pageheader.Link{Label: "All projects", Href: "/"},
+			Status:      &badge.Props{Variant: badge.VariantOutline},
+			StatusText:  "Active",
+			Primary:     &action.Action{Label: "New release", Variant: action.VariantPrimary},
+			Secondary: []action.Action{
+				{Label: "Settings"},
+				{Label: "Export"},
+			},
+		})
+	}
+}
+
+templ layoutAsidePanel() {
+	@panel.Panel(panel.Props{Level: 4, Title: "Aside", Subtitle: "Sticky on wide screens"}) {
+		<p>Supporting content lives here.</p>
+	}
+}
+
+templ layoutLeftPanel() {
+	@panel.Panel(panel.Props{Level: 4, Title: "Left"}) {
+		<p>Navigation or filters.</p>
+	}
+}
+
+templ layoutRightPanel() {
+	@panel.Panel(panel.Props{Level: 4, Title: "Right"}) {
+		<p>Details or help.</p>
+	}
+}
+
+templ layoutSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "layout", Title: "Layout", Description: "Stack, Inline, TwoColumn, ThreeColumn and Divider arrange content without any raw classes."}) {
+		@layout.Stack() {
+			@panel.Panel(panel.Props{Level: 4, Title: "First"}) {
+				<p>Stacked panel one.</p>
+			}
+			@panel.Panel(panel.Props{Level: 4, Title: "Second"}) {
+				<p>Stacked panel two.</p>
+			}
+			@panel.Panel(panel.Props{Level: 4, Title: "Third"}) {
+				<p>Stacked panel three.</p>
+			}
+		}
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@badge.Badge() {
+				One
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Two
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+				Three
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+				Four
+			}
+			@badge.Badge() {
+				Five
+			}
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				Six
+			}
+		}
+		@layout.TwoColumn(layout.TwoColumnProps{Aside: layoutAsidePanel(), Sticky: true}) {
+			<p>The main column takes the remaining width. On narrow screens the aside stacks below it. On wide screens the aside stays pinned while this column scrolls, which suits long documents with a table of contents or a summary beside them.</p>
+		}
+		@layout.ThreeColumn(layout.ThreeColumnProps{Left: layoutLeftPanel(), Right: layoutRightPanel()}) {
+			<p>The center column holds the primary content. On narrow screens the two side columns collapse into disclosures.</p>
+		}
+		<p>Content above the divider.</p>
+		@layout.Divider(layout.DividerProps{Label: "or"})
+		<p>Content below the divider.</p>
+	}
+}
+
+templ panelSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "panel", Title: "Panel", Description: "A titled surface with variants, optional collapsing and a flush mode for tables."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Default", Subtitle: "The standard surface"}) {
+			<p>Default panel body.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Muted", Variant: panel.VariantMuted}) {
+			<p>Muted panel body.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Danger", Variant: panel.VariantDanger}) {
+			<p>Danger panel body.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Collapsible, open", Collapsible: true, Open: true}) {
+			<p>This panel starts open.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Collapsible, closed", Collapsible: true}) {
+			<p>This panel starts closed.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Flush with a table", Flush: true}) {
+			@table.Table() {
+				@table.Header() {
+					@table.Row() {
+						@table.Head() {
+							Name
+						}
+						@table.Head() {
+							Role
+						}
+					}
+				}
+				@table.Body() {
+					@table.Row() {
+						@table.Cell() {
+							Ada
+						}
+						@table.Cell() {
+							Engineer
+						}
+					}
+					@table.Row() {
+						@table.Cell() {
+							Grace
+						}
+						@table.Cell() {
+							Admiral
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+templ customSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "custom", Title: "Custom fences", Description: "The declared escape hatch for markup no component covers."}) {
+		<p>Markup no component covers goes inside a <code>customblock.CustomBlock</code> (or a whole page inside a <code>custompage.CustomPage</code>) with a written Reason. Everything inside a fence is exempt from the lint, and every fence is printed by <code>make check-ui</code> so none can hide.</p>
+		<p>This demo declares no fences: the swatch below is an ordinary component, and <code>make check-ui</code> reports zero custom fences for the whole demo.</p>
+		@swatch.Swatch(swatch.Props{Color: "var(--color-border)", Label: "no fence needed"})
+	}
 }

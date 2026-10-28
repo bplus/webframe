@@ -1,0 +1,203 @@
+package appshell
+
+import (
+	"github.com/bplus/webframe/components/avatar"
+	"github.com/bplus/webframe/components/dropdown"
+	"github.com/bplus/webframe/utils"
+)
+
+// Shell renders the app chrome that goes inside Document's <body>: the
+// navigation (a topbar, or a sidebar when Layout is LayoutSidebar), the
+// right-side controls (live dot, Right, user menu, theme toggle), and
+// <main class="wf-content"> holding a #wf-flash placeholder followed by
+// the children (the page body).
+//
+// Topbar: home link, the first MaxVisible (default 4) items inline, the
+// rest in a <details class="wf-nav-more"> "More" disclosure. Under 768px
+// only the first two items stay inline; items 3..MaxVisible are hidden
+// inline and their phone-only copies in the More list are shown instead
+// (CSS shows exactly one copy of each item at any width). With
+// ThemeToggle, a second toggle is the last entry of the More list and
+// the More disclosure always renders (phone-only when nothing overflows);
+// under 768px CSS hides the topbar-right toggle and shows this one.
+// theme-toggle.js binds every [data-theme-toggle], so both stay in sync.
+//
+// Sidebar: <aside class="wf-sidebar"> with Nav (untitled) then Groups,
+// wrapped in <details class="wf-sidebar-toggle"> whose summary appears
+// only under 768px. Two layers keep it open from 768px up: Alpine sets
+// [open] from a live matchMedia('(min-width: 768px)') listener (the same
+// pattern as layout.ThreeColumn), and CSS forces the panel visible via
+// ::details-content for no-JS browsers that support it.
+//
+// The active item (see isActive) gets class wf-nav-link--active (or
+// wf-sidebar-link--active) and aria-current="page".
+//
+// @boundary LiveBadge and LiveDot poll their HxGet URLs via htmx
+templ Shell(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.CurrentPath == "" {
+		{{ p.CurrentPath = PathFromContext(ctx) }}
+	}
+	if p.Layout == LayoutSidebar {
+		<div
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ utils.TwMerge("wf-shell wf-shell--sidebar", p.Class) }
+			{ p.Attributes... }
+		>
+			<details class="wf-sidebar-toggle" x-data={ sidebarOpenData } :open="open">
+				<summary>Menu</summary>
+				<aside class="wf-sidebar">
+					<a class="wf-sidebar-home" href={ homeHref(p) }>{ p.AppName }</a>
+					if len(p.Nav) > 0 {
+						<div class="wf-sidebar-group">
+							for _, item := range p.Nav {
+								@navLink(item, p.CurrentPath, "wf-sidebar-link", "")
+							}
+						</div>
+					}
+					for _, g := range p.Groups {
+						<div class="wf-sidebar-group">
+							if g.Title != "" {
+								<div class="wf-sidebar-title">{ g.Title }</div>
+							}
+							for _, item := range g.Items {
+								@navLink(item, p.CurrentPath, "wf-sidebar-link", "")
+							}
+						</div>
+					}
+					<div class="wf-sidebar-footer">
+						@rightControls(p)
+					</div>
+				</aside>
+			</details>
+			@content(p) {
+				{ children... }
+			}
+		</div>
+	} else {
+		{{ inline, phoneOnly, overflow := splitNav(p.Nav, maxVisible(p)) }}
+		<div
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ utils.TwMerge("wf-shell", p.Class) }
+			{ p.Attributes... }
+		>
+			<nav class="wf-topbar" aria-label="Primary">
+				<div class="wf-topbar-inner">
+					<div class="wf-topbar-nav">
+						<a class="wf-topbar-home" href={ homeHref(p) }>{ p.AppName }</a>
+						for i, item := range inline {
+							if i >= phoneVisible {
+								@navLink(item, p.CurrentPath, "wf-nav-link", "wf-nav-link--phone-hidden")
+							} else {
+								@navLink(item, p.CurrentPath, "wf-nav-link", "")
+							}
+						}
+						if len(overflow) > 0 || len(phoneOnly) > 0 || p.ThemeToggle {
+							<details
+								if len(overflow) > 0 {
+									class="wf-nav-more"
+								} else {
+									class="wf-nav-more wf-nav-more--phone-only"
+								}
+							>
+								<summary>More</summary>
+								<div class="wf-nav-more-list">
+									for _, item := range phoneOnly {
+										@navLink(item, p.CurrentPath, "wf-nav-link", "wf-nav-link--phone-only")
+									}
+									for _, item := range overflow {
+										@navLink(item, p.CurrentPath, "wf-nav-link", "")
+									}
+									if p.ThemeToggle {
+										<button type="button" data-theme-toggle class="wf-theme-toggle wf-theme-toggle--in-menu">Dark Mode</button>
+									}
+								</div>
+							</details>
+						}
+					</div>
+					<div class="wf-topbar-right">
+						@rightControls(p)
+					</div>
+				</div>
+			</nav>
+			@content(p) {
+				{ children... }
+			}
+		</div>
+	}
+}
+
+templ content(p Props) {
+	<main class={ contentClass(p.Width) }>
+		<div id="wf-flash"></div>
+		{ children... }
+	</main>
+}
+
+templ navLink(item NavItem, path, base, extra string) {
+	<a
+		href={ item.Href }
+		class={ navLinkClass(item, path, base, extra) }
+		{ navLinkAttrs(item, path)... }
+	>
+		if item.Icon != nil {
+			@item.Icon
+		}
+		{ item.Label }
+		if item.Badge != nil {
+			<span hx-get={ item.Badge.HxGet } hx-trigger={ "load, " + everyTrigger(item.Badge.Every) } hx-swap="innerHTML"></span>
+		}
+	</a>
+}
+
+templ rightControls(p Props) {
+	if p.LiveDot != nil {
+		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ everyTrigger(p.LiveDot.Every) } hx-swap="none"></div>
+	}
+	if p.Right != nil {
+		@p.Right
+	}
+	if p.User != nil {
+		@userMenu(*p.User)
+	}
+	if p.ThemeToggle {
+		<button type="button" data-theme-toggle class="wf-theme-toggle">Dark Mode</button>
+	}
+}
+
+templ userMenu(u User) {
+	@dropdown.Dropdown() {
+		@dropdown.Trigger() {
+			<button type="button" class="wf-user-trigger" aria-label={ u.Name }>
+				@avatar.Avatar(avatar.Props{Class: "h-8 w-8"}) {
+					if u.AvatarURL != "" {
+						@avatar.Image(avatar.ImageProps{Src: u.AvatarURL, Alt: u.Name})
+					}
+					@avatar.Fallback() {
+						{ initials(u.Name) }
+					}
+				}
+			</button>
+		}
+		@dropdown.Content(dropdown.ContentProps{Placement: dropdown.PlacementBottomEnd}) {
+			for _, a := range u.Menu {
+				if a.IsLink() {
+					@dropdown.Item(dropdown.ItemProps{Href: a.Href, Disabled: a.Disabled, Attributes: a.Attributes}) {
+						{ a.Label }
+					}
+				} else {
+					@dropdown.Item(dropdown.ItemProps{Disabled: a.Disabled, Attributes: menuItemAttrs(a)}) {
+						{ a.Label }
+					}
+				}
+			}
+		}
+	}
+}

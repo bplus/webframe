@@ -1,0 +1,138 @@
+package panel
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/utils"
+)
+
+// Variant selects the surface treatment. The zero value is the default card look.
+type Variant string
+
+const (
+	VariantDefault Variant = ""
+	VariantMuted   Variant = "muted"
+	VariantDanger  Variant = "danger"
+)
+
+// Props configures a Panel; all fields are optional.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Title, Subtitle string
+	Actions         []action.Action
+	// Collapsible renders <details>/<summary>; Open expands it.
+	Collapsible, Open bool
+	// Flush removes body padding (e.g. for tables).
+	Flush   bool
+	Variant Variant
+	// Level is the heading level of the title: 0 or 3 renders h3, 2 h2,
+	// 4 or more h4. 1 is treated as 2 (the page title is pageheader's h1).
+	Level int
+}
+
+// headingTag clamps level to the h2..h4 range the title may use.
+func headingTag(level int) string {
+	switch {
+	case level >= 4:
+		return "h4"
+	case level == 2 || level == 1:
+		return "h2"
+	default:
+		return "h3"
+	}
+}
+
+func (p Props) hasHeader() bool {
+	return p.Title != "" || p.Subtitle != "" || len(p.Actions) > 0
+}
+
+func surfaceClass(p Props) string {
+	bg := "bg-card"
+	if p.Variant == VariantMuted {
+		bg = "bg-muted"
+	}
+	border := "border-border"
+	if p.Variant == VariantDanger {
+		border = "border-destructive"
+	}
+	return utils.TwMerge("rounded-lg border", border, bg, p.Class)
+}
+
+func bodyClass(p Props) string {
+	if p.Flush {
+		return "p-0"
+	}
+	return "p-4"
+}
+
+templ headerRow(p Props) {
+	<div class="flex flex-wrap items-start justify-between gap-4 px-4 py-3">
+		<div class="min-w-0">
+			if p.Title != "" {
+				switch headingTag(p.Level) {
+					case "h4":
+						<h4 class="text-sm font-semibold leading-none">{ p.Title }</h4>
+					case "h2":
+						<h2 class="text-lg font-semibold leading-none">{ p.Title }</h2>
+					default:
+						<h3 class="text-base font-semibold leading-none">{ p.Title }</h3>
+				}
+			}
+			if p.Subtitle != "" {
+				<p class="text-sm text-muted-foreground">{ p.Subtitle }</p>
+			}
+		</div>
+		if len(p.Actions) > 0 {
+			<div class="min-w-0 max-w-full">
+				@action.Group(p.Actions)
+			</div>
+		}
+	</div>
+}
+
+// Panel renders a titled region whose title is a heading at Level. A panel with no title, subtitle or
+// actions renders no header row.
+templ Panel(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Collapsible {
+		<details
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			if p.Open {
+				open
+			}
+			class={ surfaceClass(p) }
+			{ p.Attributes... }
+		>
+			if p.hasHeader() {
+				<summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+					@headerRow(p)
+				</summary>
+			}
+			<div class={ bodyClass(p) }>
+				{ children... }
+			</div>
+		</details>
+	} else {
+		<section
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ surfaceClass(p) }
+			{ p.Attributes... }
+		>
+			if p.hasHeader() {
+				@headerRow(p)
+			}
+			<div class={ bodyClass(p) }>
+				{ children... }
+			</div>
+		</section>
+	}
+}

@@ -1,6 +1,9 @@
 package nodepill
 
 import (
+	"bytes"
+	"context"
+	"strings"
 	"testing"
 	"unicode/utf8"
 )
@@ -170,5 +173,21 @@ func TestDisplayTitle_NegativeTruncate_LongTitle(t *testing.T) {
 	want := "12345678901234567890123456789…" // default-limit behavior
 	if got != want {
 		t.Errorf("displayTitle() with negative Truncate = %q, want %q", got, want)
+	}
+}
+
+func TestNodePillHrefIsSanitized(t *testing.T) {
+	r := func(href string) string {
+		var buf bytes.Buffer
+		if err := NodePill(Props{Title: "n", Href: href}).Render(context.Background(), &buf); err != nil {
+			t.Fatal(err)
+		}
+		return buf.String()
+	}
+	if out := r("javascript:alert(1)"); !strings.Contains(out, "about:invalid") || strings.Contains(out, "javascript:") {
+		t.Errorf("unsafe href not sanitized: %s", out)
+	}
+	if out := r("https://example.com/a"); !strings.Contains(out, `href="https://example.com/a"`) {
+		t.Errorf("safe href altered: %s", out)
 	}
 }

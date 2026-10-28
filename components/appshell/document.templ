@@ -1,0 +1,78 @@
+package appshell
+
+import "github.com/bplus/webframe/assets"
+
+// DocProps configures Document.
+type DocProps struct {
+	// Title is the page title; the document title is "{Title} — {AppName}",
+	// or just AppName when Title is empty.
+	Title   string
+	AppName string
+	// Lang is the <html lang> value; defaults to "en" when empty.
+	Lang string
+	// Head, when non-nil, renders extra content at the end of <head>.
+	Head templ.Component
+}
+
+func docTitle(p DocProps) string {
+	if p.Title == "" {
+		return p.AppName
+	}
+	return p.Title + " — " + p.AppName
+}
+
+func docLang(p DocProps) string {
+	if p.Lang == "" {
+		return "en"
+	}
+	return p.Lang
+}
+
+// Document renders the complete HTML document frame: doctype, head
+// (charset, viewport, title, stylesheet, flash-free theme init reading
+// localStorage "wf-theme" and defaulting to light, blocking htmx, deferred
+// alpine, optional p.Head), then <body class="wf-theme antialiased"> holding
+// the children, the #toast-container, the Scripts bundle, and an inline
+// htmx:afterSwap listener that calls Alpine.initTree on swapped-in content.
+//
+// @side-effects inline scripts set data-theme on <html> and re-init Alpine
+// after HTMX swaps
+// @boundary browser localStorage ("wf-theme") and static asset URLs
+templ Document(p DocProps) {
+	<!DOCTYPE html>
+	<html lang={ docLang(p) }>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ docTitle(p) }</title>
+			<link rel="stylesheet" href={ assets.URL("/static/css/output.css") }/>
+			<script>
+				// Flash-free theme init
+				(function(){
+					var t;
+					try { t = localStorage.getItem('wf-theme'); } catch(e) {}
+					// light is the product default; dark only applies via stored preference
+					document.documentElement.setAttribute('data-theme', t || 'light');
+				})();
+			</script>
+			<!-- htmx loads blocking so it can fire htmx:afterSwap before any swap
+			     occurs; alpine is deferred since it only needs to be ready before
+			     user interaction. -->
+			<script src="/static/js/htmx.min.js"></script>
+			<script defer src="/static/js/alpine.min.js"></script>
+			if p.Head != nil {
+				@p.Head
+			}
+		</head>
+		<body class="wf-theme antialiased">
+			{ children... }
+			<div id="toast-container" class="wf-toast-container"></div>
+			@Scripts()
+			<script>
+				document.addEventListener('htmx:afterSwap', function(e) {
+					if (window.Alpine) Alpine.initTree(e.detail.elt);
+				});
+			</script>
+		</body>
+	</html>
+}

@@ -1,0 +1,4 @@
+package testdata
+
+templ Broken() {
+	<p>never closed

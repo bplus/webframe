@@ -312,7 +312,7 @@ templ Item(props ...ItemProps) {
 		<a
 			id={ p.ID }
 			if p.Href != "" {
-				href={ templ.SafeURL(p.Href) }
+				href={ p.Href }
 			}
 			if p.Target != "" {
 				target={ p.Target }

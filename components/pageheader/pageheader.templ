@@ -1,0 +1,85 @@
+package pageheader
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/breadcrumbs"
+	"github.com/bplus/webframe/utils"
+)
+
+// Link is a plain label + href pair (used for the back link).
+type Link struct{ Label, Href string }
+
+// Props configures a PageHeader; all fields are optional.
+// badge.Props carries no text, so the status badge label is StatusText;
+// the badge renders only when Status is non-nil.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Title, Subtitle string
+	Breadcrumbs     []breadcrumbs.Item
+	Back            *Link
+	Status          *badge.Props
+	StatusText      string
+	Primary         *action.Action
+	Secondary       []action.Action
+}
+
+func (p Props) hasActions() bool { return p.Primary != nil || len(p.Secondary) > 0 }
+
+func (p Props) allActions() []action.Action {
+	out := make([]action.Action, 0, len(p.Secondary)+1)
+	out = append(out, p.Secondary...)
+	if p.Primary != nil {
+		out = append(out, *p.Primary)
+	}
+	return out
+}
+
+// PageHeader renders the page title bar: breadcrumbs, back link, then a
+// wrapping row with the title (plus status badge) and subtitle on the left
+// and secondary actions followed by the primary action on the right.
+templ PageHeader(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<header
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("mb-6 border-b border-border pb-4", p.Class) }
+		{ p.Attributes... }
+	>
+		if len(p.Breadcrumbs) > 0 {
+			<div class="mb-2">
+				@breadcrumbs.Breadcrumbs(breadcrumbs.Props{Items: p.Breadcrumbs})
+			</div>
+		}
+		if p.Back != nil {
+			<a href={ p.Back.Href } class="mb-2 inline-block text-sm text-muted-foreground hover:text-primary">← { p.Back.Label }</a>
+		}
+		<div class="flex flex-wrap items-start justify-between gap-4">
+			<div class="min-w-0">
+				<h1 class="flex flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight">
+					{ p.Title }
+					if p.Status != nil {
+						@badge.Badge(*p.Status) {
+							{ p.StatusText }
+						}
+					}
+				</h1>
+				if p.Subtitle != "" {
+					<p class="text-muted-foreground">{ p.Subtitle }</p>
+				}
+			</div>
+			if p.hasActions() {
+				<div class="min-w-0 max-w-full">
+					@action.Group(p.allActions())
+				</div>
+			}
+		</div>
+	</header>
+}

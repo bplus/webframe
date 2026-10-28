@@ -67,7 +67,7 @@ func (p Props) displayTitle() string {
 // glance. Zero-value / omitted props render an empty non-link pill with
 // a muted dot; only the first Props is used and extras are silently
 // ignored. Returns a templ.Component rendering an <a> when Href is set
-// (URL passed through templ.SafeURL) or a <span> otherwise; it takes no
+// (the URL is emitted as a plain string so templ sanitizes unsafe schemes) or a <span> otherwise; it takes no
 // children — content comes from Props.
 //
 // @pure
@@ -83,7 +83,7 @@ templ NodePill(props ...Props) {
 	}
 	if p.Href != "" {
 		<a
-			href={ templ.SafeURL(p.Href) }
+			href={ p.Href }
 			if p.ID != "" {
 				id={ p.ID }
 			}

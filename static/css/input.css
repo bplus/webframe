@@ -1,7 +1,10 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 
 @source "../../components/**/*.templ";
 @source "../../demo/**/*.templ";
+
+/* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */
+@source inline("divide-border divide-y font-extrabold grid-cols-2 grid-cols-3 items-end items-stretch lg:grid-cols-5 list-disc list-inside max-w-3xl max-w-5xl max-w-xl mb-10 mb-8 ml-2 mt-6 mt-8 my-6 py-10 py-6 py-8 sm:grid-cols-3 sm:grid-cols-5 sm:grid-cols-6 sm:px-10 space-y-1 space-y-3 space-y-5 space-y-6 space-y-8 text-3xl text-6xl text-red-600 text-xl underline w-40 w-56");
 
 @theme {
   /* ── Primary: Slate Blue ── */
@@ -189,6 +192,8 @@
   border-radius: var(--radius);
   padding: 0.25rem 0.75rem;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s;
 }
 
@@ -196,6 +201,230 @@
   color: var(--color-foreground);
   border-color: var(--color-foreground);
 }
+
+/* ── App shell (appshell.Shell) ── */
+.wf-topbar-nav,
+.wf-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.wf-topbar-right { gap: 0.75rem; white-space: nowrap; flex: none; }
+
+/* The More-list copy of the theme toggle is phone-only. */
+.wf-theme-toggle--in-menu { display: none; }
+
+.wf-topbar-home,
+.wf-sidebar-home {
+  font-weight: 700;
+  color: var(--color-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wf-nav-link--active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Phone-only copies of items 3..MaxVisible live in the More list; they
+   are hidden above 768px, where the inline originals show instead. */
+.wf-nav-link--phone-only,
+.wf-nav-more--phone-only { display: none; }
+
+.wf-nav-more { position: relative; }
+.wf-nav-more > summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  list-style: none;
+  white-space: nowrap;
+}
+.wf-nav-more > summary::-webkit-details-marker { display: none; }
+.wf-nav-more .wf-nav-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 8px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  z-index: 30;
+  min-width: 160px;
+}
+
+.wf-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.wf-user-trigger {
+  display: inline-flex;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+}
+
+/* Sidebar layout */
+.wf-shell--sidebar {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  min-height: 100vh;
+}
+
+.wf-sidebar-toggle > summary { display: none; }
+
+.wf-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  padding: 1.25rem 1rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.wf-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wf-sidebar-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  padding: 0 0.5rem 0.25rem;
+}
+
+.wf-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  text-decoration: none;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.wf-sidebar-link:hover { background: var(--color-muted); }
+
+.wf-sidebar-link--active {
+  background: var(--color-muted);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.wf-sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Above phone width the sidebar <details> is always open. Alpine sets
+   [open] from a matchMedia listener (see Shell); this rule is the no-JS
+   fallback: the summary is hidden and the panel forced visible regardless
+   of [open] where ::details-content is supported. */
+@media (min-width: 768px) {
+  .wf-sidebar-toggle > .wf-sidebar { display: flex; }
+  .wf-sidebar-toggle::details-content {
+    content-visibility: visible;
+    display: contents;
+  }
+}
+
+/* Content region */
+.wf-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  min-width: 0;
+}
+.wf-content--narrow { max-width: 768px; }
+.wf-content--wide { max-width: 1536px; }
+.wf-content--full { max-width: none; }
+
+@media (max-width: 767px) {
+  /* Topbar: home + first two items inline, the rest under More. */
+  .wf-nav-link--phone-hidden { display: none; }
+  .wf-nav-link--phone-only { display: inline; }
+  .wf-nav-more--phone-only { display: block; }
+  .wf-topbar-inner { padding: 0 1rem; }
+  .wf-topbar-nav { gap: 0.875rem; }
+  /* Theme toggle moves into the More list; the topbar copy hides. */
+  .wf-topbar-right .wf-theme-toggle { display: none; }
+  .wf-theme-toggle--in-menu { display: inline-block; align-self: flex-start; }
+
+  /* Sidebar collapses into a disclosure above the content. */
+  .wf-shell--sidebar {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .wf-sidebar-toggle {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .wf-sidebar-toggle > summary {
+    display: block;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+  .wf-sidebar {
+    height: auto;
+    border-right: none;
+  }
+
+  .wf-content { padding: 1rem; }
+}
+
+/* ── Content typography ──
+   Tailwind preflight strips default element styling; app pages cannot add
+   classes, so class-less elements inside .wf-content are styled here. The
+   :not([class]) guard leaves component internals (always classed) alone. */
+:where(.wf-content) p:not([class]) { margin: 0 0 1em; }
+:where(.wf-content) a:not([class]) {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+:where(.wf-content) ul:not([class]) {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0 0 1em;
+}
+:where(.wf-content) ol:not([class]) {
+  list-style: decimal;
+  padding-left: 1.5em;
+  margin: 0 0 1em;
+}
+:where(.wf-content) li:not([class]) { margin: 0.25em 0; }
+:where(.wf-content) code:not([class]) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--color-muted);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+}
+:where(.wf-content) img:not([class]) { max-width: 100%; height: auto; }
+:where(.wf-content) small:not([class]) { color: var(--color-muted-foreground); }
 
 /* ── Section styling ── */
 .wf-section {
@@ -219,61 +448,18 @@
   margin-bottom: 1.5rem;
 }
 
-/* ── Demo grid for component variants ── */
-.wf-demo-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.wf-demo-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted-foreground);
-  min-width: 6rem;
-}
-
-/* ── Color swatch ── */
-.wf-swatch {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.wf-swatch-color {
-  width: 3rem;
-  height: 3rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-}
-
-.wf-swatch-label {
-  font-size: 0.625rem;
-  color: var(--color-muted-foreground);
-}
-
-/* ── Code block ── */
-.wf-code {
-  background: var(--color-surface-900);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  overflow-x: auto;
-  color: var(--color-surface-200);
-}
-
-:root[data-theme="light"] .wf-code {
-  background: var(--color-surface-100);
-  color: var(--color-surface-800);
-}
+/* ── Tabs sizing ── */
+/* Unlayered on purpose: these rules must beat Tailwind's .hidden utility,
+   which lives in @layer utilities, so inactive panels keep their grid cell. */
+[data-wf-tabs-sizing="tallest"],
+[data-wf-tabs-sizing="fixed"] { grid-template-columns: minmax(0, 1fr); }
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-list],
+[data-wf-tabs-sizing="fixed"] > [data-tui-tabs-list] { grid-row: 1; }
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-content] { grid-row: 2; grid-column: 1; display: block; }
+[data-wf-tabs-sizing="tallest"] > [data-tui-tabs-content][data-tui-tabs-state="inactive"] { visibility: hidden; pointer-events: none; }
+[data-wf-tabs-sizing="fixed"] > [data-tui-tabs-content] { grid-row: 2; height: var(--wf-tabs-h, 20rem); overflow: auto; }
+[data-wf-tabs-sizing="fixed"][data-wf-tabs-height="s"] { --wf-tabs-h: 12rem; }
+[data-wf-tabs-sizing="fixed"][data-wf-tabs-height="l"] { --wf-tabs-h: 32rem; }
 
 /* ── HTMX indicator ── */
 .htmx-indicator {
