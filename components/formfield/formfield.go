@@ -69,7 +69,11 @@ func (f Field) ControlID() string {
 }
 
 // FeedbackID is the id of the field's Feedback wrapper, the target to
-// swap when re-validating a single field.
+// swap when re-validating a single field. The swap MUST be
+// hx-swap="outerHTML" targeting "#"+FeedbackID(): innerHTML nests the
+// wrapper, duplicates the id and defeats `empty:hidden`. For TypeSelect
+// the Attributes land on a hidden input that never blurs, so use
+// hx-trigger="change".
 func (f Field) FeedbackID() string {
 	return f.ControlID() + "-feedback"
 }
@@ -104,16 +108,35 @@ func inputType(t Type) input.Type {
 	}
 }
 
-// controlAttrs returns f.Attributes plus `required` when f.Required,
-// without mutating the caller's map.
-func (f Field) controlAttrs() templ.Attributes {
-	if !f.Required {
-		return f.Attributes
+// HelpID is the id of the field's help line (rendered only when Help is
+// set).
+func (f Field) HelpID() string {
+	return f.ControlID() + "-help"
+}
+
+// describedBy is the control's aria-describedby value: the help line
+// (when Help is set) and the Feedback wrapper, which always exists, so
+// the reference never dangles.
+func (f Field) describedBy() string {
+	if f.Help != "" {
+		return f.HelpID() + " " + f.FeedbackID()
 	}
-	out := make(templ.Attributes, len(f.Attributes)+1)
+	return f.FeedbackID()
+}
+
+// controlAttrs returns f.Attributes plus `required` when f.Required and,
+// when describe is true, aria-describedby (unless the caller set one),
+// without mutating the caller's map.
+func (f Field) controlAttrs(describe bool) templ.Attributes {
+	out := make(templ.Attributes, len(f.Attributes)+2)
 	for k, v := range f.Attributes {
 		out[k] = v
 	}
-	out["required"] = true
+	if f.Required {
+		out["required"] = true
+	}
+	if _, set := out["aria-describedby"]; describe && !set {
+		out["aria-describedby"] = f.describedBy()
+	}
 	return out
 }

@@ -144,3 +144,32 @@ func TestFormFieldAttributesReachControl(t *testing.T) {
 	out := render(t, FormField(Field{Name: "email", Label: "Email", Attributes: templ.Attributes{"hx-post": "/v"}}))
 	mustContain(t, out, `hx-post="/v"`)
 }
+
+func TestFormFieldDescribedBy(t *testing.T) {
+	withHelp := render(t, FormField(Field{Name: "email", Label: "Email", Help: "Work address"}))
+	mustContain(t, withHelp, `id="field-email-help"`, `aria-describedby="field-email-help field-email-feedback"`)
+	noHelp := render(t, FormField(Field{Name: "email", Label: "Email"}))
+	mustContain(t, noHelp, `aria-describedby="field-email-feedback"`)
+	if strings.Contains(noHelp, "field-email-help") {
+		t.Errorf("unexpected help id without Help: %s", noHelp)
+	}
+	for _, ty := range []Type{TypeTextarea, TypeSelect, TypeCheckbox, TypeRadio} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Options: []Option{{Label: "A", Value: "a"}}}))
+		mustContain(t, out, `aria-describedby="field-x-feedback"`)
+	}
+}
+
+func TestFeedbackErrorIsAlert(t *testing.T) {
+	mustContain(t, render(t, Feedback("f", "Bad", "")), `role="alert"`)
+	if out := render(t, Feedback("f", "", "")); strings.Contains(out, `role="alert"`) {
+		t.Errorf("unexpected role=alert without error: %s", out)
+	}
+}
+
+func TestFormFieldTextareaDisabledSuccess(t *testing.T) {
+	mustContain(t, render(t, FormField(Field{Name: "bio", Label: "Bio", Type: TypeTextarea})), `<textarea`, `id="field-bio"`)
+	if !regexp.MustCompile(`\sdisabled[\s/>]`).MatchString(render(t, FormField(Field{Name: "e", Label: "E", Disabled: true}))) {
+		t.Errorf("Disabled did not reach the control")
+	}
+	mustContain(t, render(t, FormField(Field{Name: "e", Label: "E", Success: "Looks good"})), "Looks good")
+}

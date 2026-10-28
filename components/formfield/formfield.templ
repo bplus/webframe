@@ -42,7 +42,7 @@ templ FormField(f Field) {
 					@textControl(f)
 			}
 			if f.Help != "" {
-				@form.Description() {
+				@form.Description(form.DescriptionProps{ID: f.HelpID()}) {
 					{ f.Help }
 				}
 			}
@@ -73,7 +73,7 @@ templ textControl(f Field) {
 		Value:       f.Value,
 		Disabled:    f.Disabled,
 		HasError:    f.Error != "",
-		Attributes:  f.controlAttrs(),
+		Attributes:  f.controlAttrs(true),
 	})
 }
 
@@ -85,12 +85,14 @@ templ textareaControl(f Field) {
 		Value:       f.Value,
 		Disabled:    f.Disabled,
 		HasError:    f.Error != "",
-		Attributes:  f.controlAttrs(),
+		Attributes:  f.controlAttrs(true),
 	})
 }
 
 // selectControl: selectbox.Trigger spreads Attributes on its hidden
-// input, which is what carries the value on submit.
+// input, which is what carries the value on submit. aria-describedby
+// therefore lands on that hidden input, not on the trigger button,
+// because Trigger has no way to put caller attributes on the button.
 templ selectControl(f Field) {
 	@selectbox.SelectBox() {
 		@selectbox.Trigger(selectbox.TriggerProps{
@@ -98,7 +100,7 @@ templ selectControl(f Field) {
 			Name:       f.Name,
 			HasError:   f.Error != "",
 			Disabled:   f.Disabled,
-			Attributes: f.controlAttrs(),
+			Attributes: f.controlAttrs(true),
 		}) {
 			@selectbox.Value(selectbox.ValueProps{Placeholder: f.Placeholder})
 		}
@@ -119,7 +121,7 @@ templ checkboxControl(f Field) {
 			Name:       f.Name,
 			Checked:    f.Value != "",
 			Disabled:   f.Disabled,
-			Attributes: f.controlAttrs(),
+			Attributes: f.controlAttrs(true),
 		})
 		@fieldLabel(f, f.ControlID())
 	</div>
@@ -131,6 +133,7 @@ templ radioControl(f Field) {
 		if f.Label != "" {
 			aria-labelledby={ f.ControlID() + "-label" }
 		}
+		aria-describedby={ f.describedBy() }
 		class="flex flex-col gap-2"
 	>
 		for i, opt := range f.Options {
@@ -141,7 +144,7 @@ templ radioControl(f Field) {
 					Value:      opt.Value,
 					Checked:    opt.Value == f.Value,
 					Disabled:   f.Disabled,
-					Attributes: f.controlAttrs(),
+					Attributes: f.controlAttrs(false),
 				})
 				{ opt.Label }
 			</label>
@@ -154,13 +157,24 @@ templ hiddenControl(f Field) {
 }
 
 // Feedback is the per-field message slot and the hx-swap target for
-// single-field validation. errMsg renders as a red message; otherwise a
-// non-empty success renders as a muted line; otherwise the wrapper is
-// empty and hidden by `empty:hidden`, reserving no space.
+// single-field validation. errMsg renders as a red message with
+// role="alert" (a freshly swapped-in alert node is what screen readers
+// announce); otherwise a non-empty success renders as a muted line;
+// otherwise the wrapper is empty and hidden by `empty:hidden`,
+// reserving no space.
+//
+// The HTMX swap MUST be hx-swap="outerHTML" targeting "#"+id
+// (Field.FeedbackID()): innerHTML would nest a second wrapper inside the
+// first, duplicate the id, and defeat `empty:hidden`. For TypeSelect the
+// Field Attributes land on a hidden input that never blurs, so validate
+// it with hx-trigger="change".
 templ Feedback(id, errMsg, success string) {
 	<div id={ id } class="empty:hidden" data-wf-feedback>
 		if errMsg != "" {
-			@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
+			@form.Message(form.MessageProps{
+				Variant:    form.MessageVariantError,
+				Attributes: templ.Attributes{"role": "alert"},
+			}) {
 				{ errMsg }
 			}
 		} else if success != "" {
