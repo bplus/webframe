@@ -93,13 +93,13 @@ func TestStatTile_Href(t *testing.T) {
 
 func TestStatTile_Delta(t *testing.T) {
 	up := render(t, StatTile(Props{Label: "Items", Value: "14", Delta: &Delta{Value: "+12%", Direction: statcomparison.DirectionUp}}))
-	for _, want := range []string{"+12%", "text-green-500", "M8 3v10M8 3l4 4M8 3L4 7"} {
+	for _, want := range []string{"+12%", "text-success", "M8 3v10M8 3l4 4M8 3L4 7"} {
 		if !strings.Contains(up, want) {
 			t.Errorf("up: missing %q in %s", want, up)
 		}
 	}
 	down := render(t, StatTile(Props{Label: "Items", Value: "14", Delta: &Delta{Value: "-3", Direction: statcomparison.DirectionDown}}))
-	for _, want := range []string{"-3", "text-red-500", "M8 13V3M8 13l4-4M8 13L4 9"} {
+	for _, want := range []string{"-3", "text-destructive", "M8 13V3M8 13l4-4M8 13L4 9"} {
 		if !strings.Contains(down, want) {
 			t.Errorf("down: missing %q in %s", want, down)
 		}
@@ -111,7 +111,7 @@ func TestStatTile_Delta(t *testing.T) {
 		}
 	}
 	none := render(t, StatTile(Props{Label: "Items", Value: "14"}))
-	if strings.Contains(none, "text-green-500") || strings.Contains(none, "text-red-500") {
+	if strings.Contains(none, "text-success") || strings.Contains(none, "text-destructive") {
 		t.Errorf("no Delta should render no delta row: %s", none)
 	}
 }

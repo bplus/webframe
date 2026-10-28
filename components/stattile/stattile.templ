@@ -8,8 +8,8 @@ import (
 )
 
 // Delta is the change shown beside the value: preformatted text ("+12%")
-// plus a statcomparison.Direction that picks the arrow and color (up green,
-// down red, flat/zero muted). The tile does no delta math.
+// plus a statcomparison.Direction that picks the arrow and color (up success,
+// down destructive, flat/zero muted). The tile does no delta math.
 type Delta struct {
 	Value     string
 	Direction statcomparison.Direction
@@ -84,9 +84,9 @@ func surfaceClass(p Props) string {
 func deltaColor(d statcomparison.Direction) string {
 	switch d {
 	case statcomparison.DirectionUp:
-		return "text-green-500"
+		return "text-success"
 	case statcomparison.DirectionDown:
-		return "text-red-500"
+		return "text-destructive"
 	default:
 		return "text-muted-foreground"
 	}
