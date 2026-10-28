@@ -517,10 +517,8 @@ templ formsSection() {
 // Dialog
 // ═══════════════════════════════════════
 templ dialogSection() {
-	<section id="dialog" class="wf-section">
-		<h2 class="wf-section-title">Dialog</h2>
-		<p class="wf-section-desc">Modal dialogs with trigger, content, header, footer.</p>
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dialog.Dialog() {
 				@dialog.Trigger() {
 					@button.Button(button.Props{Variant: button.VariantOutline}) {
@@ -565,7 +563,7 @@ templ dialogSection() {
 							Update your profile information below. 
 						}
 					}
-					<div class="space-y-4 py-4">
+					@layout.Stack() {
 						@form.Item() {
 							@form.Label() {
 								Name 
@@ -578,7 +576,7 @@ templ dialogSection() {
 							}
 							@textarea.Textarea(textarea.Props{Placeholder: "Tell us about yourself...", Rows: 3})
 						}
-					</div>
+					}
 					@dialog.Footer() {
 						@dialog.Close() {
 							@button.Button(button.Props{Variant: button.VariantOutline}) {
@@ -591,18 +589,16 @@ templ dialogSection() {
 					}
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Dropdown
 // ═══════════════════════════════════════
 templ dropdownSection() {
-	<section id="dropdown" class="wf-section">
-		<h2 class="wf-section-title">Dropdown Menu</h2>
-		<p class="wf-section-desc">Click-triggered dropdown with items, groups, separators, and sub-menus.</p>
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{ID: "dropdown", Title: "Dropdown Menu", Description: "Click-triggered dropdown with items, groups, separators, and sub-menus."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dropdown.Dropdown() {
 				@dropdown.Trigger() {
 					@button.Button(button.Props{Variant: button.VariantOutline}) {
@@ -646,17 +642,15 @@ templ dropdownSection() {
 					}
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Tabs
 // ═══════════════════════════════════════
 templ tabsSection() {
-	<section id="tabs" class="wf-section">
-		<h2 class="wf-section-title">Tabs</h2>
-		<p class="wf-section-desc">Tab navigation with content panels.</p>
+	@layout.Section(layout.SectionProps{ID: "tabs", Title: "Tabs", Description: "Tab navigation with content panels."}) {
 		@tabs.Tabs() {
 			@tabs.List() {
 				@tabs.Trigger(tabs.TriggerProps{Value: "overview", IsActive: true}) {
@@ -672,14 +666,14 @@ templ tabsSection() {
 			@tabs.Content(tabs.ContentProps{Value: "overview", IsActive: true}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm">This is the overview tab. Content switches without a page reload.</p>
+						<p>This is the overview tab. Content switches without a page reload.</p>
 					}
 				}
 			}
 			@tabs.Content(tabs.ContentProps{Value: "features"}) {
 				@card.Card() {
 					@card.Content() {
-						<ul class="text-sm space-y-1 list-disc list-inside">
+						<ul>
 							<li>Keyboard accessible (arrow keys)</li>
 							<li>JavaScript-driven show/hide</li>
 							<li>Works with HTMX for lazy loading</li>
@@ -690,97 +684,96 @@ templ tabsSection() {
 			@tabs.Content(tabs.ContentProps{Value: "code"}) {
 				@card.Card() {
 					@card.Content() {
-						<pre class="wf-code">
-							{ `@tabs.Tabs() {
-  @tabs.List() {
-    @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }
-  }
-  @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }
-}` }
-						</pre>
+						<code>
+							{ `@tabs.Tabs() {` }
+							<br/>
+							{ `  @tabs.List() {` }
+							<br/>
+							{ `    @tabs.Trigger(tabs.TriggerProps{Value: "tab1", IsActive: true}) { Tab 1 }` }
+							<br/>
+							{ `  }` }
+							<br/>
+							{ `  @tabs.Content(tabs.ContentProps{Value: "tab1"}) { Content }` }
+							<br/>
+							{ `}` }
+						</code>
 					}
 				}
 			}
 		}
-	</section>
+	}
 }
 
 // ═══════════════════════════════════════
 // Selectbox
 // ═══════════════════════════════════════
 templ selectboxSection() {
-	<section id="selectbox" class="wf-section">
-		<h2 class="wf-section-title">Selectbox</h2>
-		<p class="wf-section-desc">Custom select with search, groups, and multi-select.</p>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<div>
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Basic</h3>
-				@selectbox.SelectBox() {
-					@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
-						@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
-					}
-					@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
-						@selectbox.Group() {
-							@selectbox.Label() {
-								Frontend 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
-								React 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
-								Vue 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
-								Svelte 
-							}
-						}
-						@selectbox.Group() {
-							@selectbox.Label() {
-								Backend 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
-								Go 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
-								Python 
-							}
-							@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
-								Rust 
-							}
-						}
-					}
+	@layout.Section(layout.SectionProps{ID: "selectbox", Title: "Selectbox", Description: "Custom select with search, groups, and multi-select."}) {
+		@panel.Panel(panel.Props{Title: "Basic"}) {
+			@selectbox.SelectBox() {
+				@selectbox.Trigger(selectbox.TriggerProps{Name: "framework"}) {
+					@selectbox.Value(selectbox.ValueProps{Placeholder: "Select a framework..."})
 				}
-			</div>
-			<div>
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">With Search</h3>
-				@selectbox.SelectBox() {
-					@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
-						@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
+				@selectbox.Content(selectbox.ContentProps{NoSearch: true}) {
+					@selectbox.Group() {
+						@selectbox.Label() {
+							Frontend 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "react"}) {
+							React 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "vue"}) {
+							Vue 
+						}
+						@selectbox.Item(selectbox.ItemProps{Value: "svelte"}) {
+							Svelte 
+						}
 					}
-					@selectbox.Content() {
+					@selectbox.Group() {
+						@selectbox.Label() {
+							Backend 
+						}
 						@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
 							Go 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
-							Rust 
 						}
 						@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
 							Python 
 						}
-						@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
-							TypeScript 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
-							Java 
-						}
-						@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
-							C# 
+						@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+							Rust 
 						}
 					}
 				}
-			</div>
-		</div>
-	</section>
+			}
+		}
+		@panel.Panel(panel.Props{Title: "With Search"}) {
+			@selectbox.SelectBox() {
+				@selectbox.Trigger(selectbox.TriggerProps{Name: "language"}) {
+					@selectbox.Value(selectbox.ValueProps{Placeholder: "Search languages..."})
+				}
+				@selectbox.Content() {
+					@selectbox.Item(selectbox.ItemProps{Value: "go"}) {
+						Go 
+					}
+					@selectbox.Item(selectbox.ItemProps{Value: "rust"}) {
+						Rust 
+					}
+					@selectbox.Item(selectbox.ItemProps{Value: "python"}) {
+						Python 
+					}
+					@selectbox.Item(selectbox.ItemProps{Value: "typescript"}) {
+						TypeScript 
+					}
+					@selectbox.Item(selectbox.ItemProps{Value: "java"}) {
+						Java 
+					}
+					@selectbox.Item(selectbox.ItemProps{Value: "csharp"}) {
+						C# 
+					}
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
@@ -1291,7 +1284,6 @@ templ htmxSection() {
 // ═══════════════════════════════════════
 // Page-layer components: actions, shell, layout, panel, fences
 // ═══════════════════════════════════════
-
 templ actionSection() {
 	@layout.Section(layout.SectionProps{ID: "actions", Title: "Actions", Description: "One action model rendered as a button or link, with variants, confirmation and HTMX wiring."}) {
 		@action.Group([]action.Action{
