@@ -182,3 +182,19 @@ func TestShell_NavHrefsSanitized(t *testing.T) {
 		}
 	}
 }
+
+// TestShell_SidebarDetailsMatchMedia: the sidebar <details> opens from a
+// live matchMedia listener, not only from the CSS ::details-content rule.
+func TestShell_SidebarDetailsMatchMedia(t *testing.T) {
+	got := renderShell(t, Props{AppName: "A", Layout: LayoutSidebar}, nil)
+	i := strings.Index(got, `<details class="wf-sidebar-toggle"`)
+	if i < 0 {
+		t.Fatalf("no sidebar details in:\n%s", got)
+	}
+	tag := got[i : i+strings.Index(got[i:], ">")+1]
+	for _, want := range []string{`x-data="`, "matchMedia(&#39;(min-width: 768px)&#39;)", "addEventListener(&#39;change&#39;", `:open="open"`} {
+		if !strings.Contains(tag, want) {
+			t.Errorf("sidebar details tag missing %q: %s", want, tag)
+		}
+	}
+}

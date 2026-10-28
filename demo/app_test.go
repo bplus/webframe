@@ -15,6 +15,7 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 	assets.Mount(mux)
 	mux.HandleFunc("GET /{$}", HandleShowcase)
 	mux.HandleFunc("GET /traffic", HandleTraffic)
+	mux.HandleFunc("GET /sidebar", HandleSidebar)
 	srv := httptest.NewServer(App.Middleware(mux))
 	defer srv.Close()
 
@@ -40,6 +41,15 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 			if !strings.Contains(body, want) {
 				t.Errorf("GET %s: body missing %q", path, want)
 			}
+		}
+	}
+	code, body := get("/sidebar")
+	if code != 200 {
+		t.Errorf("GET /sidebar = %d, want 200", code)
+	}
+	for _, want := range []string{"wf-shell--sidebar", `<aside class="wf-sidebar`, "Mine", "Discover", "Trending", "Sidebar — Webframe</title>", `aria-current="page"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("GET /sidebar: body missing %q", want)
 		}
 	}
 	if code, _ := get("/static/css/output.css"); code != 200 {

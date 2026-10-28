@@ -337,8 +337,10 @@
   gap: 0.75rem;
 }
 
-/* Above phone width the sidebar <details> is always open: the summary
-   is hidden and the panel forced visible regardless of [open]. */
+/* Above phone width the sidebar <details> is always open. Alpine sets
+   [open] from a matchMedia listener (see Shell); this rule is the no-JS
+   fallback: the summary is hidden and the panel forced visible regardless
+   of [open] where ::details-content is supported. */
 @media (min-width: 768px) {
   .wf-sidebar-toggle > .wf-sidebar { display: flex; }
   .wf-sidebar-toggle::details-content {

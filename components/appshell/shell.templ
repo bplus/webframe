@@ -24,7 +24,10 @@ import (
 //
 // Sidebar: <aside class="wf-sidebar"> with Nav (untitled) then Groups,
 // wrapped in <details class="wf-sidebar-toggle"> whose summary appears
-// only under 768px; CSS keeps the panel open above that.
+// only under 768px. Two layers keep it open from 768px up: Alpine sets
+// [open] from a live matchMedia('(min-width: 768px)') listener (the same
+// pattern as layout.ThreeColumn), and CSS forces the panel visible via
+// ::details-content for no-JS browsers that support it.
 //
 // The active item (see isActive) gets class wf-nav-link--active (or
 // wf-sidebar-link--active) and aria-current="page".
@@ -46,7 +49,7 @@ templ Shell(props ...Props) {
 			class={ utils.TwMerge("wf-shell wf-shell--sidebar", p.Class) }
 			{ p.Attributes... }
 		>
-			<details class="wf-sidebar-toggle">
+			<details class="wf-sidebar-toggle" x-data={ sidebarOpenData } :open="open">
 				<summary>Menu</summary>
 				<aside class="wf-sidebar">
 					<a class="wf-sidebar-home" href={ homeHref(p) }>{ p.AppName }</a>

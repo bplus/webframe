@@ -189,3 +189,9 @@ func initials(name string) string {
 	}
 	return b.String()
 }
+
+// sidebarOpenData is the Alpine x-data of the sidebar <details>: open
+// follows a live (min-width: 768px) media query, so the sidebar is open on
+// desktop even where ::details-content is unsupported, and collapses into
+// the Menu disclosure under 768px.
+const sidebarOpenData = "{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }"
