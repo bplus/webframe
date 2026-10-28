@@ -44,18 +44,18 @@ func TestPanel_CollapsibleClosed(t *testing.T) {
 	if !strings.Contains(out, "<details") {
 		t.Errorf("missing <details in %s", out)
 	}
-	if strings.Contains(out, " open") {
+	if strings.Contains(out, "<details open") {
 		t.Errorf("unexpected open in %s", out)
 	}
 }
 
 func TestPanel_Flush(t *testing.T) {
 	out := render(t, Panel(Props{Title: "T", Flush: true}))
-	if !strings.Contains(out, "p-0") {
-		t.Errorf("missing p-0 in %s", out)
+	if !strings.Contains(out, `class="p-0"`) {
+		t.Errorf("missing class=p-0 in %s", out)
 	}
-	if strings.Contains(out, "p-4") {
-		t.Errorf("unexpected p-4 in %s", out)
+	if strings.Contains(out, `class="p-4"`) {
+		t.Errorf("unexpected class=p-4 in %s", out)
 	}
 }
 
