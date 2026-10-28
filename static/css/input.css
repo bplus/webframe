@@ -198,6 +198,190 @@
   border-color: var(--color-foreground);
 }
 
+/* ── App shell (appshell.Shell) ── */
+.wf-topbar-nav,
+.wf-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.wf-topbar-right { gap: 0.75rem; }
+
+.wf-topbar-home,
+.wf-sidebar-home {
+  font-weight: 700;
+  color: var(--color-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wf-nav-link--active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Phone-only copies of items 3..MaxVisible live in the More list; they
+   are hidden above 768px, where the inline originals show instead. */
+.wf-nav-link--phone-only,
+.wf-nav-more--phone-only { display: none; }
+
+.wf-nav-more { position: relative; }
+.wf-nav-more > summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  list-style: none;
+}
+.wf-nav-more > summary::-webkit-details-marker { display: none; }
+.wf-nav-more .wf-nav-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 8px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  z-index: 30;
+  min-width: 160px;
+}
+
+.wf-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.wf-user-trigger {
+  display: inline-flex;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+}
+
+/* Sidebar layout */
+.wf-shell--sidebar {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  min-height: 100vh;
+}
+
+.wf-sidebar-toggle > summary { display: none; }
+
+.wf-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  padding: 1.25rem 1rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.wf-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wf-sidebar-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  padding: 0 0.5rem 0.25rem;
+}
+
+.wf-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  text-decoration: none;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.wf-sidebar-link:hover { background: var(--color-muted); }
+
+.wf-sidebar-link--active {
+  background: var(--color-muted);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.wf-sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Above phone width the sidebar <details> is always open: the summary
+   is hidden and the panel forced visible regardless of [open]. */
+@media (min-width: 768px) {
+  .wf-sidebar-toggle > .wf-sidebar { display: flex; }
+  .wf-sidebar-toggle::details-content {
+    content-visibility: visible;
+    display: contents;
+  }
+}
+
+/* Content region */
+.wf-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  min-width: 0;
+}
+.wf-content--narrow { max-width: 768px; }
+.wf-content--wide { max-width: 1536px; }
+.wf-content--full { max-width: none; }
+
+@media (max-width: 767px) {
+  /* Topbar: home + first two items inline, the rest under More. */
+  .wf-nav-link--phone-hidden { display: none; }
+  .wf-nav-link--phone-only { display: inline; }
+  .wf-nav-more--phone-only { display: block; }
+  .wf-topbar-inner { padding: 0 1rem; }
+  .wf-topbar-nav { gap: 0.875rem; }
+
+  /* Sidebar collapses into a disclosure above the content. */
+  .wf-shell--sidebar {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .wf-sidebar-toggle {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .wf-sidebar-toggle > summary {
+    display: block;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+  .wf-sidebar {
+    height: auto;
+    border-right: none;
+  }
+
+  .wf-content { padding: 1rem; }
+}
+
 /* ── Section styling ── */
 .wf-section {
   padding: 2rem 0;

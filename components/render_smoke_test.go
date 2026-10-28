@@ -85,7 +85,7 @@ type componentCase struct {
 }
 
 var componentCases = []componentCase{
-	{name: "appshell", constructor: func() templ.Component { return appshell.Document(appshell.DocProps{}) }},
+	{name: "appshell", constructor: func() templ.Component { return appshell.Shell() }},
 	{name: "areachart", constructor: func() templ.Component { return areachart.AreaChart() }},
 	{name: "aspectratio", constructor: func() templ.Component { return aspectratio.AspectRatio() }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
