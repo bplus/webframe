@@ -1,0 +1,117 @@
+package pagination
+
+import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/utils"
+)
+
+const (
+	// navClass is the root: summary left, controls right, wrapping onto two
+	// rows at phone width.
+	navClass = "flex flex-wrap items-center justify-between gap-2 text-sm"
+	// stepClass styles Previous and Next like an outline sm button; the
+	// disabled span shares it so the row's width never changes between pages.
+	stepClass     = "inline-flex h-8 items-center justify-center rounded-md border bg-background px-3 text-sm font-medium shadow-xs whitespace-nowrap"
+	stepLinkClass = "hover:bg-accent hover:text-accent-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+	stepOffClass  = "opacity-50 text-muted-foreground"
+	// pageClass is one numbered page; the current one is filled.
+	pageClass        = "inline-flex size-8 items-center justify-center rounded-md text-sm font-medium"
+	pageLinkClass    = "hover:bg-accent hover:text-accent-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+	pageCurrentClass = "bg-primary text-primary-foreground"
+)
+
+// Pagination renders the range summary and the page controls for one list.
+//
+// The summary line ("1–25 of 140 items", "0 items") is ALWAYS rendered, even
+// for zero rows or a single page, so the row below a table never appears or
+// disappears between requests. Previous and Next render as links, or as
+// <span aria-disabled="true"> at the first and last page, so the row keeps
+// its width. The numbered page list (window: at most seven entries, 0 as an
+// ellipsis) is hidden below md and the current page is
+// <span aria-current="page">. Every link comes from
+// listquery.Spec.URL(base, listquery.WithPage(n)), so sort, search, filters
+// and a non-default page size carry along, escaped; page 1 is omitted
+// (Previous from page 2 links to the bare base). With HxTarget set, links
+// also carry hx-get, hx-target and hx-push-url="true".
+//
+// Phone width: the nav wraps, summary above, Previous/Next below; the
+// numbered list is hidden (hidden md:flex).
+//
+// Only the first Props is used; a zero Props renders "0" with both steps
+// disabled.
+//
+// @pure
+templ Pagination(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ s := p.state() }}
+	{{ base := p.Base }}
+	if base == "" {
+		{{ base = appshell.PathFromContext(ctx) }}
+	}
+	<nav
+		aria-label="Pagination"
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge(navClass, p.Class) }
+		{ p.Attributes... }
+	>
+		<p class="text-muted-foreground">{ p.summary(s) }</p>
+		<div class="flex items-center gap-1">
+			if s.page > 1 {
+				@step(p, base, s.page-1, "Previous")
+			} else {
+				<span aria-disabled="true" class={ utils.TwMerge(stepClass, stepOffClass) }>Previous</span>
+			}
+			<ol class="hidden md:flex items-center gap-1">
+				for _, n := range window(s.page, s.pages) {
+					<li>
+						if n == 0 {
+							<span aria-hidden="true" class="inline-flex size-8 items-center justify-center text-muted-foreground">…</span>
+						} else if n == s.page {
+							<span aria-current="page" class={ utils.TwMerge(pageClass, pageCurrentClass) }>{ strconv.Itoa(n) }</span>
+						} else {
+							@link(p, base, n, utils.TwMerge(pageClass, pageLinkClass), "")
+						}
+					</li>
+				}
+			</ol>
+			if s.page < s.pages {
+				@step(p, base, s.page+1, "Next")
+			} else {
+				<span aria-disabled="true" class={ utils.TwMerge(stepClass, stepOffClass) }>Next</span>
+			}
+		</div>
+	</nav>
+}
+
+// step is a live Previous/Next link.
+templ step(p Props, base string, n int, label string) {
+	@link(p, base, n, utils.TwMerge(stepClass, stepLinkClass), label)
+}
+
+// link is one page link; label "" shows the page number. templ sanitizes the
+// plain href; with HxTarget set the same URL goes on hx-get.
+templ link(p Props, base string, n int, class string, label string) {
+	{{ url := p.href(base, n) }}
+	<a
+		href={ url }
+		class={ class }
+		if p.HxTarget != "" {
+			hx-get={ url }
+			hx-target={ p.HxTarget }
+			hx-push-url="true"
+		}
+	>
+		if label != "" {
+			{ label }
+		} else {
+			{ strconv.Itoa(n) }
+		}
+	</a>
+}
