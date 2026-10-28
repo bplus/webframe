@@ -141,3 +141,42 @@ func TestTabsFixedPanelsAreFocusable(t *testing.T) {
 		}
 	}
 }
+
+// TestContent_StandaloneFixedSizing pins batch 2 input #14: a Content
+// rendered outside its Tabs root (an HTMX partial addressed by TabsID) cannot
+// read the group's Sizing from ctx, so ContentProps.Sizing carries it; with
+// SizingFixed the panel is focusable and ringed exactly as inside a fixed
+// group, and without it the standalone panel stays as it was.
+func TestContent_StandaloneFixedSizing(t *testing.T) {
+	renderContent := func(p tabs.ContentProps) string {
+		var buf bytes.Buffer
+		if err := tabs.Content(p).Render(context.Background(), &buf); err != nil {
+			t.Fatalf("render: %v", err)
+		}
+		return buf.String()
+	}
+	fixed := renderContent(tabs.ContentProps{Value: "a", IsActive: true, TabsID: "g", Sizing: tabs.SizingFixed})
+	if !strings.Contains(fixed, `tabindex="0"`) {
+		t.Errorf("expected tabindex=0 on standalone fixed panel, got: %s", fixed)
+	}
+	if !strings.Contains(fixed, "focus-visible:ring-[3px]") {
+		t.Errorf("expected focus ring on standalone fixed panel, got: %s", fixed)
+	}
+	if !strings.Contains(fixed, `data-tui-tabs-id="g"`) {
+		t.Errorf("expected TabsID to be honored, got: %s", fixed)
+	}
+	plain := renderContent(tabs.ContentProps{Value: "a", IsActive: true, TabsID: "g"})
+	if strings.Contains(plain, "tabindex") || strings.Contains(plain, "focus-visible:ring") {
+		t.Errorf("unexpected tabindex/ring on standalone panel without Sizing: %s", plain)
+	}
+	// Explicit Sizing wins over the enclosing group's: a fixed panel declared
+	// inside a tallest group is still fixed.
+	var buf bytes.Buffer
+	ctx := templ.WithChildren(context.Background(), tabs.Content(tabs.ContentProps{Value: "a", IsActive: true, Sizing: tabs.SizingFixed}))
+	if err := tabs.Tabs(tabs.Props{}).Render(ctx, &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), `tabindex="0"`) {
+		t.Errorf("expected explicit Sizing to win over ctx, got: %s", buf.String())
+	}
+}

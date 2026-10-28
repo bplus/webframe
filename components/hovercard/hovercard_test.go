@@ -50,3 +50,18 @@ func TestHoverLinkIsSanitized(t *testing.T) {
 		t.Errorf("safe link altered:\n%s", out)
 	}
 }
+
+// TestHover_CardIsScrollableCapped pins batch 2 input #13: the card body is
+// capped to the height popover.min.js reports as available (--wf-pop-max,
+// falling back to 70vh before the script has positioned it) and scrolls
+// inside, so a tall card beside a mid-screen trigger at 390x844 never
+// extends past the viewport.
+func TestHover_CardIsScrollableCapped(t *testing.T) {
+	out := render(t, Props{ID: "x", Title: "T"})
+	if !strings.Contains(out, "overflow-y:auto") {
+		t.Errorf("want inner scroll (overflow-y:auto) on the card shell, got:\n%s", out)
+	}
+	if !strings.Contains(out, "max-height:") || !strings.Contains(out, "var(--wf-pop-max, 70vh)") {
+		t.Errorf("want max-height bound to --wf-pop-max with a 70vh fallback, got:\n%s", out)
+	}
+}

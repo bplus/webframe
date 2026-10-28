@@ -114,3 +114,12 @@ Batch 1 of the page layer vendored no new JavaScript. This heading is the slot f
 
 Batch 1b adds `autocomplete.js`, first-party and unminified, listed under
 Local above. The counts in the Summary predate it.
+
+Batch 2 (input #13, hover card height at phone width) makes one local edit
+to the templUI-shipped `popover.min.js`: the positioning middleware list
+(`offset, flip, shift[, arrow]`) gains Floating UI's `size` step after
+`shift`, whose `apply` writes the available height on the final side to
+the CSS variable `--wf-pop-max` on the floating element (the bundled
+`window.FloatingUIDOM.size` was already present, just unused). Nothing else
+in the file changed; re-installing the component from templUI would drop
+this edit, so re-apply it (grep for `--wf-pop-max`) after any upgrade.

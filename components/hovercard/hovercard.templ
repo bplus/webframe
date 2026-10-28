@@ -51,6 +51,15 @@ type Props struct {
 // sideways placement has no room on either side and the positioning library's
 // flip cannot rescue it, while bottom/top always has a side with room.
 //
+// Phone width (390px): the card never extends past the viewport. When
+// neither side has room for the whole card, flip picks the side with more
+// room, popover.min.js's size step writes that side's available height to
+// --wf-pop-max on the popover element, and the card shell is capped to it
+// with overflow-y auto so the rest scrolls inside the card. Before the
+// script positions the card the cap falls back to 70vh. The shell's 180px
+// min-height still wins when less than that is available (not reachable at
+// 390x844 with the default top/bottom placement).
+//
 // Side effects: none server-side — no RandomID, no context writes;
 // deterministic markup from Props and children.
 //
@@ -79,7 +88,16 @@ templ Hover(props Props) {
 		Exclusive:     true,
 		Class:         "wf-hover-pop",
 	}) {
-		<div class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "") }>
+		// Height cap (batch 2 input #13): popover.min.js runs Floating UI's
+		// size step after flip/shift and writes the height available on the
+		// final side to --wf-pop-max on the popover element; the shell is
+		// capped to that (minus the popover's 1px borders) and scrolls
+		// inside. 70vh is the fallback before the script has positioned
+		// the card; 100vh - 20px (the positioning gutter) is the ceiling.
+		<div
+			class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "") }
+			style="max-height:calc(min(var(--wf-pop-max, 70vh), 100vh - 20px) - 2px);overflow-y:auto"
+		>
 			<div class="wf-hover-copy">
 				if strings.TrimSpace(props.Category) != "" {
 					<div class="wf-hover-kicker">{ props.Category }</div>
