@@ -27,6 +27,21 @@ type Props struct {
 	// Flush removes body padding (e.g. for tables).
 	Flush   bool
 	Variant Variant
+	// Level is the heading level of the title: 0 or 3 renders h3, 2 h2,
+	// 4 or more h4. 1 is treated as 2 (the page title is pageheader's h1).
+	Level int
+}
+
+// headingTag clamps level to the h2..h4 range the title may use.
+func headingTag(level int) string {
+	switch {
+	case level >= 4:
+		return "h4"
+	case level == 2 || level == 1:
+		return "h2"
+	default:
+		return "h3"
+	}
 }
 
 func (p Props) hasHeader() bool {
@@ -56,7 +71,14 @@ templ headerRow(p Props) {
 	<div class="flex flex-wrap items-start justify-between gap-4 px-4 py-3">
 		<div class="min-w-0">
 			if p.Title != "" {
-				<h3 class="text-base font-semibold leading-none">{ p.Title }</h3>
+				switch headingTag(p.Level) {
+					case "h4":
+						<h4 class="text-sm font-semibold leading-none">{ p.Title }</h4>
+					case "h2":
+						<h2 class="text-lg font-semibold leading-none">{ p.Title }</h2>
+					default:
+						<h3 class="text-base font-semibold leading-none">{ p.Title }</h3>
+				}
 			}
 			if p.Subtitle != "" {
 				<p class="text-sm text-muted-foreground">{ p.Subtitle }</p>
@@ -70,7 +92,7 @@ templ headerRow(p Props) {
 	</div>
 }
 
-// Panel renders a titled region. A panel with no title, subtitle or
+// Panel renders a titled region whose title is a heading at Level. A panel with no title, subtitle or
 // actions renders no header row.
 templ Panel(props ...Props) {
 	{{ var p Props }}

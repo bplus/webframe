@@ -97,3 +97,35 @@ func TestDivider_Label(t *testing.T) {
 		t.Errorf("want <hr: %s", buf.String())
 	}
 }
+
+func renderSection(t *testing.T, level int) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := Section(SectionProps{Title: "T", Level: level}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	return buf.String()
+}
+
+func TestSectionLevelDefaultsToH2(t *testing.T) {
+	out := renderSection(t, 0)
+	if !strings.Contains(out, `<h2 class="text-xl font-semibold`) || !strings.Contains(out, "</h2>") {
+		t.Errorf("want h2 text-xl in %s", out)
+	}
+}
+
+func TestSectionLevel3RendersH3(t *testing.T) {
+	out := renderSection(t, 3)
+	if !strings.Contains(out, `<h3 class="text-lg font-semibold`) || !strings.Contains(out, "</h3>") || strings.Contains(out, "<h2") {
+		t.Errorf("want h3 text-lg in %s", out)
+	}
+}
+
+func TestSectionLevelClamps(t *testing.T) {
+	if out := renderSection(t, 9); !strings.Contains(out, `<h4 class="text-base font-semibold`) || !strings.Contains(out, "</h4>") {
+		t.Errorf("level 9 want h4 in %s", out)
+	}
+	if out := renderSection(t, 1); !strings.Contains(out, `<h2 class="text-xl font-semibold`) || strings.Contains(out, "<h1") {
+		t.Errorf("level 1 want h2 in %s", out)
+	}
+}

@@ -13,10 +13,25 @@ type SectionProps struct {
 	Title       string
 	Description string
 	Actions     []action.Action
+	// Level is the heading level of the title: 0 or 2 renders h2, 3 h3,
+	// 4 or more h4. 1 is treated as 2 (the page title is pageheader's h1).
+	Level int
 }
 
-// Section groups content under an optional heading row: an h2 title
-// and description on the left, Actions on the right, then children.
+// headingTag clamps level to the h2..h4 range the title may use.
+func headingTag(level int) string {
+	switch {
+	case level >= 4:
+		return "h4"
+	case level == 3:
+		return "h3"
+	default:
+		return "h2"
+	}
+}
+
+// Section groups content under an optional heading row: a title heading
+// (at Level) and description on the left, Actions on the right, then children.
 //
 // @pure
 templ Section(props ...SectionProps) {
@@ -35,7 +50,14 @@ templ Section(props ...SectionProps) {
 			<div class="flex flex-row flex-wrap items-start justify-between gap-4">
 				<div class="flex min-w-0 flex-col gap-1">
 					if p.Title != "" {
-						<h2 class="text-lg font-semibold text-foreground">{ p.Title }</h2>
+						switch headingTag(p.Level) {
+							case "h4":
+								<h4 class="text-base font-semibold text-foreground">{ p.Title }</h4>
+							case "h3":
+								<h3 class="text-lg font-semibold text-foreground">{ p.Title }</h3>
+							default:
+								<h2 class="text-xl font-semibold text-foreground">{ p.Title }</h2>
+						}
 					}
 					if p.Description != "" {
 						<p class="text-sm text-muted-foreground">{ p.Description }</p>

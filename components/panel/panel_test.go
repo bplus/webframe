@@ -77,3 +77,26 @@ func TestPanel_ActionsWrapperCanShrink(t *testing.T) {
 		t.Errorf("actions wrapper missing min-w-0 max-w-full: %s", out)
 	}
 }
+
+func TestPanelLevelDefaultsToH3(t *testing.T) {
+	out := render(t, Panel(Props{Title: "T"}))
+	if !strings.Contains(out, `<h3 class="text-base font-semibold leading-none">`) {
+		t.Errorf("want default h3 in %s", out)
+	}
+}
+
+func TestPanelLevel2RendersH2(t *testing.T) {
+	out := render(t, Panel(Props{Title: "T", Level: 2}))
+	if !strings.Contains(out, `<h2 class="text-lg font-semibold leading-none">`) || !strings.Contains(out, "</h2>") || strings.Contains(out, "<h3") {
+		t.Errorf("want h2 in %s", out)
+	}
+}
+
+func TestPanelLevelClamps(t *testing.T) {
+	if out := render(t, Panel(Props{Title: "T", Level: 9})); !strings.Contains(out, `<h4 class="text-sm font-semibold leading-none">`) || !strings.Contains(out, "</h4>") {
+		t.Errorf("level 9 want h4 in %s", out)
+	}
+	if out := render(t, Panel(Props{Title: "T", Level: 1})); !strings.Contains(out, "<h2 ") || strings.Contains(out, "<h1") {
+		t.Errorf("level 1 want h2 in %s", out)
+	}
+}
