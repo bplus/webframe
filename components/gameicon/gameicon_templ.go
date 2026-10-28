@@ -14,13 +14,64 @@ package gameicon
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/bplus/webframe/utils"
+
+// Size is the rendered icon size. The zero value is medium.
+type Size string
+
+const (
+	SizeSm Size = "sm" // h-6 w-6
+	SizeMd Size = ""   // h-8 w-8
+	SizeLg Size = "lg" // h-12 w-12
+	SizeXL Size = "xl" // h-16 w-16
+)
+
+// Tone is the icon color, drawn from theme tokens. The zero value is the
+// foreground color.
+type Tone string
+
+const (
+	ToneDefault Tone = ""
+	TonePrimary Tone = "primary"
+	ToneAccent  Tone = "accent"
+	ToneMuted   Tone = "muted"
+)
+
 // Props configures a game icon.
 type Props struct {
 	// Name is the icon ID without the "icon-" prefix (e.g. "broadsword", "armor-vest").
 	Name string
-	// Class is applied to the outer <svg> element. Use for sizing and color.
-	// Example: "w-6 h-6 text-wine-600"
+	Size Size
+	Tone Tone
+	// Class is merged after Size and Tone, so it overrides them. Meant for
+	// use inside webframe components; app code uses Size and Tone.
 	Class string
+}
+
+func sizeClass(s Size) string {
+	switch s {
+	case SizeSm:
+		return "h-6 w-6"
+	case SizeLg:
+		return "h-12 w-12"
+	case SizeXL:
+		return "h-16 w-16"
+	default:
+		return "h-8 w-8"
+	}
+}
+
+func toneClass(t Tone) string {
+	switch t {
+	case TonePrimary:
+		return "text-primary"
+	case ToneAccent:
+		return "text-accent-foreground"
+	case ToneMuted:
+		return "text-muted-foreground"
+	default:
+		return "text-foreground"
+	}
 }
 
 // GameIcon renders an SVG use-reference to the game-icons sprite.
@@ -45,7 +96,7 @@ func GameIcon(props Props) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var2 = []any{props.Class}
+		var templ_7745c5c3_Var2 = []any{utils.TwMerge(sizeClass(props.Size), toneClass(props.Tone), props.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -70,7 +121,7 @@ func GameIcon(props Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs("/static/icons/game-icons.svg#icon-" + props.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/gameicon/gameicon.templ`, Line: 18, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/gameicon/gameicon.templ`, Line: 69, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

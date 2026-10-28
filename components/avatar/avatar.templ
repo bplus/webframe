@@ -12,6 +12,28 @@ type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
+	// Size sets the avatar's diameter; Class is merged after it and wins.
+	Size Size
+}
+
+// Size is the avatar diameter. The zero value is medium.
+type Size string
+
+const (
+	SizeSm Size = "sm" // h-8 w-8
+	SizeMd Size = ""   // h-10 w-10
+	SizeLg Size = "lg" // h-14 w-14
+)
+
+func sizeClass(s Size) string {
+	switch s {
+	case SizeSm:
+		return "h-8 w-8"
+	case SizeLg:
+		return "h-14 w-14"
+	default:
+		return "h-10 w-10"
+	}
 }
 
 // ImageProps configures the Image sub-component. Src is the image URL
@@ -60,7 +82,8 @@ templ Avatar(props ...Props) {
 		}
 		class={
 			utils.TwMerge(
-				"relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+				"relative flex shrink-0 overflow-hidden rounded-full",
+				sizeClass(p.Size),
 				p.Class,
 			),
 		}
