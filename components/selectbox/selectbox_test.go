@@ -63,3 +63,21 @@ func TestTrigger_ButtonAttributesOverrideAriaInvalid(t *testing.T) {
 		t.Errorf("built-in data attributes must survive the merge: %s", out)
 	}
 }
+
+func TestTrigger_AriaInvalidOnlyWhenHasError(t *testing.T) {
+	// The class list carries aria-invalid:* Tailwind variants, so match the
+	// attribute form only.
+	plain := tag(t, render(t, Trigger(TriggerProps{Name: "type"})), "button")
+	if strings.Contains(plain, `aria-invalid="`) {
+		t.Errorf("no aria-invalid attribute expected without HasError: %s", plain)
+	}
+	errored := tag(t, render(t, Trigger(TriggerProps{Name: "type", HasError: true})), "button")
+	if !strings.Contains(errored, `aria-invalid="true"`) {
+		t.Errorf("HasError should emit aria-invalid=\"true\": %s", errored)
+	}
+	// A caller's ButtonAttributes value still wins over HasError.
+	overridden := tag(t, render(t, Trigger(TriggerProps{HasError: true, ButtonAttributes: templ.Attributes{"aria-invalid": "grammar"}})), "button")
+	if !strings.Contains(overridden, `aria-invalid="grammar"`) || strings.Contains(overridden, `aria-invalid="true"`) {
+		t.Errorf("caller aria-invalid should win over HasError: %s", overridden)
+	}
+}
