@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -15,7 +15,7 @@ dev:
 clean:
 	rm -rf bin/
 
-check: check-generate check-vet check-test
+check: check-generate check-vet check-test check-ui
 
 check-generate:
 	@command -v templ >/dev/null 2>&1 || { echo "error: templ not found on PATH; install with: go install github.com/a-h/templ/cmd/templ@latest"; exit 1; }
@@ -29,3 +29,6 @@ check-vet:
 
 check-test:
 	go test ./...
+
+check-ui:
+	go run ./cmd/wflint ./internal/wflint/testdata/clean.templ.txt
