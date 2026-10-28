@@ -26,6 +26,10 @@ type ThreeColumnProps struct {
 	RightWidth AsideWidth
 }
 
+// detailsOpenClass keeps a closed <details> readable from md up without
+// JS by overriding the content-visibility the browser applies to it.
+const detailsOpenClass = "md:[&::details-content]:[content-visibility:visible] md:[&::details-content]:block"
+
 func sideOrderClass(s Side) string {
 	if s == SideLeft {
 		return "md:order-first"
@@ -35,7 +39,7 @@ func sideOrderClass(s Side) string {
 
 func stickyClass(sticky bool) string {
 	if sticky {
-		return "md:sticky md:top-16 self-start"
+		return "md:sticky md:top-16 md:self-start"
 	}
 	return ""
 }
@@ -85,7 +89,7 @@ templ ThreeColumn(props ...ThreeColumnProps) {
 		{ p.Attributes... }
 	>
 		if p.Left != nil {
-			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.LeftWidth)) } x-data="{ open: window.matchMedia('(min-width: 768px)').matches }" :open="open">
+			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.LeftWidth), detailsOpenClass) } x-data="{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }" :open="open">
 				<summary class="md:hidden">Left</summary>
 				@p.Left
 			</details>
@@ -94,7 +98,7 @@ templ ThreeColumn(props ...ThreeColumnProps) {
 			{ children... }
 		</div>
 		if p.Right != nil {
-			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.RightWidth)) } x-data="{ open: window.matchMedia('(min-width: 768px)').matches }" :open="open">
+			<details class={ utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.RightWidth), detailsOpenClass) } x-data="{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }" :open="open">
 				<summary class="md:hidden">Right</summary>
 				@p.Right
 			</details>

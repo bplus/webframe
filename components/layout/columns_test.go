@@ -32,6 +32,12 @@ func TestTwoColumn_SideLeft(t *testing.T) {
 	if !strings.Contains(out, "order-first") {
 		t.Errorf("missing order-first in %s", out)
 	}
+	if strings.Index(out, "ASIDETEXT") < strings.Index(out, "MAINTEXT") {
+		t.Errorf("aside should still follow main in the DOM: %s", out)
+	}
+	if def := renderTwo(t, TwoColumnProps{Aside: templ.Raw("ASIDETEXT")}); strings.Contains(def, "order-first") {
+		t.Errorf("default render has order-first: %s", def)
+	}
 }
 
 func TestTwoColumn_Sticky(t *testing.T) {
@@ -68,6 +74,9 @@ func TestThreeColumn_RendersAllThree(t *testing.T) {
 	l, c, r := strings.Index(out, "LEFTTEXT"), strings.Index(out, "CENTERTEXT"), strings.Index(out, "RIGHTTEXT")
 	if l < 0 || c < 0 || r < 0 || !(l < c && c < r) {
 		t.Errorf("want left<center<right: %s", out)
+	}
+	if !strings.Contains(out, "details-content") {
+		t.Errorf("missing details-content fallback in %s", out)
 	}
 	if n := strings.Count(out, `<summary class="md:hidden"`); n != 2 {
 		t.Errorf("summary count = %d, want 2 in %s", n, out)

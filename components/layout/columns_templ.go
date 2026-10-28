@@ -34,6 +34,10 @@ type ThreeColumnProps struct {
 	RightWidth AsideWidth
 }
 
+// detailsOpenClass keeps a closed <details> readable from md up without
+// JS by overriding the content-visibility the browser applies to it.
+const detailsOpenClass = "md:[&::details-content]:[content-visibility:visible] md:[&::details-content]:block"
+
 func sideOrderClass(s Side) string {
 	if s == SideLeft {
 		return "md:order-first"
@@ -43,7 +47,7 @@ func sideOrderClass(s Side) string {
 
 func stickyClass(sticky bool) string {
 	if sticky {
-		return "md:sticky md:top-16 self-start"
+		return "md:sticky md:top-16 md:self-start"
 	}
 	return ""
 }
@@ -94,7 +98,7 @@ func TwoColumn(props ...TwoColumnProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/columns.templ`, Line: 54, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/columns.templ`, Line: 58, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +229,7 @@ func ThreeColumn(props ...ThreeColumnProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/columns.templ`, Line: 82, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/columns.templ`, Line: 86, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -262,7 +266,7 @@ func ThreeColumn(props ...ThreeColumnProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Left != nil {
-			var templ_7745c5c3_Var11 = []any{utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.LeftWidth))}
+			var templ_7745c5c3_Var11 = []any{utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.LeftWidth), detailsOpenClass)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -280,7 +284,7 @@ func ThreeColumn(props ...ThreeColumnProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" x-data=\"{ open: window.matchMedia('(min-width: 768px)').matches }\" :open=\"open\"><summary class=\"md:hidden\">Left</summary>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" x-data=\"{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }\" :open=\"open\"><summary class=\"md:hidden\">Left</summary>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -306,7 +310,7 @@ func ThreeColumn(props ...ThreeColumnProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Right != nil {
-			var templ_7745c5c3_Var13 = []any{utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.RightWidth))}
+			var templ_7745c5c3_Var13 = []any{utils.TwMerge("wf-col-side shrink-0", asideWidthClass(p.RightWidth), detailsOpenClass)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -324,7 +328,7 @@ func ThreeColumn(props ...ThreeColumnProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" x-data=\"{ open: window.matchMedia('(min-width: 768px)').matches }\" :open=\"open\"><summary class=\"md:hidden\">Right</summary>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" x-data=\"{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }\" :open=\"open\"><summary class=\"md:hidden\">Right</summary>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
