@@ -281,242 +281,236 @@ templ buttonsSection() {
 // Badges
 // ═══════════════════════════════════════
 templ badgesSection() {
-	<section id="badges" class="wf-section">
-		<h2 class="wf-section-title">Badges</h2>
-		<p class="wf-section-desc">Inline label variants.</p>
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{ID: "badges", Title: "Badges", Description: "Inline label variants."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@badge.Badge(badge.Props{}) {
-				Default 
+				Default
 			}
 			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-				Secondary 
+				Secondary
 			}
 			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
-				Destructive 
+				Destructive
 			}
 			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
-				Outline 
+				Outline
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Cards
 // ═══════════════════════════════════════
 templ cardsSection() {
-	<section id="cards" class="wf-section">
-		<h2 class="wf-section-title">Cards</h2>
-		<p class="wf-section-desc">Composable card components: Card, Header, Title, Description, Content, Footer.</p>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Basic card -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Basic Card 
-					}
-					@card.Description() {
-						A simple card with header and content. 
-					}
+	@layout.Section(layout.SectionProps{ID: "cards", Title: "Cards", Description: "Composable card components: Card, Header, Title, Description, Content, Footer."}) {
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Basic Card
 				}
-				@card.Content() {
-					<p class="text-sm">Card body content goes here. This is a versatile container for any grouped content.</p>
+				@card.Description() {
+					A simple card with header and content.
 				}
 			}
-			<!-- Card with footer -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Card with Footer 
+			@card.Content() {
+				<p>Card body content goes here. This is a versatile container for any grouped content.</p>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Card with Footer
+				}
+				@card.Description() {
+					Includes action buttons in the footer.
+				}
+			}
+			@card.Content() {
+				<p>Some content that needs actions below it.</p>
+			}
+			@card.Footer() {
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
+					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
+						Cancel
 					}
-					@card.Description() {
-						Includes action buttons in the footer. 
+					@button.Button(button.Props{Size: button.SizeSm}) {
+						Save
 					}
 				}
-				@card.Content() {
-					<p class="text-sm">Some content that needs actions below it.</p>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Login
 				}
-				@card.Footer() {
-					<div class="flex gap-2">
-						@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm}) {
-							Cancel 
+				@card.Description() {
+					Enter your credentials below.
+				}
+			}
+			@card.Content() {
+				@layout.Stack() {
+					@form.Item() {
+						@label.Label(label.Props{For: "card-login-email"}) {
+							Email
 						}
-						@button.Button(button.Props{Size: button.SizeSm}) {
-							Save 
+						@input.Input(input.Props{ID: "card-login-email", Type: input.TypeEmail, Placeholder: "you@example.com"})
+					}
+					@form.Item() {
+						@label.Label(label.Props{For: "card-login-password"}) {
+							Password
 						}
-					</div>
-				}
-			}
-			<!-- Card as form -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Login 
-					}
-					@card.Description() {
-						Enter your credentials below. 
-					}
-				}
-				@card.Content() {
-					<div class="space-y-4">
-						<div>
-							@label.Label(label.Props{}) {
-								Email 
-							}
-							@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
-						</div>
-						<div>
-							@label.Label(label.Props{}) {
-								Password 
-							}
-							@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
-						</div>
-					</div>
-				}
-				@card.Footer() {
-					@button.Button(button.Props{FullWidth: true}) {
-						Sign In 
+						@input.Input(input.Props{ID: "card-login-password", Type: input.TypePassword, Placeholder: "••••••••"})
 					}
 				}
 			}
-			<!-- Minimal card -->
-			@card.Card() {
-				@card.Content() {
-					<p class="text-sm text-muted-foreground">A card with only content — no header or footer. Good for simple containers.</p>
+			@card.Footer() {
+				@button.Button(button.Props{FullWidth: true}) {
+					Sign In
 				}
 			}
-		</div>
-	</section>
+		}
+		@card.Card() {
+			@card.Content() {
+				<p><small>A card with only content — no header or footer. Good for simple containers.</small></p>
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Form Elements
 // ═══════════════════════════════════════
 templ formsSection() {
-	<section id="forms" class="wf-section">
-		<h2 class="wf-section-title">Form Elements</h2>
-		<p class="wf-section-desc">Input, Textarea, Checkbox, Radio, Label, and Form layout components.</p>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- Text inputs -->
-			<div class="space-y-4">
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Text Inputs</h3>
+	@layout.Section(layout.SectionProps{ID: "forms", Title: "Form Elements", Description: "Input, Textarea, Checkbox, Radio, Label, and Form layout components."}) {
+		@panel.Panel(panel.Props{Title: "Text Inputs"}) {
+			@layout.Stack() {
 				@form.Item() {
 					@form.Label() {
-						Default Input 
+						Default Input
 					}
 					@input.Input(input.Props{Placeholder: "Type something..."})
 					@form.Description() {
-						A standard text input. 
+						A standard text input.
 					}
 				}
 				@form.Item() {
 					@form.Label() {
-						Email 
+						Email
 					}
 					@input.Input(input.Props{Type: input.TypeEmail, Placeholder: "you@example.com"})
 				}
 				@form.Item() {
 					@form.Label() {
-						Password (with toggle) 
+						Password (with toggle)
 					}
 					@input.Input(input.Props{Type: input.TypePassword, Placeholder: "••••••••"})
 				}
 				@form.Item() {
 					@form.Label() {
-						Disabled 
+						Disabled
 					}
 					@input.Input(input.Props{Disabled: true, Placeholder: "Cannot edit"})
 				}
 				@form.Item() {
 					@form.Label() {
-						With Error 
+						With Error
 					}
 					@input.Input(input.Props{HasError: true, Placeholder: "Invalid value"})
 					@form.Message(form.MessageProps{Variant: form.MessageVariantError}) {
-						This field is required 
+						This field is required
 					}
 				}
-			</div>
-			<!-- Textarea + checks -->
-			<div class="space-y-4">
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Textarea</h3>
+			}
+		}
+		@panel.Panel(panel.Props{Title: "Textarea"}) {
+			@layout.Stack() {
 				@form.Item() {
 					@form.Label() {
-						Description 
+						Description
 					}
 					@textarea.Textarea(textarea.Props{Placeholder: "Write a description...", Rows: 3})
 				}
 				@form.Item() {
 					@form.Label() {
-						Auto-resize 
+						Auto-resize
 					}
 					@textarea.Textarea(textarea.Props{Placeholder: "This textarea grows as you type...", Rows: 2, AutoResize: true})
 				}
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Checkbox</h3>
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "terms"})
+			}
+		}
+		@panel.Panel(panel.Props{Title: "Checkbox"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@checkbox.Checkbox(checkbox.Props{ID: "cb-terms", Name: "terms"})
+					@label.Label(label.Props{For: "cb-terms"}) {
 						Accept terms and conditions
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "newsletter", Checked: true})
+					}
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@checkbox.Checkbox(checkbox.Props{ID: "cb-newsletter", Name: "newsletter", Checked: true})
+					@label.Label(label.Props{For: "cb-newsletter"}) {
 						Subscribe to newsletter
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@checkbox.Checkbox(checkbox.Props{Name: "disabled-cb", Disabled: true})
+					}
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@checkbox.Checkbox(checkbox.Props{ID: "cb-disabled", Name: "disabled-cb", Disabled: true})
+					@label.Label(label.Props{For: "cb-disabled"}) {
 						Disabled option
-					</label>
-				</div>
-				<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-6">Radio</h3>
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "free"})
-						Free
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "pro", Checked: true})
-						Pro
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						@radio.Radio(radio.Props{Name: "plan", Value: "enterprise"})
-						Enterprise
-					</label>
-				</div>
-			</div>
-		</div>
-		<!-- Form layout demo -->
-		<div class="mt-8">
-			<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Form Layout (Item + ItemFlex)</h3>
-			@card.Card() {
-				@card.Content() {
-					<div class="space-y-4">
-						@form.ItemFlex() {
-							<div class="flex-1">
-								@form.Label() {
-									Full Name 
-								}
-								@form.Description() {
-									Your display name. 
-								}
-							</div>
-							@input.Input(input.Props{Placeholder: "Jane Smith", Class: "max-w-xs"})
-						}
-						@form.ItemFlex() {
-							<div class="flex-1">
-								@form.Label() {
-									Notifications 
-								}
-								@form.Description() {
-									Receive email notifications. 
-								}
-							</div>
-							@checkbox.Checkbox(checkbox.Props{Name: "notifications"})
-						}
-					</div>
+					}
 				}
 			}
-		</div>
-	</section>
+		}
+		@panel.Panel(panel.Props{Title: "Radio"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@radio.Radio(radio.Props{ID: "plan-free", Name: "plan", Value: "free"})
+					@label.Label(label.Props{For: "plan-free"}) {
+						Free
+					}
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@radio.Radio(radio.Props{ID: "plan-pro", Name: "plan", Value: "pro", Checked: true})
+					@label.Label(label.Props{For: "plan-pro"}) {
+						Pro
+					}
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@radio.Radio(radio.Props{ID: "plan-enterprise", Name: "plan", Value: "enterprise"})
+					@label.Label(label.Props{For: "plan-enterprise"}) {
+						Enterprise
+					}
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Title: "Form Layout (Item + ItemFlex)"}) {
+			@layout.Stack() {
+				@form.ItemFlex() {
+					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+						@form.Label() {
+							Full Name
+						}
+						@form.Description() {
+							Your display name.
+						}
+					}
+					@input.Input(input.Props{Placeholder: "Jane Smith"})
+				}
+				@form.ItemFlex() {
+					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+						@form.Label() {
+							Notifications
+						}
+						@form.Description() {
+							Receive email notifications.
+						}
+					}
+					@checkbox.Checkbox(checkbox.Props{Name: "notifications"})
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
