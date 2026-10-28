@@ -1,6 +1,9 @@
 package emptystate
 
-import "github.com/bplus/webframe/utils"
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/utils"
+)
 
 // Props configures an EmptyState. Icon, Title, and Description are each
 // rendered only when non-empty (Title is "required" by convention, but
@@ -15,12 +18,16 @@ type Props struct {
 	Icon        string // Optional: icon name or emoji to display
 	Title       string // Required: e.g., "No nodes found"
 	Description string // Optional: e.g., "Try adjusting your search filters"
+	// Action, when non-nil, renders as an action.Button inside the mt-4
+	// slot, before any children: the call to action ("Clear filters",
+	// "Create item"). nil renders nothing there.
+	Action *action.Action
 }
 
 // EmptyState renders a centered "nothing here" placeholder for empty
 // lists, empty search results, or unpopulated panels — icon over title
-// over description, with a children slot below for a call-to-action
-// (e.g. a "Create" button). Calling with no arguments renders only the
+// over description, with a slot below for a call-to-action: Props.Action
+// (an action.Button) and then any children. Calling with no arguments renders only the
 // centered container and children slot, since every text section is
 // conditional on being non-empty; only the first Props is used and
 // extras are silently ignored. Returns a templ.Component rendering a
@@ -63,6 +70,9 @@ templ EmptyState(props ...Props) {
 			</p>
 		}
 		<div class="mt-4">
+			if p.Action != nil {
+				@action.Button(*p.Action)
+			}
 			{ children... }
 		</div>
 	</div>

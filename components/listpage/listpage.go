@@ -251,22 +251,41 @@ func (p Props) bulkAction(a action.Action) action.Action {
 }
 
 // empty resolves the Empty default: the caller's props when any field is
-// set; otherwise "No matches" with a hint when filters are active, and the
+// set; otherwise, when filters are active, "No matches" with a hint and a
+// "Clear filters" link whose URL is Spec.URL(base, WithoutFilters()) (no
+// q, no filters; sort and page size kept) as both href and hx-get, targeting
+// the results region with hx-push-url so the address bar resets too; and the
 // zero value (datatable renders "Nothing here yet") when not.
-func (p Props) empty() emptystate.Props {
+func (p Props) empty(base string) emptystate.Props {
 	e := p.Empty
-	if e.Title != "" || e.Description != "" || e.Icon != "" {
+	if e.Title != "" || e.Description != "" || e.Icon != "" || e.Action != nil {
 		return e
 	}
 	if p.Spec.HasFilters() {
+		clear := p.Spec.URL(base, listquery.WithoutFilters())
 		e.Title = "No matches"
 		e.Description = "Nothing matches your filters."
+		// A plain-link action with the hx-* trio as Attributes renders
+		// <a href hx-get hx-target hx-push-url>, the same shape as the sort
+		// and page links (an Hx* field would make action.Button drop the
+		// href and render a <button>).
+		e.Action = &action.Action{
+			Label: "Clear filters",
+			Href:  clear,
+			Attributes: templ.Attributes{
+				"hx-get":      clear,
+				"hx-target":   p.resultsTarget(),
+				"hx-push-url": "true",
+			},
+		}
 	}
 	return e
 }
 
-// tableProps assembles the datatable from the list props.
-func (p Props) tableProps() datatable.Props {
+// tableProps assembles the datatable from the list props for the resolved
+// base path (used only for the empty state's Clear filters link; datatable
+// resolves Base itself for the sort links).
+func (p Props) tableProps(base string) datatable.Props {
 	return datatable.Props{
 		ID:            p.tableID(),
 		Columns:       p.Columns,
@@ -278,7 +297,7 @@ func (p Props) tableProps() datatable.Props {
 		SelectionName: "ids",
 		SelectionForm: p.bulkFormID(),
 		Dense:         p.Dense,
-		Empty:         p.empty(),
+		Empty:         p.empty(base),
 	}
 }
 

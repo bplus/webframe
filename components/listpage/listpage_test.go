@@ -283,7 +283,7 @@ func TestResults_EmptyDistinguishesFilters(t *testing.T) {
 	p.Rows = nil
 	p.Total = 0
 	out = renderResults(t, p)
-	wantAll(t, out, "No matches", "filters", "0 items", "NAMECOL")
+	wantAll(t, out, "No matches", "filters", "0 items", "NAMECOL", "Clear filters")
 	wantNone(t, out, "Nothing here yet")
 
 	// A caller-provided Empty wins in both cases.
@@ -291,6 +291,24 @@ func TestResults_EmptyDistinguishesFilters(t *testing.T) {
 	out = renderResults(t, p)
 	wantAll(t, out, "CUSTOMEMPTY")
 	wantNone(t, out, "No matches")
+}
+
+func TestResults_ClearFiltersLink(t *testing.T) {
+	p := itemProps(t, "sort=name&dir=asc&page=2&per=10&q=blade&status=draft&type=armor")
+	p.Rows = nil
+	p.Total = 0
+	out := renderResults(t, p)
+	// sort/dir/per kept, page reset, q and filters gone; same URL on hx-get.
+	clear := "/items?dir=asc&amp;per=10&amp;sort=name"
+	wantAll(t, out, "Clear filters", `href="`+clear+`"`, `hx-get="`+clear+`"`, `hx-target="#list-results"`, `hx-push-url="true"`)
+	i := strings.Index(out, "Clear filters")
+	link := out[strings.LastIndex(out[:i], "<a"):i]
+	wantNone(t, link, "q=", "status=", "type=", "page=")
+	// Without filters there is no Clear filters action at all.
+	p = itemProps(t, "")
+	p.Rows = nil
+	out = renderResults(t, p)
+	wantNone(t, out, "Clear filters")
 }
 
 // --- Respond ---------------------------------------------------------------

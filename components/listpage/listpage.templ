@@ -76,8 +76,9 @@ templ bulkForm(p Props) {
 // pagination summary line is always present and the table header stays
 // when there are no rows, so only the rows change the region's height.
 templ Results(p Props) {
+	{{ base := p.base(appshell.PathFromContext(ctx)) }}
 	<div id={ p.ResultsID() } class="space-y-3">
-		@datatable.DataTable(p.tableProps())
+		@datatable.DataTable(p.tableProps(base))
 		@pagination.Pagination(p.paginationProps())
 	</div>
 }
