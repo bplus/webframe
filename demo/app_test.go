@@ -15,7 +15,7 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 	assets.Mount(mux)
 	mux.HandleFunc("GET /{$}", HandleShowcase)
 	mux.HandleFunc("GET /traffic", HandleTraffic)
-	mux.HandleFunc("GET /sidebar", HandleSidebar)
+	RegisterItemRoutes(mux)
 	srv := httptest.NewServer(App.Middleware(mux))
 	defer srv.Close()
 
@@ -84,14 +84,20 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 	if code, _ := get("/static/img/placeholder-wide.svg"); code != 200 {
 		t.Errorf("GET /static/img/placeholder-wide.svg = %d, want 200", code)
 	}
-	code, body := get("/sidebar")
+	// The Items app renders through SidebarApp: the sidebar shell with the
+	// sketch's groups, the Items entry active.
+	code, body := get("/items")
 	if code != 200 {
-		t.Errorf("GET /sidebar = %d, want 200", code)
+		t.Errorf("GET /items = %d, want 200", code)
 	}
-	for _, want := range []string{"wf-shell--sidebar", `<aside class="wf-sidebar`, "Mine", "Discover", "Trending", "Sidebar — Webframe</title>", `aria-current="page"`} {
+	for _, want := range []string{"wf-shell--sidebar", `<aside class="wf-sidebar`, "Mine", "Discover", "Trending", "Builds", "Items — Webframe</title>", `aria-current="page"`} {
 		if !strings.Contains(body, want) {
-			t.Errorf("GET /sidebar: body missing %q", want)
+			t.Errorf("GET /items: body missing %q", want)
 		}
+	}
+	// The topbar pages link across to it.
+	if _, body := get("/"); !strings.Contains(body, `href="/items"`) {
+		t.Error("GET /: topbar has no Items link")
 	}
 	if code, _ := get("/static/css/output.css"); code != 200 {
 		t.Errorf("GET /static/css/output.css = %d, want 200", code)
