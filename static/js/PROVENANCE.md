@@ -106,3 +106,7 @@ above were verified against a live-fetched LICENSE file, since this
 investigation ran with no network access; (2) `filterbar.min.js` /
 `slideover.min.js` need that same live check against templui.io's current
 component list before their Source can move out of UNKNOWN.
+
+## Page layer
+
+Batch 1 of the page layer vendored no new JavaScript. This heading is the slot for later batches that do.
