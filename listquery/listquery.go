@@ -45,6 +45,11 @@ type Spec struct {
 	Search   string              // the q parameter
 	Filters  map[string][]string // only keys listed in Options.FilterKeys; empty values dropped
 	prefix   string              // from Options.Prefix; copied into every derived Spec
+	// defaultSize is the effective default page size ParseValues resolved
+	// (Options.DefaultPageSize, 0 → 25, clamped to MaxPageSize). URL omits
+	// per when PageSize equals it. Zero on a hand-built Spec: per is then
+	// written whenever PageSize > 0.
+	defaultSize int
 }
 
 // Options controls Parse. Zero values mean: no default sort, Asc, page size 25,
@@ -104,6 +109,10 @@ func ParseValues(v url.Values, o Options) Spec {
 	if size < 1 {
 		size = defaultPageSize
 	}
+	if size > maxSize {
+		size = maxSize
+	}
+	s.defaultSize = size
 	if n, ok := positiveInt(v.Get(s.Param("per"))); ok {
 		size = n
 	}

@@ -13,10 +13,12 @@ type Override func(*Spec)
 // are query-escaped with net/url and keys are emitted in sorted order, so the
 // same state always yields the same string. Parameters equal to the zero value
 // are omitted to keep URLs short: page 1, an empty search, empty filters, an
-// empty sort (and dir, which means nothing without a sort). The page size is
-// written whenever it is set, because a Spec does not know the caller's
-// default. A base that already carries a query is extended with "&". The
-// receiver is never modified; overrides work on a deep copy.
+// empty sort (and dir, which means nothing without a sort), and a page size
+// equal to the default ParseValues resolved from its Options (a hand-built
+// Spec has no default, so its page size is written whenever it is set). A base
+// that already carries a query is extended with "&". The receiver is never
+// modified; overrides work on a deep copy, and the prefix and default size
+// carry into every derived Spec.
 func (s Spec) URL(base string, overrides ...Override) string {
 	d := s.clone()
 	for _, o := range overrides {
@@ -50,7 +52,7 @@ func (s Spec) values() url.Values {
 	if s.Page > 1 {
 		q.Set(s.Param("page"), strconv.Itoa(s.Page))
 	}
-	if s.PageSize > 0 {
+	if s.PageSize > 0 && s.PageSize != s.defaultSize {
 		q.Set(s.Param("per"), strconv.Itoa(s.PageSize))
 	}
 	if s.Search != "" {

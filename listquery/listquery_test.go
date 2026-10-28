@@ -32,17 +32,17 @@ func TestParse_Defaults(t *testing.T) {
 		{
 			name: "zero options",
 			opts: Options{},
-			want: Spec{Page: 1, PageSize: 25, Dir: Asc},
+			want: Spec{Page: 1, PageSize: 25, Dir: Asc, defaultSize: 25},
 		},
 		{
 			name: "default sort and dir",
 			opts: Options{DefaultSort: "name", DefaultDir: Desc, DefaultPageSize: 10},
-			want: Spec{Sort: "name", Dir: Desc, Page: 1, PageSize: 10},
+			want: Spec{Sort: "name", Dir: Desc, Page: 1, PageSize: 10, defaultSize: 10},
 		},
 		{
 			name: "default page size above max clamps to max",
 			opts: Options{DefaultPageSize: 500, MaxPageSize: 50},
-			want: Spec{Dir: Asc, Page: 1, PageSize: 50},
+			want: Spec{Dir: Asc, Page: 1, PageSize: 50, defaultSize: 50},
 		},
 	}
 	for _, tc := range cases {
@@ -69,32 +69,32 @@ func TestParse_Hostile(t *testing.T) {
 		{
 			name:  "review focus 1",
 			query: "sort=evil&dir=sideways&page=-3&per=100000&q=%3Cb%3E",
-			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 100, Search: "<b>"},
+			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 100, Search: "<b>", defaultSize: 25},
 		},
 		{
 			name:  "non-numeric page and size",
 			query: "page=abc&per=1e9",
-			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25},
+			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25, defaultSize: 25},
 		},
 		{
 			name:  "zero and negative size fall back to default",
 			query: "per=0",
-			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25},
+			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25, defaultSize: 25},
 		},
 		{
 			name:  "huge page parses (Apply clamps later)",
 			query: "page=99999999999999999999",
-			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25},
+			want:  Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25, defaultSize: 25},
 		},
 		{
 			name:  "allowed sort and dir pass",
 			query: "sort=created&dir=desc&page=4&per=50",
-			want:  Spec{Sort: "created", Dir: Desc, Page: 4, PageSize: 50},
+			want:  Spec{Sort: "created", Dir: Desc, Page: 4, PageSize: 50, defaultSize: 25},
 		},
 		{
 			name:  "repeated scalars take the first",
 			query: "sort=created&sort=evil&page=2&page=-1",
-			want:  Spec{Sort: "created", Dir: Asc, Page: 2, PageSize: 25},
+			want:  Spec{Sort: "created", Dir: Asc, Page: 2, PageSize: 25, defaultSize: 25},
 		},
 	}
 	for _, tc := range cases {
@@ -174,18 +174,23 @@ func TestURL_RoundTrip(t *testing.T) {
 			name: "ampersand in search, space in filter",
 			opts: itemOpts,
 			spec: Spec{Sort: "created", Dir: Desc, Page: 3, PageSize: 50, Search: "a&b",
-				Filters: map[string][]string{"status": {"in review", "draft"}, "owner": {"ada"}}},
+				Filters: map[string][]string{"status": {"in review", "draft"}, "owner": {"ada"}}, defaultSize: 25},
 		},
 		{
 			name: "prefixed",
 			opts: func() Options { o := itemOpts; o.Prefix = "items"; return o }(),
 			spec: Spec{Sort: "name", Dir: Asc, Page: 2, PageSize: 25, Search: "x=y?z#w",
-				Filters: map[string][]string{"status": {"a+b", "c%d"}}, prefix: "items"},
+				Filters: map[string][]string{"status": {"a+b", "c%d"}}, prefix: "items", defaultSize: 25},
 		},
 		{
 			name: "defaults only",
 			opts: itemOpts,
-			spec: Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25},
+			spec: Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25, defaultSize: 25},
+		},
+		{
+			name: "non-default size with a custom default",
+			opts: Options{DefaultSort: "name", DefaultPageSize: 10, MaxPageSize: 50},
+			spec: Spec{Sort: "name", Dir: Asc, Page: 2, PageSize: 20, defaultSize: 10},
 		},
 	}
 	for _, tc := range cases {
@@ -234,6 +239,51 @@ func TestURL_OmitsZero(t *testing.T) {
 	s = Spec{Filters: map[string][]string{"status": {""}, "owner": {}}}
 	if u := s.URL("/items"); u != "/items" {
 		t.Errorf("empty filters URL = %q", u)
+	}
+}
+
+func TestURL_OmitsDefaultPer(t *testing.T) {
+	// Parsed at the default size: no per in the URL, with or without page.
+	s := ParseValues(url.Values{}, itemOpts)
+	if u := s.URL("/items"); strings.Contains(u, "per=") {
+		t.Errorf("default-size URL = %q, want no per", u)
+	}
+	if u := s.URL("/items", WithPage(2)); strings.Contains(u, "per=") || !strings.Contains(u, "page=2") {
+		t.Errorf("default-size page URL = %q, want page without per", u)
+	}
+	if s.Values().Has("per") {
+		t.Error("Values() carries per at the default size")
+	}
+	// A custom default is honoured, and the default survives the prefix.
+	opts := Options{DefaultPageSize: 10, MaxPageSize: 50, Prefix: "items"}
+	s = ParseValues(url.Values{}, opts)
+	if u := s.URL("/items", WithSort("x")); strings.Contains(u, "per=") {
+		t.Errorf("custom default URL = %q, want no per", u)
+	}
+	// WithPageSize away from the default writes per; back to it omits per.
+	u := s.URL("/items", WithPageSize(50))
+	if !strings.Contains(u, "items.per=50") {
+		t.Errorf("WithPageSize(50) = %q, want items.per=50", u)
+	}
+	if u := s.URL("/items", WithPageSize(50), WithPageSize(10)); strings.Contains(u, "per=") {
+		t.Errorf("back to default = %q, want no per", u)
+	}
+	// Parsed at a non-default size: per is written and round-trips.
+	s = ParseValues(values(t, "per=50"), itemOpts)
+	u = s.URL("/items")
+	if !strings.Contains(u, "per=50") {
+		t.Errorf("non-default size URL = %q, want per=50", u)
+	}
+	p, err := url.Parse(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ParseValues(p.Query(), itemOpts); !reflect.DeepEqual(got, s) {
+		t.Errorf("round trip = %+v, want %+v", got, s)
+	}
+	// Hand-built Spec has no default: per is written whenever set.
+	if u := (Spec{PageSize: 25}).URL("/items"); u != "/items?per=25" {
+		t.Errorf("hand-built URL = %q, want per=25", u)
 	}
 }
 
