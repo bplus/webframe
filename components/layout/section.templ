@@ -1,0 +1,51 @@
+package layout
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/utils"
+)
+
+// SectionProps configures a Section.
+type SectionProps struct {
+	ID          string
+	Class       string
+	Attributes  templ.Attributes
+	Title       string
+	Description string
+	Actions     []action.Action
+}
+
+// Section groups content under an optional heading row: an h2 title
+// and description on the left, Actions on the right, then children.
+//
+// @pure
+templ Section(props ...SectionProps) {
+	{{ var p SectionProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<section
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("wf-section flex flex-col gap-4", p.Class) }
+		{ p.Attributes... }
+	>
+		if p.Title != "" || p.Description != "" || len(p.Actions) > 0 {
+			<div class="flex flex-row items-start justify-between gap-4">
+				<div class="flex flex-col gap-1">
+					if p.Title != "" {
+						<h2 class="text-lg font-semibold text-foreground">{ p.Title }</h2>
+					}
+					if p.Description != "" {
+						<p class="text-sm text-muted-foreground">{ p.Description }</p>
+					}
+				</div>
+				if len(p.Actions) > 0 {
+					@action.Group(p.Actions)
+				}
+			</div>
+		}
+		{ children... }
+	</section>
+}
