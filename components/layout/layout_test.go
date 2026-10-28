@@ -129,3 +129,42 @@ func TestSectionLevelClamps(t *testing.T) {
 		t.Errorf("level 1 want h2 in %s", out)
 	}
 }
+
+func TestStack_Justify(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Stack(StackProps{Justify: JustifyBetween}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "justify-between") {
+		t.Errorf("missing justify-between in %s", buf.String())
+	}
+	buf.Reset()
+	if err := Stack().Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "justify-start") {
+		t.Errorf("default Stack should pack at the start: %s", buf.String())
+	}
+}
+
+func TestInline_WrapsOnPhoneByDefault(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Inline().Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "max-md:flex-wrap") {
+		t.Errorf("default Inline should wrap below md: %s", out)
+	}
+	if strings.Contains(out, " flex-wrap") || strings.Contains(out, `"flex-wrap`) {
+		t.Errorf("default Inline must not wrap at every width: %s", out)
+	}
+	buf.Reset()
+	if err := Inline(InlineProps{Wrap: true}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	out = buf.String()
+	if !strings.Contains(out, " flex-wrap") && !strings.Contains(out, `"flex-wrap`) {
+		t.Errorf("Wrap: true should wrap at every width: %s", out)
+	}
+}

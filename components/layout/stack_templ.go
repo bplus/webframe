@@ -10,17 +10,23 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// StackProps configures a Stack.
+// StackProps configures a Stack. Justify distributes children along the
+// column; it only has a visible effect when the Stack is taller than its
+// content (a fixed height, or stretched by a flex or grid parent), since a
+// Stack that hugs its content has no free space to distribute.
 type StackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 	Gap        Gap
 	Align      Align
+	Justify    Justify
 }
 
 // InlineProps configures an Inline row. A zero Align centers items
-// vertically.
+// vertically. An Inline always wraps below the md breakpoint (768px) so a
+// row of controls never forces horizontal scroll on a phone; Wrap makes it
+// wrap at every width.
 type InlineProps struct {
 	ID         string
 	Class      string
@@ -38,14 +44,18 @@ func inlineAlign(a Align) string {
 	return alignClass(a)
 }
 
+// wrapClass wraps at every width when w is set and below md otherwise.
 func wrapClass(w bool) string {
 	if w {
 		return "flex-wrap"
 	}
-	return ""
+	return "max-md:flex-wrap"
 }
 
-// Stack lays children out vertically with a uniform gap.
+// Stack lays children out vertically with a uniform gap. Justify spreads
+// children along the column when the Stack has room to spare (see
+// StackProps). On phones it renders unchanged: a column is already the
+// narrow-width layout.
 //
 // @pure
 func Stack(props ...StackProps) templ.Component {
@@ -73,7 +83,7 @@ func Stack(props ...StackProps) templ.Component {
 		if len(props) > 0 {
 			p = props[0]
 		}
-		var templ_7745c5c3_Var2 = []any{utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), p.Class)}
+		var templ_7745c5c3_Var2 = []any{utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), justifyClass(p.Justify), p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -90,7 +100,7 @@ func Stack(props ...StackProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 50, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 60, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -139,7 +149,8 @@ func Stack(props ...StackProps) templ.Component {
 }
 
 // Inline lays children out horizontally with a uniform gap, centered
-// vertically by default.
+// vertically by default. Below md (phone width) the row always wraps;
+// Wrap makes it wrap at every width.
 //
 // @pure
 func Inline(props ...InlineProps) templ.Component {
@@ -192,7 +203,7 @@ func Inline(props ...InlineProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 70, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 81, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
