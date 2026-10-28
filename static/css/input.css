@@ -190,6 +190,8 @@
   border-radius: var(--radius);
   padding: 0.25rem 0.75rem;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s;
 }
 
@@ -207,7 +209,7 @@
   min-width: 0;
 }
 
-.wf-topbar-right { gap: 0.75rem; }
+.wf-topbar-right { gap: 0.75rem; white-space: nowrap; }
 
 .wf-topbar-home,
 .wf-sidebar-home {
@@ -233,6 +235,7 @@
   font-size: 14px;
   color: var(--color-muted-foreground);
   list-style: none;
+  white-space: nowrap;
 }
 .wf-nav-more > summary::-webkit-details-marker { display: none; }
 .wf-nav-more .wf-nav-more-list {
@@ -358,6 +361,10 @@
   .wf-nav-more--phone-only { display: block; }
   .wf-topbar-inner { padding: 0 1rem; }
   .wf-topbar-nav { gap: 0.875rem; }
+  /* Compact theme toggle: theme-toggle.js rewrites the button text, so
+     shrink the label rather than swapping it. */
+  .wf-topbar-right { gap: 0.5rem; }
+  .wf-theme-toggle { font-size: 0.6875rem; padding: 0.125rem 0.375rem; }
 
   /* Sidebar collapses into a disclosure above the content. */
   .wf-shell--sidebar {
