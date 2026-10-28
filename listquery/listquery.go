@@ -60,8 +60,14 @@ type Options struct {
 	DefaultPageSize int      // 0 → 25
 	MaxPageSize     int      // 0 → 100
 	AllowedSorts    []string // unknown sort → DefaultSort (DefaultSort is always allowed)
-	FilterKeys      []string // only these are read into Filters
-	Prefix          string   // "" → bare names; "items" → items.sort, items.page …
+	// FilterKeys lists the filter parameters read into Filters; any other
+	// key is ignored. Filter values are comma-free tokens: a value may
+	// arrive repeated (status=a&status=b, the form URL emits) or
+	// comma-joined (status=a,b, the form filterbar.min.js submits), and
+	// both parse to ["a","b"]. Each token is trimmed of surrounding
+	// spaces; empty tokens are dropped.
+	FilterKeys []string
+	Prefix     string // "" → bare names; "items" → items.sort, items.page …
 }
 
 // Parse reads the list state from r's query string. See ParseValues.
@@ -130,15 +136,18 @@ func ParseValues(v url.Values, o Options) Spec {
 	// Search, verbatim.
 	s.Search = v.Get(s.Param("q"))
 
-	// Filters: listed keys only, empty values dropped.
+	// Filters: listed keys only; each value split on "," into trimmed
+	// tokens, empty tokens dropped.
 	for _, key := range o.FilterKeys {
 		if key == "" {
 			continue
 		}
 		var vals []string
-		for _, val := range v[s.Param(key)] {
-			if val != "" {
-				vals = append(vals, val)
+		for _, raw := range v[s.Param(key)] {
+			for _, val := range strings.Split(raw, ",") {
+				if val = strings.TrimSpace(val); val != "" {
+					vals = append(vals, val)
+				}
 			}
 		}
 		if len(vals) > 0 {

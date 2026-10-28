@@ -479,3 +479,42 @@ func TestApply_NilMatch(t *testing.T) {
 		}
 	}
 }
+
+// TestParse_CommaJoinedFilters: filterbar.min.js submits multi-selected toggle
+// values comma-joined in one parameter; ParseValues accepts that form, the
+// repeated-parameter form Spec.URL emits, and a mix of both, and a two-value
+// filter still round-trips.
+func TestParse_CommaJoinedFilters(t *testing.T) {
+	cases := []struct {
+		raw  string
+		want []string
+	}{
+		{"status=published,draft", []string{"published", "draft"}},
+		{"status=published&status=draft", []string{"published", "draft"}},
+		{"status=a,b&status=c", []string{"a", "b", "c"}},
+		{"status=+a+,,b+&status=", []string{"a", "b"}},
+	}
+	for _, tc := range cases {
+		got := ParseValues(values(t, tc.raw), itemOpts).Filters["status"]
+		if !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("ParseValues(%q).Filters[status] = %v, want %v", tc.raw, got, tc.want)
+		}
+	}
+	if ParseValues(values(t, "status=,,"), itemOpts).HasFilters() {
+		t.Error("HasFilters = true for a value of only commas")
+	}
+
+	spec := Spec{Sort: "name", Dir: Asc, Page: 1, PageSize: 25, defaultSize: 25,
+		Filters: map[string][]string{"status": {"published", "draft"}}}
+	u := spec.URL("/items")
+	if !strings.Contains(u, "status=published&status=draft") {
+		t.Errorf("URL = %q, want repeated status params", u)
+	}
+	parsed, err := url.Parse(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ParseValues(parsed.Query(), itemOpts); !reflect.DeepEqual(got, spec) {
+		t.Errorf("round trip of %q\n got %+v\nwant %+v", u, got, spec)
+	}
+}
