@@ -195,3 +195,27 @@ func TestSlot_SpanClamped(t *testing.T) {
 		})
 	}
 }
+
+func TestDashboardGrid_Flush(t *testing.T) {
+	var buf bytes.Buffer
+	if err := dashboardgrid.Grid(dashboardgrid.Props{Flush: true}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "padding:0px") {
+		t.Errorf("Flush should zero the outer padding, got: %s", buf.String())
+	}
+	buf.Reset()
+	if err := dashboardgrid.Grid(dashboardgrid.Props{Flush: true, PageMargin: 16}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "padding:0px") {
+		t.Errorf("Flush should win over PageMargin, got: %s", buf.String())
+	}
+	buf.Reset()
+	if err := dashboardgrid.Grid().Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), "padding:32px") {
+		t.Errorf("without Flush the default 32px padding stays, got: %s", buf.String())
+	}
+}

@@ -82,3 +82,36 @@ func TestThreeColumn_RendersAllThree(t *testing.T) {
 		t.Errorf("summary count = %d, want 2 in %s", n, out)
 	}
 }
+
+func renderThree(t *testing.T, p ThreeColumnProps) string {
+	t.Helper()
+	var buf bytes.Buffer
+	ctx := templ.WithChildren(context.Background(), templ.Raw("CENTERTEXT"))
+	if err := ThreeColumn(p).Render(ctx, &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	return buf.String()
+}
+
+func TestThreeColumn_Labels(t *testing.T) {
+	out := renderThree(t, ThreeColumnProps{
+		Left: templ.Raw("LEFTTEXT"), Right: templ.Raw("RIGHTTEXT"),
+		LeftLabel: "Nav", RightLabel: "Inspector",
+	})
+	for _, want := range []string{`<summary class="md:hidden">Nav</summary>`, `<summary class="md:hidden">Inspector</summary>`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in %s", want, out)
+		}
+	}
+	for _, bad := range []string{">Left<", ">Right<"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("default label %q leaked when a label was given: %s", bad, out)
+		}
+	}
+	def := renderThree(t, ThreeColumnProps{Left: templ.Raw("L"), Right: templ.Raw("R")})
+	for _, want := range []string{`<summary class="md:hidden">Left</summary>`, `<summary class="md:hidden">Right</summary>`} {
+		if !strings.Contains(def, want) {
+			t.Errorf("missing default %q in %s", want, def)
+		}
+	}
+}

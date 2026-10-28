@@ -1,0 +1,57 @@
+// Package figure provides a captioned media item: one piece of media (an
+// icon, image, chart or swatch) with an optional caption under it. It is
+// the "icon + caption" scaffold app code otherwise repeats by hand.
+package figure
+
+import "github.com/bplus/webframe/utils"
+
+// Align is the horizontal alignment of the media and caption inside the
+// figure. The zero value centers.
+type Align string
+
+const (
+	AlignCenter Align = ""
+	AlignStart  Align = "start"
+)
+
+// Props configures a Figure. Caption renders a <figcaption> under the
+// media; empty renders none. Align defaults to centered.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Caption    string
+	Align      Align
+}
+
+func alignClass(a Align) string {
+	if a == AlignStart {
+		return "items-start"
+	}
+	return "items-center"
+}
+
+// Figure renders its children as a block of media with Caption beneath
+// in muted small text. Media and caption stack vertically, so at phone
+// width nothing collapses: the figure is as wide as its content and
+// wraps inside whatever Inline or grid places it.
+//
+// @pure
+templ Figure(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<figure
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex flex-col gap-1", alignClass(p.Align), p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+		if p.Caption != "" {
+			<figcaption class="text-xs text-muted-foreground">{ p.Caption }</figcaption>
+		}
+	</figure>
+}

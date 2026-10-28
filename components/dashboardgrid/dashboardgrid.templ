@@ -11,13 +11,17 @@ import (
 // [1, 24], so an out-of-range value degrades to the nearest bound instead of
 // emitting broken grid CSS. Gap and PageMargin are only defaulted when
 // exactly 0; negative values pass through into the inline style unchanged.
+// Flush sets the outer padding to 0 regardless of PageMargin, for a grid
+// placed inside a Section, Panel or other container that already insets
+// its content; PageMargin keeps meaning "default 32 when zero".
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Cols       int // grid columns, default 12
-	Gap        int // gap in pixels, default 16
-	PageMargin int // outer padding in pixels, default 32
+	Cols       int  // grid columns, default 12
+	Gap        int  // gap in pixels, default 16
+	PageMargin int  // outer padding in pixels, default 32
+	Flush      bool // outer padding 0, overriding PageMargin
 }
 
 // SlotProps configures one Slot cell inside a Grid. ColSpan 0 defaults to 12
@@ -69,6 +73,9 @@ templ Grid(props ...Props) {
 	}
 	if p.PageMargin == 0 {
 		{{ p.PageMargin = 32 }}
+	}
+	if p.Flush {
+		{{ p.PageMargin = 0 }}
 	}
 	<div
 		if p.ID != "" {
