@@ -51,3 +51,28 @@ func TestAvatar_Size(t *testing.T) {
 		}
 	}
 }
+
+func renderImage(t *testing.T, p ImageProps) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := Image(p).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	return buf.String()
+}
+
+func TestAvatarImage_SrcSanitized(t *testing.T) {
+	out := renderImage(t, ImageProps{Src: "javascript:alert(1)", Alt: "x"})
+	if !strings.Contains(out, `about:invalid`) {
+		t.Errorf("javascript: src must be neutralised to about:invalid: %s", out)
+	}
+	if strings.Contains(out, `javascript:`) {
+		t.Errorf("javascript: leaked into src: %s", out)
+	}
+	if ok := renderImage(t, ImageProps{Src: "/x.png", Alt: "x"}); !strings.Contains(ok, `src="/x.png"`) {
+		t.Errorf("normal src must pass through unchanged: %s", ok)
+	}
+	if empty := renderImage(t, ImageProps{Alt: "x"}); strings.Contains(empty, `src=`) {
+		t.Errorf("empty Src must still omit the attribute: %s", empty)
+	}
+}
