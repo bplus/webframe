@@ -77,3 +77,33 @@ func justifyClass(j Justify) string {
 		return "justify-start"
 	}
 }
+
+// Side is which edge of a TwoColumn the aside sits on. The zero value
+// is right.
+type Side string
+
+const (
+	SideRight Side = ""
+	SideLeft  Side = "left"
+)
+
+// AsideWidth is the width of a side column from the md breakpoint up.
+// The zero value is medium.
+type AsideWidth string
+
+const (
+	AsideM AsideWidth = ""
+	AsideS AsideWidth = "s"
+	AsideL AsideWidth = "l"
+)
+
+func asideWidthClass(w AsideWidth) string {
+	switch w {
+	case AsideS:
+		return "md:w-64"
+	case AsideL:
+		return "md:w-96"
+	default:
+		return "md:w-80"
+	}
+}
