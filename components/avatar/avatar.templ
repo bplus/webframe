@@ -36,7 +36,8 @@ func sizeClass(s Size) string {
 	}
 }
 
-// ImageProps configures the Image sub-component. Src is the image URL
+// ImageProps configures the Image sub-component. Src is the image URL,
+// URL-sanitized so an unsafe scheme such as javascript: renders as about:invalid
 // (the src attribute is omitted entirely when empty); Alt is always
 // emitted, even when empty, for accessibility.
 type ImageProps struct {
@@ -116,7 +117,7 @@ templ Image(props ...ImageProps) {
 			id={ p.ID }
 		}
 		if p.Src != "" {
-			src={ p.Src }
+			src={ templ.URL(p.Src) }
 		}
 		alt={ p.Alt }
 		class={
