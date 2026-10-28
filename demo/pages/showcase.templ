@@ -906,7 +906,7 @@ templ avatarSection() {
 					WF
 				}
 			}
-			@avatar.Avatar() {
+			@avatar.Avatar(avatar.Props{Size: avatar.SizeLg}) {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=12", Alt: "User"})
 				@avatar.Fallback() {
 					LG
@@ -944,18 +944,30 @@ templ separatorSection() {
 templ aspectratioSection() {
 	@layout.Section(layout.SectionProps{ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
 		@panel.Panel(panel.Props{Title: "16:9 (Video)"}) {
-			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
-				<img src="https://picsum.photos/seed/webframe-video/1600/900" alt="Sample 16:9 image"/>
+			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
+					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+						<small>16:9</small>
+					}
+				}
 			}
 		}
 		@panel.Panel(panel.Props{Title: "3:4 (Portrait)"}) {
-			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
-				<img src="https://picsum.photos/seed/webframe-portrait/900/1200" alt="Sample 3:4 image"/>
+			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
+					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+						<small>3:4</small>
+					}
+				}
 			}
 		}
 		@panel.Panel(panel.Props{Title: "1:1 (Square)"}) {
-			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
-				<img src="https://picsum.photos/seed/webframe-square/1000/1000" alt="Sample 1:1 image"/>
+			@panel.Panel(panel.Props{Variant: panel.VariantMuted, Flush: true}) {
+				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
+					@layout.Stack(layout.StackProps{Align: layout.AlignCenter}) {
+						<small>1:1</small>
+					}
+				}
 			}
 		}
 	}
@@ -968,40 +980,40 @@ templ gameiconSection() {
 	@layout.Section(layout.SectionProps{ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "broadsword"})
+				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
 				<small>broadsword</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest"})
+				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Size: gameicon.SizeLg})
 				<small>armor-vest</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant"})
+				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Size: gameicon.SizeLg})
 				<small>gem-pendant</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "ring"})
+				@gameicon.GameIcon(gameicon.Props{Name: "ring", Size: gameicon.SizeLg})
 				<small>ring</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger"})
+				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Size: gameicon.SizeLg})
 				<small>cloak-dagger</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "shield"})
+				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg})
 				<small>shield</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem"})
-				<small>swords-emblem</small>
+				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Size: gameicon.SizeLg, Tone: gameicon.TonePrimary})
+				<small>swords-emblem (primary)</small>
 			}
 			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt"})
-				<small>bottled-bolt</small>
+				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
+				<small>bottled-bolt (accent)</small>
 			}
 		}
 		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
-			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword"})` }</code>
+			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})` }</code>
 		}
 	}
 }
