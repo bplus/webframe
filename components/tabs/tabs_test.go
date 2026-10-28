@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/a-h/templ"
+
 	"github.com/bplus/webframe/components/tabs"
 )
 
@@ -108,6 +110,27 @@ func TestTabsSizingCSSPresent(t *testing.T) {
 	} {
 		if !strings.Contains(string(css), want) {
 			t.Errorf("input.css missing %q", want)
+		}
+	}
+}
+
+func renderTabsWithPanel(t *testing.T, p tabs.Props) string {
+	t.Helper()
+	var buf bytes.Buffer
+	ctx := templ.WithChildren(context.Background(), tabs.Content(tabs.ContentProps{Value: "a", IsActive: true}))
+	if err := tabs.Tabs(p).Render(ctx, &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	return buf.String()
+}
+
+func TestTabsFixedPanelsAreFocusable(t *testing.T) {
+	if html := renderTabsWithPanel(t, tabs.Props{Sizing: tabs.SizingFixed}); !strings.Contains(html, `tabindex="0"`) {
+		t.Errorf("expected fixed panel tabindex=0, got: %s", html)
+	}
+	for _, s := range []tabs.Sizing{tabs.SizingTallest, tabs.SizingFit} {
+		if html := renderTabsWithPanel(t, tabs.Props{Sizing: s}); strings.Contains(html, "tabindex") {
+			t.Errorf("sizing %q: unexpected tabindex in %s", s, html)
 		}
 	}
 }

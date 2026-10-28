@@ -76,7 +76,17 @@ type ContentProps struct {
 // group is as tall as its tallest panel and nothing moves on switch. Content
 // loaded later (e.g. via HTMX into a panel) may change that height once.
 // SizingFixed gives every panel Height and scrolls inside it; SizingFit is
-// the legacy column that grows and shrinks with the active panel. Required nesting: Tabs > { List > Trigger..., Content... };
+// the legacy column that grows and shrinks with the active panel; under
+// SizingFixed each panel gets tabindex="0" so a keyboard-only user can
+// scroll a panel that has nothing focusable in it.
+//
+// Lazy-loaded panels: under SizingTallest and SizingFixed the inactive
+// panels are laid out (visibility-hidden, not display-none), so an
+// hx-trigger="intersect" inside one fires at page load, not when its tab
+// is opened. Use a "revealed" or click trigger, or SizingFit, for tabs
+// whose content should load on first open.
+//
+// Required nesting: Tabs > { List > Trigger..., Content... };
 // also render Script once per page. Only props[0] is used, extras ignored;
 // zero value works. Returns a templ.Component with children inside the
 // wrapper. The active tab is whichever Trigger/Content pair was rendered
@@ -113,6 +123,7 @@ templ Tabs(props ...Props) {
 		{ p.Attributes... }
 	>
 		{{ ctx = context.WithValue(ctx, "tabsId", tabsID) }}
+		{{ ctx = context.WithValue(ctx, sizingKey{}, p.Sizing) }}
 		{ children... }
 	</div>
 }
@@ -196,7 +207,8 @@ templ Trigger(props ...TriggerProps) {
 // its data-tui-tabs-id and data-tui-tabs-value against the clicked Trigger.
 // Only props[0] is used; extras ignored. Value is required: when empty an
 // inline error <span> is rendered. All panels exist in the DOM regardless of
-// IsActive — inactive ones are only CSS-hidden. Returns a templ.Component.
+// IsActive — inactive ones are only CSS-hidden. Inside a SizingFixed Tabs
+// the panel also gets tabindex="0" (it scrolls). Returns a templ.Component.
 //
 // @temporal-coupling: group ID comes from ctx (set by the enclosing Tabs)
 // unless ContentProps.TabsID overrides it.
@@ -227,10 +239,25 @@ templ Content(props ...ContentProps) {
 		data-tui-tabs-id={ tabsID }
 		data-tui-tabs-value={ p.Value }
 		data-tui-tabs-state={ utils.IfElse(p.IsActive, "active", "inactive") }
+		if sizingFromContext(ctx) == SizingFixed {
+			tabindex="0"
+		}
 		{ p.Attributes... }
 	>
 		{ children... }
 	</div>
+}
+
+// sizingKey is the ctx key under which Tabs stores its Sizing for Content.
+type sizingKey struct{}
+
+// sizingFromContext returns the enclosing Tabs' Sizing, or SizingTallest
+// outside a Tabs render.
+//
+// @pure
+func sizingFromContext(ctx context.Context) Sizing {
+	s, _ := ctx.Value(sizingKey{}).(Sizing)
+	return s
 }
 
 // IDFromContext returns the tab group ID that the enclosing Tabs component
