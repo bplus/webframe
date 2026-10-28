@@ -9569,6 +9569,7 @@ func htmxSection() templ.Component {
 									Attributes: templ.Attributes{
 										"hx-post":    "/api/validate",
 										"hx-trigger": "blur",
+										"hx-swap":    "outerHTML",
 										"hx-target":  "#field-email-feedback",
 										"hx-vals":    `{"field":"email"}`,
 									},
@@ -9588,6 +9589,7 @@ func htmxSection() templ.Component {
 									Attributes: templ.Attributes{
 										"hx-post":    "/api/validate",
 										"hx-trigger": "blur",
+										"hx-swap":    "outerHTML",
 										"hx-target":  "#field-name-feedback",
 										"hx-vals":    `{"field":"name"}`,
 									},

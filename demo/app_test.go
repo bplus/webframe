@@ -79,7 +79,7 @@ func TestInteractionFragments(t *testing.T) {
 		{"POST", "/api/validate?field=email&value=nope", []string{`id="field-email-feedback"`, "Enter a valid email address"}, []string{"Looks good"}},
 		{"POST", "/api/validate?field=email&value=a@b.c", []string{`id="field-email-feedback"`}, []string{"Looks good", "<p"}},
 		{"POST", "/api/validate?field=name&value=Bo", []string{`id="field-name-feedback"`}, []string{"Looks good", "<p"}},
-		{"POST", "/api/picked?framework=vue&q=Vue", []string{"framework=vue"}, []string{"nothing picked"}},
+		{"POST", "/api/picked?framework=vue&q=Vue", []string{"framework=vue", "q=Vue"}, []string{"nothing picked"}},
 		{"POST", "/api/picked?q=Vu", []string{"framework=", "nothing picked"}, nil},
 		{"POST", "/api/toast?variant=error", []string{`hx-swap-oob="beforeend:#toast-container"`, "Something went wrong", "x-init="}, nil},
 	} {
