@@ -556,10 +556,10 @@ func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleItemValidate answers one field's blur validation (POST
-// /items/validate[?id=N]). The field is named by the HX-Trigger-Name
-// header htmx sends (inside a <form>, htmx posts every field of the form,
-// not just the one that blurred); without the header, the first declared
-// field present in the form is validated. ?id names the item being edited
+// /items/validate[?id=N]). Field.Validate posts only the blurred field
+// (hx-params), so the first declared field present in the form is the one
+// to validate; the HX-Trigger-Name header htmx also sends is honored first
+// when present. ?id names the item being edited
 // so its own name is not reported as taken. The answer is the field's
 // Feedback slot: a message, or the empty slot when the value is valid.
 //
