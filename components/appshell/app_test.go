@@ -51,7 +51,7 @@ func serveHeaders(t *testing.T, a *App, headers map[string]string) string {
 	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q", ct)
 	}
-	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request" {
+	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target" {
 		t.Errorf("Vary = %q", v)
 	}
 	return rec.Body.String()
@@ -145,5 +145,133 @@ func TestShellProps_CallsUser(t *testing.T) {
 	}
 	if p.CurrentPath != "/movies" || p.AppName != "Demo" {
 		t.Errorf("props = %+v", p)
+	}
+}
+
+// serveParts runs RenderParts through Middleware for one request shape and
+// returns the body. The full body is a page header plus the results part;
+// the parts map names the results region.
+func serveParts(t *testing.T, a *App, headers map[string]string) string {
+	t.Helper()
+	results := pageBody("results rows")
+	full := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if _, err := w.Write([]byte("<h1>Page Header</h1>")); err != nil {
+			return err
+		}
+		return results.Render(ctx, w)
+	})
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := a.RenderParts(w, r, "Movies", full, map[string]templ.Component{"list-results": results})
+		if err != nil {
+			t.Errorf("render: %v", err)
+		}
+	}))
+	req := httptest.NewRequest("GET", "/movies", nil)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
+		t.Errorf("Content-Type = %q", ct)
+	}
+	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target" {
+		t.Errorf("Vary = %q", v)
+	}
+	return rec.Body.String()
+}
+
+func TestRenderParts_TargetedPart(t *testing.T) {
+	for name, target := range map[string]string{"bare": "list-results", "hashed": "#list-results"} {
+		got := serveParts(t, testApp(), map[string]string{"HX-Request": "true", "HX-Target": target})
+		if got != "<p>results rows</p>" {
+			t.Errorf("%s: body = %q, want the part only", name, got)
+		}
+		for _, bad := range []string{"Page Header", "<html", "wf-topbar"} {
+			if strings.Contains(got, bad) {
+				t.Errorf("%s: unexpected %q in:\n%s", name, bad, got)
+			}
+		}
+	}
+}
+
+func TestRenderParts_OtherTargetGetsBody(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"other-target": {"HX-Request": "true", "HX-Target": "something-else"},
+		"no-target":    {"HX-Request": "true"},
+		"empty-target": {"HX-Request": "true", "HX-Target": ""},
+	} {
+		got := serveParts(t, testApp(), headers)
+		for _, want := range []string{"Page Header", "results rows"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("%s: missing %q in:\n%s", name, want, got)
+			}
+		}
+		for _, bad := range []string{"<html", "wf-topbar", "<title>"} {
+			if strings.Contains(got, bad) {
+				t.Errorf("%s: unexpected %q in:\n%s", name, bad, got)
+			}
+		}
+	}
+}
+
+func TestRenderParts_BoostedGetsDocument(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"boosted":         {"HX-Request": "true", "HX-Boosted": "true", "HX-Target": "list-results"},
+		"history-restore": {"HX-Request": "true", "HX-History-Restore-Request": "true", "HX-Target": "list-results"},
+		"plain-get":       {"HX-Target": "list-results"},
+	} {
+		got := serveParts(t, testApp(), headers)
+		if !strings.Contains(strings.ToLower(got), "<!doctype html>") {
+			t.Errorf("%s: missing doctype in:\n%s", name, got)
+		}
+		for _, want := range []string{"<title>Movies — Demo</title>", "wf-topbar", "Page Header", "results rows"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("%s: missing %q in:\n%s", name, want, got)
+			}
+		}
+	}
+}
+
+func TestMust_NoApp(t *testing.T) {
+	a, err := Must(context.Background())
+	if err == nil || a != nil {
+		t.Fatalf("Must on empty ctx = %v, %v; want nil, error", a, err)
+	}
+	if !strings.Contains(err.Error(), "Middleware") {
+		t.Errorf("error %q does not name Middleware", err)
+	}
+}
+
+func TestMust_WithApp(t *testing.T) {
+	a := testApp()
+	var got *App
+	var gotErr error
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got, gotErr = Must(r.Context())
+	}))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/movies", nil))
+	if gotErr != nil || got != a {
+		t.Errorf("Must = %v, %v; want the app, nil", got, gotErr)
+	}
+}
+
+func TestShellProps_Right(t *testing.T) {
+	a := testApp()
+	a.Right = pageBody("right slot")
+	req := httptest.NewRequest("GET", "/movies", nil)
+	p := a.ShellProps(req)
+	if p.Right == nil {
+		t.Fatal("ShellProps did not copy Right")
+	}
+	var buf bytes.Buffer
+	if err := Shell(p).Render(req.Context(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	got := buf.String()
+	i := strings.Index(got, "wf-topbar-right")
+	j := strings.Index(got, "right slot")
+	if i < 0 || j < 0 || j < i {
+		t.Errorf("Right not rendered inside the topbar right group:\n%s", got)
 	}
 }
