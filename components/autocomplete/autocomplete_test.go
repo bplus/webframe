@@ -3,6 +3,7 @@ package autocomplete
 import (
 	"bytes"
 	"context"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -86,4 +87,31 @@ func TestResultsEmpty(t *testing.T) {
 func TestScriptTag(t *testing.T) {
 	out := render(t, Script())
 	mustContain(t, out, "/static/js/autocomplete.js")
+}
+
+// boolAttr matches a bare boolean attribute (not a Tailwind "disabled:" variant).
+func boolAttr(name string) *regexp.Regexp {
+	return regexp.MustCompile(`\s` + name + `[\s/>]`)
+}
+
+func TestAutocompleteRequiredDisabledLabel(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", HxGet: "/api/search", Label: "Framework", Required: true, Disabled: true}))
+	mustContain(t, out, `for="fw"`, `Framework</label>`, `aria-expanded="false"`, `data-wf-ac-input`)
+	for _, name := range []string{"required", "disabled"} {
+		if !boolAttr(name).MatchString(out) {
+			t.Errorf("missing %s attribute in %s", name, out)
+		}
+	}
+}
+
+func TestAutocompleteDefaultsOmitRequiredDisabledLabel(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", HxGet: "/api/search"}))
+	for _, name := range []string{"required", "disabled"} {
+		if boolAttr(name).MatchString(out) {
+			t.Errorf("unexpected %s attribute in %s", name, out)
+		}
+	}
+	if strings.Contains(out, "<label") {
+		t.Errorf("unexpected <label in %s", out)
+	}
 }

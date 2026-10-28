@@ -51,6 +51,7 @@
     inputOf(root).value = label;
     setHidden(root, value);
     close(root);
+    inputOf(root).focus();
     root.dispatchEvent(new CustomEvent('wf:autocomplete:select', {
       bubbles: true, detail: { value: value, label: label }
     }));
@@ -69,13 +70,15 @@
     }
   });
 
-  // 2. Results arrived: show the list with nothing highlighted.
+  // 2. Results arrived: show the list with nothing highlighted, but only
+  // while the user is still in the field (a late response must not reopen
+  // a list they already left or closed).
   document.addEventListener('htmx:afterSwap', function (e) {
     var list = e.detail && e.detail.target;
     if (!list || !list.matches || !list.matches('[data-wf-ac-list]')) return;
     var root = rootOf(list);
-    open(root);
     setActive(root, null);
+    if (root.contains(document.activeElement)) open(root);
   });
 
   // 3. Editing the text invalidates any earlier pick.
@@ -87,6 +90,7 @@
   // 4. Keyboard: arrows move the highlight (wrapping), Enter picks it,
   // Escape closes.
   document.addEventListener('keydown', function (e) {
+    if (e.isComposing) return; // IME composition owns Enter/arrows
     if (!e.target.matches('[data-wf-ac-input]')) return;
     var root = rootOf(e.target);
     var opts = options(root);
@@ -106,6 +110,14 @@
       // preventDefault keeps a type=search box from also clearing its text.
       if (isOpen(root)) { e.preventDefault(); close(root); }
     }
+  });
+
+  // 5. Keep focus in the text box when an option is pressed, so the
+  // focusout handler never closes the list before the click lands and the
+  // user can keep typing after a pick (also covers touch browsers that
+  // would not focus a tabindex=-1 div).
+  document.addEventListener('mousedown', function (e) {
+    if (e.target.closest('[data-wf-ac-option]')) e.preventDefault();
   });
 
   // 5. Click an option to pick it. 7. Click outside any root closes all.
