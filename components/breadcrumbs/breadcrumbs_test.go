@@ -46,3 +46,27 @@ func TestBreadcrumbs_Empty(t *testing.T) {
 		t.Errorf("unexpected link: %s", out)
 	}
 }
+
+func TestBreadcrumbs_WrapsAtNarrowWidth(t *testing.T) {
+	out := render(t, Props{Items: []Item{{Label: "A", Href: "/"}, {Label: "B"}}})
+	if !strings.Contains(out, "flex-wrap") {
+		t.Errorf("missing flex-wrap: %s", out)
+	}
+}
+
+func TestBreadcrumbs_UnsafeHrefSanitized(t *testing.T) {
+	out := render(t, Props{Items: []Item{{Label: "X", Href: "javascript:alert(1)"}, {Label: "Y"}}})
+	if strings.Contains(out, "javascript:alert(1)") {
+		t.Errorf("unsanitized href: %s", out)
+	}
+}
+
+func TestBreadcrumbs_EmptyHrefIsPlainText(t *testing.T) {
+	out := render(t, Props{Items: []Item{{Label: "X"}, {Label: "Y"}}})
+	if strings.Contains(out, "<a") {
+		t.Errorf("unexpected link: %s", out)
+	}
+	if !strings.Contains(out, "<span>X</span>") {
+		t.Errorf("label not plain span: %s", out)
+	}
+}

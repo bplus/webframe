@@ -37,11 +37,15 @@ templ Breadcrumbs(props ...Props) {
 		{ p.Attributes... }
 	>
 		if len(p.Items) > 0 {
-			<ol class="flex items-center gap-1 text-sm text-muted-foreground">
+			<ol class="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
 				for i, it := range p.Items {
 					<li class="flex items-center gap-1">
 						if i < len(p.Items)-1 {
-							<a href={ templ.SafeURL(it.Href) } class="hover:text-primary">{ it.Label }</a>
+							if it.Href != "" {
+								<a href={ it.Href } class="hover:text-primary">{ it.Label }</a>
+							} else {
+								<span>{ it.Label }</span>
+							}
 							<span aria-hidden="true">/</span>
 						} else {
 							<span aria-current="page" class="text-foreground">{ it.Label }</span>
