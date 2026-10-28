@@ -9,11 +9,19 @@ import (
 )
 
 // AllowedElements are the text-level HTML elements app code may use directly.
-var AllowedElements = []string{"p", "a", "span", "strong", "em", "b", "i", "code", "kbd", "br", "ul", "ol", "li", "img", "time", "small", "sup", "sub"}
+// An image is a sized block of content, not a word in a sentence, so <img> is
+// not one: the app declares it through the image component, and webframe
+// decides how it is sized and loaded.
+var AllowedElements = []string{"p", "a", "span", "strong", "em", "b", "i", "code", "kbd", "br", "ul", "ol", "li", "time", "small", "sup", "sub"}
 
 // AllowedAttrs are the attributes app code may set on allowed elements, in
 // addition to any attribute starting with one of allowedAttrPrefixes.
-var AllowedAttrs = []string{"href", "src", "alt", "title", "id", "name", "datetime", "target", "rel"}
+// download is allowed because a link can sit inside a sentence and
+// downloading is behavior, not design. role and tabindex stay forbidden:
+// something focusable with a role is an interactive thing, and interactive
+// things are components. width, height and loading belong to the image
+// component.
+var AllowedAttrs = []string{"href", "src", "alt", "title", "id", "name", "datetime", "target", "rel", "download"}
 
 var allowedAttrPrefixes = []string{"aria-", "data-", "hx-", "x-"}
 
@@ -23,29 +31,35 @@ var classStyleBindings = []string{":class", "x-bind:class", ":style", "x-bind:st
 
 // Hints name the webframe component to use instead of a disallowed element.
 var Hints = map[string]string{
-	"div":      "layout.Stack or layout.Inline",
-	"section":  "layout.Section",
-	"header":   "appshell or pageheader",
-	"nav":      "appshell",
-	"aside":    "layout.TwoColumn",
-	"main":     "appshell",
-	"footer":   "appshell",
-	"table":    "datatable (batch 2) or table",
-	"form":     "formpage (batch 2) or form",
-	"h1":       "pageheader",
-	"h2":       "layout.Section",
-	"h3":       "panel",
-	"h4":       "panel",
-	"h5":       "panel",
-	"h6":       "panel",
-	"hr":       "layout.Divider",
-	"details":  "panel (Collapsible)",
-	"dialog":   "dialog",
-	"button":   "action.Button",
-	"input":    "formfield (batch 2) or input",
-	"select":   "selectbox",
-	"textarea": "textarea",
-	"label":    "label",
+	"div":        "layout.Stack or layout.Inline",
+	"section":    "layout.Section",
+	"header":     "appshell or pageheader",
+	"nav":        "appshell",
+	"aside":      "layout.TwoColumn",
+	"main":       "appshell",
+	"footer":     "appshell",
+	"table":      "datatable",
+	"form":       "form.Form or formpage",
+	"h1":         "pageheader",
+	"h2":         "layout.Section",
+	"h3":         "panel",
+	"h4":         "panel",
+	"h5":         "panel",
+	"h6":         "panel",
+	"hr":         "layout.Divider",
+	"details":    "panel (Collapsible)",
+	"dialog":     "dialog",
+	"button":     "action.Button",
+	"input":      "formfield",
+	"select":     "selectbox",
+	"textarea":   "textarea",
+	"label":      "label",
+	"img":        "image",
+	"figure":     "figure",
+	"figcaption": "figure",
+	"dl":         "descriptionlist",
+	"dt":         "descriptionlist",
+	"dd":         "descriptionlist",
 }
 
 func (w *walker) checkElement(e *parser.Element) {
