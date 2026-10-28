@@ -125,8 +125,15 @@ func renderTabsWithPanel(t *testing.T, p tabs.Props) string {
 }
 
 func TestTabsFixedPanelsAreFocusable(t *testing.T) {
-	if html := renderTabsWithPanel(t, tabs.Props{Sizing: tabs.SizingFixed}); !strings.Contains(html, `tabindex="0"`) {
+	html := renderTabsWithPanel(t, tabs.Props{Sizing: tabs.SizingFixed})
+	if !strings.Contains(html, `tabindex="0"`) {
 		t.Errorf("expected fixed panel tabindex=0, got: %s", html)
+	}
+	if !strings.Contains(html, "focus-visible:ring-[3px]") {
+		t.Errorf("expected focus ring on fixed panel, got: %s", html)
+	}
+	if html := renderTabsWithPanel(t, tabs.Props{}); strings.Contains(html, "focus-visible:ring") {
+		t.Errorf("unexpected focus ring on tallest panel: %s", html)
 	}
 	for _, s := range []tabs.Sizing{tabs.SizingTallest, tabs.SizingFit} {
 		if html := renderTabsWithPanel(t, tabs.Props{Sizing: s}); strings.Contains(html, "tabindex") {
