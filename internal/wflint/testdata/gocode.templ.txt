@@ -1,0 +1,17 @@
+package testdata
+
+import "github.com/a-h/templ"
+
+var unsafe = templ.Raw("<i>top</i>")
+
+templ GoCode(s string) {
+	@card.Card(card.Props{Class: "p-2"})
+	@button.Button(button.Props{Attributes: templ.Attributes{"style": "x"}})
+	{ templ.Raw(s) }
+	<p :class="x">a</p>
+	<p x-bind:style="y">b</p>
+	<p x-show="open">c</p>
+	@templ.Raw(s)
+	{{ h := templ.FromGoHTML(nil, s) }}
+	@button.Button(button.Props{Attributes: templ.Attributes{"hx-get": "/x"}})
+}

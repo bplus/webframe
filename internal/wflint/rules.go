@@ -17,6 +17,10 @@ var AllowedAttrs = []string{"href", "src", "alt", "title", "id", "name", "dateti
 
 var allowedAttrPrefixes = []string{"aria-", "data-", "hx-", "x-"}
 
+// classStyleBindings are the Alpine attributes that set class or style; they
+// are forbidden even though x-* is otherwise allowed.
+var classStyleBindings = []string{":class", "x-bind:class", ":style", "x-bind:style"}
+
 // Hints name the webframe component to use instead of a disallowed element.
 var Hints = map[string]string{
 	"div":      "layout.Stack or layout.Inline",
@@ -122,7 +126,13 @@ func (w *walker) checkKey(elem parser.Range, k parser.AttributeKey, onlyClassSty
 		w.report(r, "attr-class", "class is not allowed in app code; styling belongs inside webframe components", "")
 	case name == "style":
 		w.report(r, "attr-style", "style is not allowed in app code; styling belongs inside webframe components", "")
-	case onlyClassStyle, slices.Contains(AllowedAttrs, name), hasAllowedPrefix(name):
+	case onlyClassStyle:
+	case slices.Contains(classStyleBindings, name):
+		// Checked before the x-* allowance: choosing a class is design,
+		// not behavior.
+		w.report(r, "attr-binding",
+			fmt.Sprintf("Alpine %s is not allowed in app code; styling belongs inside webframe components", name), "")
+	case slices.Contains(AllowedAttrs, name), hasAllowedPrefix(name):
 	default:
 		w.report(r, "attr-unknown",
 			fmt.Sprintf("attribute %q is not allowed in app code", name),

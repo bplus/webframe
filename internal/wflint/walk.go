@@ -1,11 +1,16 @@
 package wflint
 
-import "github.com/a-h/templ/parser/v2"
+import (
+	"strings"
+
+	"github.com/a-h/templ/parser/v2"
+)
 
 // walker collects violations for one file.
 type walker struct {
-	file string
-	out  []Violation
+	file   string
+	out    []Violation
+	fences []Fence
 }
 
 func (w *walker) report(r parser.Range, rule, msg, hint string) {
@@ -20,8 +25,7 @@ func (w *walker) report(r parser.Range, rule, msg, hint string) {
 }
 
 // nodes walks a node list. inFence is true inside a CustomPage/CustomBlock
-// escape hatch, where the element and attribute rules do not apply. Fence
-// detection arrives in a later task; until then inFence is always false.
+// escape hatch, where every rule except fence-reason is suppressed.
 func (w *walker) nodes(ns []parser.Node, inFence bool) {
 	for _, n := range ns {
 		w.node(n, inFence)
@@ -46,9 +50,23 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.checkAttrs(n.Range, n.Attributes, true)
 		}
 	case *parser.TemplElementExpression:
-		// Fence hook: a later task inspects n.Expression for CustomPage /
-		// CustomBlock and walks the children with inFence = true.
+		if kind, ok := fenceOf(n.Expression.Value); ok {
+			w.fence(n, kind)
+			w.nodes(n.Children, true)
+			return
+		}
+		if !inFence {
+			w.reportGo(n.Expression, true)
+		}
 		w.nodes(n.Children, inFence)
+	case *parser.GoCode:
+		if !inFence {
+			w.reportGo(n.Expression, false)
+		}
+	case *parser.StringExpression:
+		if !inFence {
+			w.reportGo(n.Expression, false)
+		}
 	case *parser.IfExpression:
 		w.nodes(n.Then, inFence)
 		for _, ei := range n.ElseIfs {
@@ -62,8 +80,21 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.nodes(c.Children, inFence)
 		}
 	default:
-		// Text, Whitespace, HTMLComment, GoCode, StringExpression,
-		// ChildrenExpression, CallTemplateExpression and the like carry no
-		// elements or attributes for these rules.
+		// Text, Whitespace, HTMLComment, ChildrenExpression,
+		// CallTemplateExpression and the like carry nothing these rules
+		// check.
+	}
+}
+
+// fence records a CustomPage/CustomBlock use and reports fence-reason when
+// its Reason is absent or empty. It applies inside fences too: a nested fence
+// is still a fence.
+func (w *walker) fence(n *parser.TemplElementExpression, kind string) {
+	r := pick(n.Expression.Range, n.Range)
+	reason, ok := fenceReason(n.Expression.Value)
+	w.fences = append(w.fences, Fence{File: w.file, Line: int(r.From.Line) + 1, Kind: kind, Reason: reason})
+	if !ok {
+		w.report(r, "fence-reason",
+			"Custom"+strings.ToUpper(kind[:1])+kind[1:]+" needs a non-empty Reason explaining why components cannot be used", "")
 	}
 }
