@@ -76,6 +76,8 @@ App code never contains anything below the component boundary (no div, no class,
 
 `static/css/input.css` uses `@import "tailwindcss" source(none)` and pins sources to `components/**/*.templ`, `demo/**/*.templ`, `demo/**/*.go`, so markdown and JS can never change `output.css`. Class-less text gets element typography from `:where(.wf-content)` rules there.
 
+Legacy consumer classes: three older apps still write Tailwind classes in their own `internal/web/**/*.templ` files, and `source(none)` no longer scans them. `input.css` keeps them compiling with one `@source inline("...")` line under the "Legacy consumer classes" heading, listing every token those apps use (in `class="..."` attributes and `Class: "..."` Props literals) that is not otherwise in `output.css`. Remove an app's tokens when that app migrates to `appshell`; delete the line when all three have.
+
 **Demo app** (`cmd/demo/` + `demo/`): HTTP server on :3333 with showcase gallery and traffic stream page. Routes include HTMX interaction demos (click counter, search, validation, toasts).
 
 ## Conventions
