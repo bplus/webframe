@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"net/url"
 	"strconv"
 
 	"github.com/bplus/webframe/components/action"
@@ -8,31 +9,42 @@ import (
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
 	"github.com/bplus/webframe/components/dashboardgrid"
+	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
+	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/figure"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/image"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/statcomparison"
+	"github.com/bplus/webframe/components/stattile"
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/toolbar"
+	"github.com/bplus/webframe/listquery"
 )
 
 // Showcase renders the full component reference page — every webframe
@@ -65,8 +77,11 @@ templ Showcase() {
 				<strong>Building blocks</strong>
 				<a href="#colors">Colors</a>
 				<a href="#icons">Icons</a>
+				<a href="#figure">Figure</a>
+				<a href="#image">Image</a>
 				<a href="#buttons">Buttons</a>
 				<a href="#badges">Badges</a>
+				<a href="#stattiles">Stat tiles</a>
 				<a href="#cards">Cards</a>
 				<a href="#separator">Separator</a>
 				<a href="#aspectratio">Aspect Ratio</a>
@@ -79,6 +94,7 @@ templ Showcase() {
 				<a href="#formfields">Form Fields</a>
 				<a href="#selectbox">Selectbox</a>
 				<a href="#autocomplete">Autocomplete</a>
+				<a href="#form">Form</a>
 			}
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				<strong>Overlays and navigation</strong>
@@ -99,6 +115,12 @@ templ Showcase() {
 				<a href="#shell">Shell</a>
 				<a href="#layout">Layout</a>
 				<a href="#panel">Panel</a>
+				<a href="#banner">Banner</a>
+				<a href="#toolbar">Toolbar</a>
+				<a href="#pagination">Pagination</a>
+				<a href="#datatable">Data table</a>
+				<a href="#descriptionlist">Description list</a>
+				<a href="#pages">Pages</a>
 				<a href="#custom">Custom fences</a>
 			}
 		}
@@ -120,8 +142,11 @@ templ buildingBlocksGroup() {
 	@layout.Section(layout.SectionProps{Level: 2, ID: "building-blocks", Title: "Building blocks"}) {
 		@colorsSection()
 		@iconsSection()
+		@figureSection()
+		@imageSection()
 		@buttonsSection()
 		@badgesSection()
+		@stattilesSection()
 		@cardsSection()
 		@separatorSection()
 		@aspectratioSection()
@@ -162,6 +187,12 @@ templ pageLayerGroup() {
 		@shellSection()
 		@layoutSection()
 		@panelSection()
+		@bannerSection()
+		@toolbarSection()
+		@paginationSection()
+		@datatableSection()
+		@descriptionlistSection()
+		@pagesSection()
 		@customSection()
 	}
 }
@@ -208,58 +239,116 @@ templ colorsSection() {
 // ═══════════════════════════════════════
 templ iconsSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "icons", Title: "Icons (Lucide)", Description: "~600 Lucide icons available as Go variables. Used internally by button, input, dialog, checkbox."}) {
-		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Check()
-				<small>Check</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.X()
-				<small>X</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.ChevronDown()
-				<small>ChevronDown</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Search()
-				<small>Search</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Plus()
-				<small>Plus</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Minus()
-				<small>Minus</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Eye()
-				<small>Eye</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.EyeOff()
-				<small>EyeOff</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Settings()
-				<small>Settings</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Trash2()
-				<small>Trash2</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Copy()
-				<small>Copy</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@icon.Download()
-				<small>Download</small>
+		@panel.Panel(panel.Props{Level: 4, Title: "A dozen of them", Subtitle: "Each icon sits in a figure.Figure with its Go name as the caption; the row wraps as the window narrows."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+				@figure.Figure(figure.Props{Caption: "Check"}) {
+					@icon.Check()
+				}
+				@figure.Figure(figure.Props{Caption: "X"}) {
+					@icon.X()
+				}
+				@figure.Figure(figure.Props{Caption: "ChevronDown"}) {
+					@icon.ChevronDown()
+				}
+				@figure.Figure(figure.Props{Caption: "Search"}) {
+					@icon.Search()
+				}
+				@figure.Figure(figure.Props{Caption: "Plus"}) {
+					@icon.Plus()
+				}
+				@figure.Figure(figure.Props{Caption: "Minus"}) {
+					@icon.Minus()
+				}
+				@figure.Figure(figure.Props{Caption: "Eye"}) {
+					@icon.Eye()
+				}
+				@figure.Figure(figure.Props{Caption: "EyeOff"}) {
+					@icon.EyeOff()
+				}
+				@figure.Figure(figure.Props{Caption: "Settings"}) {
+					@icon.Settings()
+				}
+				@figure.Figure(figure.Props{Caption: "Trash2"}) {
+					@icon.Trash2()
+				}
+				@figure.Figure(figure.Props{Caption: "Copy"}) {
+					@icon.Copy()
+				}
+				@figure.Figure(figure.Props{Caption: "Download"}) {
+					@icon.Download()
+				}
 			}
 		}
 		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
 			<code>{ `@icon.Check()  // renders inline SVG, cached in-process` }</code>
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Figure
+// ═══════════════════════════════════════
+templ figureSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "figure", Title: "Figure", Description: "One piece of media with a caption under it: the icon-and-caption scaffold the Icons and Game Icon sections no longer spell out by hand."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Any media, one caption", Subtitle: "An icon, a game icon and a swatch, each captioned the same way; a figure is only as wide as its content, so a row of them wraps."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+				@figure.Figure(figure.Props{Caption: "Lucide icon"}) {
+					@icon.Settings()
+				}
+				@figure.Figure(figure.Props{Caption: "Game icon"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "Swatch"}) {
+					@swatch.Swatch(swatch.Props{Color: "var(--color-primary)", Label: "primary"})
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Aligned to the start", Subtitle: "AlignStart lines the media and caption up on the left instead of centering them."}) {
+			@figure.Figure(figure.Props{Caption: "Left-aligned caption under a wide badge row", Align: figure.AlignStart}) {
+				@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
+					@badge.Badge() {
+						One
+					}
+					@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+						Two
+					}
+					@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+						Three
+					}
+				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Image
+// ═══════════════════════════════════════
+templ imageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "image", Title: "Image", Description: "Every picture goes through image.Image, so loading, sizing and fit are decided once; the art is a local placeholder, nothing is fetched from elsewhere."}) {
+		@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Lazy by default", Subtitle: "No size given: the picture renders at its own size, shrinks to the column, and loads lazily."}) {
+					@image.Image(image.Props{Src: "/static/img/placeholder-wide.svg", Alt: "Blue placeholder landscape"})
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Sized", Subtitle: "Width and Height reserve a 320 by 180 box before the file arrives, so nothing below it moves."}) {
+					@image.Image(image.Props{Src: "/static/img/placeholder-wide.svg", Alt: "Blue placeholder landscape at 320 by 180", Width: 320, Height: 180})
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Cover and rounded", Subtitle: "The same wide picture in a 160 by 160 box: FitCover crops it to fill, Rounded softens the corners."}) {
+					@image.Image(image.Props{Src: "/static/img/placeholder-wide.svg", Alt: "Blue placeholder cropped square", Width: 160, Height: 160, Fit: image.FitCover, Rounded: true})
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "In a figure", Subtitle: "figure.Figure is the captioned wrapper; the caption sits under the picture in muted text."}) {
+					@figure.Figure(figure.Props{Caption: "A square placeholder, 200 by 200, with a caption", Align: figure.AlignStart}) {
+						@image.Image(image.Props{Src: "/static/img/placeholder-square.svg", Alt: "Orange placeholder square", Width: 200, Height: 200, Rounded: true})
+					}
+				}
+			}
 		}
 	}
 }
@@ -340,18 +429,62 @@ templ buttonsSection() {
 // ═══════════════════════════════════════
 templ badgesSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "badges", Title: "Badges", Description: "Inline label variants."}) {
-		@layout.Inline(layout.InlineProps{Wrap: true}) {
-			@badge.Badge(badge.Props{}) {
-				Default
+		@panel.Panel(panel.Props{Level: 4, Title: "Variants", Subtitle: "The four solid variants plus the three soft chips (success, warning, info) that the status words below map onto."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@badge.Badge(badge.Props{}) {
+					Default
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+					Secondary
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+					Destructive
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+					Outline
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSuccess}) {
+					Success
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantWarning}) {
+					Warning
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantInfo}) {
+					Info
+				}
 			}
-			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-				Secondary
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Status words", Subtitle: "badge.Status picks the color from the word and StatusLabel writes it out; a word it does not know, like weird, falls back to the outline so it still reads."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				for _, s := range []string{"published", "draft", "failed", "running", "stale", "weird"} {
+					@badge.Badge(badge.Status(s)) {
+						{ badge.StatusLabel(s) }
+					}
+				}
 			}
-			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
-				Destructive
-			}
-			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
-				Outline
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Stat tiles
+// ═══════════════════════════════════════
+templ stattilesSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "stattiles", Title: "Stat tiles", Description: "One dashboard number per tile, with an optional sparkline, ring or delta beside it; tiles have no spacing of their own, so they sit in a dashboard grid or an Inline row that owns it."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Four tiles in a flush grid", Subtitle: "Plain, with a sparkline, with a ring, and with a delta; the last one has an Href, so the whole tile is a link and its border turns primary on hover."}) {
+			@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
+				@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 3}) {
+					@stattile.StatTile(stattile.Props{Label: "Items", Value: "142", Sub: "11 published · 3 drafts"})
+				}
+				@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 3}) {
+					@stattile.StatTile(stattile.Props{Label: "Requests", Value: "8.2k", Spark: []float64{3, 5, 4, 7, 6, 9, 8, 11, 10, 12, 9, 13, 14, 12}, Caption: "Last 14 days"})
+				}
+				@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 3}) {
+					@stattile.StatTile(stattile.Props{Label: "Coverage", Value: "74%", Ring: &stattile.Ratio{Value: 74}, Sub: "118 of 160 files"})
+				}
+				@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 3}) {
+					@stattile.StatTile(stattile.Props{Label: "Signups", Value: "1,204", Delta: &stattile.Delta{Value: "+12%", Direction: statcomparison.DirectionUp}, Caption: "Versus last month", Href: "#stattiles"})
+				}
 			}
 		}
 	}
@@ -611,6 +744,7 @@ templ formfieldsSection() {
 						{Label: "Phone", Value: "phone"},
 					}},
 					{Name: "updates", Label: "Send me product updates", Type: formfield.TypeCheckbox},
+					{Name: "public", Label: "Public profile", Type: formfield.TypeToggle, Value: "on", Help: "A switch: TypeToggle submits \"on\" when checked, nothing when not."},
 					{Name: "age", Label: "Age", Type: formfield.TypeNumber, Width: formfield.WidthHalf},
 					{Name: "start", Label: "Start date", Type: formfield.TypeDate, Width: formfield.WidthHalf},
 				},
@@ -628,32 +762,54 @@ templ formfieldsSection() {
 				})
 			}
 		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Blur validation with Validate", Subtitle: "Leave a field with a bad value and its message appears under it from the server; fix it and the message goes away without the rest of the page moving."}) {
+			@layout.Stack() {
+				<p>Validate is a URL: the field posts its own name and value there on blur, and the server answers with formfield.RespondFeedback. Email must contain an @, name needs at least two characters.</p>
+				@formfield.Fieldset(formfield.FieldsetProps{
+					Legend: "Checked on blur",
+					Fields: []formfield.Field{ValidatedEmail, ValidatedName},
+				})
+			}
+		}
 	}
 }
+
+// ValidatedEmail and ValidatedName are the two fields of the "Blur
+// validation with Validate" panel. demo.HandleValidate answers their
+// hx-post with formfield.RespondFeedback for the same Field value, so the
+// Feedback slot it writes has the id the field is targeting.
+var (
+	ValidatedEmail = formfield.Field{Name: "email", Label: "Email", Type: formfield.TypeEmail, Placeholder: "you@example.com", Validate: "/api/validate"}
+	ValidatedName  = formfield.Field{Name: "name", Label: "Name", Placeholder: "Your name", Validate: "/api/validate"}
+)
 
 // ═══════════════════════════════════════
 // Autocomplete
 // ═══════════════════════════════════════
 templ autocompleteSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "autocomplete", Title: "Autocomplete", Description: "Type-ahead backed by the server. The visible text is what you typed or picked; the hidden framework field holds the picked option's value, and that is what the form submits."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Pick a framework", Subtitle: "Submit shows what the server received: the hidden framework value and the visible text q."}) {
-			@layout.Stack() {
-				@autocomplete.Autocomplete(autocomplete.Props{
-					ID:          "fw",
-					Name:        "framework",
-					Label:       "Framework",
-					Placeholder: "Type to search frameworks…",
-					HxGet:       "/api/search",
-					Attributes:  templ.Attributes{"id": "fw-root"},
-				})
-				@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
-					@action.Button(action.Action{
-						Label:      "Submit",
-						HxPost:     "/api/picked",
-						HxTarget:   "#picked-result",
-						Attributes: templ.Attributes{"hx-include": "#fw-root"},
+	@layout.Section(layout.SectionProps{Level: 3, ID: "autocomplete", Title: "Autocomplete and Form", Description: "Type-ahead backed by the server, inside a real form.Form. The visible text is what you typed or picked; the hidden framework field holds the picked option's value, and that is what the form submits."}) {
+		@panel.Panel(panel.Props{ID: "form", Level: 4, Title: "Form with a required picker", Subtitle: "Type without picking and press Submit: the browser blocks it with \"Pick an item from the list\"; pick one and the server echoes the hidden framework value, the visible text q and the hidden source field."}) {
+			@form.Form(form.Props{
+				ID:       "pick-form",
+				HxPost:   "/api/picked",
+				HxTarget: "#picked-result",
+				Hidden:   map[string]string{"source": "showcase"},
+			}) {
+				@layout.Stack() {
+					@autocomplete.Autocomplete(autocomplete.Props{
+						ID:          "fw",
+						Name:        "framework",
+						Label:       "Framework",
+						Placeholder: "Type to search frameworks…",
+						HxGet:       "/api/search",
+						Required:    true,
 					})
-					<span id="picked-result"></span>
+					@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
+						@button.Button(button.Props{Type: button.TypeSubmit}) {
+							Submit
+						}
+						<span id="picked-result"></span>
+					}
 				}
 			}
 		}
@@ -1168,42 +1324,35 @@ templ aspectratioSection() {
 // ═══════════════════════════════════════
 templ gameiconSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
-		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
-				<small>broadsword</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Size: gameicon.SizeLg})
-				<small>armor-vest</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Size: gameicon.SizeLg})
-				<small>gem-pendant</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "ring", Size: gameicon.SizeLg})
-				<small>ring</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Size: gameicon.SizeLg})
-				<small>cloak-dagger</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg})
-				<small>shield</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Size: gameicon.SizeLg, Tone: gameicon.TonePrimary})
-				<small>swords-emblem (primary)</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
-				<small>bottled-bolt (accent)</small>
-			}
-			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
-				@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg, Tone: gameicon.ToneForeground})
-				<small>shield (foreground)</small>
+		@panel.Panel(panel.Props{Level: 4, Title: "Six icons and three tones", Subtitle: "Each sprite reference sits in a figure.Figure captioned with its name; the last three show the primary, accent and foreground tones."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+				@figure.Figure(figure.Props{Caption: "broadsword"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "armor-vest"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "gem-pendant"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "ring"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "ring", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "cloak-dagger"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "shield"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg})
+				}
+				@figure.Figure(figure.Props{Caption: "swords-emblem (primary)"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Size: gameicon.SizeLg, Tone: gameicon.TonePrimary})
+				}
+				@figure.Figure(figure.Props{Caption: "bottled-bolt (accent)"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
+				}
+				@figure.Figure(figure.Props{Caption: "shield (foreground)"}) {
+					@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg, Tone: gameicon.ToneForeground})
+				}
 			}
 		}
 		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
@@ -1305,7 +1454,7 @@ templ alpineSection() {
 // HTMX Patterns
 // ═══════════════════════════════════════
 templ htmxSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-update, blur validation, out-of-band swaps. Live search lives in the Autocomplete section."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-update and out-of-band swaps. Live search lives in the Autocomplete section and blur validation in Form Fields, where Validate wires it."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@card.Card() {
@@ -1324,46 +1473,6 @@ templ htmxSection() {
 							"hx-vals": `{"count":"0"}`,
 						}}) {
 							Click me
-						}
-					}
-				}
-			}
-			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@card.Card() {
-					@card.Header() {
-						@card.Title() {
-							Blur Validation (hx-post + hx-trigger="blur")
-						}
-					}
-					@card.Content() {
-						@layout.Stack() {
-							@formfield.FormField(formfield.Field{
-								ID:          "field-email",
-								Name:        "value",
-								Label:       "Email",
-								Type:        formfield.TypeEmail,
-								Placeholder: "you@example.com",
-								Attributes: templ.Attributes{
-									"hx-post":    "/api/validate",
-									"hx-trigger": "blur",
-									"hx-swap":    "outerHTML",
-									"hx-target":  "#field-email-feedback",
-									"hx-vals":    `{"field":"email"}`,
-								},
-							})
-							@formfield.FormField(formfield.Field{
-								ID:          "field-name",
-								Name:        "value",
-								Label:       "Name",
-								Placeholder: "Your name",
-								Attributes: templ.Attributes{
-									"hx-post":    "/api/validate",
-									"hx-trigger": "blur",
-									"hx-swap":    "outerHTML",
-									"hx-target":  "#field-name-feedback",
-									"hx-vals":    `{"field":"name"}`,
-								},
-							})
 						}
 					}
 				}
@@ -1456,59 +1565,79 @@ templ layoutAsidePanel() {
 }
 
 templ layoutLeftPanel() {
-	@panel.Panel(panel.Props{Level: 4, Title: "Left"}) {
+	@panel.Panel(panel.Props{Level: 4, Title: "Nav"}) {
 		<p>Navigation or filters.</p>
 	}
 }
 
+// layoutRightPanel is the ThreeColumn's right side: a Stack with
+// JustifyBetween holding two panels. Justify only spreads them when the
+// Stack is taller than its content, and nothing in the demo can give it
+// that height without a class, so the panels sit together here; the
+// panel subtitle says so.
 templ layoutRightPanel() {
-	@panel.Panel(panel.Props{Level: 4, Title: "Right"}) {
-		<p>Details or help.</p>
+	@layout.Stack(layout.StackProps{Justify: layout.JustifyBetween}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Inspector"}) {
+			<p>Details or help.</p>
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Pinned below", Variant: panel.VariantMuted}) {
+			<p>The second panel of a JustifyBetween Stack.</p>
+		}
 	}
 }
 
 templ layoutSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "layout", Title: "Layout", Description: "Stack, Inline, TwoColumn, ThreeColumn and Divider arrange content without any raw classes."}) {
-		@layout.Stack() {
-			@panel.Panel(panel.Props{Level: 4, Title: "First"}) {
-				<p>Stacked panel one.</p>
-			}
-			@panel.Panel(panel.Props{Level: 4, Title: "Second"}) {
-				<p>Stacked panel two.</p>
-			}
-			@panel.Panel(panel.Props{Level: 4, Title: "Third"}) {
-				<p>Stacked panel three.</p>
-			}
-		}
-		@layout.Inline(layout.InlineProps{Wrap: true}) {
-			@badge.Badge() {
-				One
-			}
-			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-				Two
-			}
-			@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
-				Three
-			}
-			@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
-				Four
-			}
-			@badge.Badge() {
-				Five
-			}
-			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-				Six
+		@panel.Panel(panel.Props{Level: 4, Title: "Stack", Subtitle: "Three panels in a column with the default gap; a Stack never changes at phone width because a column already is the narrow layout."}) {
+			@layout.Stack() {
+				@panel.Panel(panel.Props{Level: 4, Title: "First"}) {
+					<p>Stacked panel one.</p>
+				}
+				@panel.Panel(panel.Props{Level: 4, Title: "Second"}) {
+					<p>Stacked panel two.</p>
+				}
+				@panel.Panel(panel.Props{Level: 4, Title: "Third"}) {
+					<p>Stacked panel three.</p>
+				}
 			}
 		}
-		@layout.TwoColumn(layout.TwoColumnProps{Aside: layoutAsidePanel(), Sticky: true}) {
-			<p>The main column takes the remaining width. On narrow screens the aside stacks below it. On wide screens the aside stays pinned while this column scrolls, which suits long documents with a table of contents or a summary beside them.</p>
+		@panel.Panel(panel.Props{Level: 4, Title: "Inline", Subtitle: "Six badges in a row; an Inline always wraps below 768px so it never forces a phone to scroll sideways, and Wrap makes it wrap at every width."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				@badge.Badge() {
+					One
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+					Two
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+					Three
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+					Four
+				}
+				@badge.Badge() {
+					Five
+				}
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+					Six
+				}
+			}
 		}
-		@layout.ThreeColumn(layout.ThreeColumnProps{Left: layoutLeftPanel(), Right: layoutRightPanel()}) {
-			<p>The center column holds the primary content. On narrow screens the two side columns collapse into disclosures.</p>
+		@panel.Panel(panel.Props{Level: 4, Title: "TwoColumn", Subtitle: "Main column plus a sticky aside; on a phone the aside drops below the main column."}) {
+			@layout.TwoColumn(layout.TwoColumnProps{Aside: layoutAsidePanel(), Sticky: true}) {
+				<p>The main column takes the remaining width. On narrow screens the aside stacks below it. On wide screens the aside stays pinned while this column scrolls, which suits long documents with a table of contents or a summary beside them.</p>
+			}
 		}
-		<p>Content above the divider.</p>
-		@layout.Divider(layout.DividerProps{Label: "or"})
-		<p>Content below the divider.</p>
+		@panel.Panel(panel.Props{Level: 4, Title: "ThreeColumn with Stack Justify", Subtitle: "Below 768px the sides collapse into disclosures labelled Nav and Inspector; the right side is a Stack with JustifyBetween, which only spreads its two panels when something gives the Stack height, and nothing here does without a class, so they sit together."}) {
+			@layout.ThreeColumn(layout.ThreeColumnProps{Left: layoutLeftPanel(), Right: layoutRightPanel(), LeftLabel: "Nav", RightLabel: "Inspector"}) {
+				<p>The center column holds the primary content. On narrow screens the two side columns collapse into disclosures named by LeftLabel and RightLabel.</p>
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Divider", Subtitle: "A rule with a centered word between two paragraphs."}) {
+			<p>Content above the divider.</p>
+			@layout.Divider(layout.DividerProps{Label: "or"})
+			<p>Content below the divider.</p>
+		}
 	}
 }
 
@@ -1559,6 +1688,217 @@ templ panelSection() {
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Banner
+// ═══════════════════════════════════════
+templ bannerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "banner", Title: "Banner", Description: "An inline notice that appears only when there is something to say: a banner with no title, body or details renders nothing, so a silent slot takes no space."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Four variants", Subtitle: "Info, success, warning (dismissible) and error; the error banner lists the field errors and carries role alert, and dismissing the warning hides it without anything else moving."}) {
+			@layout.Stack() {
+				@banner.Banner(banner.Props{Title: "Heads up", Body: "This list is sorted by the server; the page does not re-sort on its own."})
+				@banner.Banner(banner.Props{Variant: banner.VariantSuccess, Title: "Published", Body: "Shown here for completeness: pages do not announce success unless the user asked for a receipt."})
+				@banner.Banner(banner.Props{Variant: banner.VariantWarning, Title: "Three drafts are older than 30 days", Body: "They still build, but their recipes may be stale.", Dismissible: true})
+				@banner.Banner(banner.Props{
+					Variant: banner.VariantError,
+					Title:   "The form has 2 errors",
+					Body:    "Fix the fields below and submit again.",
+					Details: bannerDetails(),
+					Actions: []action.Action{{Label: "Jump to the first error", Href: "#banner"}},
+				})
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Nothing to say", Subtitle: "The slot below this sentence holds an error banner with no title, body or details; it renders nothing and reserves no space."}) {
+			@banner.Banner(banner.Props{Variant: banner.VariantError})
+		}
+	}
+}
+
+// bannerDetails is the error banner's list of field errors.
+templ bannerDetails() {
+	<ul>
+		<li>Name is required</li>
+		<li>Price must be a number</li>
+	</ul>
+}
+
+// ═══════════════════════════════════════
+// Toolbar
+// ═══════════════════════════════════════
+templ toolbarSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "toolbar", Title: "Toolbar", Description: "A left and a right group of actions around a middle slot; narrow the window below 768px and each side keeps one action inline and moves the rest into a ⋯ menu."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Three left, two right, Overflow 1", Subtitle: "At desktop width all five actions show; on a phone you see Build mod, a ⋯ menu, the selection count, Delete and a ⋯ menu."}) {
+			@toolbar.Toolbar(toolbar.Props{
+				Left: []action.Action{
+					{Label: "Build mod", Variant: action.VariantPrimary, Href: "#toolbar"},
+					{Label: "Import", Href: "#toolbar"},
+					{Label: "Export", Href: "#toolbar"},
+				},
+				Right: []action.Action{
+					{Label: "Delete", Variant: action.VariantDestructive, HxPost: "/api/toast", HxSwap: "none", Confirm: &action.Confirm{Message: "Delete the selected items?"}, Attributes: templ.Attributes{"hx-vals": `{"variant":"warning"}`}},
+					{Label: "Publish", HxPost: "/api/toast", HxSwap: "none", Attributes: templ.Attributes{"hx-vals": `{"variant":"info"}`}},
+				},
+				Overflow: 1,
+			}) {
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+						3 selected
+					}
+				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Pagination
+// ═══════════════════════════════════════
+
+// paginationSpec is page 5 of a 10-per-page list, parsed the way a handler
+// would parse a request's query string.
+func paginationSpec() listquery.Spec {
+	return listquery.ParseValues(url.Values{"page": {"5"}}, listquery.Options{DefaultPageSize: 10})
+}
+
+templ paginationSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "pagination", Title: "Pagination", Description: "The range summary and the page controls for one list; the summary line is always there, even for zero rows or one page, so the row never jumps."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Page 5 of 20", Subtitle: "Built from listquery.ParseValues with page=5 and 200 items at 10 a page; the numbered list hides below 768px and Previous and Next stay."}) {
+			@pagination.Pagination(pagination.Props{Total: 200, Spec: paginationSpec(), Base: "#", Noun: "items"})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "No rows", Subtitle: "Zero items still renders the summary, with Previous and Next present but disabled, so the row keeps its height and width."}) {
+			@pagination.Pagination(pagination.Props{Total: 0, Base: "#", Noun: "items"})
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Data table
+// ═══════════════════════════════════════
+
+// tableSpec is the data table's sort state: sorted by name, ascending, as a
+// handler would parse it from ?sort=name.
+func tableSpec() listquery.Spec {
+	return listquery.ParseValues(url.Values{"sort": {"name"}}, listquery.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
+}
+
+// statusBadge is badge.Status as the pointer datatable.Cell and
+// descriptionlist.Item want.
+func statusBadge(s string) *badge.Props {
+	p := badge.Status(s)
+	return &p
+}
+
+// tableColumns are the four columns of the data table examples.
+var tableColumns = []datatable.Column{
+	{Key: "name", Label: "Name", Sortable: true},
+	{Key: "type", Label: "Type", Sortable: true, Hidden: true},
+	{Key: "status", Label: "Status", Shrink: true},
+	{Key: "updated", Label: "Updated", Sortable: true, Mono: true, Shrink: true, Align: datatable.AlignRight},
+}
+
+// tableRow builds one example row: the name links to the table anchor, the
+// status is a badge.Status chip, and every row has Edit and Delete actions.
+func tableRow(id, name, kind, status, updated string) datatable.Row {
+	return datatable.Row{
+		ID:   id,
+		Href: "#datatable",
+		Cells: []datatable.Cell{
+			{Text: name},
+			{Text: kind, Muted: true},
+			{Text: badge.StatusLabel(status), Badge: statusBadge(status)},
+			{Text: updated},
+		},
+		Actions: []action.Action{
+			{Label: "Edit", Href: "#datatable"},
+			{Label: "Delete", Variant: action.VariantDestructive, HxPost: "/api/toast", HxSwap: "none", Confirm: &action.Confirm{Message: "Delete " + name + "?"}, Attributes: templ.Attributes{"hx-vals": `{"variant":"warning"}`}},
+		},
+	}
+}
+
+var tableRows = []datatable.Row{
+	tableRow("1", "Flame Tongue", "Weapon", "published", "2d"),
+	tableRow("2", "Cloak of Billowing", "Armor", "draft", "5h"),
+	tableRow("3", "Bottled Bolt", "Consumable", "failed", "1w"),
+	tableRow("4", "Gem Pendant", "Accessory", "running", "3m"),
+}
+
+templ datatableSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "datatable", Title: "Data table", Description: "Columns and rows as data, with sort links, a selection column, row actions and an empty state that keeps the header; the headers here link to # so sorting goes nowhere, a real page passes its own Base."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Four rows, sorted by name", Flush: true, Subtitle: "Name, Type and Updated are sortable (the chevron marks the sorted column); below 768px the Type column disappears and each row's Edit and Delete collapse into one ⋯ menu; the header checkbox selects every row."}) {
+			@datatable.DataTable(datatable.Props{
+				ID:        "demo-table",
+				Caption:   "Example items",
+				Columns:   tableColumns,
+				Rows:      tableRows,
+				Spec:      tableSpec(),
+				Base:      "#",
+				Selection: true,
+			})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "No rows", Flush: true, Subtitle: "The header row stays and the empty state sits in one full-width cell, so the table does not collapse when a filter matches nothing."}) {
+			@datatable.DataTable(datatable.Props{
+				ID:      "demo-table-empty",
+				Caption: "Example items, filtered to nothing",
+				Columns: tableColumns,
+				Spec:    tableSpec(),
+				Base:    "#",
+				Empty:   emptystateProps(),
+			})
+		}
+	}
+}
+
+// emptystateProps is the empty table's message and its Clear filters action.
+func emptystateProps() emptystate.Props {
+	return emptystate.Props{Title: "No items match", Description: "Try a different filter, or clear them all.", Action: &action.Action{Label: "Clear filters", Href: "#datatable"}}
+}
+
+// ═══════════════════════════════════════
+// Description list
+// ═══════════════════════════════════════
+templ descriptionlistSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "descriptionlist", Title: "Description list", Description: "Label and value rows for a detail page: labels left in muted text, values right-aligned, one bordered row each."}) {
+		@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 5}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "One column", Subtitle: "The id is mono with a copy button, the status is a badge, the owner is a link, and the empty Notes value shows a dash so the row never collapses."}) {
+					@descriptionlist.DescriptionList(descriptionlist.Props{Items: []descriptionlist.Item{
+						{Label: "ID", Value: "itm_8f3a2c9e", Mono: true, Copyable: true},
+						{Label: "Status", Value: badge.StatusLabel("published"), Badge: statusBadge("published")},
+						{Label: "Owner", Value: "Ada", Href: "#descriptionlist"},
+						{Label: "Notes"},
+					}})
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 7}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Two columns, dense", Subtitle: "Six rows in two columns from 768px up, one column below it; Dense tightens the row padding."}) {
+					@descriptionlist.DescriptionList(descriptionlist.Props{Columns: 2, Dense: true, Items: []descriptionlist.Item{
+						{Label: "Type", Value: "Weapon"},
+						{Label: "Rarity", Value: "Very rare"},
+						{Label: "Weight", Value: "6 lb", Mono: true},
+						{Label: "Damage", Value: "2d6 + 1d6 fire", Mono: true},
+						{Label: "Created", Value: "2026-10-21", Mono: true},
+						{Label: "Last build", Value: badge.StatusLabel("failed"), Badge: statusBadge("failed")},
+					}})
+				}
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Pages
+// ═══════════════════════════════════════
+templ pagesSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "pages", Title: "Pages", Description: "The three page kinds this batch builds, assembled from the pieces above on the sidebar shell; each link opens the Items demo app."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "List, detail and form", Subtitle: "Open each at desktop and phone width; the sentences say what each page is for."}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				<p><a href="/items">Items</a>: a list page with filters, sortable columns, pagination, row actions and an empty state, all driven by the query string.</p>
+				<p><a href="/items/1">Item 1</a>: a detail page with a description list, tabs and an aside.</p>
+				<p><a href="/items/new">New item</a>: a create form with sections of fields, inline errors, an error summary banner and blur validation.</p>
 			}
 		}
 	}

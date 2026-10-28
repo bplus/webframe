@@ -43,6 +43,47 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 			}
 		}
 	}
+
+	// The showcase sections added for the page-layer batch 2 pieces: each
+	// new component's signature markup is on the page, and the hand-wired
+	// htmx that Validate and form.Form replaced is gone.
+	_, body := get("/")
+	for _, want := range []string{
+		`role="switch"`,                                         // toggle field
+		`hx-post="/api/validate"`,                               // Validate wiring
+		`id="field-email-feedback"`,                             // its feedback slot
+		`id="pick-form"`,                                        // form.Form
+		`name="source" value="showcase"`,                        // its Hidden entry
+		`data-wf-ac-required`,                                   // required autocomplete
+		`<figure`,                                               // figure
+		`src="/static/img/placeholder-wide.svg"`,                // image, local art
+		`loading="lazy"`,                                        // image default
+		`role="toolbar"`,                                        // toolbar
+		`aria-label="More actions"`,                             // its phone menu
+		`aria-label="Pagination"`,                               // pagination
+		"41–50 of 200 items",                                    // page 5 of 20 at 10 a page
+		"0 items",                                               // the zero-row summary
+		`aria-sort="ascending"`,                                 // datatable sorted column
+		`aria-label="Select all rows"`,                          // its selection header
+		"No items match",                                        // the empty table's state
+		`<dl`,                                                   // descriptionlist
+		`role="alert"`,                                          // the error banner
+		`href="/items"`, `href="/items/1"`, `href="/items/new"`, // pages panel
+		"Weird",       // badge.StatusLabel on an unknown word
+		"items-start", // figure AlignStart
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("GET /: body missing %q", want)
+		}
+	}
+	for _, notWant := range []string{"hx-include", `"field":"email"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("GET /: body still contains %q", notWant)
+		}
+	}
+	if code, _ := get("/static/img/placeholder-wide.svg"); code != 200 {
+		t.Errorf("GET /static/img/placeholder-wide.svg = %d, want 200", code)
+	}
 	code, body := get("/sidebar")
 	if code != 200 {
 		t.Errorf("GET /sidebar = %d, want 200", code)
@@ -76,10 +117,13 @@ func TestInteractionFragments(t *testing.T) {
 		{"GET", "/api/search?q=re", []string{"React", "Remix", "Express", `role="option"`, `data-wf-ac-item-value="react"`}, []string{"Vue", "No matches"}},
 		{"GET", "/api/search?q=next", []string{`data-wf-ac-item-label="Next.js"`, `data-wf-ac-item-value="next-js"`}, nil},
 		{"GET", "/api/search?q=zzz", []string{"No matches"}, []string{"React"}},
-		{"POST", "/api/validate?field=email&value=nope", []string{`id="field-email-feedback"`, "Enter a valid email address"}, []string{"Looks good"}},
-		{"POST", "/api/validate?field=email&value=a@b.c", []string{`id="field-email-feedback"`}, []string{"Looks good", "<p"}},
-		{"POST", "/api/validate?field=name&value=Bo", []string{`id="field-name-feedback"`}, []string{"Looks good", "<p"}},
-		{"POST", "/api/picked?framework=vue&q=Vue", []string{"framework=vue", "q=Vue"}, []string{"nothing picked"}},
+		// Validate posts the control's own name=value, nothing else.
+		{"POST", "/api/validate?email=nope", []string{`id="field-email-feedback"`, `role="alert"`, "Enter a valid email address"}, []string{"Looks good"}},
+		{"POST", "/api/validate?email=", []string{`id="field-email-feedback"`, "Email is required"}, nil},
+		{"POST", "/api/validate?email=a@b.c", []string{`id="field-email-feedback"`}, []string{"Looks good", "<p"}},
+		{"POST", "/api/validate?name=B", []string{`id="field-name-feedback"`, "Name must be at least 2 characters"}, nil},
+		{"POST", "/api/validate?name=Bo", []string{`id="field-name-feedback"`}, []string{"Looks good", "<p"}},
+		{"POST", "/api/picked?framework=vue&q=Vue&source=showcase", []string{"framework=vue", "q=Vue"}, []string{"nothing picked"}},
 		{"POST", "/api/picked?q=Vu", []string{"framework=", "nothing picked"}, nil},
 		{"POST", "/api/toast?variant=error", []string{`hx-swap-oob="beforeend:#toast-container"`, "Something went wrong", "x-init="}, nil},
 	} {
@@ -99,5 +143,13 @@ func TestInteractionFragments(t *testing.T) {
 				t.Errorf("%s %s: unexpected %q in:\n%s", c.method, c.target, w, body)
 			}
 		}
+	}
+
+	// A validate request naming neither field has no Feedback slot to
+	// answer with, so it is refused rather than swapped.
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/validate?other=x", nil))
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("POST /api/validate?other=x = %d, want 400", rec.Code)
 	}
 }
