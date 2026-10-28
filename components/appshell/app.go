@@ -86,9 +86,12 @@ func WantsFragment(r *http.Request) bool {
 		r.Header.Get("HX-History-Restore-Request") != "true"
 }
 
-// varyHeaders lists the request headers Render's output depends on, so a
-// cache never serves a fragment for a full-page request or the reverse.
-const varyHeaders = "HX-Request, HX-Boosted, HX-History-Restore-Request"
+// varyHeaders lists the request headers Render and RenderParts output
+// depends on, so a cache never serves a fragment for a full-page request or
+// the reverse. HX-Target is included because RenderParts writes a different
+// region depending on it: a plain htmx request targeting the results id
+// gets only that part, any other target gets the full body.
+const varyHeaders = "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target"
 
 // ShellProps builds the Shell Props for r from the App's fields.
 func (a *App) ShellProps(r *http.Request) Props {

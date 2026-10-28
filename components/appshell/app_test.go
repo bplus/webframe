@@ -51,7 +51,7 @@ func serveHeaders(t *testing.T, a *App, headers map[string]string) string {
 	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q", ct)
 	}
-	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request" {
+	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target" {
 		t.Errorf("Vary = %q", v)
 	}
 	return rec.Body.String()
@@ -175,7 +175,7 @@ func serveParts(t *testing.T, a *App, headers map[string]string) string {
 	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q", ct)
 	}
-	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request" {
+	if v := rec.Header().Get("Vary"); v != "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target" {
 		t.Errorf("Vary = %q", v)
 	}
 	return rec.Body.String()
