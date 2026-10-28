@@ -1,0 +1,190 @@
+package stattile
+
+import (
+	"github.com/bplus/webframe/components/metricring"
+	"github.com/bplus/webframe/components/sparkline"
+	"github.com/bplus/webframe/components/statcomparison"
+	"github.com/bplus/webframe/utils"
+)
+
+// Delta is the change shown beside the value: preformatted text ("+12%")
+// plus a statcomparison.Direction that picks the arrow and color (up success,
+// down destructive, flat/zero muted). The tile does no delta math.
+type Delta struct {
+	Value     string
+	Direction statcomparison.Direction
+}
+
+// Ratio is the metricring shown right of the value: Value is 0-100 (clamped
+// by metricring) and Label is the ring's center text; an empty Label shows
+// "N%".
+type Ratio struct {
+	Value int
+	Label string
+}
+
+// Variant selects the surface treatment; same vocabulary as panel.Variant.
+type Variant string
+
+const (
+	VariantDefault Variant = ""
+	VariantMuted   Variant = "muted"  // bg-muted instead of bg-card
+	VariantDanger  Variant = "danger" // border-destructive
+)
+
+// Props configures a StatTile. Every display field is a preformatted string;
+// the component formats nothing. Label, Sub, Caption, Delta, Spark and Ring
+// are each omitted when empty; Value is always emitted. Spark wins over Ring
+// when both are set.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Label   string    // uppercase kicker, e.g. "Items"
+	Value   string    // the big number, already formatted
+	Sub     string    // line under the value, e.g. "11 published · 3 drafts"
+	Caption string    // smaller explanatory line
+	Delta   *Delta    // rendered beside the value (statcomparison arrow + color)
+	Spark   []float64 // sparkline right of the value (110x30, Fill)
+	Ring    *Ratio    // metricring right of the value (size 56); Spark wins if both set
+	Href    string    // whole tile becomes a link
+	Variant Variant
+}
+
+// sparkWidth/sparkHeight/ringSize are the fixed sizes of the trailing
+// graphic so a row of tiles lines up.
+const (
+	sparkWidth  = 110
+	sparkHeight = 30
+	ringSize    = 56
+)
+
+// accentColor is the sparkline/ring color; both primitives sanitize it.
+const accentColor = "var(--color-primary)"
+
+func surfaceClass(p Props) string {
+	bg := "bg-card"
+	if p.Variant == VariantMuted {
+		bg = "bg-muted"
+	}
+	border := "border-border"
+	if p.Variant == VariantDanger {
+		border = "border-destructive"
+	}
+	link := ""
+	if p.Href != "" {
+		link = "hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+	}
+	return utils.TwMerge("block rounded-lg border p-4 min-h-24 text-foreground", border, bg, link, p.Class)
+}
+
+// deltaColor mirrors statcomparison's direction colors exactly (that helper
+// is unexported, so the mapping is replicated here, not shared).
+func deltaColor(d statcomparison.Direction) string {
+	switch d {
+	case statcomparison.DirectionUp:
+		return "text-success"
+	case statcomparison.DirectionDown:
+		return "text-destructive"
+	default:
+		return "text-muted-foreground"
+	}
+}
+
+// deltaRow replicates statcomparison's arrow SVGs (16x16 stroked paths in
+// currentColor) so a tile's delta reads identically to a StatComparison's.
+templ deltaRow(d Delta) {
+	<span class={ utils.TwMerge("inline-flex items-center gap-0.5 text-sm font-medium", deltaColor(d.Direction)) }>
+		if d.Direction == statcomparison.DirectionUp {
+			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+				<path d="M8 3v10M8 3l4 4M8 3L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+			</svg>
+		} else if d.Direction == statcomparison.DirectionDown {
+			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+				<path d="M8 13V3M8 13l4-4M8 13L4 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+			</svg>
+		} else {
+			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+				<path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+			</svg>
+		}
+		<span>{ d.Value }</span>
+	</span>
+}
+
+// body is the tile's content, shared by the <a> and <div> roots.
+templ body(p Props) {
+	if p.Label != "" {
+		<div class="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{ p.Label }</div>
+	}
+	<div class="flex items-end justify-between gap-3">
+		<div class="flex min-w-0 flex-wrap items-baseline gap-2">
+			<span class="font-mono text-[28px] font-semibold leading-none tabular-nums">{ p.Value }</span>
+			if p.Delta != nil && p.Delta.Value != "" {
+				@deltaRow(*p.Delta)
+			}
+		</div>
+		if len(p.Spark) > 0 {
+			@sparkline.Sparkline(sparkline.Props{Data: p.Spark, Width: sparkWidth, Height: sparkHeight, Color: accentColor, Fill: true, Class: "shrink-0"})
+		} else if p.Ring != nil {
+			@metricring.MetricRing(metricring.Props{Value: p.Ring.Value, Label: p.Ring.Label, Size: ringSize, Class: "shrink-0"})
+		}
+	</div>
+	if p.Sub != "" {
+		<div class="mt-1.5 text-xs text-muted-foreground tabular-nums">{ p.Sub }</div>
+	}
+	if p.Caption != "" {
+		<div class="mt-1.5 text-xs leading-snug text-muted-foreground">{ p.Caption }</div>
+	}
+}
+
+// StatTile renders one dashboard stat as a card: an uppercase kicker label,
+// a large mono tabular value with an optional delta beside it and a
+// sparkline (or metricring) to its right, then a sub line and a caption. It
+// is the facelifted form of an earlier app's stat tile.
+//
+// Accepts zero or one Props: called with no arguments it renders an empty
+// card with an empty value line; any Props beyond the first are ignored.
+// Href makes the whole tile an <a> (plain href; templ sanitizes it) with a
+// hover border in the primary color; otherwise the root is a <div>.
+// VariantDanger swaps the border for border-destructive, VariantMuted swaps
+// the surface for bg-muted. The sparkline and ring take the primary color.
+//
+// The tile has no outer margin or width: place it in layout.Inline with Wrap
+// or in dashboardgrid, which own the spacing. At phone width (390px) the tile
+// fills whatever column it is given; the value row keeps the graphic at a
+// fixed 110x30 (or 56px ring) and lets the value and delta wrap beneath each
+// other, so nothing overflows horizontally.
+//
+// @pure
+// @ai-context delta colors and arrows are copied from statcomparison, whose
+// helper is unexported; keep the two in step if either changes.
+templ StatTile(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Href != "" {
+		<a
+			href={ p.Href }
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ surfaceClass(p) }
+			{ p.Attributes... }
+		>
+			@body(p)
+		</a>
+	} else {
+		<div
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ surfaceClass(p) }
+			{ p.Attributes... }
+		>
+			@body(p)
+		</div>
+	}
+}

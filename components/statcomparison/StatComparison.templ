@@ -9,9 +9,9 @@ import "github.com/bplus/webframe/utils"
 type Direction string
 
 const (
-	// DirectionUp shows the delta in green with an up arrow.
+	// DirectionUp shows the delta in the success color with an up arrow.
 	DirectionUp Direction = "up"
-	// DirectionDown shows the delta in red with a down arrow.
+	// DirectionDown shows the delta in the destructive color with a down arrow.
 	DirectionDown Direction = "down"
 	// DirectionFlat shows the delta in muted gray with a flat line;
 	// same rendering as the zero value.
@@ -38,9 +38,9 @@ type Props struct {
 func (p Props) directionColor() string {
 	switch p.Direction {
 	case DirectionUp:
-		return "text-green-500"
+		return "text-success"
 	case DirectionDown:
-		return "text-red-500"
+		return "text-destructive"
 	default:
 		return "text-muted-foreground"
 	}
@@ -55,7 +55,7 @@ func (p Props) directionColor() string {
 // flex <div>; it takes no children — all content comes from Props.
 //
 // @pure
-// @ai-context Colors are fixed to "up = green, down = red" via
+// @ai-context Colors are fixed to "up = success, down = destructive" via
 // directionColor(); there is no way to flip the mapping for metrics
 // where a decrease is good (e.g. error counts) other than choosing a
 // different Direction than the arithmetic one. Arrow SVGs are inlined,
