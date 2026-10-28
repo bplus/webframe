@@ -1,0 +1,107 @@
+package toggle
+
+import "github.com/bplus/webframe/utils"
+
+// Size selects the switch dimensions. The zero value (SizeM) is the
+// default 36x20px track; SizeS is a 28x16px track for dense rows.
+type Size string
+
+// Switch sizes.
+const (
+	SizeM Size = ""
+	SizeS Size = "s"
+)
+
+// Props configures Toggle. The zero value renders an enabled, unchecked
+// switch that submits "on" when checked (the HTML default value is
+// written out explicitly when Value is empty). Class merges after the
+// root <label>'s built-in classes via utils.TwMerge; ID and Attributes
+// go on the <input> (the control), not the <label>, so aria-*, hx-*
+// and data-* attributes land on the element they describe — the same
+// split checkbox.Props uses.
+type Props struct {
+	// ID is the <input>'s id; supply one to target the control from an
+	// external label (label.Props.For) or aria-labelledby. Not
+	// auto-generated.
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Name       string
+	// Value defaults to "on" in the rendered markup when empty.
+	Value    string
+	Checked  bool
+	Disabled bool
+	// Form associates the switch with a <form> by id, allowing it to
+	// live outside the form element.
+	Form string
+	Size Size
+}
+
+// Toggle renders a CSS-only switch: a native <input type="checkbox"
+// role="switch"> that is visually hidden (sr-only) but focusable and
+// clickable, followed by a track <span> styled through peer-* variants
+// (checked moves the thumb and fills the track with the primary color,
+// focus-visible draws the ring, disabled dims it). The root is an
+// inline-flex <label>, so clicking anywhere on the switch or its text
+// toggles it; children are optional inline text rendered after the
+// switch. No script is needed — there is no Script() in this package.
+//
+// Accepts zero or one Props (elements past the first are ignored).
+// Phone width: the switch is a fixed-size inline element and its text
+// wraps; nothing collapses.
+//
+// @pure no id generation or randomness; markup is deterministic.
+// @invariant external label association requires a caller-supplied ID
+// equal to label.Props.For — nothing here generates one.
+templ Toggle(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<label class={ utils.TwMerge("inline-flex items-center gap-2 text-sm cursor-pointer has-[:disabled]:cursor-not-allowed", p.Class) }>
+		<input
+			type="checkbox"
+			role="switch"
+			checked?={ p.Checked }
+			disabled?={ p.Disabled }
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			if p.Name != "" {
+				name={ p.Name }
+			}
+			if p.Value != "" {
+				value={ p.Value }
+			} else {
+				value="on"
+			}
+			if p.Form != "" {
+				form={ p.Form }
+			}
+			class="peer sr-only"
+			{ p.Attributes... }
+		/>
+		<span
+			aria-hidden="true"
+			class={
+				utils.TwMerge(
+					"relative inline-block shrink-0 rounded-full border border-transparent bg-input transition-colors",
+					"after:absolute after:top-0.5 after:left-0.5 after:rounded-full after:bg-primary-foreground after:shadow-xs after:transition-transform",
+					"peer-checked:bg-primary",
+					"peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 peer-focus-visible:border-ring",
+					"peer-disabled:opacity-50",
+					trackSize(p.Size),
+				),
+			}
+		></span>
+		{ children... }
+	</label>
+}
+
+// trackSize returns the track, thumb and travel classes for a Size.
+func trackSize(s Size) string {
+	if s == SizeS {
+		return "h-4 w-7 after:size-3 peer-checked:after:translate-x-3"
+	}
+	return "h-5 w-9 after:size-4 peer-checked:after:translate-x-4"
+}

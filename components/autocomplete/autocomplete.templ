@@ -18,8 +18,11 @@ type Props struct {
 	Attributes templ.Attributes // spread on the root
 
 	// Name is the hidden field carrying the picked Value; "" renders no
-	// hidden field (free text only, submitted as q).
-	Name        string
+	// hidden field (free text only, submitted under TextName).
+	Name string
+	// TextName is the visible text box's name (the query parameter sent
+	// to HxGet and the field a plain form submit carries); "" → "q".
+	TextName    string
 	Label       string // optional visible label
 	Placeholder string
 	Value       string // initial picked value (hidden field)
@@ -31,8 +34,23 @@ type Props struct {
 	HxGet    string
 	MinChars int // default 1: fewer typed characters → no request, list closed
 	DelayMs  int // default 300: typing pause before the request fires
+	// Required puts required on the text box. When Name is also set the
+	// root carries data-wf-ac-required and autocomplete.js keeps a
+	// custom validity message ("Pick an item from the list") on the text
+	// box while the hidden value is empty, so inside a form "required"
+	// means "picked", not "typed something".
 	Required bool
+	// Disabled disables the text box and the hidden value input, so a
+	// disabled picker submits nothing.
 	Disabled bool
+}
+
+// textName returns the visible input's name: TextName or "q".
+func (p Props) textName() string {
+	if p.TextName != "" {
+		return p.TextName
+	}
+	return "q"
 }
 
 // Item is one suggestion in a Results list. Label is shown and copied
@@ -42,7 +60,7 @@ type Item struct{ Label, Value, Description string }
 
 func (p Props) inputAttrs() templ.Attributes {
 	a := templ.Attributes{
-		"name":              "q",
+		"name":              p.textName(),
 		"role":              "combobox",
 		"aria-autocomplete": "list",
 		"aria-expanded":     "false",
@@ -67,6 +85,8 @@ func (p Props) inputAttrs() templ.Attributes {
 // text box and its value into the hidden field named Name, then fires
 // a bubbling "wf:autocomplete:select" event with detail {value, label}
 // on the root. Editing the text after a pick clears the hidden value.
+// ArrowDown on a closed list re-requests the suggestions for the
+// current text (when it meets MinChars) and opens the list.
 //
 // @temporal-coupling picking, keyboard navigation, MinChars gating and
 // closing are inert unless Script() is on the page (appshell.Scripts
@@ -83,7 +103,15 @@ templ Autocomplete(props Props) {
 	if p.DelayMs <= 0 {
 		{{ p.DelayMs = 300 }}
 	}
-	<div class={ utils.TwMerge("relative", p.Class) } data-wf-autocomplete data-wf-ac-min={ strconv.Itoa(p.MinChars) } { p.Attributes... }>
+	<div
+		class={ utils.TwMerge("relative", p.Class) }
+		data-wf-autocomplete
+		data-wf-ac-min={ strconv.Itoa(p.MinChars) }
+		if p.Required && p.Name != "" {
+			data-wf-ac-required
+		}
+		{ p.Attributes... }
+	>
 		if p.HxGet == "" {
 			<span class="text-xs text-destructive">Error: Autocomplete missing required 'HxGet'</span>
 		}
@@ -101,7 +129,7 @@ templ Autocomplete(props Props) {
 			Attributes:  p.inputAttrs(),
 		})
 		if p.Name != "" {
-			<input type="hidden" name={ p.Name } value={ p.Value } data-wf-ac-value/>
+			<input type="hidden" name={ p.Name } value={ p.Value } disabled?={ p.Disabled } data-wf-ac-value/>
 		}
 		<div
 			id={ p.ID + "-list" }

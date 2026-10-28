@@ -3,16 +3,51 @@
 package form
 
 import (
+	"sort"
+
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/utils"
 )
 
+// Props configures Form, the <form> element itself. The zero value
+// renders <form method="post"> with no action (submits to the current
+// URL). Class merges after the built-in classes via utils.TwMerge;
+// Attributes spread last on the <form>, so a caller attribute wins
+// over anything Props would emit.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	// Action is the submit URL, emitted plain (templ sanitizes it; no
+	// templ.SafeURL). Empty omits the attribute.
+	Action string
+	// Method is "post" when empty; "get" is the other valid value and
+	// is passed through as written.
+	Method string
+	// HxPost / HxGet / HxTarget / HxSwap are emitted as the matching
+	// hx-* attributes when non-empty. HxPost and HxGet are independent
+	// of Action/Method: set both for a form that works with and without
+	// htmx.
+	HxPost, HxGet, HxTarget, HxSwap string
+	// Hidden renders one <input type="hidden" name=key value=val> per
+	// entry before the children, in sorted key order so markup is
+	// deterministic.
+	Hidden map[string]string
+	// NoValidate emits novalidate: the browser skips its own
+	// required/pattern checks and the server does all validation.
+	NoValidate bool
+	// Multipart emits enctype="multipart/form-data"; required for file
+	// inputs.
+	Multipart bool
+}
+
 // MessageVariant selects the color of a Message. The zero value
-// leaves the text in the surrounding foreground color.
+// leaves the text in the surrounding foreground color. Colors are theme
+// tokens: destructive for errors, info for hints.
 type MessageVariant string
 
-// Message color variants: error renders red (validation failures),
-// info renders blue (neutral hints).
+// Message color variants: error renders in the destructive token
+// (validation failures), info in the info token (neutral hints).
 const (
 	MessageVariantError MessageVariant = "error"
 	MessageVariantInfo  MessageVariant = "info"
@@ -58,6 +93,70 @@ type MessageProps struct {
 	Class      string
 	Attributes templ.Attributes
 	Variant    MessageVariant
+}
+
+// Form renders the <form> element that app code uses instead of a raw
+// <form> (wflint forbids the raw tag): method defaults to "post", the
+// Hidden entries render first as hidden inputs in sorted key order,
+// then the children. Accepts zero or one Props (extras ignored).
+// Phone width: a block element with no layout of its own; the fields
+// inside decide how they stack.
+//
+// @pure
+// @invariant Hidden keys are emitted sorted so two renders of the same
+// map produce identical markup.
+templ Form(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.Method == "" {
+		{{ p.Method = "post" }}
+	}
+	<form
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		if p.Class != "" {
+			class={ utils.TwMerge(p.Class) }
+		}
+		if p.Action != "" {
+			action={ p.Action }
+		}
+		method={ p.Method }
+		if p.Multipart {
+			enctype="multipart/form-data"
+		}
+		novalidate?={ p.NoValidate }
+		if p.HxPost != "" {
+			hx-post={ p.HxPost }
+		}
+		if p.HxGet != "" {
+			hx-get={ p.HxGet }
+		}
+		if p.HxTarget != "" {
+			hx-target={ p.HxTarget }
+		}
+		if p.HxSwap != "" {
+			hx-swap={ p.HxSwap }
+		}
+		{ p.Attributes... }
+	>
+		for _, k := range hiddenKeys(p.Hidden) {
+			<input type="hidden" name={ k } value={ p.Hidden[k] }/>
+		}
+		{ children... }
+	</form>
+}
+
+// hiddenKeys returns the keys of m in sorted order.
+func hiddenKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // Item renders the vertical wrapper for one form field: a <div> with
@@ -160,9 +259,9 @@ templ Description(props ...DescriptionProps) {
 	</p>
 }
 
-// Message renders a small feedback line (<p>) colored by Variant —
-// red for MessageVariantError, blue for MessageVariantInfo, inherited
-// color for the zero value. It carries the validation text whose
+// Message renders a small feedback line (<p>) colored by Variant:
+// text-destructive for MessageVariantError, text-info for
+// MessageVariantInfo, inherited color for the zero value. It carries the validation text whose
 // presence usually accompanies HasError on the control and Error on
 // the label (those style themselves; this renders the words).
 //
@@ -198,9 +297,9 @@ templ Message(props ...MessageProps) {
 func messageVariantClass(variant MessageVariant) string {
 	switch variant {
 	case MessageVariantError:
-		return "text-red-500"
+		return "text-destructive"
 	case MessageVariantInfo:
-		return "text-blue-500"
+		return "text-info"
 	default:
 		return ""
 	}
