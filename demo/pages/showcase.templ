@@ -780,70 +780,54 @@ templ selectboxSection() {
 // Popover
 // ═══════════════════════════════════════
 templ popoverSection() {
-	<section id="popover" class="wf-section">
-		<h2 class="wf-section-title">Popover</h2>
-		<p class="wf-section-desc">Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement.</p>
-		<div class="wf-demo-row">
-			<!-- Click popover -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
-					@button.Button(button.Props{Variant: button.VariantOutline}) {
-						Click Popover 
-					}
+	@layout.Section(layout.SectionProps{ID: "popover", Title: "Popover", Description: "Positioning primitive used by dropdown, selectbox, and hovercard. Click or hover triggers with configurable placement."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
+			@popover.Trigger(popover.TriggerProps{For: "pop-click"}) {
+				@button.Button(button.Props{Variant: button.VariantOutline}) {
+					Click Popover
 				}
-				@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
-					<div class="p-4 max-w-xs">
-						<h4 class="font-semibold text-sm mb-1">Click-triggered Popover</h4>
-						<p class="text-xs text-muted-foreground">This popover opens on click and positions itself below the trigger with an arrow.</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{ID: "pop-click", Placement: popover.PlacementBottom, ShowArrow: true}) {
+				@panel.Panel(panel.Props{Title: "Click-triggered Popover"}) {
+					<p><small>This popover opens on click and positions itself below the trigger with an arrow.</small></p>
 				}
-			</div>
-			<!-- Hover popover -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-hover", TriggerType: popover.TriggerTypeHover}) {
-					@button.Button(button.Props{Variant: button.VariantSecondary}) {
-						Hover Popover 
-					}
+			}
+			@popover.Trigger(popover.TriggerProps{For: "pop-hover", TriggerType: popover.TriggerTypeHover}) {
+				@button.Button(button.Props{Variant: button.VariantSecondary}) {
+					Hover Popover
 				}
-				@popover.Content(popover.ContentProps{
-					ID:            "pop-hover",
-					Placement:     popover.PlacementTop,
-					ShowArrow:     true,
-					HoverDelay:    200,
-					HoverOutDelay: 150,
-				}) {
-					<div class="p-4 max-w-xs">
-						<h4 class="font-semibold text-sm mb-1">Hover-triggered</h4>
-						<p class="text-xs text-muted-foreground">200ms delay before show, 150ms before hide. Configurable via HoverDelay/HoverOutDelay.</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{
+				ID:            "pop-hover",
+				Placement:     popover.PlacementTop,
+				ShowArrow:     true,
+				HoverDelay:    200,
+				HoverOutDelay: 150,
+			}) {
+				@panel.Panel(panel.Props{Title: "Hover-triggered"}) {
+					<p><small>200ms delay before show, 150ms before hide. Configurable via HoverDelay/HoverOutDelay.</small></p>
 				}
-			</div>
-			<!-- Right placement -->
-			<div>
-				@popover.Trigger(popover.TriggerProps{For: "pop-right"}) {
-					@button.Button(button.Props{Variant: button.VariantGhost}) {
-						Right Side 
-					}
+			}
+			@popover.Trigger(popover.TriggerProps{For: "pop-right"}) {
+				@button.Button(button.Props{Variant: button.VariantGhost}) {
+					Right Side
 				}
-				@popover.Content(popover.ContentProps{ID: "pop-right", Placement: popover.PlacementRight, ShowArrow: true}) {
-					<div class="p-4">
-						<p class="text-xs text-muted-foreground">Placement: Right</p>
-					</div>
+			}
+			@popover.Content(popover.ContentProps{ID: "pop-right", Placement: popover.PlacementRight, ShowArrow: true}) {
+				@panel.Panel() {
+					<p><small>Placement: Right</small></p>
 				}
-			</div>
-		</div>
-	</section>
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Hover Card
 // ═══════════════════════════════════════
 templ hovercardSection() {
-	<section id="hovercard" class="wf-section">
-		<h2 class="wf-section-title">Hover Card</h2>
-		<p class="wf-section-desc">Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon.</p>
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-			<!-- Product hover card -->
+	@layout.Section(layout.SectionProps{ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-product",
 				Title:       "Flame Tongue Greatsword",
@@ -859,12 +843,11 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — Product Card</p>
-						<p class="text-xs text-muted-foreground">Shows item details with metadata rows and icon</p>
+						<p><strong>Hover me — Product Card</strong></p>
+						<p><small>Shows item details with metadata rows and icon</small></p>
 					}
 				}
 			}
-			<!-- User profile hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-user",
 				Title:       "Jane Developer",
@@ -880,12 +863,11 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — User Profile</p>
-						<p class="text-xs text-muted-foreground">No icon panel — text-only hover card</p>
+						<p><strong>Hover me — User Profile</strong></p>
+						<p><small>No icon panel — text-only hover card</small></p>
 					}
 				}
 			}
-			<!-- Minimal hover card -->
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-minimal",
 				Title:       "Quick Tooltip",
@@ -893,74 +875,68 @@ templ hovercardSection() {
 			}) {
 				@card.Card() {
 					@card.Content() {
-						<p class="text-sm font-medium">Hover me — Minimal</p>
-						<p class="text-xs text-muted-foreground">Title + description only</p>
+						<p><strong>Hover me — Minimal</strong></p>
+						<p><small>Title + description only</small></p>
 					}
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Avatar
 // ═══════════════════════════════════════
 templ avatarSection() {
-	<section id="avatar" class="wf-section">
-		<h2 class="wf-section-title">Avatar</h2>
-		<p class="wf-section-desc">Circular avatar with image and text fallback.</p>
-		<div class="wf-demo-row">
+	@layout.Section(layout.SectionProps{ID: "avatar", Title: "Avatar", Description: "Circular avatar with image and text fallback."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
 			@avatar.Avatar() {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=1", Alt: "User"})
 				@avatar.Fallback() {
-					JD 
+					JD
 				}
 			}
 			@avatar.Avatar() {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=5", Alt: "User"})
 				@avatar.Fallback() {
-					AK 
+					AK
 				}
 			}
 			@avatar.Avatar() {
 				@avatar.Fallback() {
-					WF 
+					WF
 				}
 			}
-			@avatar.Avatar(avatar.Props{Class: "h-16 w-16"}) {
+			@avatar.Avatar() {
 				@avatar.Image(avatar.ImageProps{Src: "https://i.pravatar.cc/150?img=12", Alt: "User"})
 				@avatar.Fallback() {
-					LG 
+					LG
 				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Separator
 // ═══════════════════════════════════════
 templ separatorSection() {
-	<section id="separator" class="wf-section">
-		<h2 class="wf-section-title">Separator</h2>
-		<p class="wf-section-desc">Horizontal and vertical dividers.</p>
-		<div class="space-y-4">
-			<p class="text-sm">Content above the separator.</p>
-			@separator.Separator()
-			<p class="text-sm">Content below the separator.</p>
-			@separator.Separator(separator.Props{Decoration: separator.DecorationDashed})
-			@separator.Separator() {
-				<span class="text-xs text-muted-foreground px-2">OR</span>
-			}
-			<div class="flex items-center gap-4 h-8">
-				<span class="text-sm">Left</span>
-				@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-				<span class="text-sm">Center</span>
-				@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
-				<span class="text-sm">Right</span>
-			</div>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{ID: "separator", Title: "Separator", Description: "Horizontal and vertical dividers."}) {
+		<p>Content above the separator.</p>
+		@separator.Separator()
+		<p>Content below the separator.</p>
+		@separator.Separator(separator.Props{Decoration: separator.DecorationDashed})
+		@separator.Separator() {
+			OR
+		}
+		@layout.Inline() {
+			<span>Left</span>
+			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
+			<span>Center</span>
+			@separator.Separator(separator.Props{Orientation: separator.OrientationVertical})
+			<span>Right</span>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
