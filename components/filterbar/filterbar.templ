@@ -41,6 +41,11 @@ type FilterConfig struct {
 	// Options populate TypeSelect and TypeToggle controls; unused by
 	// TypeSearch.
 	Options []FilterOption
+	// Value is the initial text of a TypeSearch input (rendered as its
+	// value attribute when non-empty); unused by TypeSelect and
+	// TypeToggle, whose state lives in Options[i].Selected. WithSelected
+	// fills it from the query.
+	Value string
 }
 
 // Props configures FilterBar. Class merges after the built-in classes
@@ -57,6 +62,13 @@ type Props struct {
 	// ShowReset appends a "Clear filters" button that resets every
 	// control and re-triggers the update.
 	ShowReset bool
+	// Hidden renders one <input type="hidden"> per entry (sorted by key)
+	// carrying the control marker, so filterbar.min.js sends these
+	// parameters along with every filter change. Meant for list state
+	// that is not a filter — sort, dir, per — so changing a filter keeps
+	// the sort. "Clear filters" leaves hidden inputs alone. nil renders
+	// nothing.
+	Hidden map[string]string
 }
 
 // FilterBar renders a horizontal bar of filter controls (selects,
@@ -82,6 +94,10 @@ type Props struct {
 // The root <div> emits id={ p.ID } only when Props.ID is non-empty, so a
 // bar without an explicit ID renders no id attribute at all (contrast
 // graphwidget, which renders id={ id } unconditionally).
+//
+// Props.Hidden entries render first, as hidden inputs in sorted key
+// order; they take no space, so the bar's phone-width wrapping is
+// unchanged by them.
 templ FilterBar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -107,6 +123,9 @@ templ FilterBar(props ...Props) {
 		}
 		{ p.Attributes... }
 	>
+		for _, k := range sortedKeys(p.Hidden) {
+			<input type="hidden" name={ k } value={ p.Hidden[k] } data-tui-filterbar-control/>
+		}
 		for _, f := range p.Filters {
 			switch f.Type {
 				case TypeSelect:
@@ -159,6 +178,9 @@ templ filterSearch(f FilterConfig) {
 			type="search"
 			name={ f.ID }
 			data-tui-filterbar-control
+			if f.Value != "" {
+				value={ f.Value }
+			}
 			data-tui-filterbar-debounce="400"
 			placeholder={ f.Placeholder }
 			class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
