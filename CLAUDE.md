@@ -60,6 +60,10 @@ Apps are built by composing components, never by writing markup. Packages:
 - `components/custompage`, `components/customblock` — the declared design-exemption fences (see below)
 - `gameicon` has `Size`/`Tone`; `avatar` has `Size`; `tabs` has `Sizing` (`SizingTallest` default, `SizingFixed` + `Height` S/M/L, `SizingFit`); `hovercard` has `Placement` (default bottom-start)
 
+Headings: `layout.Section` defaults to an h2 and `panel` to an h3; set `Level` to nest them. `formfield.Feedback` is swapped with `hx-swap="outerHTML"` targeting `#`+`Field.FeedbackID()` (innerHTML nests the wrapper and duplicates its id). No component renders a `<form>` yet, and wflint forbids a raw one, so until `formpage` (batch 2) lands, `Required` is a label marker plus the `required` attribute for assistive tech; browser validation does not run. The demo therefore submits the autocomplete with `hx-include`.
+
+**Changed defaults in batch 1b:** `tabs` are now as tall as their tallest panel by default (set `Sizing: tabs.SizingFit` for the old grow-and-shrink behavior), hover cards open below by default (set `Placement` to choose), `layout.Section` Level 2 headings are `text-2xl` and the page title is `text-3xl`. Consumers pinned to v0.1.0 (one app uses tabs and hovercard) will see these changes when they upgrade.
+
 App pattern: configure one `appshell.App`, wrap the mux in `App.Middleware`, render each page with `App.Render`:
 
 ```go
