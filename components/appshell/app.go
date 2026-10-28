@@ -2,8 +2,10 @@ package appshell
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/a-h/templ"
 )
@@ -22,6 +24,9 @@ type App struct {
 	LiveDot        *LiveDot
 	// Head, when non-nil, renders extra content at the end of <head>.
 	Head templ.Component
+	// Right, when non-nil, renders in the topbar's right group (before the
+	// user menu); ShellProps copies it into Props.Right.
+	Right templ.Component
 	// User returns the signed-in user for r; nil means no user menu.
 	User func(*http.Request) *User
 }
@@ -47,6 +52,16 @@ func (a *App) Middleware(next http.Handler) http.Handler {
 func FromContext(ctx context.Context) (*App, bool) {
 	a, ok := ctx.Value(appKey).(*App)
 	return a, ok && a != nil
+}
+
+// Must returns the App stored by Middleware, or an error naming Middleware
+// when the handler chain has none; page types call it from their Respond.
+func Must(ctx context.Context) (*App, error) {
+	a, ok := FromContext(ctx)
+	if !ok {
+		return nil, errors.New("appshell: no App in request context; wrap the handler in (*App).Middleware")
+	}
+	return a, nil
 }
 
 // PathFromContext returns the request path stored by Middleware, or "".
@@ -87,6 +102,7 @@ func (a *App) ShellProps(r *http.Request) Props {
 		MaxVisible:  a.MaxVisible,
 		ThemeToggle: a.ThemeToggle,
 		LiveDot:     a.LiveDot,
+		Right:       a.Right,
 		Width:       a.Width,
 	}
 	if a.User != nil {
@@ -100,14 +116,36 @@ func (a *App) ShellProps(r *http.Request) Props {
 // htmx request headers. It returns the render error
 // rather than writing a 500 itself.
 func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
+	return a.RenderParts(w, r, title, body, nil)
+}
+
+// RenderParts is Render with named swap regions. parts maps a swap target's
+// element id to the component that renders just that region. The response
+// depends on the request shape:
+//
+//   - WantsFragment(r) and the HX-Target header (with one leading "#"
+//     stripped) names a key in parts: only that part is written.
+//   - WantsFragment(r) otherwise (no HX-Target, an unknown target, or a
+//     target whose part is nil): full is written, the body with no shell.
+//   - any other request (not htmx, boosted, or a history restore): the whole
+//     Document wrapping Shell wrapping full, as Render does.
+//
+// Content-Type and Vary are set exactly as in Render. An empty HX-Target
+// never matches, even when parts has an "" key.
+func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, full templ.Component, parts map[string]templ.Component) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Add("Vary", varyHeaders)
 	ctx := r.Context()
 	if WantsFragment(r) {
-		return body.Render(ctx, w)
+		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
+			if part := parts[target]; part != nil {
+				return part.Render(ctx, w)
+			}
+		}
+		return full.Render(ctx, w)
 	}
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return Shell(a.ShellProps(r)).Render(templ.WithChildren(ctx, body), w)
+		return Shell(a.ShellProps(r)).Render(templ.WithChildren(ctx, full), w)
 	})
 	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head})
 	return doc.Render(templ.WithChildren(ctx, page), w)
