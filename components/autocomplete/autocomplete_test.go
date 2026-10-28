@@ -78,9 +78,25 @@ func TestResultsRendersOptions(t *testing.T) {
 
 func TestResultsEmpty(t *testing.T) {
 	out := render(t, Results(nil))
-	mustContain(t, out, "No matches")
-	if strings.Contains(out, `role="option"`) {
-		t.Errorf("unexpected option in %s", out)
+	mustContain(t, out, "No matches", `role="option"`, `aria-disabled="true"`, "data-wf-ac-empty")
+	if strings.Contains(out, "data-wf-ac-option") {
+		t.Errorf("No matches row must not be pickable: %s", out)
+	}
+}
+
+func TestAutocompleteMissingHxGetRendersError(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw"}))
+	mustContain(t, out, `Error: Autocomplete missing required 'HxGet'`, "text-destructive")
+	if strings.Contains(render(t, Autocomplete(Props{ID: "fw", HxGet: "/s"})), "Error:") {
+		t.Errorf("unexpected error with HxGet set")
+	}
+}
+
+func TestAutocompleteListLabelledByLabel(t *testing.T) {
+	out := render(t, Autocomplete(Props{ID: "fw", HxGet: "/s", Label: "Framework"}))
+	mustContain(t, out, `id="fw-label"`, `aria-labelledby="fw-label"`)
+	if strings.Contains(render(t, Autocomplete(Props{ID: "fw", HxGet: "/s"})), "aria-labelledby") {
+		t.Errorf("unexpected aria-labelledby without Label")
 	}
 }
 

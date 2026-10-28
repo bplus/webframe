@@ -25,8 +25,9 @@ type Props struct {
 	Value       string // initial picked value (hidden field)
 	Text        string // initial visible text
 
-	// HxGet is the server URL: the request is GET HxGet?q=<typed text>
-	// and the response should be a Results(...) fragment.
+	// HxGet is the server URL (required; empty renders an inline error):
+	// the request is GET HxGet?q=<typed text> and the response should be
+	// a Results(...) fragment.
 	HxGet    string
 	MinChars int // default 1: fewer typed characters → no request, list closed
 	DelayMs  int // default 300: typing pause before the request fires
@@ -83,8 +84,11 @@ templ Autocomplete(props Props) {
 		{{ p.DelayMs = 300 }}
 	}
 	<div class={ utils.TwMerge("relative", p.Class) } data-wf-autocomplete data-wf-ac-min={ strconv.Itoa(p.MinChars) } { p.Attributes... }>
+		if p.HxGet == "" {
+			<span class="text-xs text-destructive">Error: Autocomplete missing required 'HxGet'</span>
+		}
 		if p.Label != "" {
-			@form.Label(form.LabelProps{For: p.ID}) {
+			@form.Label(form.LabelProps{ID: p.ID + "-label", For: p.ID}) {
 				{ p.Label }
 			}
 		}
@@ -99,18 +103,26 @@ templ Autocomplete(props Props) {
 		if p.Name != "" {
 			<input type="hidden" name={ p.Name } value={ p.Value } data-wf-ac-value/>
 		}
-		<div id={ p.ID + "-list" } role="listbox" class="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-md hidden" data-wf-ac-list></div>
+		<div
+			id={ p.ID + "-list" }
+			role="listbox"
+			if p.Label != "" {
+				aria-labelledby={ p.ID + "-label" }
+			}
+			class="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-md hidden"
+			data-wf-ac-list
+		></div>
 	</div>
 }
 
 // Results renders the listbox contents the server returns for a query:
-// one selectable option per item, or a single non-selectable
-// "No matches" row when items is empty.
+// one selectable option per item, or a single "No matches" row when
+// items is empty (role="option" aria-disabled="true", never pickable).
 //
 // @pure
 templ Results(items []Item) {
 	if len(items) == 0 {
-		<div class="px-3 py-2 text-sm text-muted-foreground" data-wf-ac-empty>No matches</div>
+		<div role="option" aria-disabled="true" class="px-3 py-2 text-sm text-muted-foreground" data-wf-ac-empty>No matches</div>
 	}
 	for _, it := range items {
 		<div role="option" tabindex="-1" class="cursor-pointer px-3 py-2 text-sm data-[active]:bg-muted hover:bg-muted" data-wf-ac-option data-wf-ac-item-value={ it.Value } data-wf-ac-item-label={ it.Label }>
