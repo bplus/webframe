@@ -1,0 +1,28 @@
+package testdata
+
+templ Branches(n int, items []string, x bool) {
+	if n == 0 {
+		<p>zero</p>
+	} else if n == 1 {
+		<div>else-if</div>
+	} else {
+		<div>else</div>
+	}
+	for _, it := range items {
+		<div>{ it }</div>
+	}
+	switch n {
+		case 2:
+			<div>case</div>
+	}
+	@layout.Stack() {
+		<div>call child</div>
+	}
+	<p
+		if x {
+			title="a"
+		} else {
+			style="b"
+		}
+	>cond</p>
+}

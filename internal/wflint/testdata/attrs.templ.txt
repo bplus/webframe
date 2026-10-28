@@ -10,4 +10,6 @@ templ Attrs(attrs templ.Attributes, key string) {
 		p { color: red; }
 	</style>
 	<a hx-get="/x" x-show="open" data-id="1" aria-label="y">ok</a>
+	<script defer nonce={ templ.GetNonce(ctx) } src={ "/app.js" }></script>
+	<script class="s" style="t"></script>
 }

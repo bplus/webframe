@@ -44,11 +44,14 @@ var Hints = map[string]string{
 func (w *walker) checkElement(e *parser.Element) {
 	name := strings.ToLower(e.Name)
 	if !slices.Contains(AllowedElements, name) {
+		// Attribute rules apply only to allowed elements: the element
+		// itself is the violation, and replacing it removes its attributes.
 		w.report(e.Range, "element",
 			fmt.Sprintf("<%s> is not allowed in app code; use a webframe component", name),
 			Hints[name])
+		return
 	}
-	w.checkAttrs(e.Range, e.Attributes)
+	w.checkAttrs(e.Range, e.Attributes, false)
 }
 
 func (w *walker) checkRawElement(e *parser.RawElement) {
@@ -64,35 +67,44 @@ func (w *walker) checkRawElement(e *parser.RawElement) {
 }
 
 // checkAttrs applies the attribute rules. elem is the owning element's range,
-// used when an attribute carries no position of its own.
-func (w *walker) checkAttrs(elem parser.Range, attrs []parser.Attribute) {
+// used when an attribute carries no position of its own. With onlyClassStyle
+// (used for <script>), only attr-class and attr-style are checked.
+func (w *walker) checkAttrs(elem parser.Range, attrs []parser.Attribute, onlyClassStyle bool) {
 	for _, a := range attrs {
 		switch a := a.(type) {
 		case *parser.ConstantAttribute:
-			w.checkKey(elem, a.Key)
+			w.checkKey(elem, a.Key, onlyClassStyle)
 		case *parser.ExpressionAttribute:
-			w.checkKey(elem, a.Key)
+			w.checkKey(elem, a.Key, onlyClassStyle)
 		case *parser.BoolConstantAttribute:
-			w.checkKey(elem, a.Key)
+			w.checkKey(elem, a.Key, onlyClassStyle)
 		case *parser.BoolExpressionAttribute:
-			w.checkKey(elem, a.Key)
+			w.checkKey(elem, a.Key, onlyClassStyle)
 		case *parser.ConditionalAttribute:
-			w.checkAttrs(elem, a.Then)
-			w.checkAttrs(elem, a.Else)
+			w.checkAttrs(elem, a.Then, onlyClassStyle)
+			w.checkAttrs(elem, a.Else, onlyClassStyle)
 		case *parser.SpreadAttributes:
-			w.report(pick(a.Range, elem), "attr-spread",
-				"attribute spread is not allowed in app code; pass props to a webframe component", "")
+			if !onlyClassStyle {
+				w.report(pick(a.Range, elem), "attr-spread",
+					"attribute spread is not allowed in app code; pass props to a webframe component", "")
+			}
 		}
 	}
 }
 
-func (w *walker) checkKey(elem parser.Range, k parser.AttributeKey) {
+func (w *walker) checkKey(elem parser.Range, k parser.AttributeKey, onlyClassStyle bool) {
 	switch k := k.(type) {
 	case parser.ExpressionAttributeKey:
+		if onlyClassStyle {
+			return
+		}
 		w.report(pick(k.Expression.Range, elem), "attr-dynamic-key",
 			"attribute names computed at runtime are not allowed in app code", "")
 		return
 	case *parser.ExpressionAttributeKey:
+		if onlyClassStyle {
+			return
+		}
 		w.report(pick(k.Expression.Range, elem), "attr-dynamic-key",
 			"attribute names computed at runtime are not allowed in app code", "")
 		return
@@ -110,7 +122,7 @@ func (w *walker) checkKey(elem parser.Range, k parser.AttributeKey) {
 		w.report(r, "attr-class", "class is not allowed in app code; styling belongs inside webframe components", "")
 	case name == "style":
 		w.report(r, "attr-style", "style is not allowed in app code; styling belongs inside webframe components", "")
-	case slices.Contains(AllowedAttrs, name) || hasAllowedPrefix(name):
+	case onlyClassStyle, slices.Contains(AllowedAttrs, name), hasAllowedPrefix(name):
 	default:
 		w.report(r, "attr-unknown",
 			fmt.Sprintf("attribute %q is not allowed in app code", name),

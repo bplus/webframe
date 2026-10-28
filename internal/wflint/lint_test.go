@@ -76,6 +76,8 @@ func TestLint_Attrs(t *testing.T) {
 		{7, "attr-dynamic-key"},
 		{8, "attr-unknown"},
 		{9, "style-element"},
+		{14, "attr-class"},
+		{14, "attr-style"},
 	}
 	if len(vs) != len(want) {
 		t.Fatalf("got %d violations, want %d: %+v", len(vs), len(want), vs)
@@ -85,14 +87,51 @@ func TestLint_Attrs(t *testing.T) {
 			t.Errorf("[%d] got %s at line %d, want %s at line %d", i, vs[i].Rule, vs[i].Line, w.rule, w.line)
 		}
 	}
-	// The hx-/x-/data-/aria- line (12) must be clean.
+	// Line 12 (hx-/x-/data-/aria- attributes) and line 13 (a <script> with
+	// defer, nonce and src) must be clean: scripts are allowed, and only
+	// class/style are checked on them.
 	for _, v := range vs {
-		if v.Line == 12 {
-			t.Errorf("prefixed attributes produced a violation: %+v", v)
+		if v.Line == 12 || v.Line == 13 {
+			t.Errorf("line %d should be clean, got %+v", v.Line, v)
 		}
 	}
 	if !strings.Contains(vs[4].Message, "onclick") {
 		t.Errorf("attr-unknown message %q should name onclick", vs[4].Message)
+	}
+}
+
+// TestLint_ElementsNoAttrRulesOnForbidden: the <div> on line 4 carries class
+// and style and the <button> on line 7 carries onclick, but attribute rules
+// apply only to allowed elements, so only the element violations appear.
+func TestLint_ElementsNoAttrRulesOnForbidden(t *testing.T) {
+	for _, v := range lintOne(t, "testdata/elements.templ.txt") {
+		if v.Rule != "element" {
+			t.Errorf("forbidden element produced %s at line %d", v.Rule, v.Line)
+		}
+	}
+}
+
+func TestLint_Branches(t *testing.T) {
+	vs := lintOne(t, "testdata/branches.templ.txt")
+	want := []struct {
+		line int
+		rule string
+		site string
+	}{
+		{7, "element", "else if branch"},
+		{9, "element", "else branch"},
+		{12, "element", "for loop"},
+		{16, "element", "switch case"},
+		{19, "element", "template call children"},
+		{25, "attr-style", "conditional attribute else"},
+	}
+	if len(vs) != len(want) {
+		t.Fatalf("got %d violations, want %d: %+v", len(vs), len(want), vs)
+	}
+	for i, w := range want {
+		if vs[i].Line != w.line || vs[i].Rule != w.rule {
+			t.Errorf("%s: got %s at line %d, want %s at line %d", w.site, vs[i].Rule, vs[i].Line, w.rule, w.line)
+		}
 	}
 }
 

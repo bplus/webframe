@@ -40,8 +40,10 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.checkRawElement(n)
 		}
 	case *parser.ScriptElement:
+		// <script> is allowed in app code (behavior is not design); only
+		// class and style are checked on it.
 		if !inFence {
-			w.report(n.Range, "element", "<script> is not allowed in app code; scripts belong inside webframe components", "")
+			w.checkAttrs(n.Range, n.Attributes, true)
 		}
 	case *parser.TemplElementExpression:
 		// Fence hook: a later task inspects n.Expression for CustomPage /
