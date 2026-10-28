@@ -17,3 +17,6 @@ var p = card.Props{
 var o = other.Options{Class: "x"}
 
 var a = map[string]any{"style": "x"}
+
+// Any *Props literal counts, not only one named Props.
+var c = dropdown.ContentProps{Class: "x"}

@@ -29,6 +29,7 @@ templ GoCode(s string) {
 		}
 	}}
 	{{ o := other.Options{Class: "x"} }}
+	{{ sl := dashboardgrid.SlotProps{Class: "x"} }}
 }
 
 var hero = card.Card(card.Props{Class: "x"})

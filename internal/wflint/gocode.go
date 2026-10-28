@@ -13,10 +13,11 @@ var (
 	// propsClassRe finds a Class field anywhere; used inside component call
 	// expressions, where any Class: is a Props field.
 	propsClassRe = regexp.MustCompile(`\bClass:\s*`)
-	// propsLitRe finds the opening of a Props composite literal (card.Props{
-	// or Props{); in plain Go code Class: is reported only inside one, since
-	// other structs may legitimately have a Class field.
-	propsLitRe = regexp.MustCompile(`\b(?:[A-Za-z_]\w*\.)?Props\{`)
+	// propsLitRe finds the opening of any *Props composite literal (Props{,
+	// card.Props{, dashboardgrid.SlotProps{, dropdown.ContentProps{); in
+	// plain Go code Class: is reported only inside one, since other structs
+	// may legitimately have a Class field.
+	propsLitRe = regexp.MustCompile(`\b(?:[A-Za-z_]\w*\.)?\w*Props\{`)
 	// attrsMapRe finds the opening of an attribute-map literal.
 	attrsMapRe = regexp.MustCompile(`\btempl\.Attributes\{|\bmap\[string\](?:any|interface\{\})\{`)
 	// classStyleKey finds a quoted class or style key, in any case.

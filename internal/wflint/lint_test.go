@@ -269,7 +269,8 @@ func TestLint_GoCode(t *testing.T) {
 		{24, "attrs-map"},    // "Style" key, any case
 		{25, "attrs-map"},    // "}" inside a string does not end the literal
 		{28, "props-class"},  // Class: on its own line of a multi-line Props literal
-		{34, "props-class"},  // top-level var hero = card.Card(card.Props{Class: ...})
+		{32, "props-class"},  // {{ dashboardgrid.SlotProps{Class: ...} }}: any *Props literal
+		{35, "props-class"},  // top-level var hero = card.Card(card.Props{Class: ...})
 	}
 	if len(vs) != len(want) {
 		t.Fatalf("got %d violations, want %d: %+v", len(vs), len(want), vs)
@@ -301,6 +302,7 @@ func TestLint_GoFiles(t *testing.T) {
 		{7, "html-from-go"},
 		{13, "props-class"}, // multi-line card.Props literal
 		{19, "attrs-map"},   // map[string]any{"style": ...}
+		{22, "props-class"}, // dropdown.ContentProps{Class: ...}: any *Props literal
 	}
 	if len(vs) != len(want) {
 		t.Fatalf("handler.go: got %d violations, want %d: %+v", len(vs), len(want), vs)
