@@ -1,0 +1,12 @@
+package testdata
+
+templ Clean() {
+	@layout.Stack() {
+		<p>Hello <strong>world</strong></p>
+		<a href="/about">About</a>
+		<ul>
+			<li>One</li>
+			<li>Two</li>
+		</ul>
+	}
+}

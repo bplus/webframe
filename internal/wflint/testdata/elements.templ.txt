@@ -1,0 +1,9 @@
+package testdata
+
+templ Elements() {
+	<div>
+		<h1>Title</h1>
+		<table></table>
+		<button>Go</button>
+	</div>
+}
