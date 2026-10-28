@@ -943,318 +943,272 @@ templ separatorSection() {
 // Aspect Ratio
 // ═══════════════════════════════════════
 templ aspectratioSection() {
-	<section id="aspectratio" class="wf-section">
-		<h2 class="wf-section-title">Aspect Ratio</h2>
-		<p class="wf-section-desc">Container that maintains a fixed aspect ratio. Useful for images, videos, maps.</p>
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">16:9 (Video)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						16:9
-					</div>
-				}
-			</div>
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">3:4 (Portrait)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						3:4
-					</div>
-				}
-			</div>
-			<div>
-				<p class="text-xs font-semibold uppercase text-muted-foreground mb-2">1:1 (Square)</p>
-				@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
-					<div class="w-full h-full rounded-md bg-muted flex items-center justify-center text-muted-foreground text-sm">
-						1:1
-					</div>
-				}
-			</div>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{ID: "aspectratio", Title: "Aspect Ratio", Description: "Container that maintains a fixed aspect ratio. Useful for images, videos, maps."}) {
+		@panel.Panel(panel.Props{Title: "16:9 (Video)"}) {
+			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioVideo}) {
+				<img src="https://picsum.photos/seed/webframe-video/1600/900" alt="Sample 16:9 image"/>
+			}
+		}
+		@panel.Panel(panel.Props{Title: "3:4 (Portrait)"}) {
+			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioPortrait}) {
+				<img src="https://picsum.photos/seed/webframe-portrait/900/1200" alt="Sample 3:4 image"/>
+			}
+		}
+		@panel.Panel(panel.Props{Title: "1:1 (Square)"}) {
+			@aspectratio.AspectRatio(aspectratio.Props{Ratio: aspectratio.RatioSquare}) {
+				<img src="https://picsum.photos/seed/webframe-square/1000/1000" alt="Sample 1:1 image"/>
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Game Icon
 // ═══════════════════════════════════════
 templ gameiconSection() {
-	<section id="gameicon" class="wf-section">
-		<h2 class="wf-section-title">Game Icon (SVG Sprite)</h2>
-		<p class="wf-section-desc">SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set.</p>
-		<div class="wf-demo-row">
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">broadsword</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">armor-vest</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">gem-pendant</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "ring", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">ring</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">cloak-dagger</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "shield", Class: "w-10 h-10 text-foreground"})
-				<span class="text-xs text-muted-foreground">shield</span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Class: "w-10 h-10 text-primary"})
-				<span class="text-xs text-muted-foreground">swords-emblem <span class="text-primary-500">(tinted)</span></span>
-			</div>
-			<div class="flex flex-col items-center gap-1">
-				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Class: "w-10 h-10 text-accent-500"})
-				<span class="text-xs text-muted-foreground">bottled-bolt <span class="text-accent-500">(tinted)</span></span>
-			</div>
-		</div>
-		<div class="wf-code text-xs mt-4">
-			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Class: "w-10 h-10 text-foreground"})` }</code>
-		</div>
-	</section>
+	@layout.Section(layout.SectionProps{ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "broadsword"})
+				<small>broadsword</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "armor-vest"})
+				<small>armor-vest</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant"})
+				<small>gem-pendant</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "ring"})
+				<small>ring</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger"})
+				<small>cloak-dagger</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "shield"})
+				<small>shield</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem"})
+				<small>swords-emblem</small>
+			}
+			@layout.Stack(layout.StackProps{Gap: layout.GapXS, Align: layout.AlignCenter}) {
+				@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt"})
+				<small>bottled-bolt</small>
+			}
+		}
+		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
+			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword"})` }</code>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // Alpine.js Patterns
 // ═══════════════════════════════════════
 templ alpineSection() {
-	<section id="alpine" class="wf-section">
-		<h2 class="wf-section-title">Alpine.js Patterns</h2>
-		<p class="wf-section-desc">Common Alpine.js patterns used with these components.</p>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Toggle visibility -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Toggle (x-show) 
-					}
-				}
-				@card.Content() {
-					<div x-data="{ open: false }">
-						@button.Button(button.Props{
-							Attributes: templ.Attributes{"@click": "open = !open"},
-							Size:       button.SizeSm,
-						}) {
-							Toggle Content 
-						}
-						<div x-show="open" x-transition x-cloak class="mt-3 p-3 rounded-md bg-muted text-sm">
-							This content is toggled with <code class="font-mono text-xs">x-show</code> and <code class="font-mono text-xs">x-transition</code>.
-						</div>
-					</div>
+	@layout.Section(layout.SectionProps{ID: "alpine", Title: "Alpine.js Patterns", Description: "Common Alpine.js patterns used with these components."}) {
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Toggle (x-show)
 				}
 			}
-			<!-- Counter with x-data -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Reactive State (x-data) 
+			@card.Content() {
+				@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+					@button.Button(button.Props{
+						Attributes: templ.Attributes{"x-on:click": "open = !open"},
+						Size:       button.SizeSm,
+					}) {
+						Toggle Content
+					}
+					@panel.Panel(panel.Props{Variant: panel.VariantMuted, Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-cloak": true}}) {
+						<p>This content is toggled with <code>x-show</code> and <code>x-transition</code>.</p>
 					}
 				}
-				@card.Content() {
-					<div x-data="{ count: 0 }" class="flex items-center gap-4">
-						<button @click="count--" class="inline-flex items-center justify-center rounded-md border border-input bg-background h-8 w-8 text-sm hover:bg-accent transition-colors">-</button>
-						<span x-text="count" class="text-2xl font-bold tabular-nums w-12 text-center">0</span>
-						<button @click="count++" class="inline-flex items-center justify-center rounded-md border border-input bg-background h-8 w-8 text-sm hover:bg-accent transition-colors">+</button>
-					</div>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Reactive State (x-data)
 				}
 			}
-			<!-- Two-way binding -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Two-way Binding (x-model) 
+			@card.Content() {
+				@layout.Inline(layout.InlineProps{Align: layout.AlignCenter, Attributes: templ.Attributes{"x-data": "{ count: 0 }"}}) {
+					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count--", "aria-label": "Decrement"}}) {
+						-
+					}
+					<strong x-text="count">0</strong>
+					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeIcon, Attributes: templ.Attributes{"x-on:click": "count++", "aria-label": "Increment"}}) {
+						+
 					}
 				}
-				@card.Content() {
-					<div x-data="{ name: '' }">
-						@input.Input(input.Props{
-							Placeholder: "Type your name...",
-							Attributes:  templ.Attributes{"x-model": "name"},
-						})
-						<p class="mt-2 text-sm text-muted-foreground">
-							Hello, <span x-text="name || 'stranger'" class="font-medium text-foreground"></span>!
-						</p>
-					</div>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Two-way Binding (x-model)
 				}
 			}
-			<!-- Dropdown with click.outside -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Click Outside (@@click.outside) 
+			@card.Content() {
+				@layout.Stack(layout.StackProps{Gap: layout.GapS, Attributes: templ.Attributes{"x-data": "{ name: '' }"}}) {
+					@input.Input(input.Props{
+						Placeholder: "Type your name...",
+						Attributes:  templ.Attributes{"x-model": "name"},
+					})
+					<p><small>Hello, <strong x-text="name || 'stranger'"></strong>!</small></p>
+				}
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Click Outside (x-on:click.outside)
+				}
+			}
+			@card.Content() {
+				@layout.Stack(layout.StackProps{Gap: layout.GapS, Align: layout.AlignStart, Attributes: templ.Attributes{"x-data": "{ open: false }"}}) {
+					@button.Button(button.Props{Variant: button.VariantOutline, Size: button.SizeSm, Attributes: templ.Attributes{"x-on:click": "open = !open"}}) {
+						<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
+					}
+					@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-show": "open", "x-transition": true, "x-on:click.outside": "open = false", "x-cloak": true}}) {
+						<p>Click outside this panel to close it.</p>
 					}
 				}
-				@card.Content() {
-					<div x-data="{ open: false }" class="relative">
-						<button @click="open = !open" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors">
-							<span x-text="open ? 'Close' : 'Open'">Open</span> Panel
-						</button>
-						<div
-							x-show="open"
-							x-transition
-							@click.outside="open = false"
-							x-cloak
-							class="absolute top-full mt-2 p-4 rounded-md border border-border bg-popover shadow-lg text-sm z-10"
-						>
-							Click outside this panel to close it.
-						</div>
-					</div>
-				}
 			}
-		</div>
-	</section>
+		}
+	}
 }
 
 // ═══════════════════════════════════════
 // HTMX Patterns
 // ═══════════════════════════════════════
 templ htmxSection() {
-	<section id="htmx" class="wf-section">
-		<h2 class="wf-section-title">HTMX Patterns</h2>
-		<p class="wf-section-desc">Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps.</p>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Click counter -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Click to Update (hx-post + hx-swap) 
-					}
+	@layout.Section(layout.SectionProps{ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-load, live search, validation, out-of-band swaps."}) {
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Click to Update (hx-post + hx-swap)
 				}
-				@card.Content() {
-					<p class="text-sm text-muted-foreground mb-3">Button replaces itself with server response.</p>
-					<button
-						hx-post="/api/click"
-						hx-swap="outerHTML"
-						hx-vals='{"count":"0"}'
-						class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-					>
-						Click me
-					</button>
+				@card.Description() {
+					Button replaces itself with server response.
 				}
 			}
-			<!-- Live search -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Live Search (hx-get + debounce) 
-					}
+			@card.Content() {
+				@button.Button(button.Props{Attributes: templ.Attributes{
+					"hx-post": "/api/click",
+					"hx-swap": "outerHTML",
+					"hx-vals": `{"count":"0"}`,
+				}}) {
+					Click me
 				}
-				@card.Content() {
-					<input
-						type="search"
-						name="q"
-						hx-get="/api/search"
-						hx-trigger="input changed delay:300ms, search"
-						hx-target="#search-results"
-						placeholder="Search frameworks..."
-						class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-					/>
-					<div id="search-results" class="mt-3 max-h-48 overflow-y-auto rounded-md border border-border">
-						<ul class="space-y-1 p-1">
-							<li class="px-3 py-2 text-sm text-muted-foreground">Type to search...</li>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Live Search (hx-get + debounce)
+				}
+			}
+			@card.Content() {
+				@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+					@input.Input(input.Props{
+						Type:        input.TypeSearch,
+						Name:        "q",
+						Placeholder: "Search frameworks...",
+						Attributes: templ.Attributes{
+							"hx-get":     "/api/search",
+							"hx-trigger": "input changed delay:300ms, search",
+							"hx-target":  "#search-results",
+						},
+					})
+					@panel.Panel(panel.Props{ID: "search-results"}) {
+						<ul>
+							<li><small>Type to search...</small></li>
 						</ul>
-					</div>
-				}
-			}
-			<!-- Field validation on blur -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Blur Validation (hx-post + hx-trigger="blur") 
 					}
 				}
-				@card.Content() {
-					<div class="space-y-4">
-						<div>
-							@label.Label(label.Props{}) {
-								Email 
-							}
-							<input
-								type="email"
-								name="value"
-								hx-post="/api/validate"
-								hx-trigger="blur"
-								hx-target="#email-feedback"
-								hx-vals='{"field":"email"}'
-								placeholder="you@example.com"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-							/>
-							<div id="email-feedback"></div>
-						</div>
-						<div>
-							@label.Label(label.Props{}) {
-								Name 
-							}
-							<input
-								type="text"
-								name="value"
-								hx-post="/api/validate"
-								hx-trigger="blur"
-								hx-target="#name-feedback"
-								hx-vals='{"field":"name"}'
-								placeholder="Your name"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-							/>
-							<div id="name-feedback"></div>
-						</div>
-					</div>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Blur Validation (hx-post + hx-trigger="blur")
 				}
 			}
-			<!-- Toast via OOB swap -->
-			@card.Card() {
-				@card.Header() {
-					@card.Title() {
-						Toast (hx-swap-oob) 
+			@card.Content() {
+				@layout.Stack() {
+					@form.Item() {
+						@label.Label(label.Props{For: "htmx-email"}) {
+							Email
+						}
+						@input.Input(input.Props{
+							ID:          "htmx-email",
+							Type:        input.TypeEmail,
+							Name:        "value",
+							Placeholder: "you@example.com",
+							Attributes: templ.Attributes{
+								"hx-post":    "/api/validate",
+								"hx-trigger": "blur",
+								"hx-target":  "#email-feedback",
+								"hx-vals":    `{"field":"email"}`,
+							},
+						})
+						<span id="email-feedback"></span>
+					}
+					@form.Item() {
+						@label.Label(label.Props{For: "htmx-name"}) {
+							Name
+						}
+						@input.Input(input.Props{
+							ID:          "htmx-name",
+							Name:        "value",
+							Placeholder: "Your name",
+							Attributes: templ.Attributes{
+								"hx-post":    "/api/validate",
+								"hx-trigger": "blur",
+								"hx-target":  "#name-feedback",
+								"hx-vals":    `{"field":"name"}`,
+							},
+						})
+						<span id="name-feedback"></span>
 					}
 				}
-				@card.Content() {
-					<p class="text-sm text-muted-foreground mb-3">Server responds with out-of-band HTML injected into #toast-container.</p>
-					<div class="flex gap-2 flex-wrap">
-						<button
-							hx-post="/api/toast"
-							hx-vals='{"variant":"success"}'
-							hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors"
-						>
-							Success
-						</button>
-						<button
-							hx-post="/api/toast"
-							hx-vals='{"variant":"error"}'
-							hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:bg-destructive/90 transition-colors"
-						>
-							Error
-						</button>
-						<button
-							hx-post="/api/toast"
-							hx-vals='{"variant":"info"}'
-							hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
-						>
-							Info
-						</button>
-						<button
-							hx-post="/api/toast"
-							hx-vals='{"variant":"warning"}'
-							hx-swap="none"
-							class="inline-flex items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
-						>
-							Warning
-						</button>
-					</div>
+			}
+		}
+		@card.Card() {
+			@card.Header() {
+				@card.Title() {
+					Toast (hx-swap-oob)
+				}
+				@card.Description() {
+					Server responds with out-of-band HTML injected into #toast-container.
 				}
 			}
-		</div>
-	</section>
+			@card.Content() {
+				@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
+					@button.Button(button.Props{Size: button.SizeSm, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"success"}`, "hx-swap": "none"}}) {
+						Success
+					}
+					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantDestructive, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"error"}`, "hx-swap": "none"}}) {
+						Error
+					}
+					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"info"}`, "hx-swap": "none"}}) {
+						Info
+					}
+					@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"warning"}`, "hx-swap": "none"}}) {
+						Warning
+					}
+				}
+			}
+		}
+	}
 }
 
 // ═══════════════════════════════════════
