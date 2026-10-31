@@ -1,8 +1,8 @@
 package authpage
 
 import (
+	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/banner"
-	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
@@ -68,24 +68,13 @@ templ signIn(p Props) {
 		for _, f := range p.fields() {
 			@formfield.FormField(f)
 		}
-		@button.Button(p.submitButtonProps()) {
-			{{ a := p.submit() }}
-			if a.Icon != nil {
-				@a.Icon
-			}
-			<span>{ a.Label }</span>
-		}
+		@action.Button(p.submit())
 	}
 	if len(p.Providers) > 0 {
 		@layout.Divider(layout.DividerProps{Label: "or"})
 		<div class="flex flex-col gap-2">
 			for _, a := range p.Providers {
-				@button.Button(providerProps(a)) {
-					if a.Icon != nil {
-						@a.Icon
-					}
-					<span>{ a.Label }</span>
-				}
+				@action.Button(provider(a))
 			}
 		</div>
 	}
@@ -95,13 +84,7 @@ templ signIn(p Props) {
 // Submit as a full-width link or button.
 templ messagePage(p Props) {
 	<p class="text-center text-sm text-muted-foreground">{ p.message() }</p>
-	{{ a := p.submit() }}
-	@button.Button(p.actionProps()) {
-		if a.Icon != nil {
-			@a.Icon
-		}
-		<span>{ a.Label }</span>
-	}
+	@action.Button(p.submit())
 }
 
 // errorDetails is the banner's list of field errors: "Label: message"

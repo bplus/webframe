@@ -21,10 +21,8 @@ import (
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
-	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
-	"github.com/bplus/webframe/utils"
 )
 
 // Mode selects which of the three pages renders. The zero value is
@@ -259,13 +257,17 @@ func (p Props) errorItems() []errorItem {
 	return items
 }
 
-// submit returns Submit with the mode's defaults applied: Label and, for
-// ModeForbidden, Href "/" when the action has no destination at all.
+// submit returns Submit with the mode's defaults applied, always
+// FullWidth: Label and, for ModeForbidden, Href "/" when the action has no
+// destination at all. For ModeSignIn it is marked Submit with Href and the
+// Hx* fields cleared, so action.Button renders the form's real
+// <button type="submit"> and nothing else, as Props.Submit promises.
 func (p Props) submit() action.Action {
 	a := p.Submit
 	if a.Variant == "" {
 		a.Variant = action.VariantPrimary
 	}
+	a.FullWidth = true
 	switch p.mode() {
 	case ModeSignedOut:
 		if a.Label == "" {
@@ -285,96 +287,18 @@ func (p Props) submit() action.Action {
 		if a.Label == "" {
 			a.Label = "Sign in"
 		}
+		a.Submit = true
+		a.Href, a.HxGet, a.HxPost, a.HxDelete, a.HxTarget, a.HxSwap = "", "", "", "", "", ""
 	}
 	return a
 }
 
-// buttonVariant maps an action Variant onto the button Variant, as
-// action.Button does (its mapping is unexported).
-func buttonVariant(v action.Variant) button.Variant {
-	switch v {
-	case action.VariantDestructive:
-		return button.VariantDestructive
-	case action.VariantGhost:
-		return button.VariantGhost
-	case action.VariantSecondary:
-		return button.VariantSecondary
-	default:
-		return button.VariantDefault
-	}
-}
-
-// hxAttrs builds the hx-* attributes of a merged with its Attributes
-// (caller attributes win), as action.Button does.
-func hxAttrs(a action.Action) templ.Attributes {
-	hx := templ.Attributes{}
-	if a.HxGet != "" {
-		hx["hx-get"] = a.HxGet
-	}
-	if a.HxPost != "" {
-		hx["hx-post"] = a.HxPost
-	}
-	if a.HxDelete != "" {
-		hx["hx-delete"] = a.HxDelete
-	}
-	if a.HxTarget != "" {
-		hx["hx-target"] = a.HxTarget
-	}
-	if a.HxSwap != "" {
-		hx["hx-swap"] = a.HxSwap
-	}
-	if a.Confirm != nil {
-		hx["hx-confirm"] = a.Confirm.Message
-	}
-	return utils.MergeAttributes(hx, a.Attributes)
-}
-
-// fullWidthProps renders a as a full-width button.Props: an <a> for a
-// plain Href, a <button> carrying the hx-* attributes otherwise, in the
-// given variant.
-func fullWidthProps(a action.Action, v button.Variant) button.Props {
-	bp := button.Props{
-		ID:         a.ID,
-		Variant:    v,
-		Size:       a.Size,
-		FullWidth:  true,
-		Disabled:   a.Disabled,
-		Attributes: hxAttrs(a),
-	}
-	if a.IsLink() {
-		bp.Href = a.Href
-	}
-	return bp
-}
-
-// submitButtonProps renders Submit as the sign-in form's real submit
-// button: <button type="submit">, full width. action.Button always emits
-// type="button", so the props are built here (the same reason formpage
-// gives).
-func (p Props) submitButtonProps() button.Props {
-	a := p.submit()
-	return button.Props{
-		ID:         a.ID,
-		Type:       button.TypeSubmit,
-		Variant:    buttonVariant(a.Variant),
-		Size:       a.Size,
-		FullWidth:  true,
-		Disabled:   a.Disabled,
-		Attributes: a.Attributes,
-	}
-}
-
-// actionProps renders Submit for ModeSignedOut and ModeForbidden: a
-// full-width link or button in the action's variant.
-func (p Props) actionProps() button.Props {
-	a := p.submit()
-	return fullWidthProps(a, buttonVariant(a.Variant))
-}
-
-// providerProps renders one Provider as a full-width outline link or
-// button.
-func providerProps(a action.Action) button.Props {
-	return fullWidthProps(a, button.VariantOutline)
+// provider returns one Provider as a full-width outline action: a link
+// for a plain Href, a button carrying the hx-* attributes otherwise.
+func provider(a action.Action) action.Action {
+	a.Variant = action.VariantOutline
+	a.FullWidth = true
+	return a
 }
 
 // Respond writes the auth page for r without the shell. With an App in

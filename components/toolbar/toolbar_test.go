@@ -127,3 +127,20 @@ func TestToolbar_NoCollapse(t *testing.T) {
 		t.Errorf("Overflow -1 should render one width-independent row: %s", out)
 	}
 }
+
+func TestToolbar_OverflowMenuDestructiveConfirm(t *testing.T) {
+	out := render(t, Props{
+		Overflow: 1,
+		Right: []action.Action{
+			{Label: "FIRST", Href: "/1"},
+			{Label: "DELETE", HxDelete: "/2", Variant: action.VariantDestructive,
+				Confirm: &action.Confirm{Title: "Delete all", Message: "Sure?", ConfirmLabel: "Delete", CancelLabel: "Keep"}},
+		},
+	}, nil)
+	menu := out[indexOf(t, out, `aria-label="More actions"`):]
+	for _, want := range []string{`role="menuitem"`, `hx-delete="/2"`, `hx-confirm="Sure?"`, `data-wf-confirm-title="Delete all"`, `data-wf-confirm-label="Delete"`, `data-wf-confirm-cancel="Keep"`, `data-wf-confirm-destructive="true"`} {
+		if !strings.Contains(menu, want) {
+			t.Errorf("missing %q in menu %s", want, menu)
+		}
+	}
+}

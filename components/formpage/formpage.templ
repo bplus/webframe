@@ -3,7 +3,6 @@ package formpage
 import (
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/banner"
-	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/layout"
@@ -63,12 +62,6 @@ templ submitRow(p Props) {
 		if p.Cancel != nil {
 			@action.Button(*p.Cancel)
 		}
-		@button.Button(p.submitButtonProps()) {
-			{{ a := p.submit() }}
-			if a.Icon != nil {
-				@a.Icon
-			}
-			<span>{ a.Label }</span>
-		}
+		@action.Button(p.submit())
 	}
 }

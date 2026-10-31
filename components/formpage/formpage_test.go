@@ -280,3 +280,11 @@ func TestRespond_NoApp(t *testing.T) {
 		t.Errorf("err = %v, want one naming Middleware", err)
 	}
 }
+
+func TestBody_SubmitIgnoresHrefAndHx(t *testing.T) {
+	p := itemProps()
+	p.Submit = action.Action{Label: "Save", Href: "/ignored", HxPost: "/ignored", HxTarget: "#ignored"}
+	out := render(t, Body(p))
+	mustContain(t, out, `type="submit"`, "<span>Save</span>")
+	mustNotContain(t, out, `href="/ignored"`, `hx-post="/ignored"`, `hx-target="#ignored"`)
+}

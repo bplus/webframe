@@ -241,7 +241,7 @@ templ rowActions(actions []action.Action) {
 							{ a.Label }
 						}
 					} else {
-						@dropdown.Item(dropdown.ItemProps{Disabled: a.Disabled, Attributes: menuItemAttrs(a)}) {
+						@dropdown.Item(dropdown.ItemProps{Disabled: a.Disabled, Attributes: action.MenuAttrs(a)}) {
 							{ a.Label }
 						}
 					}

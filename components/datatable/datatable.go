@@ -279,29 +279,3 @@ func rowAction(a action.Action) action.Action {
 	}
 	return a
 }
-
-// menuItemAttrs builds the hx-* attributes for a non-link action as
-// dropdown item attributes, merged with the action's own Attributes. The
-// dropdown item is itself the <button>, so action.Button is not nested
-// inside it (a button inside a button is invalid HTML). Same shape as
-// toolbar's helper.
-func menuItemAttrs(a action.Action) templ.Attributes {
-	attrs := templ.Attributes{}
-	set := func(k, v string) {
-		if v != "" {
-			attrs[k] = v
-		}
-	}
-	set("hx-get", a.HxGet)
-	set("hx-post", a.HxPost)
-	set("hx-delete", a.HxDelete)
-	set("hx-target", a.HxTarget)
-	set("hx-swap", a.HxSwap)
-	if a.Confirm != nil {
-		set("hx-confirm", a.Confirm.Message)
-	}
-	for k, v := range a.Attributes {
-		attrs[k] = v
-	}
-	return attrs
-}

@@ -246,3 +246,18 @@ func TestShell_NilFlashKeepsEmptySlot(t *testing.T) {
 		}
 	}
 }
+
+func TestShell_UserMenuDestructiveConfirm(t *testing.T) {
+	got := renderShell(t, Props{
+		AppName: "A",
+		User: &User{Name: "Ada", Menu: []action.Action{
+			{Label: "Delete account", HxDelete: "/account", Variant: action.VariantDestructive,
+				Confirm: &action.Confirm{Title: "Delete account", Message: "Really?", ConfirmLabel: "Delete"}},
+		}},
+	}, nil)
+	for _, want := range []string{`role="menuitem"`, `hx-delete="/account"`, `hx-confirm="Really?"`, `data-wf-confirm-title="Delete account"`, `data-wf-confirm-label="Delete"`, `data-wf-confirm-destructive="true"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("user menu item missing %q in:\n%s", want, got)
+		}
+	}
+}

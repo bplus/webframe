@@ -172,30 +172,6 @@ func navLinkAttrs(item NavItem, path string) templ.Attributes {
 	return templ.Attributes{}
 }
 
-// menuItemAttrs builds the hx-* attributes for a non-link user-menu
-// action, merged with its own Attributes. The dropdown item itself is
-// the <button>, so action.Button is not nested inside it.
-func menuItemAttrs(a action.Action) templ.Attributes {
-	attrs := templ.Attributes{}
-	set := func(k, v string) {
-		if v != "" {
-			attrs[k] = v
-		}
-	}
-	set("hx-get", a.HxGet)
-	set("hx-post", a.HxPost)
-	set("hx-delete", a.HxDelete)
-	set("hx-target", a.HxTarget)
-	set("hx-swap", a.HxSwap)
-	if a.Confirm != nil {
-		set("hx-confirm", a.Confirm.Message)
-	}
-	for k, v := range a.Attributes {
-		attrs[k] = v
-	}
-	return attrs
-}
-
 func initials(name string) string {
 	fields := strings.Fields(name)
 	var b strings.Builder
