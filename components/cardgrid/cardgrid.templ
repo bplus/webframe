@@ -1,0 +1,120 @@
+package cardgrid
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/aspectratio"
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/card"
+	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/image"
+	"github.com/bplus/webframe/utils"
+)
+
+// CardGrid renders Props.Items as a responsive grid of cards. The grid
+// starts at one column and adds columns by breakpoint (sm 2, lg 3, xl 4)
+// up to the Columns cap, so a catalog goes 4→2→1 (or 3→2→1, 2→1) as the
+// viewport narrows. Every card is a card.Card holding, top to bottom: the
+// art (aspectratio.AspectRatio around an image.Image with object-cover,
+// so the picture is cropped to the frame and never stretches it), the
+// title (card.Title; a link when Href is set), the muted subtitle, the
+// badges row, the meta line, and a footer with the actions as small ghost
+// buttons followed by the card's Footer component. Sections with nothing
+// to show are omitted.
+//
+// Whole-card click: when Href is set the title link's ::after pseudo
+// element covers the card (after:absolute after:inset-0 on a relative
+// card), so the whole surface navigates while the card has exactly one
+// focusable element for it; the footer sits above that overlay
+// (relative z-10) so its buttons and the Footer component stay
+// clickable. A focus ring on the link draws around the card.
+//
+// Dense swaps the p-6 card padding for p-4 and the gap-4 grid gap for
+// gap-3. When Items is empty the grid holds one full-width
+// emptystate.EmptyState from Props.Empty (default title "Nothing here
+// yet").
+//
+// Phone width (390): one column; each card spans the width, the art
+// keeps its ratio (the frame is the column width, the picture is
+// cropped to it, nothing overflows), titles wrap, badges wrap onto new
+// rows, and the footer actions wrap (flex-wrap) rather than overflow.
+//
+// @pure
+templ CardGrid(p Props) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge(p.gridClasses(), p.Class) }
+		{ p.Attributes... }
+	>
+		if len(p.Items) == 0 {
+			<div class="col-span-full">
+				@emptystate.EmptyState(p.empty())
+			</div>
+		} else {
+			for _, c := range p.Items {
+				@gridCard(p, c)
+			}
+		}
+	</div>
+}
+
+// gridCard renders one Card. The card is relative and overflow-hidden
+// (so the art's corners follow the card's) and a flex column with the
+// footer pushed to the bottom (mt-auto), so cards in one row line up
+// their footers when their bodies differ in height.
+templ gridCard(p Props, c Card) {
+	@card.Card(card.Props{
+		ID:    c.ID,
+		Class: "relative flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md",
+	}) {
+		if c.Art != nil {
+			@aspectratio.AspectRatio(aspectratio.Props{Ratio: c.Art.ratio(), Class: "bg-muted"}) {
+				@image.Image(image.Props{Src: c.Art.Src, Alt: c.Art.Alt, Fit: image.FitCover, Class: "h-full w-full"})
+			}
+		}
+		@card.Content(card.ContentProps{Class: utils.TwMerge("flex flex-1 flex-col gap-2", p.padding())}) {
+			@card.Title(card.TitleProps{Class: "text-base leading-snug"}) {
+				if c.Href != "" {
+					<a
+						href={ templ.URL(c.Href) }
+						class="after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring"
+					>
+						{ c.Title }
+					</a>
+				} else {
+					{ c.Title }
+				}
+			}
+			if c.Subtitle != "" {
+				@card.Description() {
+					{ c.Subtitle }
+				}
+			}
+			if len(c.Badges) > 0 {
+				<div class="flex flex-wrap gap-1.5">
+					for _, b := range c.Badges {
+						@badge.Badge(b.Props) {
+							{ b.Label }
+						}
+					}
+				</div>
+			}
+			if len(c.Meta) > 0 {
+				<p class="text-xs text-muted-foreground">
+					{ c.metaLine() }
+				</p>
+			}
+		}
+		if c.hasFooter() {
+			@card.Footer(card.FooterProps{Class: "relative z-10 mt-auto flex-wrap gap-2 " + p.padding() + " pt-0"}) {
+				for _, a := range c.Actions {
+					@action.Button(footerAction(a))
+				}
+				if c.Footer != nil {
+					@c.Footer
+				}
+			}
+		}
+	}
+}
