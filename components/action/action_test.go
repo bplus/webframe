@@ -89,3 +89,43 @@ func TestGroup_Wraps(t *testing.T) {
 		t.Errorf("Group should wrap at narrow widths: %s", out)
 	}
 }
+
+func TestButton_ConfirmEmitsDialogDataAttributes(t *testing.T) {
+	out := render(t, Button(Action{
+		Label: "Del", HxDelete: "/d", Variant: VariantDestructive,
+		Confirm: &Confirm{Title: "Delete item", Message: "Delete it?", ConfirmLabel: "Delete", CancelLabel: "Keep"},
+	}))
+	for _, want := range []string{
+		`hx-confirm="Delete it?"`,
+		`data-wf-confirm-title="Delete item"`,
+		`data-wf-confirm-label="Delete"`,
+		`data-wf-confirm-cancel="Keep"`,
+		`data-wf-confirm-destructive="true"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestButton_ConfirmOmitsEmptyFieldsAndDestructiveFlag(t *testing.T) {
+	out := render(t, Button(Action{Label: "Go", HxPost: "/go", Confirm: &Confirm{Message: "Sure?"}}))
+	if !strings.Contains(out, `hx-confirm="Sure?"`) {
+		t.Errorf("missing hx-confirm:\n%s", out)
+	}
+	for _, unwanted := range []string{"data-wf-confirm-title", "data-wf-confirm-label", "data-wf-confirm-cancel", "data-wf-confirm-destructive"} {
+		if strings.Contains(out, unwanted) {
+			t.Errorf("empty Confirm field or non-destructive action emitted %q:\n%s", unwanted, out)
+		}
+	}
+}
+
+func TestButton_NoConfirmEmitsNothing(t *testing.T) {
+	out := render(t, Button(Action{Label: "Go", HxPost: "/go", Variant: VariantDestructive}))
+	if strings.Contains(out, "hx-confirm") || strings.Contains(out, "data-wf-confirm") {
+		t.Errorf("action without Confirm emitted confirm attributes:\n%s", out)
+	}
+	if len(Action{}.ConfirmAttributes()) != 0 {
+		t.Errorf("ConfirmAttributes with nil Confirm should be empty")
+	}
+}
