@@ -143,8 +143,6 @@ control or a stale `page=` therefore leaves the URL, while parameters the bar
 does not own are kept (the search string is edited, not replaced). Nothing
 else in the file changed.
 
-Batch 3 (Task A0) adds `confirm.js`, first-party (webframe, not templUI, not third-party), committed empty so `appshell.Scripts` can include it; batch 3 task A3 fills it with the `htmx:confirm` interceptor.
-
 Batch 3 (Task A12, phone sort control) makes a third local edit to
 `filterbar.min.js`, in three places: a new `applySets(bar)` function, before
 `collectParams`, reads the selected `<option>` of every
