@@ -8,7 +8,10 @@ package timeline
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/bplus/webframe/components/emptystate"
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/emptystate"
+)
 
 // rowClass is the two-column grid every row (day heading or item) uses: a
 // fixed 1rem gutter for the dot and rail, then the content. The fixed gutter
@@ -186,7 +189,7 @@ func dayHeading(g Group, first bool) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(g.dayAttr())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 37, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 40, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -199,7 +202,7 @@ func dayHeading(g Group, first bool) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(g.dayText())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 37, Col: 127}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 40, Col: 127}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -276,7 +279,7 @@ func item(p Props, it Item, last bool) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.atAttr(it))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 53, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 56, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -289,7 +292,7 @@ func item(p Props, it Item, last bool) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.atText(it))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 53, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 56, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +310,7 @@ func item(p Props, it Item, last bool) templ.Component {
 			var templ_7745c5c3_Var17 templ.SafeURL
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 56, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 59, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -320,7 +323,7 @@ func item(p Props, it Item, last bool) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(it.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 56, Col: 151}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 59, Col: 151}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -338,7 +341,7 @@ func item(p Props, it Item, last bool) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(it.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 58, Col: 74}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 61, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -357,7 +360,7 @@ func item(p Props, it Item, last bool) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(it.Body)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 61, Col: 74}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 64, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -376,7 +379,7 @@ func item(p Props, it Item, last bool) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(it.Meta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 64, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 67, Col: 72}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -454,7 +457,7 @@ func Timeline(props ...Props) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 95, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 98, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -516,7 +519,7 @@ func Timeline(props ...Props) templ.Component {
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 105, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 108, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
@@ -585,6 +588,54 @@ func Timeline(props ...Props) templ.Component {
 		}
 		return nil
 	})
+}
+
+// The class strings live in this .templ file (not timeline.go) because
+// input.css pins Tailwind's sources to components/**/*.templ.
+// Tone returns the background class for the dot of variant v, from the
+// tokens the badge of the same variant uses: destructive, success, warning
+// and info are solid dots in their token; secondary is a muted dot; outline
+// is a hollow dot (border only); the default is the primary dot. toast and
+// banner have their own Tone for text and tint; this one is for a filled
+// dot and shares the same mapping.
+//
+// @pure
+func Tone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "bg-destructive"
+	case badge.VariantSuccess:
+		return "bg-success"
+	case badge.VariantWarning:
+		return "bg-warning"
+	case badge.VariantInfo:
+		return "bg-info"
+	case badge.VariantSecondary:
+		return "bg-muted-foreground"
+	case badge.VariantOutline:
+		return "border-2 border-border bg-background"
+	default:
+		return "bg-primary"
+	}
+}
+
+// iconTone returns the text color class for an Item.Icon of variant v, so
+// a glyph in the gutter reads in the same token as the dot it replaces.
+func iconTone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "text-destructive"
+	case badge.VariantSuccess:
+		return "text-success"
+	case badge.VariantWarning:
+		return "text-warning"
+	case badge.VariantInfo:
+		return "text-info"
+	case badge.VariantSecondary, badge.VariantOutline:
+		return "text-muted-foreground"
+	default:
+		return "text-primary"
+	}
 }
 
 var _ = templruntime.GeneratedTemplate

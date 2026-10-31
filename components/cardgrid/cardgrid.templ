@@ -74,7 +74,7 @@ templ gridCard(p Props, c Card) {
 			}
 		}
 		@card.Content(card.ContentProps{Class: utils.TwMerge("flex flex-1 flex-col gap-2", p.padding())}) {
-			@card.Title(card.TitleProps{Class: "text-base leading-snug"}) {
+			@card.Title(card.TitleProps{Class: "text-base leading-snug break-words"}) {
 				if c.Href != "" {
 					<a
 						href={ templ.URL(c.Href) }
@@ -101,7 +101,7 @@ templ gridCard(p Props, c Card) {
 				</div>
 			}
 			if len(c.Meta) > 0 {
-				<p class="text-xs text-muted-foreground">
+				<p class="text-xs text-muted-foreground break-words">
 					{ c.metaLine() }
 				</p>
 			}

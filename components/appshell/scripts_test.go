@@ -56,7 +56,7 @@ func TestShell_LiveElementsSwallowErrors(t *testing.T) {
 	if badge < 0 {
 		t.Fatalf("badge span missing in:\n%s", got)
 	}
-	badgeTag := got[badge:badge+strings.Index(got[badge:], ">")]
+	badgeTag := got[badge : badge+strings.Index(got[badge:], ">")]
 	if !strings.Contains(badgeTag, "data-wf-swallow-errors") {
 		t.Errorf("badge span lacks data-wf-swallow-errors: %s", badgeTag)
 	}
@@ -68,7 +68,7 @@ func TestShell_LiveElementsSwallowErrors(t *testing.T) {
 	if dot < 0 {
 		t.Fatalf("live dot missing in:\n%s", got)
 	}
-	dotTag := got[dot:dot+strings.Index(got[dot:], ">")]
+	dotTag := got[dot : dot+strings.Index(got[dot:], ">")]
 	if !strings.Contains(dotTag, "data-wf-swallow-errors") {
 		t.Errorf("live dot lacks data-wf-swallow-errors: %s", dotTag)
 	}
@@ -79,7 +79,7 @@ func TestShell_LiveElementsSwallowErrors(t *testing.T) {
 	if badge < 0 {
 		t.Fatalf("sidebar badge span missing in:\n%s", got)
 	}
-	badgeTag = got[badge:badge+strings.Index(got[badge:], ">")]
+	badgeTag = got[badge : badge+strings.Index(got[badge:], ">")]
 	if !strings.Contains(badgeTag, "data-wf-swallow-errors") {
 		t.Errorf("sidebar badge span lacks data-wf-swallow-errors: %s", badgeTag)
 	}

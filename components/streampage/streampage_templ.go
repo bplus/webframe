@@ -9,7 +9,6 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/trafficstream"
@@ -20,7 +19,7 @@ import (
 const introClass = "text-sm text-muted-foreground"
 
 // Page renders the stream page body (no shell) in this order: pageheader;
-// then the intro line (when set), the filter bar (when Filters is set) and
+// then the intro line (when set) and
 // the trafficstream panel, those three directly under the header or, when
 // Aside is set, inside the main column of a layout.TwoColumn whose aside
 // is Aside; then trafficstream.Script() once, unless NoScript. The root is
@@ -66,7 +65,7 @@ func Page(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/streampage/streampage.templ`, Line: 26, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/streampage/streampage.templ`, Line: 25, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -149,7 +148,7 @@ func Page(p Props) templ.Component {
 	})
 }
 
-// body is everything under the header: intro, filter bar, stream.
+// body is everything under the header: intro, stream.
 func body(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -201,19 +200,13 @@ func body(p Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Intro)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/streampage/streampage.templ`, Line: 49, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/streampage/streampage.templ`, Line: 48, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</p>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if p.hasFilters() {
-			templ_7745c5c3_Err = filterbar.FilterBar(p.filterbarProps()).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

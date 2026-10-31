@@ -150,7 +150,7 @@ func TestLinkAttrs(t *testing.T) {
 		"hx-get":      "/mail/42",
 		"hx-target":   "#mail-detail",
 		"hx-push-url": "true",
-		"hx-trigger":  "click[window.innerWidth >= 768]",
+		"hx-trigger":  "click[matchMedia('(min-width: 48rem)').matches]",
 	}
 	if len(attrs) != len(want) {
 		t.Errorf("attrs = %v, want exactly %v", attrs, want)

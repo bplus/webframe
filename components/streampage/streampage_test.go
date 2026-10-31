@@ -12,7 +12,6 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/appshell"
-	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/trafficstream"
@@ -69,16 +68,11 @@ func trafficPage() Props {
 
 func TestPage_CompositionOrder(t *testing.T) {
 	p := trafficPage()
-	p.Filters = []filterbar.FilterConfig{{
-		ID: "provider", Label: "Provider", Type: filterbar.TypeSelect,
-		Options: []filterbar.FilterOption{{Label: "Anthropic", Value: "anthropic"}},
-	}}
 	out := render(t, p)
 	inOrder(t, out,
 		`id="traffic"`,
 		"<h1", "Traffic Stream",
 		"Events arrive every second or so.",
-		`id="traffic-filters"`, "data-tui-filterbar",
 		`id="traffic-panel"`, "data-tui-trafficstream",
 		`data-tui-trafficstream-url="/api/traffic/stream"`,
 		"POST /v1/messages",
@@ -93,7 +87,7 @@ func TestPage_StreamPropsPassThrough(t *testing.T) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
 	}
-	// The panel keeps its own controls whether or not Filters is set.
+	// The panel keeps its own controls.
 	for _, want := range []string{"data-tui-trafficstream-search", "data-tui-trafficstream-provider", "data-tui-trafficstream-toggle"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("stream control %q missing:\n%s", want, out)
@@ -111,18 +105,6 @@ func TestPage_NoIntroNoFilters(t *testing.T) {
 	// The body opens straight onto the panel: no intro <p> before it.
 	if !strings.Contains(out, `<div class="flex flex-col gap-4"><section`) {
 		t.Errorf("empty Intro should render no intro line before the panel:\n%s", out)
-	}
-}
-
-func TestPage_FiltersAreClientSideOnly(t *testing.T) {
-	p := trafficPage()
-	p.Filters = []filterbar.FilterConfig{{ID: "q", Label: "Search", Type: filterbar.TypeSearch}}
-	out := render(t, p)
-	if !strings.Contains(out, `data-tui-filterbar-hx-get=""`) {
-		t.Errorf("companion filter bar must carry no hx-get:\n%s", out)
-	}
-	if !strings.Contains(out, `name="q"`) {
-		t.Errorf("filter control missing:\n%s", out)
 	}
 }
 
@@ -185,12 +167,6 @@ func TestPage_ClassAttributesAndIDs(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q:\n%s", want, out)
 		}
-	}
-	if got := (Props{}).FiltersID(); got != "" {
-		t.Errorf("FiltersID without ID = %q, want empty", got)
-	}
-	if got := p.FiltersID(); got != "traffic-filters" {
-		t.Errorf("FiltersID = %q", got)
 	}
 }
 

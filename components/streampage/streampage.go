@@ -10,15 +10,9 @@
 // search box and provider/event/direction selects, which filter its rows
 // client-side.
 //
-// Filters is a companion filterbar.FilterBar above the stream. It is
-// client-side only: the bar renders with no hx-get, so filterbar.min.js
-// (loaded by appshell.Scripts) issues no request when a control changes;
-// it dispatches the bubbling "filterbar-change" CustomEvent (detail.params
-// is a URLSearchParams of the controls' values) and mirrors those values
-// into the page URL with history.replaceState. Nothing in trafficstream
-// listens for that event today: an app that wants the bar to drive the
-// stream wires the event to the panel's own controls itself. The stream's
-// controls stay whether or not Filters is set.
+// The stream's own search box and selects are its filters; streampage adds
+// no second filter bar (a bar that drives nothing would be a dead control;
+// a bridge from filterbar to the panel's controls is a batch 5 input).
 //
 // Script: Page renders trafficstream.Script() once, after the content,
 // because appshell.Scripts deliberately leaves it out of the shared
@@ -48,7 +42,6 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/appshell"
-	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/trafficstream"
@@ -56,9 +49,7 @@ import (
 
 // Props declares a stream page. Header is the pageheader; Intro is one
 // muted line under it; Stream configures the trafficstream panel as the
-// app would call it directly; Filters, when set, render a client-side
-// filterbar between the intro and the stream (see the package doc for
-// what it does and does not do); Aside puts everything under the header
+// app would call it directly; Aside puts everything under the header
 // in the main column of a layout.TwoColumn whose aside is Aside, sized by
 // AsideWidth and pinned by AsideSticky. NoScript leaves out the
 // trafficstream.Script() tag Page otherwise renders once. Class is merged
@@ -72,30 +63,10 @@ type Props struct {
 	Header      pageheader.Props
 	Intro       string
 	Stream      trafficstream.Props
-	Filters     []filterbar.FilterConfig
 	Aside       templ.Component
 	AsideWidth  layout.AsideWidth
 	AsideSticky bool
 	NoScript    bool
-}
-
-// FiltersID is the filter bar's element id: ID+"-filters", or "" (no id
-// attribute) when ID is empty.
-func (p Props) FiltersID() string {
-	if p.ID == "" {
-		return ""
-	}
-	return p.ID + "-filters"
-}
-
-// hasFilters reports whether the companion filter bar renders.
-func (p Props) hasFilters() bool { return len(p.Filters) > 0 }
-
-// filterbarProps builds the companion bar: the configs as given, the id
-// from FiltersID, and no HxGet/HxTarget, so filterbar.min.js dispatches
-// its change event and syncs the URL without issuing a request.
-func (p Props) filterbarProps() filterbar.Props {
-	return filterbar.Props{ID: p.FiltersID(), Filters: p.Filters}
 }
 
 func (p Props) twoColumnProps() layout.TwoColumnProps {

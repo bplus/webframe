@@ -1,6 +1,9 @@
 package timeline
 
-import "github.com/bplus/webframe/components/emptystate"
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/emptystate"
+)
 
 // rowClass is the two-column grid every row (day heading or item) uses: a
 // fixed 1rem gutter for the dot and rail, then the content. The fixed gutter
@@ -120,5 +123,53 @@ templ Timeline(props ...Props) {
 				</li>
 			}
 		</ol>
+	}
+}
+
+// The class strings live in this .templ file (not timeline.go) because
+// input.css pins Tailwind's sources to components/**/*.templ.
+// Tone returns the background class for the dot of variant v, from the
+// tokens the badge of the same variant uses: destructive, success, warning
+// and info are solid dots in their token; secondary is a muted dot; outline
+// is a hollow dot (border only); the default is the primary dot. toast and
+// banner have their own Tone for text and tint; this one is for a filled
+// dot and shares the same mapping.
+//
+// @pure
+func Tone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "bg-destructive"
+	case badge.VariantSuccess:
+		return "bg-success"
+	case badge.VariantWarning:
+		return "bg-warning"
+	case badge.VariantInfo:
+		return "bg-info"
+	case badge.VariantSecondary:
+		return "bg-muted-foreground"
+	case badge.VariantOutline:
+		return "border-2 border-border bg-background"
+	default:
+		return "bg-primary"
+	}
+}
+
+// iconTone returns the text color class for an Item.Icon of variant v, so
+// a glyph in the gutter reads in the same token as the dot it replaces.
+func iconTone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "text-destructive"
+	case badge.VariantSuccess:
+		return "text-success"
+	case badge.VariantWarning:
+		return "text-warning"
+	case badge.VariantInfo:
+		return "text-info"
+	case badge.VariantSecondary, badge.VariantOutline:
+		return "text-muted-foreground"
+	default:
+		return "text-primary"
 	}
 }

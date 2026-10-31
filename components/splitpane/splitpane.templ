@@ -81,6 +81,8 @@ templ detailContent(p Props) {
 			@action.Button(backAction(p))
 		</div>
 		@p.Detail
+	} else if p.Placeholder != nil {
+		@p.Placeholder
 	}
 }
 

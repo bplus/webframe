@@ -27,7 +27,7 @@ func TestLoadingStateUsesSpinner(t *testing.T) {
 		t.Fatalf("loading wrapper missing:\n%s", out)
 	}
 	loading := out[i:]
-	for _, want := range []string{`role="status"`, "animate-spin", "h-8 w-8", `<span class="sr-only">Loading graph</span>`, "Loading graph..."} {
+	for _, want := range []string{`role="status"`, "animate-spin", "h-8", "w-8", `<span class="sr-only">Loading graph</span>`, "Loading graph..."} {
 		if !strings.Contains(loading, want) {
 			t.Errorf("loading state missing %q:\n%s", want, loading)
 		}
@@ -40,7 +40,7 @@ func TestLoadingStateUsesSpinner(t *testing.T) {
 	if n := strings.Count(loading, "animate-spin"); n != 1 {
 		t.Errorf("animate-spin appears %d times, want 1", n)
 	}
-	if strings.Contains(loading, "h-6 w-6") {
+	if strings.Contains(loading, "h-6") {
 		t.Errorf("old inline spinner size still rendered:\n%s", loading)
 	}
 }

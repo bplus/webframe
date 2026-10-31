@@ -54,7 +54,7 @@ func TestTimeline_GroupsByDayNewestFirst(t *testing.T) {
 			t.Errorf("missing %q in %s", want, out)
 		}
 	}
-	if got := strings.Count(out, `<time datetime="2026-10-31"`)+strings.Count(out, `<time datetime="2026-10-29"`); got != 2 {
+	if got := strings.Count(out, `<time datetime="2026-10-31"`) + strings.Count(out, `<time datetime="2026-10-29"`); got != 2 {
 		t.Errorf("want 2 day headings, got %d in %s", got, out)
 	}
 	// Newest day first, newest item first within the day, oldest day last.

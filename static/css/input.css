@@ -501,6 +501,13 @@
   opacity: 1;
 }
 
+/* ── Bottom-stuck bars ── */
+/* A form with a sticky save bar (settingspage) keeps a focused control
+   clear of the bar when the browser scrolls it into view on Tab. */
+form:has(.wf-settings-bar) :where(input, select, textarea, button, [tabindex]) {
+  scroll-margin-bottom: 5rem;
+}
+
 /* ── Toast ── */
 /* The Document renders one #toast-container; toast.Send appends to it out
    of band. A column flex with no fixed heights: a dismissed toast leaves

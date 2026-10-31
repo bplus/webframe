@@ -27,7 +27,7 @@
 // Attributes: splitpane.LinkAttrs(p, "/mail/42")}. The attributes are
 // href (the plain navigation), hx-get=href, hx-target=DetailTarget(p),
 // hx-push-url="true" (the address bar follows the pick) and
-// hx-trigger="click[window.innerWidth >= 768]".
+// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]".
 //
 // # Why the trigger filter
 //
@@ -37,12 +37,12 @@
 // no detail region to swap into (it is hidden, the list fills the width),
 // and the server cannot tell a phone from a desktop by the request. So the
 // phone must not send the htmx request at all: the hx-trigger event filter
-// makes htmx ignore the click below 768px, the anchor's default action
+// makes htmx ignore the click below md, the anchor's default action
 // runs, and the browser navigates to href as a plain page load. The server
 // then sees /mail/42 without an HX-Target, renders the whole document, and
-// the pane shows the detail with the Back link. 768 is Tailwind's md
-// breakpoint at the default 16px root font size; window.innerWidth and the
-// media query both count the scrollbar, so the two agree.
+// the pane shows the detail with the Back link. The filter asks the same
+// media query Tailwind's md breakpoint uses (48rem), so the two agree at
+// any root font size.
 //
 // # Phone
 //
@@ -50,20 +50,14 @@
 // shown: with Detail nil the list (full width) and an empty, hidden detail
 // region; with Detail set the detail, preceded by a ghost "Back" link
 // (BackHref, BackLabel), and the list hidden. A list click is a plain
-// navigation that pushes a history entry, so Back (the browser's or the
-// link's, which points at BackHref: the list route) returns to the list.
-// Resizing a desktop window below md after a swap shows the list, not the
-// swapped-in detail, until the page is reloaded: the swap changes only the
-// region's content, never which column the markup shows on a phone.
+// navigation (a new history entry; Back returns to the list).
 //
 // # Desktop
 //
-// From md up the list column is ListWidth wide (WidthSm 280px, WidthMd
-// 360px, WidthLg 440px), does not shrink, is sticky under the shell's
-// sticky chrome (--wf-sticky-top) and scrolls on its own when taller than
-// the viewport, with a right border. The detail region (id DetailID) is
-// min-w-0 flex-1 and scrolls with the page. There is no drag-to-resize;
-// the widths are tiers.
+// From md up the list column is a fixed width tier (Sm 280px, Md 360px,
+// Lg 440px), sticky under the shell's sticky chrome and scrolling on its
+// own; the detail is the flexible column, showing Placeholder while
+// nothing is selected. There is no drag-to-resize.
 package splitpane
 
 import (
@@ -94,7 +88,7 @@ const defaultBackLabel = "Back"
 
 // mdTrigger is the hx-trigger on list links: htmx handles the click only
 // from md (768px) up; below that the anchor navigates by itself.
-const mdTrigger = "click[window.innerWidth >= 768]"
+const mdTrigger = "click[matchMedia('(min-width: 48rem)').matches]"
 
 // Props declares the pane. List renders in the list column; Detail, when
 // non-nil, in the detail region (nil means no item is selected: the
@@ -120,6 +114,9 @@ type Props struct {
 
 	BackHref  string
 	BackLabel string
+	// Placeholder renders in the detail region on md and up while Detail
+	// is nil ("Select an item"); never on a phone, where the list shows.
+	Placeholder templ.Component
 
 	Title string
 }
@@ -158,7 +155,7 @@ func DetailTarget(p Props) string {
 // LinkAttrs returns the attributes a list link needs so a click swaps the
 // detail from md up and navigates below: href (the plain navigation and
 // the phone fallback), hx-get=href, hx-target=DetailTarget(p),
-// hx-push-url="true" and hx-trigger="click[window.innerWidth >= 768]".
+// hx-push-url="true" and hx-trigger="click[matchMedia('(min-width: 48rem)').matches]".
 // Spread it on the <a> (or pass it as an action.Action's Attributes with
 // the same Href). The handler behind href is the detail route, which
 // calls Respond; it answers the htmx request with the detail region's

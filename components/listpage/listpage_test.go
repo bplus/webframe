@@ -618,7 +618,7 @@ func TestPage_SortControl(t *testing.T) {
 // 32 runes is left alone and carries no title.
 func TestPage_SortOptionLabelTruncated(t *testing.T) {
 	long := "Dernière modification de cet élément" // 36 runes, multibyte
-	exact := strings.Repeat("ab", 16)                // 32 runes
+	exact := strings.Repeat("ab", 16)              // 32 runes
 	p := itemProps(t, "sort=name")
 	p.Columns = append(p.Columns,
 		datatable.Column{Key: "updated", Label: long, Sortable: true},

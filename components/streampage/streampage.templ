@@ -1,7 +1,6 @@
 package streampage
 
 import (
-	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/trafficstream"
@@ -12,7 +11,7 @@ import (
 const introClass = "text-sm text-muted-foreground"
 
 // Page renders the stream page body (no shell) in this order: pageheader;
-// then the intro line (when set), the filter bar (when Filters is set) and
+// then the intro line (when set) and
 // the trafficstream panel, those three directly under the header or, when
 // Aside is set, inside the main column of a layout.TwoColumn whose aside
 // is Aside; then trafficstream.Script() once, unless NoScript. The root is
@@ -42,14 +41,11 @@ templ Page(p Props) {
 	</div>
 }
 
-// body is everything under the header: intro, filter bar, stream.
+// body is everything under the header: intro, stream.
 templ body(p Props) {
 	<div class="flex flex-col gap-4">
 		if p.Intro != "" {
 			<p class={ introClass }>{ p.Intro }</p>
-		}
-		if p.hasFilters() {
-			@filterbar.FilterBar(p.filterbarProps())
 		}
 		@trafficstream.TrafficStream(p.Stream)
 	</div>

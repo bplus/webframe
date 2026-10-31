@@ -141,7 +141,13 @@ func (g Group) dayText() string { return g.Day.Format(dayText) }
 func (p Props) atAttr(it Item) string { return p.in(it.At).Format(time.RFC3339) }
 
 // atText is the HH:MM shown for an item, in the resolved location.
-func (p Props) atText(it Item) string { return p.in(it.At).Format(clockText) }
+func (p Props) atText(it Item) string {
+	if p.NoGroups {
+		// Without day groups the date has to live on the item itself.
+		return p.in(it.At).Format("Jan 2 15:04")
+	}
+	return p.in(it.At).Format(clockText)
+}
 
 // empty resolves the zero-value Empty props to the default title.
 func (p Props) empty() emptystate.Props {
@@ -150,52 +156,6 @@ func (p Props) empty() emptystate.Props {
 		e.Title = "Nothing here yet"
 	}
 	return e
-}
-
-// Tone returns the background class for the dot of variant v, from the
-// tokens the badge of the same variant uses: destructive, success, warning
-// and info are solid dots in their token; secondary is a muted dot; outline
-// is a hollow dot (border only); the default is the primary dot. toast and
-// banner have their own Tone for text and tint; this one is for a filled
-// dot and shares the same mapping.
-//
-// @pure
-func Tone(v badge.Variant) string {
-	switch v {
-	case badge.VariantDestructive:
-		return "bg-destructive"
-	case badge.VariantSuccess:
-		return "bg-success"
-	case badge.VariantWarning:
-		return "bg-warning"
-	case badge.VariantInfo:
-		return "bg-info"
-	case badge.VariantSecondary:
-		return "bg-muted-foreground"
-	case badge.VariantOutline:
-		return "border-2 border-border bg-background"
-	default:
-		return "bg-primary"
-	}
-}
-
-// iconTone returns the text color class for an Item.Icon of variant v, so
-// a glyph in the gutter reads in the same token as the dot it replaces.
-func iconTone(v badge.Variant) string {
-	switch v {
-	case badge.VariantDestructive:
-		return "text-destructive"
-	case badge.VariantSuccess:
-		return "text-success"
-	case badge.VariantWarning:
-		return "text-warning"
-	case badge.VariantInfo:
-		return "text-info"
-	case badge.VariantSecondary, badge.VariantOutline:
-		return "text-muted-foreground"
-	default:
-		return "text-primary"
-	}
 }
 
 func (p Props) rootClass() string {
