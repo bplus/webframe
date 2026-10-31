@@ -126,7 +126,7 @@ func TestDataTable_RowHref(t *testing.T) {
 	wantAll(t, out, `<a href="/items/1"`, "cursor-pointer")
 	// The linked text is the first cell's text, and only the first cell.
 	i := strings.Index(out, `<a href="/items/1"`)
-	a := out[i:strings.Index(out[i:], "</a>")+i]
+	a := out[i : strings.Index(out[i:], "</a>")+i]
 	wantAll(t, a, "Alpha")
 	wantNone(t, a, "weapon")
 	// A row without Href has no link and no pointer.
@@ -138,7 +138,7 @@ func TestDataTable_RowHref(t *testing.T) {
 	if j < 0 {
 		t.Fatalf("missing row-2 in %s", out)
 	}
-	row2 := out[j:strings.Index(out[j:], "</tr>")+j]
+	row2 := out[j : strings.Index(out[j:], "</tr>")+j]
 	wantNone(t, row2, "<a ", "cursor-pointer")
 	wantAll(t, row2, "Beta")
 }
@@ -164,7 +164,7 @@ func TestDataTable_RowActionsTwoRenderings(t *testing.T) {
 	wantAll(t, menu, `role="menuitem"`, `hx-delete="/items/1"`, `hx-target="#list-results"`, `hx-confirm="Sure?"`, `href="/items/1/edit"`)
 	// Row 2 has no actions but still gets the actions cell so columns line up.
 	j := strings.Index(out, `id="row-2"`)
-	row2 := out[j:strings.Index(out[j:], "</tr>")+j]
+	row2 := out[j : strings.Index(out[j:], "</tr>")+j]
 	if strings.Count(row2, "<td") != len(itemColumns)+1 {
 		t.Errorf("row-2 td count = %d, want %d", strings.Count(row2, "<td"), len(itemColumns)+1)
 	}
@@ -225,7 +225,7 @@ func TestDataTable_Badge(t *testing.T) {
 	wantAll(t, out, "text-success", "published", "<b>CUSTOMCOMP</b>")
 	// The badge variant classes wrap the text.
 	i := strings.Index(out, "text-success")
-	after := out[i:strings.Index(out[i:], "</span>")+i]
+	after := out[i : strings.Index(out[i:], "</span>")+i]
 	wantAll(t, after, "published")
 }
 
@@ -245,9 +245,69 @@ func TestDataTable_HxTarget(t *testing.T) {
 
 func TestDataTable_DenseAndSticky(t *testing.T) {
 	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", Dense: true, StickyHeader: true})
-	wantAll(t, out, "py-1.5", "sticky", "top-0", "bg-card")
+	wantAll(t, out, "py-1.5", "sticky", "top-0", "z-10", "bg-card")
+	// The sticky classes sit on the thead, not the wrapper.
+	head := out[strings.Index(out, "<thead"):strings.Index(out, "</thead>")]
+	wantAll(t, head[:strings.Index(head, ">")], "sticky", "top-0", "z-10", "bg-card")
 	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items"})
-	wantNone(t, out, "py-1.5", "sticky")
+	wantNone(t, out, "py-1.5", "sticky", "md:overflow-visible", "max-h-")
+}
+
+// wrapper returns the opening tag of table.Table's wrapper div.
+func wrapper(t *testing.T, out string) string {
+	t.Helper()
+	i := strings.Index(out, "<div")
+	if i < 0 {
+		t.Fatalf("no wrapper div in:\n%s", out)
+	}
+	return out[i : strings.Index(out[i:], ">")+i]
+}
+
+func TestDataTable_StickyHeaderWithoutMaxHeightSticksToPage(t *testing.T) {
+	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", StickyHeader: true})
+	w := wrapper(t, out)
+	// md+: the wrapper stops clipping so the thead's scrolling ancestor is
+	// the page. Below md the wrapper keeps its own scroll for overflow.
+	wantAll(t, w, "md:overflow-visible", "overflow-auto", "relative")
+	wantNone(t, w, "max-h-")
+}
+
+func TestDataTable_MaxHeight(t *testing.T) {
+	cases := []struct {
+		h    Height
+		want string
+	}{
+		{HeightSm, "max-h-[240px]"},
+		{HeightMd, "max-h-[400px]"},
+		{HeightLg, "max-h-[600px]"},
+	}
+	for _, c := range cases {
+		// With StickyHeader: the capped wrapper is the scroll box at every
+		// width, so it must keep overflow-auto and never go page-level.
+		out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", StickyHeader: true, MaxHeight: c.h})
+		w := wrapper(t, out)
+		wantAll(t, w, c.want, "overflow-auto")
+		wantNone(t, w, "md:overflow-visible")
+		wantAll(t, out, "sticky", "top-0", "bg-card")
+		// Without StickyHeader the cap alone is a plain scroll box.
+		out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", MaxHeight: c.h})
+		w = wrapper(t, out)
+		wantAll(t, w, c.want, "overflow-auto")
+		wantNone(t, w, "md:overflow-visible", "sticky")
+	}
+	// Exactly one max-h class, and only one wrapper-level cap.
+	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", MaxHeight: HeightMd})
+	if got := strings.Count(out, "max-h-"); got != 1 {
+		t.Errorf("max-h- count = %d, want 1", got)
+	}
+	// HeightNone and an unknown value set no cap.
+	for _, h := range []Height{HeightNone, Height("huge")} {
+		out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", MaxHeight: h})
+		wantNone(t, wrapper(t, out), "max-h-")
+	}
+	// The caller's Class is still merged onto the wrapper alongside the cap.
+	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", MaxHeight: HeightSm, StickyHeader: true, Class: "mt-2"})
+	wantAll(t, wrapper(t, out), "mt-2", "max-h-[240px]")
 }
 
 func TestDataTable_ShortRow(t *testing.T) {
