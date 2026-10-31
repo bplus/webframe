@@ -14,8 +14,9 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/autocomplete"
-	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/demo/pages"
 )
 
@@ -199,30 +200,73 @@ func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// toastKinds maps a toast variant to its badge variant, label and message.
-var toastKinds = map[string]struct {
-	variant    badge.Variant
-	label, msg string
-}{
-	"success": {badge.VariantDefault, "Success", "Operation completed successfully!"},
-	"error":   {badge.VariantDestructive, "Error", "Something went wrong. Please try again."},
-	"info":    {badge.VariantSecondary, "Info", "Here's some useful information."},
-	"warning": {badge.VariantOutline, "Warning", "Careful — this action cannot be undone."},
+// toastKinds maps the showcase's "variant" form value to the toast it
+// sends. The texts are written so the same reply reads right after any of
+// the showcase actions that post here (the Toast buttons, the confirm
+// dialog's actions, the toolbar and the table rows): "warning" answers a
+// confirmed destructive action and "info" a confirmed plain one. "sticky"
+// is an error toast that stays until dismissed.
+var toastKinds = map[string]toast.Props{
+	"success": toast.Success("Export finished", "The file is ready to download."),
+	"error":   toast.Error("Could not save", "The server refused the change. Try again."),
+	"info":    toast.Info("Showcase action", "The server received the request and changed nothing."),
+	"warning": toast.Warning("Nothing was deleted", "The showcase answers destructive actions with this toast instead of acting."),
+	"sticky":  {Kind: toast.KindError, Sticky: true, Title: "Build failed", Body: "This one stays until you dismiss it."},
 }
 
-// HandleToast returns a toast notification (demonstrates hx-swap-oob). The
-// "variant" form value picks the message and badge; empty or unknown
-// defaults to "success". The response is appended out-of-band to
-// #toast-container and removes itself after 4 seconds (see pages.Toast).
+// HandleToast answers the showcase's toast buttons (POST /api/toast): the
+// "variant" form value picks one of toastKinds (empty or unknown → "info")
+// and toast.Send appends it out of band to #toast-container. Send writes
+// nothing for a request that is not from htmx, so a plain POST gets an
+// empty 200: a toast has nowhere to land on a full page, and a handler
+// that redirects sets a flash instead (see HandleFlash).
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleToast(w http.ResponseWriter, r *http.Request) {
-	k, ok := toastKinds[r.FormValue("variant")]
+	p, ok := toastKinds[r.FormValue("variant")]
 	if !ok {
-		k = toastKinds["success"]
+		p = toastKinds["info"]
 	}
-	fragment(w, r, "toast", pages.Toast(k.variant, k.label, k.msg))
+	// Send sets neither status nor Content-Type: the toast is this
+	// handler's whole output, so the type is set here before the write.
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := toast.Send(w, r, p); err != nil {
+		log.Printf("demo: render toast: %v", err)
+	}
+}
+
+// HandleFlash answers the showcase's flash form (POST /api/flash): it
+// stores a one-shot warning in the flash cookie and redirects (303) back to
+// the Flash section. The shell renders the banner once, in its #wf-flash
+// slot above the page, on that next page; a reload shows nothing.
+//
+// @boundary HTTP
+// @side-effects sets the wf_flash cookie; writes a redirect
+func HandleFlash(w http.ResponseWriter, r *http.Request) {
+	flash.Warning(w, r, "This page was reached through a redirect", "The warning rode along in a one-shot cookie; reload and it is gone.")
+	http.Redirect(w, r, "/#flash", http.StatusSeeOther)
+}
+
+// slowDelay is how long HandleSlow waits before answering: long enough to
+// see the htmx indicator, short enough not to feel broken. Tests set it to
+// zero.
+var slowDelay = 1500 * time.Millisecond
+
+// HandleSlow answers the showcase's spinner demo (GET /api/slow): it waits
+// slowDelay (or until the client goes away) and then writes a one-line
+// fragment with the time it answered, so the request indicator has
+// something to wait for.
+//
+// @boundary HTTP
+// @side-effects blocks for slowDelay; writes HTML response
+func HandleSlow(w http.ResponseWriter, r *http.Request) {
+	select {
+	case <-r.Context().Done():
+		return
+	case <-time.After(slowDelay):
+	}
+	fragment(w, r, "slow", pages.SlowResult(time.Now().Format("15:04:05")))
 }
 
 // fragment writes an htmx response fragment, logging a render error (the

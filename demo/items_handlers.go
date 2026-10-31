@@ -15,11 +15,14 @@ import (
 	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/detailpage"
+	"github.com/bplus/webframe/components/errorpage"
 	"github.com/bplus/webframe/components/filterbar"
+	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/formpage"
 	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/demo/pages"
 	"github.com/bplus/webframe/listquery"
 )
@@ -120,7 +123,6 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 
 	rows := make([]datatable.Row, 0, len(page.Items))
 	for _, it := range page.Items {
-		status := badge.Status(it.Status)
 		usedIn := datatable.Cell{Text: it.UsedIn}
 		if it.UsedIn == "" {
 			usedIn = datatable.Cell{Text: "—", Muted: true}
@@ -131,7 +133,7 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 			Cells: []datatable.Cell{
 				{Text: it.Name},
 				{Text: itemTypeLabel(it.Type)},
-				{Text: badge.StatusLabel(it.Status), Badge: &status},
+				datatable.BadgeCell(badge.StatusLabel(it.Status), it.Status),
 				usedIn,
 				{Text: relativeTime(it.Updated, now)},
 			},
@@ -210,24 +212,70 @@ func respondResults(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleItemDelete deletes one item (DELETE /items/{id}). From the list
-// (HX-Target is the results region) it re-renders the results for the
-// current URL so the row disappears and the summary and intro update; from
-// anywhere else over htmx (the detail page) it answers HX-Redirect to
-// /items; a plain request gets a 303 to /items. Unknown ids are 404.
+// protectedItemID is the one item the demo refuses to delete ("1", Blade of
+// the Fallen Star, the first seeded row), so the failure path of a real
+// action can be seen: the confirm dialog opens, the user confirms, and the
+// server says no.
+const protectedItemID = "1"
+
+// HandleItemDelete deletes one item (DELETE /items/{id}). The protected
+// item is refused (refuseDelete). Otherwise, from the list (HX-Target is
+// the results region) it re-renders the results for the current URL so the
+// row disappears and the summary and intro update; from anywhere else over
+// htmx (the detail page) it answers HX-Redirect to /items; a plain request
+// gets a 303 to /items. Unknown ids are 404.
 //
 // @boundary HTTP
 // @side-effects mutates Items; writes HTML or a redirect
 func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
-	if !Items.Delete(r.PathValue("id")) {
+	it, ok := Items.Get(r.PathValue("id"))
+	if !ok {
 		http.NotFound(w, r)
 		return
 	}
+	if it.ID == protectedItemID {
+		refuseDelete(w, r, it)
+		return
+	}
+	Items.Delete(it.ID)
 	if r.Header.Get("HX-Target") == itemsResultsID {
 		respondResults(w, r)
 		return
 	}
 	redirectTo(w, r, "/items")
+}
+
+// refuseDelete answers a delete of the protected item: the action failed
+// and nothing on the page changed, so the user is told through a toast.
+// Over htmx the response is a 409 whose only body is the error toast
+// (toast.Send appends it to #toast-container out of band). A plain request
+// has no page for a toast to land on, so it sets an error flash and sends
+// the browser back to the item (303); the shell shows the flash once there.
+func refuseDelete(w http.ResponseWriter, r *http.Request, it Item) {
+	title := "Could not delete " + it.Name
+	body := "It is still used in " + it.UsedIn + "; remove it from the pack first."
+	if it.UsedIn == "" {
+		body = "The demo keeps this item so the refused delete can be seen."
+	}
+	if appshell.IsHX(r) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusConflict)
+		if err := toast.Send(w, r, toast.Error(title, body)); err != nil {
+			log.Printf("demo: render refused delete toast: %v", err)
+		}
+		return
+	}
+	flash.Error(w, r, title, body)
+	http.Redirect(w, r, "/items/"+it.ID, http.StatusSeeOther)
+}
+
+// notFound answers a page request for an unknown item id with the 404 error
+// page, in the sidebar shell (the handler runs under
+// SidebarApp.Middleware), so the nav still works.
+func notFound(w http.ResponseWriter, r *http.Request) {
+	if err := errorpage.NotFound(w, r); err != nil {
+		log.Printf("demo: render item not found: %v", err)
+	}
 }
 
 // HandleItemsPublish publishes the selected items (POST /items/publish,
@@ -261,14 +309,15 @@ func redirectTo(w http.ResponseWriter, r *http.Request, location string) {
 
 // HandleItemDetail renders one item (GET /items/{id}): header with the
 // status badge, Back to Items, Edit and Delete; a two-column summary; Notes
-// inline and History loaded lazily from /items/{id}/history.
+// inline and History loaded lazily from /items/{id}/history. An unknown id
+// is the 404 error page.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
-		http.NotFound(w, r)
+		notFound(w, r)
 		return
 	}
 	if err := detailpage.Respond(w, r, it.Name, itemDetailProps(it)); err != nil {
@@ -278,7 +327,6 @@ func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 
 // itemDetailProps declares the detail page for it.
 func itemDetailProps(it Item) detailpage.Props {
-	status := badge.Status(it.Status)
 	usedIn := descriptionlist.Item{Label: "Used in", Value: it.UsedIn}
 	if it.UsedIn == "" {
 		usedIn = descriptionlist.Item{Label: "Used in", Value: "—", Muted: true}
@@ -288,7 +336,7 @@ func itemDetailProps(it Item) detailpage.Props {
 		Header: pageheader.Props{
 			Title:      it.Name,
 			Back:       &pageheader.Link{Label: "Items", Href: "/items"},
-			Status:     &status,
+			Status:     badge.StatusPtr(it.Status),
 			StatusText: badge.StatusLabel(it.Status),
 			Primary:    &action.Action{Label: "Edit", Href: "/items/" + it.ID + "/edit", Variant: action.VariantPrimary},
 			Secondary: []action.Action{{
@@ -300,7 +348,7 @@ func itemDetailProps(it Item) detailpage.Props {
 		},
 		Summary: []descriptionlist.Item{
 			{Label: "Type", Value: itemTypeLabel(it.Type)},
-			{Label: "Status", Value: badge.StatusLabel(it.Status), Badge: &status},
+			descriptionlist.BadgeItem("Status", badge.StatusLabel(it.Status), it.Status),
 			usedIn,
 			{Label: "Updated", Value: relativeTime(it.Updated, time.Now()) + " ago · " + it.Updated.Format("Jan 2, 2006")},
 			{Label: "ID", Value: it.ID, Mono: true, Copyable: true},
@@ -473,14 +521,15 @@ func HandleItemNew(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleItemEdit renders the edit form for one item (GET
-// /items/{id}/edit) with its current values.
+// /items/{id}/edit) with its current values. An unknown id is the 404
+// error page.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
-		http.NotFound(w, r)
+		notFound(w, r)
 		return
 	}
 	if err := formpage.Respond(w, r, "Edit "+it.Name, itemFormProps(&it)); err != nil {

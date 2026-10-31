@@ -37,6 +37,9 @@ import (
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/skeleton"
+	"github.com/bplus/webframe/components/slideover"
+	"github.com/bplus/webframe/components/spinner"
 	"github.com/bplus/webframe/components/statcomparison"
 	"github.com/bplus/webframe/components/stattile"
 	"github.com/bplus/webframe/components/swatch"
@@ -60,9 +63,9 @@ import (
 //
 // Rendering is static, but the emitted markup wires live browser behavior:
 // Alpine x-data examples, and HTMX demos that POST/GET /api/click,
-// /api/search, /api/picked, /api/validate, and /api/toast (handled in
-// demo/handlers.go),
-// all relying on the scripts loaded by appshell.Document.
+// /api/search, /api/picked, /api/validate, /api/toast, /api/flash and
+// /api/slow (handled in demo/handlers.go), all relying on the scripts
+// loaded by appshell.Document.
 //
 // @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
 // the library's importable API
@@ -119,9 +122,22 @@ templ Showcase() {
 				<a href="#toolbar">Toolbar</a>
 				<a href="#pagination">Pagination</a>
 				<a href="#datatable">Data table</a>
+				<a href="#stickyheader">Sticky header</a>
+				<a href="#phonesort">Phone sort</a>
 				<a href="#descriptionlist">Description list</a>
 				<a href="#pages">Pages</a>
+				<a href="#errorpage">Error pages</a>
+				<a href="#authpage">Auth pages</a>
 				<a href="#custom">Custom fences</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Feedback</strong>
+				<a href="#toast">Toast</a>
+				<a href="#flash">Flash</a>
+				<a href="#confirmdialog">Confirm dialog</a>
+				<a href="#skeleton">Skeleton</a>
+				<a href="#spinner">Spinner</a>
+				<a href="#bottomsheet">Bottom sheet</a>
 			}
 		}
 	}
@@ -132,10 +148,11 @@ templ Showcase() {
 	@overlaysGroup()
 	@patternsGroup()
 	@pageLayerGroup()
+	@feedbackGroup()
 }
 
 // ═══════════════════════════════════════
-// Groups: the five top-level sections (h2), each holding per-topic
+// Groups: the six top-level sections (h2), each holding per-topic
 // sections (h3) whose panels are h4.
 // ═══════════════════════════════════════
 templ buildingBlocksGroup() {
@@ -191,8 +208,12 @@ templ pageLayerGroup() {
 		@toolbarSection()
 		@paginationSection()
 		@datatableSection()
+		@stickyheaderSection()
+		@phonesortSection()
 		@descriptionlistSection()
 		@pagesSection()
+		@errorpageSection()
+		@authpageSection()
 		@customSection()
 	}
 }
@@ -1454,7 +1475,7 @@ templ alpineSection() {
 // HTMX Patterns
 // ═══════════════════════════════════════
 templ htmxSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "Common HTMX patterns: click-to-update and out-of-band swaps. Live search lives in the Autocomplete section and blur validation in Form Fields, where Validate wires it."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "htmx", Title: "HTMX Patterns", Description: "The click-to-update pattern. Live search lives in the Autocomplete section, blur validation in Form Fields, where Validate wires it, and out-of-band swaps in the Toast section."}) {
 		@dashboardgrid.Grid() {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
 				@card.Card() {
@@ -1473,34 +1494,6 @@ templ htmxSection() {
 							"hx-vals": `{"count":"0"}`,
 						}}) {
 							Click me
-						}
-					}
-				}
-			}
-			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@card.Card() {
-					@card.Header() {
-						@card.Title() {
-							Toast (hx-swap-oob)
-						}
-						@card.Description() {
-							Server responds with out-of-band HTML injected into #toast-container.
-						}
-					}
-					@card.Content() {
-						@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
-							@button.Button(button.Props{Size: button.SizeSm, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"success"}`, "hx-swap": "none"}}) {
-								Success
-							}
-							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantDestructive, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"error"}`, "hx-swap": "none"}}) {
-								Error
-							}
-							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"info"}`, "hx-swap": "none"}}) {
-								Info
-							}
-							@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": `{"variant":"warning"}`, "hx-swap": "none"}}) {
-								Warning
-							}
 						}
 					}
 				}
@@ -1785,13 +1778,6 @@ func tableSpec() listquery.Spec {
 	return listquery.ParseValues(url.Values{"sort": {"name"}}, listquery.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
 }
 
-// statusBadge is badge.Status as the pointer datatable.Cell and
-// descriptionlist.Item want.
-func statusBadge(s string) *badge.Props {
-	p := badge.Status(s)
-	return &p
-}
-
 // tableColumns are the four columns of the data table examples.
 var tableColumns = []datatable.Column{
 	{Key: "name", Label: "Name", Sortable: true},
@@ -1801,7 +1787,7 @@ var tableColumns = []datatable.Column{
 }
 
 // tableRow builds one example row: the name links to the table anchor, the
-// status is a badge.Status chip, and every row has Edit and Delete actions.
+// status is a BadgeCell, and every row has Edit and Delete actions.
 func tableRow(id, name, kind, status, updated string) datatable.Row {
 	return datatable.Row{
 		ID:   id,
@@ -1809,7 +1795,7 @@ func tableRow(id, name, kind, status, updated string) datatable.Row {
 		Cells: []datatable.Cell{
 			{Text: name},
 			{Text: kind, Muted: true},
-			{Text: badge.StatusLabel(status), Badge: statusBadge(status)},
+			datatable.BadgeCell(badge.StatusLabel(status), status),
 			{Text: updated},
 		},
 		Actions: []action.Action{
@@ -1867,7 +1853,7 @@ templ descriptionlistSection() {
 				@panel.Panel(panel.Props{Level: 4, Title: "One column", Subtitle: "The id is mono with a copy button, the status is a badge, the owner is a link, and the empty Notes value shows a dash so the row never collapses."}) {
 					@descriptionlist.DescriptionList(descriptionlist.Props{Items: []descriptionlist.Item{
 						{Label: "ID", Value: "itm_8f3a2c9e", Mono: true, Copyable: true},
-						{Label: "Status", Value: badge.StatusLabel("published"), Badge: statusBadge("published")},
+						descriptionlist.BadgeItem("Status", badge.StatusLabel("published"), "published"),
 						{Label: "Owner", Value: "Ada", Href: "#descriptionlist"},
 						{Label: "Notes"},
 					}})
@@ -1881,7 +1867,7 @@ templ descriptionlistSection() {
 						{Label: "Weight", Value: "6 lb", Mono: true},
 						{Label: "Damage", Value: "2d6 + 1d6 fire", Mono: true},
 						{Label: "Created", Value: "2026-10-21", Mono: true},
-						{Label: "Last build", Value: badge.StatusLabel("failed"), Badge: statusBadge("failed")},
+						descriptionlist.BadgeItem("Last build", badge.StatusLabel("failed"), "failed"),
 					}})
 				}
 			}
@@ -1909,5 +1895,263 @@ templ customSection() {
 		<p>Markup no component covers goes inside a <code>customblock.CustomBlock</code> (or a whole page inside a <code>custompage.CustomPage</code>) with a written Reason. Everything inside a fence is exempt from the lint, and every fence is printed by <code>make check-ui</code> so none can hide.</p>
 		<p>This demo declares no fences: the swatch below is an ordinary component, and <code>make check-ui</code> reports zero custom fences for the whole demo.</p>
 		@swatch.Swatch(swatch.Props{Color: "var(--color-border)", Label: "no fence needed"})
+	}
+}
+
+// ═══════════════════════════════════════
+// Sticky table header and the phone sort control
+// ═══════════════════════════════════════
+
+// manyRows builds n example rows for the sticky header tables: numbered
+// names, the four types and four status words in rotation, no actions.
+func manyRows(n int) []datatable.Row {
+	types := []string{"Weapon", "Armor", "Accessory", "Consumable"}
+	statuses := []string{"published", "draft", "running", "failed"}
+	rows := make([]datatable.Row, 0, n)
+	for i := 0; i < n; i++ {
+		status := statuses[i%len(statuses)]
+		rows = append(rows, datatable.Row{
+			ID: strconv.Itoa(i + 1),
+			Cells: []datatable.Cell{
+				{Text: "Example item " + strconv.Itoa(i+1)},
+				{Text: types[i%len(types)], Muted: true},
+				datatable.BadgeCell(badge.StatusLabel(status), status),
+				{Text: strconv.Itoa(i+1) + "d"},
+			},
+		})
+	}
+	return rows
+}
+
+templ stickyheaderSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "stickyheader", Title: "Sticky table header", Description: "Scroll inside the first table and the page past the second: the header row stays in view in both; below 768px the second one's header sticks only within the table's own scroll box, since that box is what keeps a wide table reachable on a phone."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Thirty rows in a 400px box", Flush: true, Subtitle: "MaxHeight Md caps the table and the rows scroll inside it; the header sticks to the top of that box at every width."}) {
+			@datatable.DataTable(datatable.Props{
+				ID:           "sticky-capped",
+				Caption:      "Thirty example items in a capped table",
+				Columns:      tableColumns,
+				Rows:         manyRows(30),
+				Spec:         tableSpec(),
+				Base:         "#",
+				StickyHeader: true,
+				MaxHeight:    datatable.HeightMd,
+			})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Twelve rows, page-level", Flush: true, Subtitle: "No cap: the table is as tall as its rows and, from 768px up, the header sticks to the top of the window while the page scrolls past it."}) {
+			@datatable.DataTable(datatable.Props{
+				ID:           "sticky-page",
+				Caption:      "Twelve example items with a page-level sticky header",
+				Columns:      tableColumns,
+				Rows:         manyRows(12),
+				Spec:         tableSpec(),
+				Base:         "#",
+				StickyHeader: true,
+			})
+		}
+	}
+}
+
+templ phonesortSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "phonesort", Title: "Phone sort control", Description: "Open the Items list at 390px: the Type and Updated columns are hidden there, and their sort links with them, so the filter bar ends in a Sort select offering every sortable column both ways; choose Updated ↑ and the list re-sorts exactly as a header click would."}) {
+		<p>There is nothing to add to a page for it: listpage renders the select whenever a column is sortable, below 768px only, and keeps it in step with the header links. See it on <a href="/items">Items</a>.</p>
+	}
+}
+
+// ═══════════════════════════════════════
+// Error and auth pages
+// ═══════════════════════════════════════
+templ errorpageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "errorpage", Title: "Error pages", Description: "Each link answers with the status it names and renders the page in the shell, so the nav still works; the 500 shows a request id to quote, and any address this demo does not serve gets the 404 the same way."}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			<p><a href="/errors/404">404 Page not found</a>: the default wording and a Go home button.</p>
+			<p><a href="/errors/403">403 Not allowed</a>: for a signed-in user without access to the page.</p>
+			<p><a href="/errors/500">500 Something went wrong</a>: with the request id under the message.</p>
+			<p><a href="/no-such-page">/no-such-page</a>: the server's catch-all, through the same component.</p>
+		}
+	}
+}
+
+templ authpageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "authpage", Title: "Auth pages", Description: "The three pages an app shows outside its shell: no nav, one centered card with the app name as the heading; the sign-in form refuses every submission and re-renders with the error and the typed email."}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			<p><a href="/signin">Sign in</a>: email and password with a full-width submit button.</p>
+			<p><a href="/signed-out">Signed out</a>: the message and a link back to sign in.</p>
+			<p><a href="/forbidden">Forbidden</a>: the message and a way home.</p>
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Feedback: toast, flash, confirm dialog, skeleton, spinner, bottom sheet
+// ═══════════════════════════════════════
+templ feedbackGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "feedback", Title: "Feedback"}) {
+		@toastSection()
+		@flashSection()
+		@confirmSection()
+		@skeletonSection()
+		@spinnerSection()
+		@bottomsheetSection()
+	}
+}
+
+// variantVals is the hx-vals JSON that tells /api/toast which toast to
+// send; v is one of the showcase's fixed variant words, never user input.
+func variantVals(v string) string {
+	return `{"variant":"` + v + `"}`
+}
+
+// toastButton is one Toast section button: it posts the variant to
+// /api/toast and swaps nothing itself, since the reply arrives out of band.
+templ toastButton(variant, label string, v button.Variant) {
+	@button.Button(button.Props{Size: button.SizeSm, Variant: v, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": variantVals(variant), "hx-swap": "none"}}) {
+		{ label }
+	}
+}
+
+templ toastSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "toast", Title: "Toast", Description: "Each button posts to the server and the reply is one toast appended out of band to the container the shell renders: watch the top right (the top of the screen on a phone), where toasts stack and leave on their own after four seconds; the sticky one stays until you dismiss it."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS}) {
+			@toastButton("error", "Error", button.VariantDestructive)
+			@toastButton("warning", "Warning", button.VariantOutline)
+			@toastButton("info", "Info", button.VariantSecondary)
+			@toastButton("success", "Success", button.VariantDefault)
+			@toastButton("sticky", "Sticky error", button.VariantOutline)
+		}
+		<p><code>toast.Send</code> writes the toast only for an htmx request; a handler that answers with a redirect has no page to put it on and sets a flash instead (next section). Errors and warnings are the expected kinds; a success toast is opt-in, for an action whose only visible result would otherwise be nothing.</p>
+	}
+}
+
+templ flashSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "flash", Title: "Flash", Description: "Submit the form: the server stores a one-shot warning in a cookie and redirects back here, and the banner appears once in the slot above the page title (scroll to the top to see it); reload and it is gone."}) {
+		@form.Form(form.Props{ID: "flash-form", Action: "/api/flash"}) {
+			@button.Button(button.Props{Type: button.TypeSubmit, Variant: button.VariantOutline}) {
+				Set a flash and redirect
+			}
+		}
+		<p>The cookie is HttpOnly, lives five minutes at most and is cleared by the render that shows it. A flash set by an htmx action reaches the same slot out of band, on the page the user is already looking at.</p>
+	}
+}
+
+templ confirmSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "confirmdialog", Title: "Confirm dialog", Description: "Both actions ask first, in the styled dialog instead of the browser's box: Cancel, Escape and the backdrop close it and send nothing; Confirm sends the request exactly once, and the reply is a toast."}) {
+		@action.Group([]action.Action{
+			{Label: "Delete item", Variant: action.VariantDestructive, HxPost: "/api/toast", HxSwap: "none", Attributes: templ.Attributes{"hx-vals": variantVals("warning")}, Confirm: &action.Confirm{Title: "Delete this item?", Message: "Deleting is permanent; the item leaves every pack that uses it.", ConfirmLabel: "Delete", CancelLabel: "Keep it"}},
+			{Label: "Archive item", HxPost: "/api/toast", HxSwap: "none", Attributes: templ.Attributes{"hx-vals": variantVals("info")}, Confirm: &action.Confirm{Message: "Archive this item? You can restore it later."}},
+		})
+		<p>A destructive action gets the destructive confirm button, a plain one the primary. Title, message and both labels come from <code>action.Confirm</code>; only the message is required, and it doubles as the native <code>hx-confirm</code> text when the script is missing.</p>
+	}
+}
+
+// skeletonRows are the three rows of the Skeleton section's real table, the
+// counterpart of skeleton.Table(3, 4): four plain cells, no actions.
+var skeletonRows = []datatable.Row{
+	{ID: "s1", Cells: []datatable.Cell{{Text: "Flame Tongue"}, {Text: "Weapon", Muted: true}, datatable.BadgeCell(badge.StatusLabel("published"), "published"), {Text: "2d"}}},
+	{ID: "s2", Cells: []datatable.Cell{{Text: "Cloak of Billowing"}, {Text: "Armor", Muted: true}, datatable.BadgeCell(badge.StatusLabel("draft"), "draft"), {Text: "5h"}}},
+	{ID: "s3", Cells: []datatable.Cell{{Text: "Bottled Bolt"}, {Text: "Consumable", Muted: true}, datatable.BadgeCell(badge.StatusLabel("failed"), "failed"), {Text: "1w"}}},
+}
+
+templ skeletonSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "skeleton", Title: "Skeleton", Description: "Each placeholder sits beside the real thing it stands in for: Card, Table and Tile are the height of the panel, table and stat tile next to them, so a region that shows the skeleton while it loads does not move when the content arrives; Lines is the bare run of bars for a short block of text."}) {
+		@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@skeleton.Card()
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Build summary"}) {
+					@layout.Stack(layout.StackProps{Gap: layout.GapXS}) {
+						<p>Thirty-one of thirty-eight builds passed.</p>
+						<p>Seven failed on missing textures.</p>
+						<p>The last run finished two hours ago.</p>
+					}
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@skeleton.Table(3, 4)
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@datatable.DataTable(datatable.Props{
+					ID:      "skeleton-table",
+					Caption: "Three example items",
+					Columns: tableColumns,
+					Rows:    skeletonRows,
+					Spec:    tableSpec(),
+					Base:    "#",
+				})
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@skeleton.Tile()
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@stattile.StatTile(stattile.Props{Label: "Builds", Value: "38", Delta: &stattile.Delta{Value: "+4", Direction: statcomparison.DirectionUp}, Sub: "31 passed · 7 failed"})
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@skeleton.Lines(3)
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				<p>skeleton.Lines(n) is n bars at the pitch of small text, with no frame around them: the placeholder for a block of lines like this one while it loads.</p>
+			}
+		}
+	}
+}
+
+templ spinnerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "spinner", Title: "Spinner", Description: "Three sizes and the inline form with its label; the spinner inside the button is an htmx indicator, invisible until you click, fading in while the slow request (1.5 s) is in flight and out when the answer lands beside it."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Align: layout.AlignCenter}) {
+			@spinner.Spinner(spinner.Props{Size: spinner.SizeSm, Label: "Loading, small"})
+			@spinner.Spinner(spinner.Props{Label: "Loading, medium"})
+			@spinner.Spinner(spinner.Props{Size: spinner.SizeLg, Label: "Loading, large"})
+			@spinner.Inline("Saving…")
+		}
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS, Align: layout.AlignCenter}) {
+			@button.Button(button.Props{Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-get": "/api/slow", "hx-target": "#slow-result"}}) {
+				@spinner.Spinner(spinner.Props{Size: spinner.SizeSm, Indicator: true, Label: "Waiting for the server"})
+				Load slowly
+			}
+			<span id="slow-result"></span>
+		}
+	}
+}
+
+// sheetParagraphs fill the bottom sheet past its 60vh cap on a phone, so
+// the Body scrolls while the header and footer stay put.
+var sheetParagraphs = []string{
+	"A bottom sheet holds the controls a phone has no room for beside the content: a filter set, a row's actions, a share menu. On a desktop it is the same panel, still anchored to the bottom edge.",
+	"It spans the full width at every size and rises to at most 60% of the viewport here (Height Md; Sm is 40%, Lg 85%). Past that cap this body scrolls on its own while the title above and the buttons below stay where they are.",
+	"The header keeps its close button, Escape and the backdrop close it, and focus moves into the panel when it opens and back to the trigger after.",
+	"The footer's Fire a toast button posts to the server while the sheet is open: the toast appears at the top of the screen, above the sheet and its backdrop, so it is seen without covering Done.",
+	"The sheet respects the safe area at the bottom of a phone screen, so the footer's buttons sit above the home indicator rather than under it.",
+	"Everything in here is ordinary page content: paragraphs, a form, a list, whatever the task needs. Only the frame is the component's.",
+	"This paragraph exists so there is enough text to scroll at 390 by 844; on a desktop the cap is rarely reached and the sheet is only as tall as its content.",
+}
+
+templ bottomsheetSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "bottomsheet", Title: "Bottom sheet", Description: "Open it at any width, then at 390px: the sheet rises from the bottom edge, spans the width, stops at 60% of the viewport and scrolls inside; a toast fired from its footer appears at the top of the screen, above the sheet and never over its buttons."}) {
+		@slideover.SlideOver(slideover.Props{ID: "sheet-demo"}) {
+			@slideover.Trigger() {
+				@button.Button(button.Props{Variant: button.VariantOutline}) {
+					Open bottom sheet
+				}
+			}
+			@slideover.Panel(slideover.PanelProps{Title: "Filter items", Side: slideover.SideBottom, Height: slideover.HeightMd}) {
+				@slideover.Body() {
+					@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+						for _, text := range sheetParagraphs {
+							<p>{ text }</p>
+						}
+					}
+				}
+				@slideover.Footer() {
+					@button.Button(button.Props{Variant: button.VariantSecondary, Attributes: templ.Attributes{"hx-post": "/api/toast", "hx-vals": variantVals("warning"), "hx-swap": "none"}}) {
+						Fire a toast
+					}
+					@slideover.Close() {
+						@button.Button() {
+							Done
+						}
+					}
+				}
+			}
+		}
 	}
 }
