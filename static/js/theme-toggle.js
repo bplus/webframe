@@ -1,4 +1,14 @@
+// theme-toggle.js - binds every [data-theme-toggle] button (first-party).
 (function () {
+  'use strict';
+  // htmx re-runs <script src> tags that arrive in swapped content (a boosted
+  // navigation swaps the whole body, bundle included); a second copy of
+  // this script would add duplicate DOMContentLoaded and htmx:afterSwap
+  // listeners. Same guard as confirm.js and htmx-errors.js.
+  if (window.wf && window.wf.theme) return;
+  window.wf = window.wf || {};
+  window.wf.theme = { version: 1 };
+
   function getTheme() {
     try {
       // light is the product default (cb57069); dark only applies via stored preference

@@ -68,6 +68,7 @@ confirmed local, not just inferred:
 | `theme-toggle.js` | Local | The only standalone `.js` file, and fully readable. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
 | `autocomplete.js` | Local | Written for webframe in page-layer batch 1b (autocomplete component, paired with `components/autocomplete/autocomplete.templ`). Unminified, first-party; depends only on HTMX's `htmx:beforeRequest` / `htmx:afterSwap` events. | Part of the webframe module (see above). |
 | `confirm.js` | Local | Written for webframe in page-layer batch 3 (the `htmx:confirm` interceptor behind `action.Confirm`, paired with `components/confirmdialog/confirmdialog.templ`). Unminified, first-party; depends on HTMX's `htmx:confirm` event and the `window.tui.dialog` API of the templUI-shipped `dialog.min.js`. | Part of the webframe module (see above). |
+| `htmx-errors.js` | Local | Written for webframe in page-layer batch 4 (the `htmx:beforeSwap` error-swap guard loaded by `appshell.Scripts` right after `confirm.js`). Unminified, first-party; depends only on HTMX's `htmx:beforeSwap` event (`evt.detail.isError`, `.xhr`, `.target`, `.shouldSwap`). | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -188,3 +189,26 @@ and never scans JS, those three classes are kept alive by an
 `@source inline("bg-success bg-warning bg-muted-foreground")` line there;
 a future class written only by a script needs the same by-hand entry.
 Nothing else in the file changed.
+
+Batch 4 (Task A8) adds `htmx-errors.js`, first-party (webframe, not
+templUI, not third-party), listed under Local above; `appshell.Scripts`
+loads it right after `confirm.js`. Unminified, about 40 lines, no
+dependencies beyond htmx's `htmx:beforeSwap` event. When
+`evt.detail.isError` is true (the `[45]..` codes under the webframe
+`htmx-config`) it sets `evt.detail.shouldSwap = false` if the response's
+`Content-Type` header (read with `evt.detail.xhr.getResponseHeader`) is
+not `text/html` (a missing header counts as not HTML; parameters such as
+`; charset=utf-8` are allowed) **or** the swap target or one of its
+ancestors carries `data-wf-swallow-errors` (`Element.closest`); in every
+other case `shouldSwap` is left as htmx computed it, so the batch 3
+behavior (swap an HTML error body: 422 forms, 409 toast-only, 404 error
+pages) stands. htmx still fires `htmx:responseError` after a refused swap.
+The shell marks its polled elements (`NavItem.Badge` span, `LiveDot`)
+with `data-wf-swallow-errors`. The script guards against a second run
+with `window.wf.errors` (htmx re-executes `<script src>` tags found in
+swapped content).
+
+Batch 4 (Task A8) also gives `theme-toggle.js` the same re-run guard
+(`window.wf.theme`) that `confirm.js` has (`window.wf.confirm`); the rest of
+the file is unchanged. `autocomplete.js` and the templUI-shipped component
+scripts have no such guard (input #20, pre-existing).
