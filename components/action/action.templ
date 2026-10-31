@@ -3,8 +3,9 @@ package action
 import "github.com/bplus/webframe/components/button"
 
 // Button renders one Action as an <a> (plain link) or a <button>
-// (anything with Hx* attributes, or no Href), with optional Icon
-// before the Label.
+// (anything with Hx* attributes, Submit, or no Href), with optional
+// Icon before the Label. Submit gives the button type="submit"; Form
+// and FullWidth pass through to button.Props.
 templ Button(a Action) {
 	@button.Button(a.buttonProps()) {
 		if a.Icon != nil {

@@ -333,6 +333,17 @@ func TestDataTable_BadgeCell(t *testing.T) {
 	out := render(t, Props{Columns: itemColumns, Rows: rows, Base: "/items"})
 	wantAll(t, out, "text-info", "In progress")
 	i := strings.Index(out, "text-info")
-	after := out[i:strings.Index(out[i:], "</span>")+i]
+	after := out[i : strings.Index(out[i:], "</span>")+i]
 	wantAll(t, after, "In progress")
+}
+
+func TestDataTable_RowActionsMenuDestructiveConfirm(t *testing.T) {
+	rows := itemRows()
+	rows[0].Actions = []action.Action{
+		{Label: "DELACT", HxDelete: "/items/1", HxTarget: "#list-results", Variant: action.VariantDestructive,
+			Confirm: &action.Confirm{Title: "Delete Alpha", Message: "Sure?", ConfirmLabel: "Delete"}},
+	}
+	out := render(t, Props{Columns: itemColumns, Rows: rows, Base: "/items"})
+	menu := out[strings.Index(out, `aria-label="Row actions"`):]
+	wantAll(t, menu, `role="menuitem"`, `hx-delete="/items/1"`, `hx-confirm="Sure?"`, `data-wf-confirm-title="Delete Alpha"`, `data-wf-confirm-label="Delete"`, `data-wf-confirm-destructive="true"`)
 }
