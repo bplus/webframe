@@ -538,8 +538,8 @@ func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 
 // HandleItemCreate handles the create form's submit (POST /items). On
 // validation errors it re-renders the form with the submitted values and
-// the errors (status 200: htmx 2 does not swap a 4xx, so a 422 would leave
-// the stale form on screen); on success it saves and redirects to the new
+// the errors (422; appshell configures htmx to swap error responses, so the
+// form re-renders in place); on success it saves and redirects to the new
 // item's detail page (HX-Redirect for an htmx submit, else 303). It never
 // renders a success message.
 //

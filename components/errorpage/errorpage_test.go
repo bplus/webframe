@@ -161,10 +161,14 @@ func assertHeaders(t *testing.T, rec *httptest.ResponseRecorder, status int) {
 	if rec.Code != status {
 		t.Errorf("status = %d, want %d", rec.Code, status)
 	}
-	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
+	// rec.Result() holds the headers as they were sent (frozen at
+	// WriteHeader); rec.Header() is the live map and hides a header set
+	// too late.
+	h := rec.Result().Header
+	if ct := h.Get("Content-Type"); ct != "text/html; charset=utf-8" {
 		t.Errorf("Content-Type = %q", ct)
 	}
-	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Request") {
+	if v := h.Get("Vary"); !strings.Contains(v, "HX-Request") {
 		t.Errorf("Vary = %q, want the htmx headers", v)
 	}
 }
@@ -234,5 +238,40 @@ func TestShorthands(t *testing.T) {
 		if !strings.Contains(rec.Body.String(), c.want) {
 			t.Errorf("%s: missing %q", c.name, c.want)
 		}
+	}
+}
+
+// TestRespond_ClearsPendingFlash: an error page consumes a pending flash
+// and its clearing cookie is sent even though the status is not 200 (the
+// status is written after App.Flash ran).
+func TestRespond_ClearsPendingFlash(t *testing.T) {
+	cleared := false
+	app := &appshell.App{Name: "Demo", HomeHref: "/", Flash: func(w http.ResponseWriter, r *http.Request) templ.Component {
+		http.SetCookie(w, &http.Cookie{Name: "wf_flash", Value: "", MaxAge: -1, Path: "/"})
+		cleared = true
+		return templ.Raw("<p>FLASHBANNER</p>")
+	}}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/missing", nil)
+	app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := NotFound(w, r); err != nil {
+			t.Fatal(err)
+		}
+	})).ServeHTTP(rec, req)
+	res := rec.Result()
+	if res.StatusCode != 404 || !cleared {
+		t.Fatalf("status %d, flash called %v", res.StatusCode, cleared)
+	}
+	var sawClear bool
+	for _, c := range res.Cookies() {
+		if c.Name == "wf_flash" && c.MaxAge < 0 {
+			sawClear = true
+		}
+	}
+	if !sawClear {
+		t.Errorf("clearing Set-Cookie lost (headers frozen before Flash ran): %v", res.Header)
+	}
+	if !strings.Contains(rec.Body.String(), "FLASHBANNER") {
+		t.Errorf("flash banner missing from the error page")
 	}
 }

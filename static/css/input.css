@@ -163,6 +163,13 @@
 }
 
 /* ── Topbar ── */
+/* --wf-sticky-top is the height of whatever the shell keeps stuck to the
+   top of the window: the topbar on the topbar layout, nothing on the
+   sidebar layout. Anything else that sticks to the page (datatable's
+   StickyHeader) offsets by it so it is not hidden under the bar. */
+.wf-shell { --wf-sticky-top: 0px; }
+.wf-shell:has(> .wf-topbar) { --wf-sticky-top: 3.5rem; }
+
 .wf-topbar {
   position: sticky;
   top: 0;

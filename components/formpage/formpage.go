@@ -226,9 +226,9 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
+	status := 0
 	if len(p.Errors) > 0 {
-		appshell.SetHeaders(w)
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		status = http.StatusUnprocessableEntity
 	}
-	return app.RenderParts(w, r, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
+	return app.RenderPartsStatus(w, r, status, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
 }

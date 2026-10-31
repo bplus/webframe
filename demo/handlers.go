@@ -228,9 +228,6 @@ func HandleToast(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		p = toastKinds["info"]
 	}
-	// Send sets neither status nor Content-Type: the toast is this
-	// handler's whole output, so the type is set here before the write.
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := toast.Send(w, r, p); err != nil {
 		log.Printf("demo: render toast: %v", err)
 	}

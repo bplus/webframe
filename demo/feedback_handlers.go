@@ -39,8 +39,8 @@ func signInProps() authpage.Props {
 
 // HandleSignIn serves the sign-in page (GET /signin) and refuses every
 // submission (POST /signin): the form re-renders with the typed email, an
-// empty password and the error "Demo: sign-in is not wired", status 200 so
-// an htmx submit swaps it. A real app would check the credentials, set its
+// empty password and the error "Demo: sign-in is not wired" (422; htmx is
+// configured to swap it). A real app would check the credentials, set its
 // session and redirect (303) on success.
 //
 // @boundary HTTP

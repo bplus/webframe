@@ -9,7 +9,7 @@
 // labelled "Row actions" (`md:hidden`). Both renderings are in the DOM at
 // every width; CSS picks one.
 //
-// Sticky header: StickyHeader pins the thead (sticky top-0 z-10 bg-card,
+// Sticky header: StickyHeader pins the thead (sticky z-10 bg-card; top-0 inside a capped box, top offset by the shell's --wf-sticky-top when sticking to the page,
 // opaque so rows scroll under it). With MaxHeight the table's wrapper is a
 // capped scroll box and the header sticks to its top at every width.
 // Without MaxHeight the wrapper stops clipping on md and up
@@ -127,7 +127,7 @@ type Row struct {
 //
 // MaxHeight caps the wrapper (max-h-[240px|400px|600px] for HeightSm, Md,
 // Lg; HeightNone/"" sets no cap) and the rows scroll inside it, at every
-// width. StickyHeader makes the thead `sticky top-0 z-10 bg-card` (opaque,
+// width. StickyHeader makes the thead `sticky z-10 bg-card` (`top-0` in a capped box, `top-[var(--wf-sticky-top)]` page-level so the topbar shell's bar does not hide it; opaque,
 // so rows scroll under it). Where it sticks depends on MaxHeight: with a
 // cap, to the top of the wrapper's scroll box; without one, the wrapper
 // becomes `md:overflow-visible` so on md and up (768px+) the header sticks

@@ -36,8 +36,10 @@ type App struct {
 	// body-only or part-only htmx response appends it after the fragment
 	// as an out-of-band swap of #wf-flash (nothing when the result is nil),
 	// so a flash set by an htmx action shows at once. RenderBare never
-	// calls it. It runs before the first byte of the body is written, so it
-	// may set or clear cookies on w. A nil result renders the empty slot on
+	// calls it. It runs before the status and the first byte of the body are
+	// written (a handler that needs a non-200 status uses RenderStatus or
+	// RenderPartsStatus instead of calling WriteHeader itself), so it may set
+	// or clear cookies on w. A nil result renders the empty slot on
 	// a Shell render. appshell holds no cookie logic itself: an app wires
 	// App.Flash = flash.Take.
 	Flash func(w http.ResponseWriter, r *http.Request) templ.Component
@@ -183,8 +185,14 @@ func RenderBare(w http.ResponseWriter, r *http.Request, name, title string, body
 // map at WriteHeader, so the order is SetHeaders, WriteHeader, Render.
 // errorpage.Respond does exactly that.
 func SetHeaders(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Add("Vary", varyHeaders)
+	h := w.Header()
+	h.Set("Content-Type", "text/html; charset=utf-8")
+	for _, v := range h.Values("Vary") {
+		if v == varyHeaders {
+			return
+		}
+	}
+	h.Add("Vary", varyHeaders)
 }
 
 // renderDocument writes body alone when WantsFragment(r), otherwise the
@@ -215,8 +223,27 @@ func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body tem
 // Only the third shape includes the Shell, so only it calls App.Flash
 // (once, before any output), and the result fills the #wf-flash slot.
 func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, full templ.Component, parts map[string]templ.Component) error {
+	return a.RenderPartsStatus(w, r, 0, title, full, parts)
+}
+
+// RenderStatus is Render with a status code: status is written after
+// App.Flash has run and the headers are set (a status written by the
+// handler first would freeze the header map and lose the flash's clearing
+// cookie, Content-Type and Vary). 0 means 200. errorpage uses it.
+func (a *App) RenderStatus(w http.ResponseWriter, r *http.Request, status int, title string, body templ.Component) error {
+	return a.RenderPartsStatus(w, r, status, title, body, nil)
+}
+
+// RenderPartsStatus is RenderParts with a status code, written in the same
+// order as RenderStatus. 0 means 200. formpage uses it for a 422.
+func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status int, title string, full templ.Component, parts map[string]templ.Component) error {
 	SetHeaders(w)
 	ctx := r.Context()
+	writeStatus := func() {
+		if status != 0 {
+			w.WriteHeader(status)
+		}
+	}
 	if WantsFragment(r) {
 		// A fragment render still consumes a pending flash: the banner is
 		// sent out of band into the page's #wf-flash slot, so a flash set
@@ -235,6 +262,7 @@ func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, 
 				frag = part
 			}
 		}
+		writeStatus()
 		if err := frag.Render(ctx, w); err != nil || oob == nil {
 			return err
 		}
@@ -245,6 +273,7 @@ func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, 
 		// Before the first write: Flash may set or clear a cookie.
 		props.Flash = a.Flash(w, r)
 	}
+	writeStatus()
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return Shell(props).Render(templ.WithChildren(ctx, full), w)
 	})

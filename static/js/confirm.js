@@ -16,6 +16,12 @@
 // dialog.min.js has loaded, the handler returns and htmx shows the native box.
 (function () {
   'use strict';
+  // htmx re-runs <script src> tags that arrive in swapped content (a boosted
+  // navigation swaps the whole body, bundle included); a second copy of
+  // this script would issue every confirmed request twice.
+  if (window.wf && window.wf.confirm) return;
+  window.wf = window.wf || {};
+  window.wf.confirm = { version: 1 };
   var HOST = 'wf-confirm';
   var pending = null; // { issue: evt.detail.issueRequest, elt: the trigger }
 
@@ -72,13 +78,17 @@
   // dialog.min.js owns open/close (Cancel, Escape, backdrop, close()) and
   // records it in data-tui-dialog-open on the panel; a flip to "false" while
   // a request is still pending is a cancel.
+  // The observer watches the whole body (subtree) rather than the panel
+  // found at load, so a host swapped in later (boosted navigation) is still
+  // covered without a second script run.
   function watch() {
-    var h = host();
-    var panel = h && h.querySelector('[data-tui-dialog-content]');
-    if (!panel) return;
-    new MutationObserver(function () {
-      if (panel.getAttribute('data-tui-dialog-open') === 'false') finish(false);
-    }).observe(panel, { attributes: true, attributeFilter: ['data-tui-dialog-open'] });
+    new MutationObserver(function (records) {
+      if (!pending) return;
+      for (var i = 0; i < records.length; i++) {
+        var el = records[i].target;
+        if (el.getAttribute && el.getAttribute('data-tui-dialog-open') === 'false' && el.closest('#' + HOST)) { finish(false); return; }
+      }
+    }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-tui-dialog-open'] });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
 })();

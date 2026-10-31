@@ -220,7 +220,7 @@ func DataTable(props ...Props) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = table.Header(table.Props{Class: utils.If(p.StickyHeader, "sticky top-0 z-10 bg-card")}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = table.Header(table.Props{Class: stickyClass(p)}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -986,6 +986,21 @@ func headPad(dense bool) string {
 // nothing caps the height (so on md+ the page, not the wrapper, is the
 // scrolling ancestor; below md the wrapper's overflow-auto stays for
 // horizontal overflow), then the caller's Class last so it wins.
+// stickyClass pins the thead when StickyHeader is set. Inside a capped
+// scroll box (MaxHeight) it sticks to the box's top; sticking to the page
+// it offsets by --wf-sticky-top, which the shell sets to its topbar's
+// height (0 on the sidebar layout), so the header is never hidden under
+// the bar. The class literals live here for Tailwind's source scan.
+func stickyClass(p Props) string {
+	if !p.StickyHeader {
+		return ""
+	}
+	if p.MaxHeight != HeightNone {
+		return "sticky top-0 z-10 bg-card"
+	}
+	return "sticky top-[var(--wf-sticky-top,0px)] z-10 bg-card"
+}
+
 func wrapperClass(p Props) string {
 	return utils.TwMerge(
 		maxHeightClass(p.MaxHeight),

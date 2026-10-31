@@ -302,6 +302,9 @@ func (p Props) submit() action.Action {
 		if a.Href == "" {
 			a.Href = p.Action
 		}
+		if a.Href == "" {
+			a.Href = "/signin" // never a dead button
+		}
 	case ModeForbidden:
 		if a.Label == "" {
 			a.Label = "Go home"

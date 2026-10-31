@@ -27,11 +27,15 @@ func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	}
 	title, _ := defaults(p)
 	appshell.SetHeaders(w)
-	w.WriteHeader(status)
 	if app, ok := appshell.FromContext(r.Context()); ok {
-		return app.Render(w, r, title, ErrorPage(p))
+		// RenderStatus runs App.Flash and sets the headers before writing
+		// the status, so a pending flash is still cleared.
+		return app.RenderStatus(w, r, status, title, ErrorPage(p))
 	}
-	// No App: no app name, so the document title is the page title alone.
+	// No App (and no flash): no app name, so the document title is the
+	// page title alone.
+	appshell.SetHeaders(w)
+	w.WriteHeader(status)
 	return appshell.RenderBare(w, r, "", title, ErrorPage(p))
 }
 

@@ -313,6 +313,9 @@
   .top-\[50\%\] {
     top: 50%;
   }
+  .top-\[var\(--wf-sticky-top\,0px\)\] {
+    top: var(--wf-sticky-top,0px);
+  }
   .right-0 {
     right: 0px;
   }
@@ -348,6 +351,9 @@
   }
   .z-\[60\] {
     z-index: 60;
+  }
+  .z-\[65\] {
+    z-index: 65;
   }
   .z-\[9999\] {
     z-index: 9999;
@@ -2421,6 +2427,12 @@
   background-color: var(--color-background);
   color: var(--color-foreground);
   min-height: 100vh;
+}
+.wf-shell {
+  --wf-sticky-top: 0px;
+}
+.wf-shell:has(> .wf-topbar) {
+  --wf-sticky-top: 3.5rem;
 }
 .wf-topbar {
   position: sticky;

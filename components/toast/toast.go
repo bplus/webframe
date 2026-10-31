@@ -15,12 +15,11 @@ import (
 // a toast fragment has nowhere to land; it should set a one-shot flash
 // (package flash) instead.
 //
-// Send never sets the status code or Content-Type: the handler's main
-// response does, and Send is called after that response's body (or
-// headers) has been written. Called first, with nothing written yet, it
-// makes Go send a 200 with its own sniffed Content-Type, so a handler
-// whose only output is the toast sets Content-Type itself before calling
-// it. A render error is returned, not written.
+// Send never sets the status code: the handler's main response does, and
+// Send is normally called after that response's body. It sets Content-Type
+// to HTML only when nothing has set one yet (a handler whose only output
+// is the toast; for an error status use Respond, which also tells htmx to
+// swap nothing). A render error is returned, not written.
 func Send(w http.ResponseWriter, r *http.Request, p Props) error {
 	if !appshell.IsHX(r) {
 		return nil

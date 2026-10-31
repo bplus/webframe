@@ -245,10 +245,13 @@ func TestDataTable_HxTarget(t *testing.T) {
 
 func TestDataTable_DenseAndSticky(t *testing.T) {
 	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", Dense: true, StickyHeader: true})
-	wantAll(t, out, "py-1.5", "sticky", "top-0", "z-10", "bg-card")
+	// Page-level sticking offsets by the shell's sticky-top variable (the
+	// topbar height) so the header is not hidden under the bar.
+	wantAll(t, out, "py-1.5", "sticky", "top-[var(--wf-sticky-top,0px)]", "z-10", "bg-card")
+	wantNone(t, out, "top-0")
 	// The sticky classes sit on the thead, not the wrapper.
 	head := out[strings.Index(out, "<thead"):strings.Index(out, "</thead>")]
-	wantAll(t, head[:strings.Index(head, ">")], "sticky", "top-0", "z-10", "bg-card")
+	wantAll(t, head[:strings.Index(head, ">")], "sticky", "top-[var(--wf-sticky-top,0px)]", "z-10", "bg-card")
 	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items"})
 	wantNone(t, out, "py-1.5", "sticky", "md:overflow-visible", "max-h-")
 }
@@ -288,7 +291,9 @@ func TestDataTable_MaxHeight(t *testing.T) {
 		w := wrapper(t, out)
 		wantAll(t, w, c.want, "overflow-auto")
 		wantNone(t, w, "md:overflow-visible")
+		// Inside the capped box the header sticks to the box's own top.
 		wantAll(t, out, "sticky", "top-0", "bg-card")
+		wantNone(t, out, "wf-sticky-top")
 		// Without StickyHeader the cap alone is a plain scroll box.
 		out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", MaxHeight: c.h})
 		w = wrapper(t, out)
