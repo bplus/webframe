@@ -54,18 +54,22 @@ func (p Props) hasContent() bool {
 	return p.Title != "" || p.Body != "" || p.Details != nil
 }
 
-// role returns the ARIA live-region role: alert for errors, status otherwise.
-func (p Props) role() string {
-	if p.Variant == VariantError {
+// Role returns the ARIA live-region role for v: alert for VariantError,
+// status otherwise. toast reuses it so a toast and a banner of the same
+// variant are announced the same way.
+func Role(v Variant) string {
+	if v == VariantError {
 		return "alert"
 	}
 	return "status"
 }
 
-// tone returns the color classes for the variant. Error uses the existing
-// destructive token; the others use the success/warning/info tokens.
-func (p Props) tone() string {
-	switch p.Variant {
+// Tone returns the color classes for v: a left border, a soft tint and a
+// text color from one token. Error uses the existing destructive token; the
+// others use the success/warning/info tokens. toast reuses it so every
+// notice in an app is colored from the same mapping.
+func Tone(v Variant) string {
+	switch v {
 	case VariantError:
 		return "border-destructive bg-destructive/10 text-destructive"
 	case VariantSuccess:
@@ -76,6 +80,12 @@ func (p Props) tone() string {
 		return "border-info bg-info/10 text-info"
 	}
 }
+
+// role returns the ARIA live-region role: alert for errors, status otherwise.
+func (p Props) role() string { return Role(p.Variant) }
+
+// tone returns the color classes for the variant.
+func (p Props) tone() string { return Tone(p.Variant) }
 
 func (p Props) rootClass() string {
 	return utils.TwMerge(

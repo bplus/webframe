@@ -492,6 +492,10 @@
 }
 
 /* ── Toast ── */
+/* The Document renders one #toast-container; toast.Send appends to it out
+   of band. A column flex with no fixed heights: a dismissed toast leaves
+   the flow (x-show) and the ones below it close up. z-index 50 sits below
+   a bottom sheet (slideover, 60), so a toast never covers one. */
 .wf-toast-container {
   position: fixed;
   top: 1rem;
@@ -499,7 +503,25 @@
   z-index: 50;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 0.5rem;
+  width: 24rem;
+  max-width: calc(100vw - 2rem);
+}
+.wf-toast { max-width: 24rem; }
+
+/* Phone: the stack moves to the bottom and spans the width minus the
+   16px gutters; each toast stretches to that width. */
+@media (max-width: 767px) {
+  .wf-toast-container {
+    top: auto;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+    max-width: none;
+  }
+  .wf-toast { max-width: none; }
 }
 
 /* ── Hover Card ── */
