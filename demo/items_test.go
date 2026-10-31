@@ -318,8 +318,8 @@ func TestItems_Publish(t *testing.T) {
 	wantAll(t, body, `id="items-results"`, "Helm of the Last Watch", "1–1 of 1 items",
 		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 13 published · 1 draft</p>`)
 	wantNone(t, body, "Cloak of Whispers", "Amulet of Still Water", "<h1")
-	// The default sort is written too, as the page links write it.
-	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?dir=desc&sort=updated&status=draft" {
+	// The default sort is omitted, as the page links omit it.
+	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?status=draft" {
 		t.Errorf("HX-Replace-Url = %q", got)
 	}
 	for _, id := range []string{"2", "6"} {

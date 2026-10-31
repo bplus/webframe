@@ -522,7 +522,8 @@ func TestRespondResults(t *testing.T) {
 	if err := RespondResults(rec, req, p); err != nil {
 		t.Fatalf("RespondResults: %v", err)
 	}
-	if got := rec.Header().Get("HX-Replace-Url"); got != "/items/publish?dir=desc&sort=updated" {
+	// The Spec is in its default order, which the URL omits.
+	if got := rec.Header().Get("HX-Replace-Url"); got != "/items/publish" {
 		t.Errorf("HX-Replace-Url = %q", got)
 	}
 	wantNone(t, rec.Body.String(), "hx-swap-oob")
