@@ -27,6 +27,12 @@ import (
 // changes when the sort does. With HxTarget set the link also carries
 // hx-get (same URL), hx-target and hx-push-url="true".
 //
+// Wrapper: Props.Class, the MaxHeight cap and, with StickyHeader but no
+// MaxHeight, `md:overflow-visible` are merged into table.Table's wrapper
+// class (it is `relative w-full overflow-auto rounded-lg border` by
+// default) so the sticky thead has the right scrolling ancestor: the
+// wrapper when capped, the page on md+ when not. See Props.
+//
 // Phone collapse (below md, 768px): th and td of a Hidden column carry
 // `hidden md:table-cell`; the selection column stays at every width (the
 // app declared selection; Hidden is its lever for making room); the
@@ -52,7 +58,7 @@ templ DataTable(props ...Props) {
 		}
 		actions := p.hasActions()
 	}}
-	@table.Table(table.Props{ID: p.ID, Class: p.Class, Attributes: p.Attributes}) {
+	@table.Table(table.Props{ID: p.ID, Class: wrapperClass(p), Attributes: p.Attributes}) {
 		if p.Caption != "" {
 			<caption class="sr-only">{ p.Caption }</caption>
 		}
@@ -264,4 +270,33 @@ func cellPad(dense bool) string {
 // the same phone-width horizontal padding as cellPad.
 func headPad(dense bool) string {
 	return utils.TwMerge("max-md:px-2", utils.If(dense, "h-9"))
+}
+
+// wrapperClass builds the extra classes for table.Table's wrapper: the
+// MaxHeight cap, then `md:overflow-visible` when the header is sticky and
+// nothing caps the height (so on md+ the page, not the wrapper, is the
+// scrolling ancestor; below md the wrapper's overflow-auto stays for
+// horizontal overflow), then the caller's Class last so it wins.
+func wrapperClass(p Props) string {
+	return utils.TwMerge(
+		maxHeightClass(p.MaxHeight),
+		utils.If(p.StickyHeader && p.MaxHeight == HeightNone, "md:overflow-visible"),
+		p.Class,
+	)
+}
+
+// maxHeightClass maps Height to its max-h utility; HeightNone and unknown
+// values set no cap. The literals live in this .templ file so Tailwind's
+// source scan (components/**/*.templ) compiles them.
+func maxHeightClass(h Height) string {
+	switch h {
+	case HeightSm:
+		return "max-h-[240px]"
+	case HeightMd:
+		return "max-h-[400px]"
+	case HeightLg:
+		return "max-h-[600px]"
+	default:
+		return ""
+	}
 }
