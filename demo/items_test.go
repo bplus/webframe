@@ -162,8 +162,8 @@ func TestItems_CreateErrors(t *testing.T) {
 	h := itemsHandler(t)
 	form := url.Values{"name": {"ab"}, "status": {"draft"}, "notes": {"keep me"}}
 	rec := do(h, "POST", "/items", form, hx("item-form"))
-	if rec.Code != 200 {
-		t.Fatalf("POST /items with errors = %d, want 200 (htmx does not swap 4xx)", rec.Code)
+	if rec.Code != 422 {
+		t.Fatalf("POST /items with errors = %d, want 422 (Document's htmx config swaps error responses)", rec.Code)
 	}
 	body := rec.Body.String()
 	if !strings.HasPrefix(strings.TrimSpace(body), "<form") {

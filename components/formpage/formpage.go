@@ -215,14 +215,20 @@ func (p Props) submit() action.Action {
 // error re-render swaps the form in place.
 //
 // Respond never redirects. The POST handler decides: on validation errors
-// it sets p.Values from the submitted form and p.Errors, then calls Respond
-// (status 200, so htmx performs the swap); on success it redirects to the
-// saved record (303 See Other, or for an htmx submit an HX-Redirect header
-// with an empty 200 body) and renders no success message.
+// it sets p.Values from the submitted form and p.Errors, then calls Respond,
+// which answers 422 Unprocessable Entity (appshell.Document configures htmx
+// to swap error responses, so the form re-renders in place with a truthful
+// status); on success it redirects to the saved record (303 See Other, or
+// for an htmx submit an HX-Redirect header with an empty 200 body) and
+// renders no success message.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
 		return err
+	}
+	if len(p.Errors) > 0 {
+		appshell.SetHeaders(w)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 	return app.RenderParts(w, r, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
 }

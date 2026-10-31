@@ -13365,7 +13365,7 @@ func flashSection() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "flash", Title: "Flash", Description: "Submit the form: the server stores a one-shot warning in a cookie and redirects back here, and the banner appears once in the slot above the page title (scroll to the top to see it); reload and it is gone."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var555), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "flash", Title: "Flash", Description: "Submit the form: the server stores a one-shot warning in a cookie and redirects to the top of this page, where the banner appears once in the slot above the page title; reload and it is gone."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var555), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

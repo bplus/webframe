@@ -113,8 +113,8 @@ func TestFeedback_RefusedDeleteToast(t *testing.T) {
 func TestFeedback_FlashShowsOnceOnNextPage(t *testing.T) {
 	h := fullHandler(t)
 	rec := do(h, "POST", "/api/flash", url.Values{}, nil)
-	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/#flash" {
-		t.Fatalf("POST /api/flash = %d Location %q, want 303 /#flash", rec.Code, rec.Header().Get("Location"))
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+		t.Fatalf("POST /api/flash = %d Location %q, want 303 /", rec.Code, rec.Header().Get("Location"))
 	}
 	c := flashCookie(t, rec)
 	if !c.HttpOnly || c.Path != "/" || c.MaxAge != 300 {
@@ -197,9 +197,9 @@ func TestFeedback_AuthPages(t *testing.T) {
 	wantNone(t, body, "wf-topbar", "wf-sidebar", "wf-flash", `role="alert"`, "Demo: sign-in is not wired")
 
 	// Every submission is refused: the error banner, the typed email kept,
-	// the password never echoed, status 200 so htmx swaps it.
+	// the password never echoed, status 422 (htmx is configured to swap it).
 	rec = do(h, "POST", "/signin", url.Values{"email": {"ada@example.com"}, "password": {"hunter2"}}, nil)
-	if rec.Code != 200 {
+	if rec.Code != 422 {
 		t.Fatalf("POST /signin = %d", rec.Code)
 	}
 	body = rec.Body.String()

@@ -288,3 +288,39 @@ func TestBody_SubmitIgnoresHrefAndHx(t *testing.T) {
 	mustContain(t, out, `type="submit"`, "<span>Save</span>")
 	mustNotContain(t, out, `href="/ignored"`, `hx-post="/ignored"`, `hx-target="#ignored"`)
 }
+
+// TestRespond_ErrorsAre422: a re-render with Errors answers 422 with the
+// headers Render sets; without Errors it is 200.
+func TestRespond_ErrorsAre422(t *testing.T) {
+	app := &appshell.App{Name: "Demo", HomeHref: "/"}
+	serve := func(p Props) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/items", nil)
+		req.Header.Set("HX-Request", "true")
+		req.Header.Set("HX-Target", p.id())
+		app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := Respond(w, r, "New", p); err != nil {
+				t.Fatal(err)
+			}
+		})).ServeHTTP(rec, req)
+		return rec
+	}
+	p := Props{ID: "item-form", Action: "/items", Sections: []Section{{Fields: []formfield.Field{{Name: "name", Label: "Name"}}}}}
+	if rec := serve(p); rec.Code != http.StatusOK {
+		t.Errorf("no errors: status %d, want 200", rec.Code)
+	}
+	p.Errors = map[string]string{"name": "Required"}
+	rec := serve(p)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("with errors: status %d, want 422", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type %q lost with the early status", ct)
+	}
+	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Request") {
+		t.Errorf("Vary %q lost with the early status", v)
+	}
+	if !strings.Contains(rec.Body.String(), `aria-invalid="true"`) {
+		t.Errorf("error re-render lacks aria-invalid:\n%s", rec.Body.String())
+	}
+}

@@ -25,6 +25,15 @@ type DocProps struct {
 	Head templ.Component
 }
 
+// htmxConfig makes htmx swap 4xx and 5xx responses like 2xx ones (htmx 2
+// leaves the target untouched on an error status by default). The server
+// decides what an error looks like: a 422 form re-render with the errors
+// under the fields, a 409 whose only body is a toast, a 404 error page, so
+// the status code can be truthful and the user still sees the answer. 204
+// still swaps nothing; the error status still fires htmx:responseError
+// for apps that listen.
+const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
+
 func docTitle(p DocProps) string {
 	switch {
 	case p.Title == "":
@@ -83,7 +92,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(docLang(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 52, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 61, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -96,7 +105,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(docTitle(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 56, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 65, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -109,13 +118,26 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("/static/css/output.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 57, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 66, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\t// light is the product default; dark only applies via stored preference\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'light');\n\t\t\t\t})();\n\t\t\t</script><!-- htmx loads blocking so it can fire htmx:afterSwap before any swap\n\t\t\t     occurs; alpine is deferred since it only needs to be ready before\n\t\t\t     user interaction. --><script src=\"/static/js/htmx.min.js\"></script><script defer src=\"/static/js/alpine.min.js\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\t// light is the product default; dark only applies via stored preference\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'light');\n\t\t\t\t})();\n\t\t\t</script><!-- htmx loads blocking so it can fire htmx:afterSwap before any swap\n\t\t\t     occurs; alpine is deferred since it only needs to be ready before\n\t\t\t     user interaction. --><meta name=\"htmx-config\" content=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(htmxConfig)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 79, Col: 48}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><script src=\"/static/js/htmx.min.js\"></script><script defer src=\"/static/js/alpine.min.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -125,7 +147,7 @@ func Document(p DocProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</head><body class=\"wf-theme antialiased\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body class=\"wf-theme antialiased\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,7 +155,7 @@ func Document(p DocProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div id=\"toast-container\" class=\"wf-toast-container\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"toast-container\" class=\"wf-toast-container\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -145,7 +167,7 @@ func Document(p DocProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script>\n\t\t\t\tdocument.addEventListener('htmx:afterSwap', function(e) {\n\t\t\t\t\tif (window.Alpine) Alpine.initTree(e.detail.elt);\n\t\t\t\t});\n\t\t\t</script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<script>\n\t\t\t\tdocument.addEventListener('htmx:afterSwap', function(e) {\n\t\t\t\t\tif (window.Alpine) Alpine.initTree(e.detail.elt);\n\t\t\t\t});\n\t\t\t</script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

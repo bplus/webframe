@@ -237,15 +237,15 @@ func HandleToast(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleFlash answers the showcase's flash form (POST /api/flash): it
-// stores a one-shot warning in the flash cookie and redirects (303) back to
-// the Flash section. The shell renders the banner once, in its #wf-flash
-// slot above the page, on that next page; a reload shows nothing.
+// stores a one-shot warning in the flash cookie and redirects (303) to the
+// top of the showcase, where the shell renders the banner once in its
+// #wf-flash slot above the page title; a reload shows nothing.
 //
 // @boundary HTTP
 // @side-effects sets the wf_flash cookie; writes a redirect
 func HandleFlash(w http.ResponseWriter, r *http.Request) {
 	flash.Warning(w, r, "This page was reached through a redirect", "The warning rode along in a one-shot cookie; reload and it is gone.")
-	http.Redirect(w, r, "/#flash", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // slowDelay is how long HandleSlow waits before answering: long enough to

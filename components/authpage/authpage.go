@@ -338,12 +338,16 @@ func provider(a action.Action) action.Action {
 // "Sign in", "Signed out" or "Not allowed" (with the " — AppName" suffix
 // when there is an app name).
 //
-// Respond writes no status: the first body write sends 200. The
-// re-render after a failed sign-in POST (Values from the form, Errors or
-// Error set) is therefore 200, for the reason formpage gives: htmx only
-// swaps a 2xx. A successful sign in redirects instead (303 See Other)
-// and never renders this page.
+// Respond answers 200, or 422 Unprocessable Entity for the re-render after
+// a refused sign-in POST (Error or Errors set); appshell.Document
+// configures htmx to swap error responses, so an htmx submit still shows
+// it. A successful sign in redirects instead (303 See Other) and never
+// renders this page.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
+	if p.Error != "" || len(p.Errors) > 0 {
+		appshell.SetHeaders(w)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+	}
 	if app, ok := appshell.FromContext(r.Context()); ok {
 		if p.AppName == "" {
 			p.AppName = app.Name

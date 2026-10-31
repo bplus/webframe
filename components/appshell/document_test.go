@@ -97,3 +97,21 @@ func TestDocument_ConfirmScriptFirstInBundleAfterHTMX(t *testing.T) {
 		t.Errorf("want htmx < confirm.js < component scripts; got %d %d %d", htmx, confirm, tabs)
 	}
 }
+
+// TestDocument_HTMXConfigSwapsErrors: the htmx-config meta precedes the
+// htmx script and tells htmx to swap 4xx/5xx responses, so a 422 form
+// re-render, a 409 carrying only a toast and a 404 error page all reach
+// the page.
+func TestDocument_HTMXConfigSwapsErrors(t *testing.T) {
+	got := renderDoc(t, DocProps{Title: "T", AppName: "A"}, nil)
+	meta := strings.Index(got, `<meta name="htmx-config"`)
+	script := strings.Index(got, "htmx.min.js")
+	if meta < 0 || script < 0 || meta > script {
+		t.Fatalf("htmx-config meta missing or after the htmx script (meta=%d script=%d)", meta, script)
+	}
+	for _, want := range []string{`[45]..`, `swap`, `error`, `204`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("htmx-config lacks %q:\n%s", want, got[meta:meta+300])
+		}
+	}
+}

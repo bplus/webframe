@@ -17,6 +17,15 @@ type DocProps struct {
 	Head templ.Component
 }
 
+// htmxConfig makes htmx swap 4xx and 5xx responses like 2xx ones (htmx 2
+// leaves the target untouched on an error status by default). The server
+// decides what an error looks like: a 422 form re-render with the errors
+// under the fields, a 409 whose only body is a toast, a 404 error page, so
+// the status code can be truthful and the user still sees the answer. 204
+// still swaps nothing; the error status still fires htmx:responseError
+// for apps that listen.
+const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
+
 func docTitle(p DocProps) string {
 	switch {
 	case p.Title == "":
@@ -67,6 +76,7 @@ templ Document(p DocProps) {
 			<!-- htmx loads blocking so it can fire htmx:afterSwap before any swap
 			     occurs; alpine is deferred since it only needs to be ready before
 			     user interaction. -->
+			<meta name="htmx-config" content={ htmxConfig }/>
 			<script src="/static/js/htmx.min.js"></script>
 			<script defer src="/static/js/alpine.min.js"></script>
 			if p.Head != nil {

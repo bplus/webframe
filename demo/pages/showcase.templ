@@ -2023,7 +2023,7 @@ templ toastSection() {
 }
 
 templ flashSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "flash", Title: "Flash", Description: "Submit the form: the server stores a one-shot warning in a cookie and redirects back here, and the banner appears once in the slot above the page title (scroll to the top to see it); reload and it is gone."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "flash", Title: "Flash", Description: "Submit the form: the server stores a one-shot warning in a cookie and redirects to the top of this page, where the banner appears once in the slot above the page title; reload and it is gone."}) {
 		@form.Form(form.Props{ID: "flash-form", Action: "/api/flash"}) {
 			@button.Button(button.Props{Type: button.TypeSubmit, Variant: button.VariantOutline}) {
 				Set a flash and redirect
