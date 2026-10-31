@@ -1,0 +1,49 @@
+package settingspage
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/formpage"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+)
+
+// Page renders the whole settings page: the page header, then Body.
+templ Page(p Props) {
+	@pageheader.PageHeader(p.Header)
+	@Body(p)
+}
+
+// Body renders exactly the <form> element (id p.ID, default "settings"),
+// so it is the swap region for an HxPost submit: the error banner (only
+// when Errors is non-empty), one layout.Section (h2) per Group holding a
+// formfield.Fieldset of the resolved fields, then the save bar as the
+// form's last child. The banner lives inside the form so an error
+// re-render that swaps the form brings its own banner and takes the old
+// one away with it.
+templ Body(p Props) {
+	@form.Form(p.formProps()) {
+		@formpage.ErrorBanner(p.allFields(), p.Errors)
+		for _, g := range p.Groups {
+			@layout.Section(layout.SectionProps{ID: g.ID, Title: g.Title, Description: g.Description, Level: 2}) {
+				@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(g)})
+			}
+		}
+		@saveBar(p)
+	}
+}
+
+// saveBar is the sticky bottom bar: Cancel (ghost, if any) then the submit
+// button, right-aligned on one row. It is always rendered.
+templ saveBar(p Props) {
+	<div class={ saveBarClass }>
+		@layout.Inline(layout.InlineProps{Justify: layout.JustifyEnd, Gap: layout.GapS}) {
+			{{ c, ok := p.cancel() }}
+			if ok {
+				@action.Button(c)
+			}
+			@action.Button(p.submit())
+		}
+	</div>
+}
