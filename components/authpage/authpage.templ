@@ -1,0 +1,125 @@
+package authpage
+
+import (
+	"github.com/bplus/webframe/components/banner"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/card"
+	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/utils"
+)
+
+// AuthPage renders the page: a full-height centered column holding one
+// card (max-w-sm, w-full) with the optional Logo, the app name as the
+// <h1>, the error banner (Error or field Errors), then the mode's
+// content, then the Footer. No nav, no shell: it is the whole body.
+//
+// Phone width (390px): the column keeps p-4 (16px) on each side and the
+// card fills the rest; every button is full width; Providers stack one
+// per row.
+templ AuthPage(p Props) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("wf-authpage min-h-dvh flex items-center justify-center p-4", p.Class) }
+		{ p.Attributes... }
+	>
+		@card.Card(card.Props{Class: "max-w-sm w-full"}) {
+			@card.Content(card.ContentProps{Class: "flex flex-col gap-6"}) {
+				if p.Logo != nil {
+					<div class="flex justify-center">
+						@p.Logo
+					</div>
+				}
+				<h1 class="text-xl font-semibold text-center">{ p.heading() }</h1>
+				if p.hasBanner() {
+					@banner.Banner(banner.Props{
+						Variant: banner.VariantError,
+						Title:   p.bannerTitle(),
+						Details: errorDetails(p.errorItems()),
+					})
+				}
+				switch p.mode() {
+					case ModeSignedOut, ModeForbidden:
+						@messagePage(p)
+					default:
+						@signIn(p)
+				}
+				if p.Footer != nil {
+					<div class="text-center text-sm text-muted-foreground">
+						@p.Footer
+					</div>
+				}
+			}
+		}
+	</div>
+}
+
+// signIn is the sign-in content: the optional Message, the <form> of
+// fields with a full-width submit button, then the Providers under an
+// "or" divider.
+templ signIn(p Props) {
+	if p.Message != "" {
+		<p class="text-center text-sm text-muted-foreground">{ p.Message }</p>
+	}
+	@form.Form(p.formProps()) {
+		for _, f := range p.fields() {
+			@formfield.FormField(f)
+		}
+		@button.Button(p.submitButtonProps()) {
+			{{ a := p.submit() }}
+			if a.Icon != nil {
+				@a.Icon
+			}
+			<span>{ a.Label }</span>
+		}
+	}
+	if len(p.Providers) > 0 {
+		@layout.Divider(layout.DividerProps{Label: "or"})
+		<div class="flex flex-col gap-2">
+			for _, a := range p.Providers {
+				@button.Button(providerProps(a)) {
+					if a.Icon != nil {
+						@a.Icon
+					}
+					<span>{ a.Label }</span>
+				}
+			}
+		</div>
+	}
+}
+
+// messagePage is the signed-out and forbidden content: the message, then
+// Submit as a full-width link or button.
+templ messagePage(p Props) {
+	<p class="text-center text-sm text-muted-foreground">{ p.message() }</p>
+	{{ a := p.submit() }}
+	@button.Button(p.actionProps()) {
+		if a.Icon != nil {
+			@a.Icon
+		}
+		<span>{ a.Label }</span>
+	}
+}
+
+// errorDetails is the banner's list of field errors: "Label: message"
+// linking to the field's control, or the bare message for an error naming
+// no field. Renders nothing for no items (Error alone keeps a one-line
+// banner).
+templ errorDetails(items []errorItem) {
+	if len(items) > 0 {
+		<ul class="list-disc space-y-1 pl-5">
+			for _, it := range items {
+				<li>
+					if it.Href != "" {
+						<a href={ it.Href } class="underline underline-offset-2 hover:text-foreground">{ it.Label }: { it.Message }</a>
+					} else {
+						{ it.Message }
+					}
+				</li>
+			}
+		</ul>
+	}
+}
