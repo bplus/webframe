@@ -1,5 +1,5 @@
 // Package streampage is the page type for a live feed: a page header, an
-// optional intro line, an optional filter bar, one trafficstream panel and
+// optional intro line, one trafficstream panel and
 // an optional right rail, plus the trafficstream script, so an operator
 // view of an event stream is one Props value and one Respond call. App
 // code writes no markup of its own.
@@ -22,7 +22,7 @@
 // load does not double-connect a panel.
 //
 // Phone width (390px, 358px of content inside the shell's gutters): the
-// header, intro, filter bar, stream and aside stack in one column (the
+// header, intro, stream and aside stack in one column (the
 // aside under the stream: layout.TwoColumn's md:flex-row). trafficstream
 // needs no change for that width, measured against its markup: its
 // title/actions row is flex-col below md with the badge and the two
