@@ -559,7 +559,7 @@ func Panel(props ...PanelProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 = []any{utils.TwMerge(
-			"fixed inset-0 z-[55] bg-black/50",
+			"fixed inset-0 z-[55] bg-foreground/40",
 			"transition-opacity duration-300",
 			"data-[tui-slideover-open=false]:opacity-0",
 			"data-[tui-slideover-open=true]:opacity-100",

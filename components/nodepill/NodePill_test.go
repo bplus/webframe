@@ -15,15 +15,15 @@ func TestDotColor_AllTypes(t *testing.T) {
 		nodeType string
 		want     string
 	}{
-		{"concept", "bg-blue-500"},
-		{"tool", "bg-green-500"},
-		{"decision", "bg-amber-500"},
-		{"error", "bg-red-500"},
-		{"service", "bg-purple-500"},
-		{"person", "bg-cyan-500"},
-		{"incident", "bg-orange-500"},
-		{"code_path", "bg-emerald-500"},
-		{"reference", "bg-slate-500"},
+		{"concept", "bg-info"},
+		{"tool", "bg-success"},
+		{"decision", "bg-warning"},
+		{"error", "bg-destructive"},
+		{"service", "bg-primary"},
+		{"person", "bg-info/60"},
+		{"incident", "bg-destructive/60"},
+		{"code_path", "bg-success/60"},
+		{"reference", "bg-muted-foreground"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.nodeType, func(t *testing.T) {
