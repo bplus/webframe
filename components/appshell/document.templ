@@ -32,8 +32,10 @@ func docLang(p DocProps) string {
 // (charset, viewport, title, stylesheet, flash-free theme init reading
 // localStorage "wf-theme" and defaulting to light, blocking htmx, deferred
 // alpine, optional p.Head), then <body class="wf-theme antialiased"> holding
-// the children, the #toast-container, the Scripts bundle, and an inline
-// htmx:afterSwap listener that calls Alpine.initTree on swapped-in content.
+// the children, the #toast-container, the empty #wf-confirm host (the
+// page's one confirm dialog mounts there), the Scripts bundle, and an
+// inline htmx:afterSwap listener that calls Alpine.initTree on swapped-in
+// content.
 //
 // @side-effects inline scripts set data-theme on <html> and re-init Alpine
 // after HTMX swaps
@@ -67,6 +69,7 @@ templ Document(p DocProps) {
 		<body class="wf-theme antialiased">
 			{ children... }
 			<div id="toast-container" class="wf-toast-container"></div>
+			<div id="wf-confirm"></div>
 			@Scripts()
 			<script>
 				document.addEventListener('htmx:afterSwap', function(e) {

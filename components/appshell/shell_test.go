@@ -220,3 +220,29 @@ func TestShell_EmptyEveryDefaults30s(t *testing.T) {
 		t.Errorf("explicit Every lost in:\n%s", got)
 	}
 }
+
+func TestShell_FlashRendersInsideSlot(t *testing.T) {
+	got := renderShell(t, Props{AppName: "A", Flash: templ.Raw(`<div class="wf-banner">saved?</div>`)}, templ.Raw("<p>body-here</p>"))
+	slot := strings.Index(got, `<div id="wf-flash">`)
+	banner := strings.Index(got, "wf-banner")
+	child := strings.Index(got, "<p>body-here</p>")
+	if slot < 0 || banner < 0 || child < 0 {
+		t.Fatalf("missing slot/banner/child in:\n%s", got)
+	}
+	close := slot + strings.Index(got[slot:], "</div>")
+	if !(slot < banner && banner < close && close < child) {
+		t.Errorf("want wf-flash < banner < </div> < child; got %d %d %d %d", slot, banner, close, child)
+	}
+	if strings.Count(got, `id="wf-flash"`) != 1 {
+		t.Errorf("want exactly one #wf-flash in:\n%s", got)
+	}
+}
+
+func TestShell_NilFlashKeepsEmptySlot(t *testing.T) {
+	for _, layout := range []Layout{LayoutTopbar, LayoutSidebar} {
+		got := renderShell(t, Props{AppName: "A", Layout: layout}, nil)
+		if !strings.Contains(got, `<div id="wf-flash"></div>`) {
+			t.Errorf("layout %v: missing empty #wf-flash in:\n%s", layout, got)
+		}
+	}
+}

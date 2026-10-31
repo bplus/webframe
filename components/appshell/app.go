@@ -29,6 +29,16 @@ type App struct {
 	Right templ.Component
 	// User returns the signed-in user for r; nil means no user menu.
 	User func(*http.Request) *User
+	// Flash, when non-nil, supplies the one-shot message for the Shell's
+	// #wf-flash slot. Render and RenderParts call it exactly once per
+	// response that includes the Shell (a non-htmx request, a boosted link,
+	// a history restore) and pass the result into Props.Flash; they never
+	// call it for a body-only or part-only htmx response, and RenderBare
+	// never calls it. It runs before the first byte of the body is written,
+	// so it may set or clear cookies on w. A nil result renders the empty
+	// slot. appshell holds no cookie logic itself: an app wires
+	// App.Flash = flash.Take.
+	Flash func(w http.ResponseWriter, r *http.Request) templ.Component
 }
 
 type ctxKey int
@@ -118,8 +128,52 @@ func (a *App) ShellProps(r *http.Request) Props {
 // full Document wrapping Shell wrapping body. It always sets Vary on the
 // htmx request headers. It returns the render error
 // rather than writing a 500 itself.
+//
+// An empty title makes the document title the app name alone (an error
+// page uses this); otherwise it is "{title} — {App.Name}".
+//
+// Render never calls WriteHeader itself: the first body write sends 200
+// unless the handler wrote a status first, in which case that status
+// stands. Content-Type and Vary are set before anything is written, so a
+// handler that writes a status before calling Render should expect them
+// to be dropped by net/http (headers are frozen at WriteHeader).
 func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
 	return a.RenderParts(w, r, title, body, nil)
+}
+
+// RenderBare writes a page with no Shell: the bare body when
+// WantsFragment(r), otherwise the full Document (title suffix, stylesheet,
+// theme init, script bundle, App.Head) holding body as its only child. No
+// nav, no #wf-flash slot, and App.Flash is not called. Sign-in and signed-
+// out pages use it. Content-Type and Vary are set exactly as in Render.
+func (a *App) RenderBare(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
+	return renderDocument(w, r, DocProps{Title: title, AppName: a.Name, Head: a.Head}, body)
+}
+
+// RenderBare is (*App).RenderBare with no App: name is the app name for
+// the title suffix and the Document uses its default theme init and no
+// extra head content. A handler that runs before App.Middleware (a 500
+// from an outer middleware, a sign-in page outside the shell) can answer
+// with it. Content-Type and Vary are set exactly as in (*App).Render.
+func RenderBare(w http.ResponseWriter, r *http.Request, name, title string, body templ.Component) error {
+	return renderDocument(w, r, DocProps{Title: title, AppName: name}, body)
+}
+
+// setHeaders sets the response headers every render shares.
+func setHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Add("Vary", varyHeaders)
+}
+
+// renderDocument writes body alone when WantsFragment(r), otherwise the
+// Document described by p holding body as its only child.
+func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body templ.Component) error {
+	setHeaders(w)
+	ctx := r.Context()
+	if WantsFragment(r) {
+		return body.Render(ctx, w)
+	}
+	return Document(p).Render(templ.WithChildren(ctx, body), w)
 }
 
 // RenderParts is Render with named swap regions. parts maps a swap target's
@@ -135,9 +189,11 @@ func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body 
 //
 // Content-Type and Vary are set exactly as in Render. An empty HX-Target
 // never matches, even when parts has an "" key.
+//
+// Only the third shape includes the Shell, so only it calls App.Flash
+// (once, before any output), and the result fills the #wf-flash slot.
 func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, full templ.Component, parts map[string]templ.Component) error {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Add("Vary", varyHeaders)
+	setHeaders(w)
 	ctx := r.Context()
 	if WantsFragment(r) {
 		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
@@ -147,8 +203,13 @@ func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, 
 		}
 		return full.Render(ctx, w)
 	}
+	props := a.ShellProps(r)
+	if a.Flash != nil {
+		// Before the first write: Flash may set or clear a cookie.
+		props.Flash = a.Flash(w, r)
+	}
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return Shell(a.ShellProps(r)).Render(templ.WithChildren(ctx, full), w)
+		return Shell(props).Render(templ.WithChildren(ctx, full), w)
 	})
 	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head})
 	return doc.Render(templ.WithChildren(ctx, page), w)
