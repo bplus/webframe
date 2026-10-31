@@ -62,6 +62,17 @@ type Cell struct {
 	Component templ.Component
 }
 
+// BadgeCell is a Cell whose Text is shown inside a status badge: kind goes
+// through badge.StatusPtr to pick the variant (published → success, failed →
+// destructive, and so on; unknown words → outline) and text is what the
+// badge says. Pass badge.StatusLabel(kind) as text for the display form of
+// the status word itself.
+//
+// @pure
+func BadgeCell(text, kind string) Cell {
+	return Cell{Text: text, Badge: badge.StatusPtr(kind)}
+}
+
 // Row is one table row. ID is the selection value and the <tr> id suffix
 // (`<tableID>-row-<ID>`, or `row-<ID>` when the table has no ID). Href
 // links the first cell to it and gives the row a pointer cursor. Actions

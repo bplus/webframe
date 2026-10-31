@@ -20,6 +20,17 @@ type Item struct {
 	Muted        bool            // value in muted-foreground (e.g. "—" for empty)
 }
 
+// BadgeItem is an Item whose Value is shown inside a status badge: kind
+// goes through badge.StatusPtr to pick the variant (published → success,
+// failed → destructive, and so on; unknown words → outline) and text is
+// what the badge says. Pass badge.StatusLabel(kind) as text for the display
+// form of the status word itself.
+//
+// @pure
+func BadgeItem(label, text, kind string) Item {
+	return Item{Label: label, Value: text, Badge: badge.StatusPtr(kind)}
+}
+
 // Props configures DescriptionList. Class is merged via utils.TwMerge;
 // Attributes spread onto the root <dl>.
 type Props struct {

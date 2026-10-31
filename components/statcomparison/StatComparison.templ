@@ -35,14 +35,44 @@ type Props struct {
 	Direction  Direction // up, down, flat
 }
 
-func (p Props) directionColor() string {
-	switch p.Direction {
+// ToneClass is the theme text-color class for a direction: up →
+// text-success, down → text-destructive, flat and the zero value →
+// text-muted-foreground. It is the one place the direction→color mapping
+// lives; stattile uses it so a tile's delta reads identically to a
+// StatComparison's.
+//
+// @pure
+func ToneClass(dir Direction) string {
+	switch dir {
 	case DirectionUp:
 		return "text-success"
 	case DirectionDown:
 		return "text-destructive"
 	default:
 		return "text-muted-foreground"
+	}
+}
+
+// Arrow renders the 16x16 trend icon for a direction as an inline SVG
+// stroked in currentColor (so it takes the color of the ToneClass on its
+// parent): an up arrow, a down arrow, or a flat line for DirectionFlat and
+// the zero value. It is decorative (aria-hidden); the delta text beside it
+// carries the meaning. Shared with stattile.
+//
+// @pure
+templ Arrow(dir Direction) {
+	if dir == DirectionUp {
+		<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+			<path d="M8 3v10M8 3l4 4M8 3L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+		</svg>
+	} else if dir == DirectionDown {
+		<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+			<path d="M8 13V3M8 13l4-4M8 13L4 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+		</svg>
+	} else {
+		<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+			<path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+		</svg>
 	}
 }
 
@@ -56,10 +86,10 @@ func (p Props) directionColor() string {
 //
 // @pure
 // @ai-context Colors are fixed to "up = success, down = destructive" via
-// directionColor(); there is no way to flip the mapping for metrics
-// where a decrease is good (e.g. error counts) other than choosing a
-// different Direction than the arithmetic one. Arrow SVGs are inlined,
-// hard-coded 16x16 stroked paths using currentColor.
+// ToneClass; there is no way to flip the mapping for metrics where a
+// decrease is good (e.g. error counts) other than choosing a different
+// Direction than the arithmetic one. The arrow comes from Arrow, which
+// stattile shares.
 templ StatComparison(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -82,20 +112,8 @@ templ StatComparison(props ...Props) {
 			}
 		</div>
 		if p.Delta != "" {
-			<div class={ utils.TwMerge("flex items-center gap-1 text-sm font-medium", p.directionColor()) }>
-				if p.Direction == DirectionUp {
-					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M8 3v10M8 3l4 4M8 3L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-					</svg>
-				} else if p.Direction == DirectionDown {
-					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M8 13V3M8 13l4-4M8 13L4 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-					</svg>
-				} else {
-					<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-					</svg>
-				}
+			<div class={ utils.TwMerge("flex items-center gap-1 text-sm font-medium", ToneClass(p.Direction)) }>
+				@Arrow(p.Direction)
 				<span>{ p.Delta }</span>
 			</div>
 		}

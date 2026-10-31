@@ -150,3 +150,18 @@ func TestStatTile_ZeroValue(t *testing.T) {
 		t.Errorf("zero-value tile should still render a <div root: %s", out)
 	}
 }
+
+// The tile's delta is statcomparison's shared Arrow and ToneClass: for every
+// direction the tile renders the exact svg and class statcomparison does.
+func TestStatTile_DeltaSharesStatComparison(t *testing.T) {
+	for _, dir := range []statcomparison.Direction{statcomparison.DirectionUp, statcomparison.DirectionDown, statcomparison.DirectionFlat, ""} {
+		tile := render(t, StatTile(Props{Value: "1", Delta: &Delta{Value: "+1", Direction: dir}}))
+		arrow := render(t, statcomparison.Arrow(dir))
+		if !strings.Contains(tile, arrow) {
+			t.Errorf("dir %q: tile does not contain statcomparison.Arrow output\n tile: %s\n arrow: %s", dir, tile, arrow)
+		}
+		if !strings.Contains(tile, statcomparison.ToneClass(dir)) {
+			t.Errorf("dir %q: tile missing %q: %s", dir, statcomparison.ToneClass(dir), tile)
+		}
+	}
+}
