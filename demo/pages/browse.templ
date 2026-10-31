@@ -1,0 +1,61 @@
+package pages
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/descriptionlist"
+	"github.com/bplus/webframe/components/layout"
+)
+
+// BrowseLink is one entry of the browser's list: the text, the attributes
+// splitpane.LinkAttrs returned for its href, and whether it is the item
+// shown in the detail region (marked aria-current).
+type BrowseLink struct {
+	Label   string
+	Attrs   templ.Attributes
+	Current bool
+}
+
+// attr returns the string value of one of the link's attributes, or "".
+// App code may not spread an attribute map onto an element, so the list
+// writes each attribute splitpane.LinkAttrs produced by name.
+//
+// @pure
+func attr(a templ.Attributes, name string) string {
+	s, _ := a[name].(string)
+	return s
+}
+
+// BrowseList is the browser's list column: one plain link per item, in
+// store order. Each link carries the href and the hx-get, hx-target,
+// hx-push-url and hx-trigger values from splitpane.LinkAttrs, so from md up
+// a click swaps only the detail region and pushes the URL, and below md the
+// anchor navigates by itself.
+templ BrowseList(links []BrowseLink) {
+	<ul id="browse-list">
+		for _, l := range links {
+			<li>
+				<a
+					href={ templ.URL(attr(l.Attrs, "href")) }
+					hx-get={ attr(l.Attrs, "hx-get") }
+					hx-target={ attr(l.Attrs, "hx-target") }
+					hx-push-url={ attr(l.Attrs, "hx-push-url") }
+					hx-trigger={ attr(l.Attrs, "hx-trigger") }
+					if l.Current {
+						aria-current="page"
+					}
+				>
+					{ l.Label }
+				</a>
+			</li>
+		}
+	</ul>
+}
+
+// BrowseDetail is the detail region's content for one item: a section
+// titled with the item's name, an action opening its full detail page, and
+// the description list of its facts.
+templ BrowseDetail(title, itemHref string, items []descriptionlist.Item) {
+	@layout.Section(layout.SectionProps{Level: 2, Title: title, Actions: []action.Action{{Label: "Open item", Href: itemHref}}}) {
+		@descriptionlist.DescriptionList(descriptionlist.Props{Items: items})
+	}
+}
