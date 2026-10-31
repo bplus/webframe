@@ -141,9 +141,10 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 				{Label: "Edit", Href: "/items/" + it.ID + "/edit"},
 				{
 					Label:    "Delete",
+					Variant:  action.VariantDestructive,
 					HxDelete: "/items/" + it.ID,
 					HxTarget: itemsResultsSel,
-					Confirm:  &action.Confirm{Message: "Delete this item?"},
+					Confirm:  &action.Confirm{Title: "Delete " + it.Name + "?", Message: "This cannot be undone.", ConfirmLabel: "Delete"},
 				},
 			},
 		})
@@ -248,7 +249,7 @@ func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 // refuseDelete answers a delete of the protected item: the action failed
 // and nothing on the page changed, so the user is told through a toast.
 // Over htmx the response is a 409 whose only body is the error toast
-// (toast.Send appends it to #toast-container out of band). A plain request
+// (toast.Respond: HX-Reswap none, so the list stays as it is). A plain request
 // has no page for a toast to land on, so it sets an error flash and sends
 // the browser back to the item (303); the shell shows the flash once there.
 func refuseDelete(w http.ResponseWriter, r *http.Request, it Item) {
@@ -258,9 +259,7 @@ func refuseDelete(w http.ResponseWriter, r *http.Request, it Item) {
 		body = "The demo keeps this item so the refused delete can be seen."
 	}
 	if appshell.IsHX(r) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusConflict)
-		if err := toast.Send(w, r, toast.Error(title, body)); err != nil {
+		if err := toast.Respond(w, r, http.StatusConflict, toast.Error(title, body)); err != nil {
 			log.Printf("demo: render refused delete toast: %v", err)
 		}
 		return
@@ -343,7 +342,7 @@ func itemDetailProps(it Item) detailpage.Props {
 				Label:    "Delete",
 				Variant:  action.VariantDestructive,
 				HxDelete: "/items/" + it.ID,
-				Confirm:  &action.Confirm{Message: "Delete this item?"},
+				Confirm:  &action.Confirm{Title: "Delete " + it.Name + "?", Message: "This cannot be undone.", ConfirmLabel: "Delete"},
 			}},
 		},
 		Summary: []descriptionlist.Item{

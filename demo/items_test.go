@@ -109,7 +109,7 @@ func TestItems_ListSortsAndFilters(t *testing.T) {
 		"All types", "Search items", "Published", "Draft",
 		"Build mod", "+ Create item", "Publish selected",
 		"1–3 of 3 items", `id="items-results"`,
-		`hx-delete="/items/2"`, `hx-confirm="Delete this item?"`, `href="/items/2/edit"`,
+		`hx-delete="/items/2"`, `hx-confirm="This cannot be undone."`, `data-wf-confirm-destructive="true"`, `href="/items/2/edit"`,
 	)
 	// The default list is newest first with every row.
 	body = do(h, "GET", "/items", nil, nil).Body.String()
@@ -353,7 +353,7 @@ func TestItems_DetailAndHistory(t *testing.T) {
 	wantAll(t, body,
 		"<!doctype", "wf-shell--sidebar", "Blade of the Fallen Star — Webframe</title>",
 		"← Items", `href="/items"`, "Published",
-		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="Delete this item?"`,
+		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="This cannot be undone."`, `data-wf-confirm-destructive="true"`,
 		"<dt", "Type", "Weapon", "Starfall Pack", "Updated", "2d ago", `>1<`,
 		"Notes", "Seeded from the 2026-10-21 dashboard sketch.",
 		"History", `hx-get="/items/1/history"`, `hx-trigger="click once"`, `hx-target="#history-panel"`,

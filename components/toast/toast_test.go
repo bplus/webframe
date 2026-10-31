@@ -95,13 +95,22 @@ func TestToast_InlineHasNoOOB(t *testing.T) {
 	mustNotContain(t, out, "hx-swap-oob")
 }
 
-func TestOOB_AddsAttributeWithoutMutatingCaller(t *testing.T) {
+func TestOOB_WrapsTheToast(t *testing.T) {
 	p := Info("A", "B")
 	p.Attributes = templ.Attributes{"data-x": "1"}
 	out := render(t, OOB(p))
-	mustContain(t, out, `hx-swap-oob="beforeend:#toast-container"`, `data-x="1"`)
+	// The oob attribute sits on a wrapper whose only child is the toast
+	// root (htmx inserts an oob element's content for beforeend), so the
+	// root keeps its role, Alpine state and dismiss button.
+	if !strings.HasPrefix(out, `<div hx-swap-oob="beforeend:#toast-container"><div `) {
+		t.Errorf("OOB does not start with the wrapper then the toast root:\n%s", out)
+	}
+	mustContain(t, out, `role="status"`, `x-data`, `data-x="1"`)
 	if _, ok := p.Attributes["hx-swap-oob"]; ok {
 		t.Error("OOB mutated the caller's Attributes map")
+	}
+	if out := render(t, OOB(Props{})); out != "" {
+		t.Errorf("empty OOB rendered %q", out)
 	}
 }
 
@@ -141,4 +150,33 @@ func TestToast_EscapesTitleAndBody(t *testing.T) {
 	out := render(t, Toast(Info(`<script>alert("t")</script>`, `<b>bold</b> & "q"`)))
 	mustNotContain(t, out, "<script>", "<b>")
 	mustContain(t, out, "&lt;script&gt;", "&lt;b&gt;bold&lt;/b&gt;", "&amp;")
+}
+
+func TestRespond_ToastOnlyResponse(t *testing.T) {
+	req := httptest.NewRequest("DELETE", "/items/1", nil)
+	req.Header.Set("HX-Request", "true")
+	rec := httptest.NewRecorder()
+	if err := Respond(rec, req, http.StatusConflict, Error("Could not delete", "Still in use")); err != nil {
+		t.Fatal(err)
+	}
+	if rec.Code != http.StatusConflict || rec.Header().Get("HX-Reswap") != "none" || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") {
+		t.Errorf("status %d, HX-Reswap %q, Content-Type %q", rec.Code, rec.Header().Get("HX-Reswap"), rec.Header().Get("Content-Type"))
+	}
+	if body := rec.Body.String(); !strings.Contains(body, `hx-swap-oob="beforeend:#toast-container"`) || !strings.Contains(body, "Could not delete") {
+		t.Errorf("body lacks the oob toast:\n%s", body)
+	}
+	// Not htmx: plain text with the status, no HTML.
+	rec = httptest.NewRecorder()
+	if err := Respond(rec, httptest.NewRequest("DELETE", "/items/1", nil), http.StatusConflict, Error("Could not delete", "Still in use")); err != nil {
+		t.Fatal(err)
+	}
+	if rec.Code != http.StatusConflict || strings.Contains(rec.Body.String(), "<") || !strings.Contains(rec.Body.String(), "Still in use") {
+		t.Errorf("plain response: %d %q", rec.Code, rec.Body.String())
+	}
+	// Zero status is 200.
+	rec = httptest.NewRecorder()
+	_ = Respond(rec, req, 0, Info("Queued", ""))
+	if rec.Code != http.StatusOK {
+		t.Errorf("zero status = %d", rec.Code)
+	}
 }

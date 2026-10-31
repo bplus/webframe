@@ -403,11 +403,15 @@ func Toast(p Props) templ.Component {
 	})
 }
 
-// OOB renders Toast with hx-swap-oob="beforeend:#toast-container" on the
-// root, so htmx appends it to the container the Document rendered instead
-// of swapping it into the request's target. Send writes it; use OOB
-// directly when the toast is one of several components in a response
-// body.
+// OOB renders Toast inside a wrapper carrying
+// hx-swap-oob="beforeend:#toast-container", so htmx appends it to the
+// container the Document rendered instead of swapping it into the
+// request's target. The wrapper is needed: for an out-of-band swap style
+// other than outerHTML htmx inserts the element's content, not the element
+// (measured 2026-10-31: with the attribute on the toast root only the
+// inner block arrived, without role, auto-dismiss or the dismiss handler).
+// Send and Respond write it; use OOB directly when the toast is one of
+// several components in a response body. Renders nothing when Toast does.
 func OOB(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -429,9 +433,19 @@ func OOB(p Props) templ.Component {
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = Toast(withOOB(p)).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if p.Title != "" || p.Body != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div hx-swap-oob=\"beforeend:#toast-container\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = Toast(p).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})

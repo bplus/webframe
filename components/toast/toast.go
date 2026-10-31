@@ -1,31 +1,12 @@
 package toast
 
 import (
+	"io"
 	"net/http"
-
-	"github.com/a-h/templ"
+	"strings"
 
 	"github.com/bplus/webframe/components/appshell"
 )
-
-// oobAttr is the htmx attribute that routes a response fragment to the
-// Document's toast container instead of the request's target.
-const (
-	oobAttr  = "hx-swap-oob"
-	oobValue = "beforeend:#toast-container"
-)
-
-// withOOB returns a copy of p whose Attributes carry the out-of-band swap.
-// The caller's map is not modified.
-func withOOB(p Props) Props {
-	attrs := make(templ.Attributes, len(p.Attributes)+1)
-	for k, v := range p.Attributes {
-		attrs[k] = v
-	}
-	attrs[oobAttr] = oobValue
-	p.Attributes = attrs
-	return p
-}
 
 // Send appends the toast to the response for an htmx request: it renders
 // OOB(p) to w, which htmx swaps into #toast-container out of band. For a
@@ -44,11 +25,34 @@ func Send(w http.ResponseWriter, r *http.Request, p Props) error {
 	if !appshell.IsHX(r) {
 		return nil
 	}
-	// When the toast is the whole response (a handler with nothing to swap
-	// answers hx-swap="none" with just a toast) the body is HTML too.
 	if h := w.Header(); h.Get("Content-Type") == "" {
 		h.Set("Content-Type", "text/html; charset=utf-8")
 	}
+	return OOB(p).Render(r.Context(), w)
+}
+
+// Respond makes the toast the whole response: the action failed (or had
+// nothing to show) and nothing on the page changes except the toast. It
+// sets HX-Reswap: none, so htmx leaves the request's target untouched
+// (appshell.Document configures htmx to swap error statuses too, and
+// without this header a toast-only 409 would replace the target with an
+// empty body), sets Content-Type, writes status (0 → 200) and renders
+// OOB(p). For a request that is not from htmx it writes status and the
+// title and body as plain text; such a handler normally prefers a flash
+// and a redirect.
+func Respond(w http.ResponseWriter, r *http.Request, status int, p Props) error {
+	if status == 0 {
+		status = http.StatusOK
+	}
+	if !appshell.IsHX(r) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(status)
+		_, err := io.WriteString(w, strings.TrimSpace(p.Title+"\n"+p.Body)+"\n")
+		return err
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("HX-Reswap", "none")
+	w.WriteHeader(status)
 	return OOB(p).Render(r.Context(), w)
 }
 
