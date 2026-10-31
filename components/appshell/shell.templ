@@ -9,8 +9,8 @@ import (
 // Shell renders the app chrome that goes inside Document's <body>: the
 // navigation (a topbar, or a sidebar when Layout is LayoutSidebar), the
 // right-side controls (live dot, Right, user menu, theme toggle), and
-// <main class="wf-content"> holding a #wf-flash placeholder followed by
-// the children (the page body).
+// <main class="wf-content"> holding the #wf-flash slot (empty, or
+// Props.Flash) followed by the children (the page body).
 //
 // Topbar: home link, the first MaxVisible (default 4) items inline, the
 // rest in a <details class="wf-nav-more"> "More" disclosure. Under 768px
@@ -136,7 +136,11 @@ templ Shell(props ...Props) {
 
 templ content(p Props) {
 	<main class={ contentClass(p.Width) }>
-		<div id="wf-flash"></div>
+		<div id="wf-flash">
+			if p.Flash != nil {
+				@p.Flash
+			}
+		</div>
 		{ children... }
 	</main>
 }

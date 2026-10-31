@@ -97,6 +97,10 @@ type Props struct {
 	ThemeToggle bool
 	LiveDot     *LiveDot
 	Width       Width
+	// Flash, when non-nil, renders inside the #wf-flash slot at the top
+	// of <main>, above the page body; it is the only thing that slot ever
+	// holds. (*App).RenderParts fills it from App.Flash.
+	Flash templ.Component
 }
 
 // phoneVisible is how many topbar items stay inline under 768px; the

@@ -61,3 +61,35 @@ func TestDocument_RendersChildren(t *testing.T) {
 		t.Errorf("children not inside body:\n%s", got)
 	}
 }
+
+func TestDocument_ConfirmHostOnceAfterToastContainer(t *testing.T) {
+	got := renderDoc(t, DocProps{AppName: "A"}, templ.Raw("<p>hi</p>"))
+	const host = `<div id="wf-confirm"></div>`
+	if n := strings.Count(got, `id="wf-confirm"`); n != 1 {
+		t.Fatalf("want exactly one #wf-confirm, got %d in:\n%s", n, got)
+	}
+	if !strings.Contains(got, host) {
+		t.Errorf("confirm host is not empty in:\n%s", got)
+	}
+	toast := strings.Index(got, `id="toast-container"`)
+	confirm := strings.Index(got, host)
+	scripts := strings.Index(got, "confirm.js")
+	child := strings.Index(got, "<p>hi</p>")
+	end := strings.Index(got, "</body>")
+	if !(child < toast && toast < confirm && confirm < scripts && scripts < end) {
+		t.Errorf("want children < toast-container < wf-confirm < scripts < </body>; got %d %d %d %d %d", child, toast, confirm, scripts, end)
+	}
+}
+
+func TestDocument_ConfirmScriptFirstInBundleAfterHTMX(t *testing.T) {
+	got := renderDoc(t, DocProps{AppName: "A"}, nil)
+	htmx := strings.Index(got, "htmx.min.js")
+	confirm := strings.Index(got, "/static/js/confirm.js")
+	tabs := strings.Index(got, "tabs.min.js")
+	if htmx < 0 || confirm < 0 || tabs < 0 {
+		t.Fatalf("missing htmx/confirm/tabs script in:\n%s", got)
+	}
+	if !(htmx < confirm && confirm < tabs) {
+		t.Errorf("want htmx < confirm.js < component scripts; got %d %d %d", htmx, confirm, tabs)
+	}
+}
