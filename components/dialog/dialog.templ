@@ -239,7 +239,9 @@ templ Content(props ...ContentProps) {
 	<!-- Overlay -->
 	<div
 		class={ utils.TwMerge(
-				"fixed inset-0 z-50 bg-foreground/40",
+				// A scrim darkens in both themes (a shadow, not a surface
+				// color); bg-foreground/40 lightened the page in dark mode.
+				"fixed inset-0 z-50 bg-black/50",
 				"transition-opacity duration-300",
 				"data-[tui-dialog-open=false]:opacity-0",
 				"data-[tui-dialog-open=true]:opacity-100",
