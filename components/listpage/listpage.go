@@ -173,6 +173,10 @@ type Props struct {
 	BulkActions []action.Action
 	// Dense tightens the table's cell padding.
 	Dense bool
+	// StickyHeader and MaxHeight pass through to datatable: a pinned thead,
+	// and a capped scroll box for the rows (see datatable.Props).
+	StickyHeader bool
+	MaxHeight    datatable.Height
 	// Base is the URL every sort, page and filter request is built on
 	// ("/items"). "" uses the request path stored by appshell.Middleware.
 	Base string
@@ -475,6 +479,8 @@ func (p Props) tableProps(base string) datatable.Props {
 		SelectionName: "ids",
 		SelectionForm: p.bulkFormID(),
 		Dense:         p.Dense,
+		StickyHeader:  p.StickyHeader,
+		MaxHeight:     p.MaxHeight,
 		Empty:         p.empty(base),
 	}
 }

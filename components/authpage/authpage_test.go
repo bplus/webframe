@@ -329,3 +329,16 @@ func TestRespond_NoApp_HXBodyOnly(t *testing.T) {
 	mustContain(t, out, "wf-authpage")
 	mustNotContain(t, out, "<html", "<title>")
 }
+
+func TestSignIn_AutocompleteDefaults(t *testing.T) {
+	out := render(t, AuthPage(Props{Action: "/signin", Fields: []formfield.Field{
+		{Name: "email", Label: "Email", Type: formfield.TypeEmail},
+		{Name: "password", Label: "Password", Type: formfield.TypePassword},
+		{Name: "code", Label: "Code", Type: formfield.TypeText},
+		{Name: "pw2", Label: "New password", Type: formfield.TypePassword, Attributes: templ.Attributes{"autocomplete": "new-password"}},
+	}}))
+	mustContain(t, out, `autocomplete="username"`, `autocomplete="current-password"`, `autocomplete="new-password"`)
+	if n := strings.Count(out, `autocomplete="`); n != 3 {
+		t.Errorf("autocomplete appears %d times, want 3 (not on the text field):\n%s", n, out)
+	}
+}

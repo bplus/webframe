@@ -636,3 +636,12 @@ func TestPage_SortOnlyBar(t *testing.T) {
 	out = renderPage(t, p)
 	wantNone(t, out, "data-tui-filterbar", "<select")
 }
+
+func TestPage_StickyHeaderAndMaxHeightPassThrough(t *testing.T) {
+	p := itemProps(t, "")
+	p.StickyHeader, p.MaxHeight = true, datatable.HeightMd
+	out := renderPage(t, p)
+	wantAll(t, out, "sticky", "top-0", "max-h-[400px]")
+	p = itemProps(t, "")
+	wantNone(t, renderPage(t, p), "sticky", "max-h-[")
+}

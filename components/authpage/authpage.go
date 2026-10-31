@@ -165,7 +165,33 @@ func (p Props) resolve(f formfield.Field) formfield.Field {
 		f.Error = e
 	}
 	f.Width = formfield.WidthFull
+	// Browser and password-manager autofill key off autocomplete; a sign-in
+	// form that forgets it is painful on a phone. Default the two fields a
+	// sign-in has unless the app set its own (sign-up wants new-password).
+	if ac := defaultAutocomplete(f.Type); ac != "" {
+		if _, set := f.Attributes["autocomplete"]; !set {
+			attrs := make(templ.Attributes, len(f.Attributes)+1)
+			for k, v := range f.Attributes {
+				attrs[k] = v
+			}
+			attrs["autocomplete"] = ac
+			f.Attributes = attrs
+		}
+	}
 	return f
+}
+
+// defaultAutocomplete is the autocomplete token a sign-in form's field
+// gets by default: username for the email field, current-password for the
+// password field, nothing for the rest.
+func defaultAutocomplete(t formfield.Type) string {
+	switch t {
+	case formfield.TypeEmail:
+		return "username"
+	case formfield.TypePassword:
+		return "current-password"
+	}
+	return ""
 }
 
 // fields returns the resolved sign-in fields in declared order.
