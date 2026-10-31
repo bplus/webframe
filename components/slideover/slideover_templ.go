@@ -156,11 +156,11 @@ func widthClass(w Width) string {
 func heightClass(h Height) string {
 	switch h {
 	case HeightSm:
-		return "max-h-[40vh]"
+		return "max-h-[40dvh]"
 	case HeightLg:
-		return "max-h-[85vh]"
+		return "max-h-[85dvh]"
 	default:
-		return "max-h-[60vh]"
+		return "max-h-[60dvh]"
 	}
 }
 
@@ -550,7 +550,7 @@ func Panel(props ...PanelProps) templ.Component {
 		position, closedTranslate, openTranslate := sideClasses(s)
 		var geometry string
 		if bottom {
-			geometry = utils.TwMerge("inset-x-0 w-full rounded-t-xl border-t", heightClass(p.Height))
+			geometry = utils.TwMerge("inset-x-0 w-full rounded-t-xl border-t pb-[env(safe-area-inset-bottom,0px)]", heightClass(p.Height))
 		} else {
 			geometry = utils.TwMerge("top-0 h-full", widthClass(w), "max-w-[calc(100%-2rem)] max-sm:w-full max-sm:max-w-full", utils.IfElse(s == SideLeft, "border-r", "border-l"))
 		}
@@ -701,7 +701,7 @@ func Panel(props ...PanelProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Header --><div class=\"flex items-center justify-between border-b border-border px-6 py-4 shrink-0\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Header --><div class=\"flex items-center justify-between border-b border-border px-4 sm:px-6 py-4 shrink-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

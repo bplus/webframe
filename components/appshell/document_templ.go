@@ -16,7 +16,7 @@ import (
 // DocProps configures Document.
 type DocProps struct {
 	// Title is the page title; the document title is "{Title} — {AppName}",
-	// or just AppName when Title is empty.
+	// just AppName when Title is empty, just Title when AppName is empty.
 	Title   string
 	AppName string
 	// Lang is the <html lang> value; defaults to "en" when empty.
@@ -26,8 +26,11 @@ type DocProps struct {
 }
 
 func docTitle(p DocProps) string {
-	if p.Title == "" {
+	switch {
+	case p.Title == "":
 		return p.AppName
+	case p.AppName == "":
+		return p.Title
 	}
 	return p.Title + " — " + p.AppName
 }
@@ -80,20 +83,20 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(docLang(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 49, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 52, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(docTitle(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 53, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 56, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -106,7 +109,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("/static/css/output.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 54, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 57, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

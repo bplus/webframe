@@ -492,20 +492,35 @@ func TestFlash_SetsCookieBeforeBody(t *testing.T) {
 	}
 }
 
-func TestFlash_NotCalledForBodyOnlyRender(t *testing.T) {
+// TestFlash_BodyOnlyRenderSendsOOB: a plain htmx body render consumes the
+// flash too and appends it out of band into #wf-flash, after the body, so
+// a flash set by an htmx action shows on the current page.
+func TestFlash_BodyOnlyRenderSendsOOB(t *testing.T) {
 	calls := 0
 	a := testApp()
 	a.Flash = flashCounter(&calls)
 	got := serve(t, a, true)
-	if calls != 0 {
-		t.Errorf("Flash called %d times for a plain htmx body render, want 0", calls)
+	if calls != 1 {
+		t.Errorf("Flash called %d times for a plain htmx body render, want 1", calls)
 	}
-	if strings.Contains(got, "flash-banner") || strings.Contains(got, "wf-flash") {
-		t.Errorf("flash leaked into body-only render:\n%s", got)
+	oob := strings.Index(got, `<div id="wf-flash" hx-swap-oob="true">`)
+	body := strings.Index(got, "hello page")
+	marker := strings.Index(got, "flash-banner")
+	if oob < 0 || marker < oob || body < 0 || oob < body {
+		t.Errorf("want body, then the oob #wf-flash holding the flash:\n%s", got)
+	}
+	if strings.Contains(got, "wf-shell") {
+		t.Errorf("shell leaked into body-only render:\n%s", got)
+	}
+	// No flash: no oob slot at all.
+	a = testApp()
+	a.Flash = func(http.ResponseWriter, *http.Request) templ.Component { return nil }
+	if got := serve(t, a, true); strings.Contains(got, "wf-flash") {
+		t.Errorf("empty flash added an oob slot:\n%s", got)
 	}
 }
 
-func TestFlash_NotCalledForPartRender(t *testing.T) {
+func TestFlash_PartRenderSendsOOB(t *testing.T) {
 	for name, headers := range map[string]map[string]string{
 		"targeted-part": {"HX-Request": "true", "HX-Target": "list-results"},
 		"other-target":  {"HX-Request": "true", "HX-Target": "something-else"},
@@ -514,11 +529,11 @@ func TestFlash_NotCalledForPartRender(t *testing.T) {
 		a := testApp()
 		a.Flash = flashCounter(&calls)
 		got := serveParts(t, a, headers)
-		if calls != 0 {
-			t.Errorf("%s: Flash called %d times, want 0", name, calls)
+		if calls != 1 {
+			t.Errorf("%s: Flash called %d times, want 1", name, calls)
 		}
-		if strings.Contains(got, "flash-banner") {
-			t.Errorf("%s: flash leaked into part render:\n%s", name, got)
+		if !strings.Contains(got, `<div id="wf-flash" hx-swap-oob="true">`) || !strings.Contains(got, "flash-banner") {
+			t.Errorf("%s: flash oob missing from part render:\n%s", name, got)
 		}
 	}
 	calls := 0

@@ -8,7 +8,7 @@ import (
 // DocProps configures Document.
 type DocProps struct {
 	// Title is the page title; the document title is "{Title} — {AppName}",
-	// or just AppName when Title is empty.
+	// just AppName when Title is empty, just Title when AppName is empty.
 	Title   string
 	AppName string
 	// Lang is the <html lang> value; defaults to "en" when empty.
@@ -18,8 +18,11 @@ type DocProps struct {
 }
 
 func docTitle(p DocProps) string {
-	if p.Title == "" {
+	switch {
+	case p.Title == "":
 		return p.AppName
+	case p.AppName == "":
+		return p.Title
 	}
 	return p.Title + " — " + p.AppName
 }
@@ -49,7 +52,7 @@ templ Document(p DocProps) {
 	<html lang={ docLang(p) }>
 		<head>
 			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 			<title>{ docTitle(p) }</title>
 			<link rel="stylesheet" href={ assets.URL("/static/css/output.css") }/>
 			<script>

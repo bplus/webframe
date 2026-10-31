@@ -146,7 +146,7 @@ func TestItems_ResultsSwap(t *testing.T) {
 		`<input type="hidden" id="items-filterbar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control hx-swap-oob="true">`,
 		`<select id="items-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
 		`<option value="name" selected data-tui-filterbar-set-dir="asc">Name ↑</option>`,
-		`<option value="updated" data-tui-filterbar-set-dir="desc">Updated ↓</option>`,
+		`<option value="" data-tui-filterbar-set-dir="">Updated ↓</option>`,
 		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 11 published · 3 drafts</p>`)
 	wantNone(t, body, "<h1", "<html", "wf-topbar", "wf-sidebar", "Search items", "data-tui-filterbar-hx-get")
 	// Any other htmx target gets the page body without the shell.

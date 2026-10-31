@@ -1,17 +1,21 @@
 // Package flash carries a one-shot message across a redirect and shows it
-// once on the next full page. A handler that answers an action with a
-// redirect has no page to put a banner on and no htmx response to attach a
-// toast to; it calls flash.Error (or Set) before redirecting, the shell
-// renders the message in its #wf-flash slot above the page body on the next
-// full render, and the same render clears it, so a reload shows nothing.
+// once on the next page. A handler that answers an action with a redirect
+// has no page to put a banner on; it calls flash.Error (or Set) before
+// redirecting, the shell renders the message in its #wf-flash slot above
+// the page body on the next render, and the same render clears it, so a
+// reload shows nothing.
 //
 // Wiring, once, in the app's server setup:
 //
 //	app.Flash = flash.Take
 //
-// appshell calls App.Flash once per response that includes the shell (a
-// plain request, a boosted link, a history restore) before the first body
-// write, and never for a body-only or part-only htmx response. The cookie
+// appshell calls App.Flash once per response, before the first body write:
+// a response that includes the shell (a plain request, a boosted link, a
+// history restore) renders the banner inside #wf-flash; a body-only or
+// part-only htmx response appends the banner after the fragment as an
+// out-of-band swap of #wf-flash, so a flash set by an htmx action, or by a
+// redirect htmx followed as XHR, shows on the page the user is looking at
+// rather than on some later full page. The cookie
 // is HttpOnly, SameSite=Lax, Path=/, lives at most five minutes, and holds
 // base64url(JSON) under 2 KB; a value that does not decode renders nothing
 // and is cleared like any other.

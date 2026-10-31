@@ -497,13 +497,16 @@
 /* ── Toast ── */
 /* The Document renders one #toast-container; toast.Send appends to it out
    of band. A column flex with no fixed heights: a dismissed toast leaves
-   the flow (x-show) and the ones below it close up. z-index 50 sits below
-   a bottom sheet (slideover, 60), so a toast never covers one. */
+   the flow (x-show) and the ones below it close up. z-index 70 sits above
+   a slideover panel (60) and its backdrop (55): a toast fired while a
+   sheet is open is still seen, and because the phone stack is at the top
+   it never covers a bottom sheet's buttons, a form's submit button or the
+   field above an on-screen keyboard. */
 .wf-toast-container {
   position: fixed;
-  top: 1rem;
+  top: calc(1rem + env(safe-area-inset-top, 0px));
   right: 1rem;
-  z-index: 50;
+  z-index: 70;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -513,14 +516,12 @@
 }
 .wf-toast { max-width: 24rem; }
 
-/* Phone: the stack moves to the bottom and spans the width minus the
-   16px gutters; each toast stretches to that width. */
+/* Phone: the stack stays at the top and spans the width minus the 16px
+   gutters; each toast stretches to that width. */
 @media (max-width: 767px) {
   .wf-toast-container {
-    top: auto;
     left: 1rem;
     right: 1rem;
-    bottom: 1rem;
     width: auto;
     max-width: none;
   }

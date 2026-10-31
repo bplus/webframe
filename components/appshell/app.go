@@ -137,6 +137,21 @@ func (a *App) ShellProps(r *http.Request) Props {
 // stands. Content-Type and Vary are set before anything is written, so a
 // handler that writes a status before calling Render should expect them
 // to be dropped by net/http (headers are frozen at WriteHeader).
+// flashOOB wraps a flash component in the #wf-flash slot marked for an
+// out-of-band swap, so a fragment response replaces the slot in place.
+func flashOOB(f templ.Component) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if _, err := io.WriteString(w, `<div id="wf-flash" hx-swap-oob="true">`); err != nil {
+			return err
+		}
+		if err := f.Render(ctx, w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, `</div>`)
+		return err
+	})
+}
+
 func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
 	return a.RenderParts(w, r, title, body, nil)
 }
@@ -201,12 +216,27 @@ func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, 
 	SetHeaders(w)
 	ctx := r.Context()
 	if WantsFragment(r) {
-		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
-			if part := parts[target]; part != nil {
-				return part.Render(ctx, w)
+		// A fragment render still consumes a pending flash: the banner is
+		// sent out of band into the page's #wf-flash slot, so a flash set
+		// by an htmx action (or by a redirect htmx followed as XHR) shows
+		// on the page the user is looking at instead of waiting for the
+		// next full render. Called before the first write, like below.
+		var oob templ.Component
+		if a.Flash != nil {
+			if f := a.Flash(w, r); f != nil {
+				oob = flashOOB(f)
 			}
 		}
-		return full.Render(ctx, w)
+		frag := full
+		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
+			if part := parts[target]; part != nil {
+				frag = part
+			}
+		}
+		if err := frag.Render(ctx, w); err != nil || oob == nil {
+			return err
+		}
+		return oob.Render(ctx, w)
 	}
 	props := a.ShellProps(r)
 	if a.Flash != nil {

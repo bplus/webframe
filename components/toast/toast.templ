@@ -17,12 +17,12 @@
 // and Info for neutral notices. Pages do not show success messages unless
 // the user asked for one.
 //
-// Phone width (390px): .wf-toast-container moves from the top right to the
-// bottom of the viewport and spans the width minus 16px gutters; each toast
-// stretches to that width (max-width 24rem on 768px and up). The container
-// is a column flex with no fixed heights, so a dismissed toast collapses
-// and the ones below it close up. A toast sits at z-index 50, below a
-// bottom sheet (slideover), so it never covers one.
+// Phone width (390px): .wf-toast-container stays at the top and spans the
+// width minus 16px gutters; each toast stretches to that width. The stack
+// sits above a slideover panel and backdrop (z-index 70 over 60/55), so a
+// toast fired while a bottom sheet is open is still seen, and being at the
+// top it never covers the sheet's buttons, a submit button or the field
+// above an on-screen keyboard.
 package toast
 
 import (

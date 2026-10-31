@@ -39,17 +39,17 @@
 
 //
 
-// Phone width (390px): .wf-toast-container moves from the top right to the
+// Phone width (390px): .wf-toast-container stays at the top and spans the
 
-// bottom of the viewport and spans the width minus 16px gutters; each toast
+// width minus 16px gutters; each toast stretches to that width. The stack
 
-// stretches to that width (max-width 24rem on 768px and up). The container
+// sits above a slideover panel and backdrop (z-index 70 over 60/55), so a
 
-// is a column flex with no fixed heights, so a dismissed toast collapses
+// toast fired while a bottom sheet is open is still seen, and being at the
 
-// and the ones below it close up. A toast sits at z-index 50, below a
+// top it never covers the sheet's buttons, a submit button or the field
 
-// bottom sheet (slideover), so it never covers one.
+// above an on-screen keyboard.
 
 package toast
 

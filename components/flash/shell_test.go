@@ -47,17 +47,31 @@ func TestShell_FlashShowsOnceOnNextFullPage(t *testing.T) {
 		t.Fatalf("want one wf_flash cookie with MaxAge 300, got %v", set)
 	}
 
-	// 2. An htmx body-only render with the cookie leaves it alone.
+	// 2. An htmx body-only render with the cookie consumes it too: the
+	// banner follows the fragment out of band into #wf-flash (so a flash
+	// set by an htmx action, or by a redirect htmx followed as XHR, shows
+	// on the page the user is looking at) and the cookie is cleared.
 	rec = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/movies", nil)
 	r.Header.Set("HX-Request", "true")
 	r.AddCookie(set[0])
 	h.ServeHTTP(rec, r)
-	if out := rec.Body.String(); strings.Contains(out, "Could not delete") || strings.Contains(out, "wf-flash") {
-		t.Errorf("body-only render consumed the flash:\n%s", out)
+	out := rec.Body.String()
+	frag := strings.Index(out, "<p>page body</p>")
+	oob := strings.Index(out, `<div id="wf-flash" hx-swap-oob="true">`)
+	if frag < 0 || oob < frag || strings.Count(out, "Could not delete") != 1 || strings.Contains(out, "wf-shell") {
+		t.Errorf("body-only render should be the fragment then the oob flash:\n%s", out)
 	}
-	if sc := rec.Result().Header.Values("Set-Cookie"); len(sc) != 0 {
-		t.Errorf("body-only render touched the cookie: %v", sc)
+	if c := rec.Result().Cookies(); len(c) != 1 || c[0].Name != CookieName || c[0].MaxAge >= 0 {
+		t.Errorf("body-only render did not clear the cookie: %v", c)
+	}
+	// Without the cookie the fragment carries no slot at all.
+	rec = httptest.NewRecorder()
+	r = httptest.NewRequest("GET", "/movies", nil)
+	r.Header.Set("HX-Request", "true")
+	h.ServeHTTP(rec, r)
+	if out := rec.Body.String(); strings.Contains(out, "wf-flash") {
+		t.Errorf("fragment without a flash carries a slot:\n%s", out)
 	}
 
 	// 3. The next full page shows the banner in #wf-flash and clears it.
@@ -65,7 +79,7 @@ func TestShell_FlashShowsOnceOnNextFullPage(t *testing.T) {
 	r = httptest.NewRequest("GET", "/movies", nil)
 	r.AddCookie(set[0])
 	h.ServeHTTP(rec, r)
-	out := rec.Body.String()
+	out = rec.Body.String()
 	slot := strings.Index(out, `<div id="wf-flash">`)
 	banner := strings.Index(out, `role="alert"`)
 	pageBody := strings.Index(out, "<p>page body</p>")

@@ -35,7 +35,7 @@ func TestLines_CountAndShape(t *testing.T) {
 	if got := bars(out); got != 4 {
 		t.Errorf("bars = %d, want 4", got)
 	}
-	mustContain(t, out, `id="para"`, `aria-busy="true"`, `data-x="1"`, "mt-2", "space-y-2", "h-4", "w-2/3", "bg-muted", `aria-hidden="true"`)
+	mustContain(t, out, `id="para"`, `aria-busy="true"`, `data-x="1"`, "mt-2", "space-y-1", "h-4", "w-2/3", "bg-muted", `aria-hidden="true"`)
 	if got := strings.Count(out, "w-2/3"); got != 1 {
 		t.Errorf("last-line w-2/3 count = %d, want 1", got)
 	}

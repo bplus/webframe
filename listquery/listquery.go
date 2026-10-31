@@ -315,3 +315,13 @@ func (s Spec) HasFilters() bool {
 
 // IsSorted reports whether the list is currently sorted by key.
 func (s Spec) IsSorted(key string) bool { return key != "" && s.Sort == key }
+
+// IsDefaultOrder reports whether sorting by key in direction d is the
+// default order this Spec was parsed with (Options.DefaultSort and
+// DefaultDir), the order URL omits. False on a hand-built Spec.
+func (s Spec) IsDefaultOrder(key string, d Dir) bool {
+	if d != Desc {
+		d = Asc
+	}
+	return s.defaultSort != "" && key == s.defaultSort && d == s.defaultDir
+}

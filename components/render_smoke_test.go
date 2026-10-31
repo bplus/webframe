@@ -18,6 +18,7 @@ import (
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/areachart"
 	"github.com/bplus/webframe/components/aspectratio"
+	"github.com/bplus/webframe/components/authpage"
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
 	"github.com/bplus/webframe/components/badge"
@@ -27,6 +28,7 @@ import (
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/confirmdialog"
 	"github.com/bplus/webframe/components/copybutton"
 	"github.com/bplus/webframe/components/customblock"
 	"github.com/bplus/webframe/components/custompage"
@@ -38,8 +40,10 @@ import (
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/errorpage"
 	"github.com/bplus/webframe/components/figure"
 	"github.com/bplus/webframe/components/filterbar"
+	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/formpage"
@@ -64,14 +68,17 @@ import (
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/skeleton"
 	"github.com/bplus/webframe/components/slideover"
 	"github.com/bplus/webframe/components/sparkline"
+	"github.com/bplus/webframe/components/spinner"
 	"github.com/bplus/webframe/components/statcomparison"
 	"github.com/bplus/webframe/components/stattile"
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/components/toggle"
 	"github.com/bplus/webframe/components/toolbar"
 	"github.com/bplus/webframe/components/trafficstream"
@@ -109,6 +116,7 @@ var componentCases = []componentCase{
 	{name: "appshell", constructor: func() templ.Component { return appshell.Shell() }},
 	{name: "areachart", constructor: func() templ.Component { return areachart.AreaChart() }},
 	{name: "aspectratio", constructor: func() templ.Component { return aspectratio.AspectRatio() }},
+	{name: "authpage", constructor: func() templ.Component { return authpage.AuthPage(authpage.Props{}) }},
 	{name: "autocomplete", constructor: func() templ.Component { return autocomplete.Autocomplete(autocomplete.Props{ID: "x", HxGet: "/q"}) }},
 	{name: "avatar", constructor: func() templ.Component { return avatar.Avatar() }},
 	{name: "badge", constructor: func() templ.Component { return badge.Badge() }},
@@ -123,6 +131,7 @@ var componentCases = []componentCase{
 	{name: "button", constructor: func() templ.Component { return button.Button() }},
 	{name: "card", constructor: func() templ.Component { return card.Card() }},
 	{name: "checkbox", constructor: func() templ.Component { return checkbox.Checkbox() }},
+	{name: "confirmdialog", constructor: func() templ.Component { return confirmdialog.ConfirmDialog(confirmdialog.Props{}) }},
 	{name: "copybutton", constructor: func() templ.Component { return copybutton.CopyButton() }},
 	{name: "customblock", constructor: func() templ.Component { return customblock.CustomBlock() }},
 	{name: "custompage", constructor: func() templ.Component { return custompage.CustomPage() }},
@@ -139,8 +148,10 @@ var componentCases = []componentCase{
 		expectEmptyReason: "Dropdown() only stashes a context value and renders `{ children... }`; with no children supplied, templ.GetChildren falls back to templ.NopComponent (a real, silent empty component — not the leaked-text bug), so zero-value output is legitimately zero bytes.",
 	},
 	{name: "emptystate", constructor: func() templ.Component { return emptystate.EmptyState() }},
+	{name: "errorpage", constructor: func() templ.Component { return errorpage.ErrorPage() }},
 	{name: "figure", constructor: func() templ.Component { return figure.Figure() }},
 	{name: "filterbar", constructor: func() templ.Component { return filterbar.FilterBar() }},
+	{name: "flash", constructor: func() templ.Component { return flash.Flash(flash.Message{}) }},
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
 	{name: "formfield", constructor: func() templ.Component { return formfield.FormField(formfield.Field{Name: "x"}) }},
 	{name: "formpage", constructor: func() templ.Component { return formpage.Page(formpage.Props{}) }},
@@ -171,7 +182,9 @@ var componentCases = []componentCase{
 	{name: "radio", constructor: func() templ.Component { return radio.Radio() }},
 	{name: "selectbox", constructor: func() templ.Component { return selectbox.SelectBox() }},
 	{name: "separator", constructor: func() templ.Component { return separator.Separator() }},
+	{name: "skeleton", constructor: func() templ.Component { return skeleton.Lines(3) }},
 	{name: "slideover", constructor: func() templ.Component { return slideover.SlideOver() }},
+	{name: "spinner", constructor: func() templ.Component { return spinner.Spinner() }},
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
 	{name: "stattile", constructor: func() templ.Component { return stattile.StatTile() }},
@@ -181,6 +194,12 @@ var componentCases = []componentCase{
 	// package-level regression test.
 	{name: "tabs", constructor: func() templ.Component { return tabs.Content() }},
 	{name: "textarea", constructor: func() templ.Component { return textarea.Textarea() }},
+	{
+		name:              "toast",
+		constructor:       func() templ.Component { return toast.Toast(toast.Props{}) },
+		expectEmpty:       true,
+		expectEmptyReason: "a toast with no title and no body renders nothing, like banner",
+	},
 	{name: "toggle", constructor: func() templ.Component { return toggle.Toggle() }},
 	{name: "toolbar", constructor: func() templ.Component { return toolbar.Toolbar() }},
 	{name: "trafficstream", constructor: func() templ.Component { return trafficstream.TrafficStream() }},

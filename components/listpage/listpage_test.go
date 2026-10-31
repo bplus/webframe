@@ -576,9 +576,12 @@ func TestPage_SortControl(t *testing.T) {
 		`<option value="name" data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
 		`<option value="name" selected data-tui-filterbar-set-dir="desc">NAMECOL ↓</option>`,
 		`<option value="updated" data-tui-filterbar-set-dir="asc">UPDATEDCOL ↑</option>`,
-		`<option value="updated" data-tui-filterbar-set-dir="desc">UPDATEDCOL ↓</option>`,
+		// The default order (updated desc) submits nothing: value "" and
+		// dir "", so a filter change made in it keeps the URL clean.
+		`<option value="" data-tui-filterbar-set-dir="">UPDATEDCOL ↓</option>`,
 	)
-	wantNone(t, out, "STATUSCOL ↑", "Default order", `type="hidden" id="list-filterbar-hidden-sort"`)
+	wantNone(t, out, "STATUSCOL ↑", "Default order", `type="hidden" id="list-filterbar-hidden-sort"`,
+		`<option value="updated" data-tui-filterbar-set-dir="desc">`)
 	// The wrapper is md:hidden; the bar itself is not (it has filters).
 	i := strings.Index(out, `<label for="list-filterbar-hidden-sort"`)
 	wrapper := out[strings.LastIndex(out[:i], "<div"):i]

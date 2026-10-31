@@ -21,7 +21,7 @@
 
 // value with a delta and one sub line, Card() is a panel with a title and a
 
-// three-line body, and Lines(n) is n h-4 bars at a space-y-2 gap. A skeleton
+// three-line body, and Lines(n) is n h-4 bars at a space-y-1 gap. A skeleton
 
 // is a placeholder for a known shape, never a generic shimmer: pick the one
 
@@ -113,12 +113,11 @@ func first(props []Props) Props {
 	return Props{}
 }
 
-// Lines renders n rounded h-4 bars stacked at a space-y-2 gap, the last one
+// Lines renders n rounded h-4 bars stacked at a space-y-1 gap, the last one
 // two thirds wide so the block reads as a paragraph. n below 1 renders one
-// bar. Height: n*16px + (n-1)*8px. Use it where a paragraph of text or a
-// list of short lines will land; for a text-sm paragraph the real content
-// is slightly taller (20px lines), so prefer Card, Table or Tile when the
-// real shape is one of those.
+// bar. Height: n*20px - 4px, the pitch of a text-sm paragraph (20px lines),
+// so it stands in for one at the same height. Prefer Card, Table or Tile
+// when the real shape is one of those.
 //
 // Accepts zero or one Props; extras are ignored.
 func Lines(n int, props ...Props) templ.Component {
@@ -146,7 +145,7 @@ func Lines(n int, props ...Props) templ.Component {
 		if n < 1 {
 			n = 1
 		}
-		var templ_7745c5c3_Var3 = []any{utils.TwMerge("space-y-2", p.Class)}
+		var templ_7745c5c3_Var3 = []any{utils.TwMerge("space-y-1", p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var3...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -163,7 +162,7 @@ func Lines(n int, props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 78, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 77, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -281,7 +280,7 @@ func Card(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 102, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 101, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -694,7 +693,7 @@ func Tile(props ...Props) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 181, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 180, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {

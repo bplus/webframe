@@ -237,7 +237,9 @@ func (p Props) hasFilterBar() bool { return p.hasFilterControls() || p.hasSortCo
 
 // sortConfig builds the Sort select (see the package doc): named
 // Spec.Param("sort"), two options per sortable column whose
-// data-tui-filterbar-set-<dir param> attribute sets the hidden dir input,
+// data-tui-filterbar-set-<dir param> attribute sets the hidden dir input
+// (the option for the Spec's default order carries value "" and dir "", so
+// choosing it, or changing a filter while in it, submits no sort at all),
 // the option matching Spec.Sort and Spec.Dir selected, and a leading
 // "Default order" option (value "", dir "") when none matches, so the
 // select never claims a sort the page is not in. A zero Spec.Dir counts
@@ -256,11 +258,18 @@ func (p Props) sortConfig() filterbar.FilterConfig {
 		for _, d := range []listquery.Dir{listquery.Asc, listquery.Desc} {
 			sel := p.Spec.Sort == c.Key && dir == d
 			matched = matched || sel
+			// The default order submits nothing (value "" and dir ""), so
+			// a filter change made in the default order leaves the URL as
+			// clean as listquery's own links do.
+			value, setTo := c.Key, string(d)
+			if p.Spec.IsDefaultOrder(c.Key, d) {
+				value, setTo = "", ""
+			}
 			opts = append(opts, filterbar.FilterOption{
 				Label:      c.Label + " " + utils.IfElse(d == listquery.Asc, "↑", "↓"),
-				Value:      c.Key,
+				Value:      value,
 				Selected:   sel,
-				Attributes: templ.Attributes{setDir: string(d)},
+				Attributes: templ.Attributes{setDir: setTo},
 			})
 		}
 	}

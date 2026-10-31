@@ -3,15 +3,15 @@
 // templ: version: v0.3.1001
 // Package flash carries a one-shot message across a redirect and shows it
 
-// once on the next full page. A handler that answers an action with a
+// once on the next page. A handler that answers an action with a redirect
 
-// redirect has no page to put a banner on and no htmx response to attach a
+// has no page to put a banner on; it calls flash.Error (or Set) before
 
-// toast to; it calls flash.Error (or Set) before redirecting, the shell
+// redirecting, the shell renders the message in its #wf-flash slot above
 
-// renders the message in its #wf-flash slot above the page body on the next
+// the page body on the next render, and the same render clears it, so a
 
-// full render, and the same render clears it, so a reload shows nothing.
+// reload shows nothing.
 
 //
 
@@ -23,11 +23,19 @@
 
 //
 
-// appshell calls App.Flash once per response that includes the shell (a
+// appshell calls App.Flash once per response, before the first body write:
 
-// plain request, a boosted link, a history restore) before the first body
+// a response that includes the shell (a plain request, a boosted link, a
 
-// write, and never for a body-only or part-only htmx response. The cookie
+// history restore) renders the banner inside #wf-flash; a body-only or
+
+// part-only htmx response appends the banner after the fragment as an
+
+// out-of-band swap of #wf-flash, so a flash set by an htmx action, or by a
+
+// redirect htmx followed as XHR, shows on the page the user is looking at
+
+// rather than on some later full page. The cookie
 
 // is HttpOnly, SameSite=Lax, Path=/, lives at most five minutes, and holds
 

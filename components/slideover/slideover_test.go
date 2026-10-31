@@ -69,7 +69,7 @@ func TestPanel_SideBottomGeometry(t *testing.T) {
 	cls := panelClass(t, out)
 	wantClasses(t, cls,
 		"fixed", "inset-x-0", "bottom-0", "w-full", "rounded-t-xl", "border-t", "border-border",
-		"max-h-[60vh]", "flex", "flex-col",
+		"max-h-[60dvh]", "flex", "flex-col",
 		"data-[tui-slideover-open=false]:translate-y-full",
 		"data-[tui-slideover-open=true]:translate-y-0",
 	)
@@ -94,16 +94,16 @@ func TestPanel_HeightTiers(t *testing.T) {
 		h    Height
 		want string
 	}{
-		{"", "max-h-[60vh]"},
-		{HeightSm, "max-h-[40vh]"},
-		{HeightMd, "max-h-[60vh]"},
-		{HeightLg, "max-h-[85vh]"},
-		{Height("bogus"), "max-h-[60vh]"},
+		{"", "max-h-[60dvh]"},
+		{HeightSm, "max-h-[40dvh]"},
+		{HeightMd, "max-h-[60dvh]"},
+		{HeightLg, "max-h-[85dvh]"},
+		{Height("bogus"), "max-h-[60dvh]"},
 	}
 	for _, c := range cases {
 		cls := panelClass(t, render(t, Panel(PanelProps{Side: SideBottom, Height: c.h})))
 		wantClasses(t, cls, c.want)
-		for _, other := range []string{"max-h-[40vh]", "max-h-[60vh]", "max-h-[85vh]"} {
+		for _, other := range []string{"max-h-[40dvh]", "max-h-[60dvh]", "max-h-[85dvh]"} {
 			if other != c.want {
 				rejectClasses(t, cls, other)
 			}
@@ -114,7 +114,7 @@ func TestPanel_HeightTiers(t *testing.T) {
 func TestPanel_HeightIgnoredForSides(t *testing.T) {
 	for _, s := range []Side{SideLeft, SideRight} {
 		cls := panelClass(t, render(t, Panel(PanelProps{Side: s, Height: HeightSm})))
-		rejectClasses(t, cls, "max-h-[40vh]", "max-h-[60vh]", "max-h-[85vh]")
+		rejectClasses(t, cls, "max-h-[40dvh]", "max-h-[60dvh]", "max-h-[85dvh]")
 		wantClasses(t, cls, "h-full")
 	}
 }

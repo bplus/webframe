@@ -659,3 +659,18 @@ func TestURL_OmitsDefaultSort(t *testing.T) {
 		t.Errorf("Values at default order = %v, want no sort/dir", v)
 	}
 }
+
+func TestIsDefaultOrder(t *testing.T) {
+	o := Options{DefaultSort: "updated", DefaultDir: Desc, AllowedSorts: []string{"updated", "name"}}
+	s := ParseValues(values(t, "sort=name"), o)
+	if !s.IsDefaultOrder("updated", Desc) || s.IsDefaultOrder("updated", Asc) || s.IsDefaultOrder("name", Asc) {
+		t.Errorf("IsDefaultOrder wrong for %+v", s)
+	}
+	if (Spec{Sort: "updated", Dir: Desc}).IsDefaultOrder("updated", Desc) {
+		t.Error("hand-built Spec has no default order")
+	}
+	// A zero Dir counts as ascending.
+	if !ParseValues(values(t, ""), Options{DefaultSort: "name"}).IsDefaultOrder("name", "") {
+		t.Error("zero dir should match an ascending default")
+	}
+}
