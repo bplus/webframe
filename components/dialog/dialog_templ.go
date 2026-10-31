@@ -459,7 +459,7 @@ func Content(props ...ContentProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 = []any{utils.TwMerge(
-			"fixed inset-0 z-50 bg-black/50",
+			"fixed inset-0 z-50 bg-foreground/40",
 			"transition-opacity duration-300",
 			"data-[tui-dialog-open=false]:opacity-0",
 			"data-[tui-dialog-open=true]:opacity-100",

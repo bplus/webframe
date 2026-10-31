@@ -32,47 +32,44 @@ type State string
 
 const (
 	// StateDone marks a stage that completed successfully: a filled
-	// green circle with a white check mark.
+	// success-green circle with a check mark in the success foreground.
 	StateDone State = "done"
 	// StateActive marks the stage currently in progress: a filled
-	// purple circle with a white center dot.
+	// primary circle with a center dot in the primary foreground.
 	StateActive State = "active"
 	// StateAttn marks a stage waiting on the operator: a filled amber
-	// circle with a white exclamation mark.
+	// circle with an exclamation mark in the warning foreground.
 	StateAttn State = "attn"
 	// StateFailed marks a stage that errored: a filled red circle
-	// with a white X.
+	// with an X in the destructive foreground.
 	StateFailed State = "failed"
-	// StateFuture marks a stage not yet reached: a white circle with
+	// StateFuture marks a stage not yet reached: a card-colored circle with
 	// a grey border showing the stage's 1-based index.
 	StateFuture State = "future"
 	// StateSkipped marks a stage that was deliberately bypassed: a
-	// white circle with a dashed grey border showing an en dash.
+	// card-colored circle with a dashed grey border showing an en dash.
 	// Connectors touching a skipped node always render grey — see
 	// connectorColor — so a fully-green connector bar can only mean
 	// every stage actually ran.
 	StateSkipped State = "skipped"
 )
 
-// Fixed design colors with no matching Observatory theme token.
-// Checked against static/css/input.css (2026-09-01): no
-// --color-success or --color-warning variable exists, so these are
-// hard-coded per the approved design rather than left to guess a
-// token name.
+// Theme-token colors for the state palette. These were hard-coded hex
+// values from the approved design until batch 3 (inputs #10), when the
+// --color-success / --color-warning tokens existed and every component
+// moved onto tokens so the stepper follows the active theme (including
+// the dark-mode block in static/css/input.css).
 const (
-	colorDoneGreen  = "#1B7F4B" // done circle fill, done->done connectors
-	colorAttnAmber  = "#B45309" // attn circle fill
-	colorNodeBorder = "#C9C8C2" // future/skipped circle border
-	colorMutedIcon  = "#7A7975" // future index digit / skipped en dash
-	colorMutedLabel = "#8B8A85" // future/skipped label text
+	colorDoneGreen  = "var(--color-success)"          // done circle fill, done->done connectors
+	colorAttnAmber  = "var(--color-warning)"          // attn circle fill
+	colorNodeBorder = "var(--color-border)"           // future/skipped circle border
+	colorMutedIcon  = "var(--color-muted-foreground)" // future index digit / skipped en dash
+	colorMutedLabel = "var(--color-muted-foreground)" // future/skipped label text
 )
 
-// Theme-token colors reused verbatim because they match the design
-// spec's hex values exactly (static/css/input.css): --color-primary
-// is #4A3AA7, --color-destructive is #E34948, --color-border is
-// #DBDAD5. Using the tokens (rather than hard-coding the same hex)
-// keeps the stepper following the active theme automatically,
-// including the dark-mode override block in input.css.
+// Theme-token colors that matched the design spec from the start
+// (--color-primary #4A3AA7, --color-destructive #E34948, --color-border
+// #DBDAD5 in static/css/input.css).
 const (
 	colorActivePurple = "var(--color-primary)"
 	colorFailedRed    = "var(--color-destructive)"
@@ -98,7 +95,7 @@ type Step struct {
 }
 
 // circleStyle returns the inline CSS for the node's circle: a filled
-// background for done/active/attn/failed, or a bordered white circle
+// background for done/active/attn/failed, or a bordered card-colored circle
 // (dashed for skipped, solid otherwise) for future/skipped/unknown.
 func (s Step) circleStyle() string {
 	switch s.State {
@@ -196,22 +193,22 @@ func nodeIcon(s State, index int) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		switch s {
 		case StateDone:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2.5 6.5L5 9L9.5 3.5\" stroke=\"white\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2.5 6.5L5 9L9.5 3.5\" class=\"stroke-success-foreground\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case StateActive:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"6\" cy=\"6\" r=\"2.4\" fill=\"white\"></circle></svg>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"6\" cy=\"6\" r=\"2.4\" class=\"fill-primary-foreground\"></circle></svg>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case StateAttn:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M6 3v3.6\" stroke=\"white\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path> <circle cx=\"6\" cy=\"9\" r=\"1\" fill=\"white\"></circle></svg>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M6 3v3.6\" class=\"stroke-warning-foreground\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path> <circle cx=\"6\" cy=\"9\" r=\"1\" class=\"fill-warning-foreground\"></circle></svg>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case StateFailed:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3.5 3.5L8.5 8.5\" stroke=\"white\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path> <path d=\"M8.5 3.5L3.5 8.5\" stroke=\"white\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path></svg>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3.5 3.5L8.5 8.5\" class=\"stroke-destructive-foreground\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path> <path d=\"M8.5 3.5L3.5 8.5\" class=\"stroke-destructive-foreground\" stroke-width=\"1.8\" stroke-linecap=\"round\"></path></svg>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -223,7 +220,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 184, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 181, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -241,7 +238,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("font-family:var(--font-mono);font-size:11px;line-height:1;color:%s", colorMutedIcon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 186, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 183, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -254,7 +251,7 @@ func nodeIcon(s State, index int) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", index))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 186, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 183, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -314,7 +311,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(step.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 206, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 203, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -332,7 +329,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(step.PopoverURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 208, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 205, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -350,7 +347,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(step.PopoverTarget)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 210, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 207, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -368,7 +365,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(node)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 213, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 210, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -381,7 +378,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(circle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 216, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 213, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -402,7 +399,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 219, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 216, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -415,7 +412,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(step.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 219, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 216, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -438,7 +435,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(step.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 224, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 221, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -456,7 +453,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(node)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 226, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 223, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -469,7 +466,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(circle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 228, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 225, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -490,7 +487,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 231, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 228, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -503,7 +500,7 @@ func stepperNode(step Step, index int, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(step.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 231, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 228, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -549,7 +546,7 @@ func stepperConnector(color string, width int) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block;flex-shrink:0", width, color))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 240, Col: 115}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 237, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -604,7 +601,7 @@ func stepper(p Props, sz sizeConfig) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 249, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/lifecyclestepper/LifecycleStepper.templ`, Line: 246, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
