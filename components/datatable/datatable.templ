@@ -28,7 +28,9 @@ import (
 // hx-get (same URL), hx-target and hx-push-url="true".
 //
 // Phone collapse (below md, 768px): th and td of a Hidden column carry
-// `hidden md:table-cell`; the row-actions cell holds two renderings, an
+// `hidden md:table-cell`; the selection column stays at every width (the
+// app declared selection; Hidden is its lever for making room); the
+// row-actions cell holds two renderings, an
 // inline `hidden md:flex` group of ghost action.Buttons and a `md:hidden`
 // dropdown whose trigger is a ghost icon button labelled "Row actions".
 // Menu items follow toolbar: a link action is a dropdown.Item with Href,
@@ -57,7 +59,7 @@ templ DataTable(props ...Props) {
 		@table.Header(table.Props{Class: utils.If(p.StickyHeader, "sticky top-0 z-10 bg-card")}) {
 			@table.Row(table.RowProps{Class: "hover:bg-transparent"}) {
 				if p.Selection {
-					@table.Head(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", headPad(p.Dense))}) {
+					@table.Head(table.CellProps{Class: utils.TwMerge("w-px", headPad(p.Dense))}) {
 						if len(p.Rows) > 0 {
 							@checkbox.Checkbox(checkbox.Props{
 								Group:       p.selectionGroup(),
@@ -143,7 +145,7 @@ templ row(p Props, r Row, actions bool) {
 		Class: utils.If(r.Href != "", "cursor-pointer"),
 	}) {
 		if p.Selection {
-			@table.Cell(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", cellPad(p.Dense))}) {
+			@table.Cell(table.CellProps{Class: utils.TwMerge("w-px", cellPad(p.Dense))}) {
 				@checkbox.Checkbox(checkbox.Props{
 					Group:      p.selectionGroup(),
 					Name:       p.selectionName(),

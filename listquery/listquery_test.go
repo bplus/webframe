@@ -9,6 +9,18 @@ import (
 	"testing"
 )
 
+// expect returns want with the unexported defaults ParseValues records from
+// o (defaultSort, defaultDir), so expected Specs are written in terms of
+// public fields only.
+func expect(want Spec, o Options) Spec {
+	want.defaultSort = o.DefaultSort
+	want.defaultDir = o.DefaultDir
+	if want.defaultDir != Asc && want.defaultDir != Desc {
+		want.defaultDir = Asc
+	}
+	return want
+}
+
 var itemOpts = Options{
 	DefaultSort:  "name",
 	AllowedSorts: []string{"name", "created"},
@@ -49,7 +61,7 @@ func TestParse_Defaults(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := ParseValues(url.Values{}, tc.opts)
-			if !reflect.DeepEqual(got, tc.want) {
+			if !reflect.DeepEqual(got, expect(tc.want, tc.opts)) {
 				t.Errorf("ParseValues(empty) = %+v, want %+v", got, tc.want)
 			}
 		})
@@ -114,7 +126,7 @@ func TestParse_Hostile(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := ParseValues(values(t, tc.query), itemOpts)
-			if !reflect.DeepEqual(got, tc.want) {
+			if !reflect.DeepEqual(got, expect(tc.want, itemOpts)) {
 				t.Errorf("ParseValues(%q) = %+v, want %+v", tc.query, got, tc.want)
 			}
 		})
@@ -215,7 +227,7 @@ func TestURL_RoundTrip(t *testing.T) {
 				t.Fatalf("URL produced unparsable %q: %v", u, err)
 			}
 			got := ParseValues(parsed.Query(), tc.opts)
-			if !reflect.DeepEqual(got, tc.spec) {
+			if !reflect.DeepEqual(got, expect(tc.spec, tc.opts)) {
 				t.Errorf("round trip of %q\n got %+v\nwant %+v", u, got, tc.spec)
 			}
 		})
@@ -316,8 +328,13 @@ func TestWithSort_Flips(t *testing.T) {
 	}
 	again := ParseValues(v, itemOpts)
 	v = q(again.URL("/items", WithSort("name")))
-	if v.Get("dir") != "asc" {
-		t.Errorf("second flip = %v, want asc", v)
+	// The flip back lands on itemOpts' default order (name asc), which URL
+	// omits; parsing the URL yields it.
+	if v.Has("sort") || v.Has("dir") {
+		t.Errorf("second flip = %v, want the default order omitted", v)
+	}
+	if back := ParseValues(v, itemOpts); back.Sort != "name" || back.Dir != Asc {
+		t.Errorf("second flip parses as %s %s, want name asc", back.Sort, back.Dir)
 	}
 	v = q(base.URL("/items", WithSort("created")))
 	if v.Get("sort") != "created" || v.Get("dir") != "asc" || v.Has("page") {
@@ -528,7 +545,7 @@ func TestParse_CommaJoinedFilters(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := ParseValues(parsed.Query(), itemOpts); !reflect.DeepEqual(got, spec) {
+	if got := ParseValues(parsed.Query(), itemOpts); !reflect.DeepEqual(got, expect(spec, itemOpts)) {
 		t.Errorf("round trip of %q\n got %+v\nwant %+v", u, got, spec)
 	}
 }
@@ -575,7 +592,7 @@ func TestParseCurrent(t *testing.T) {
 	got := ParseCurrent(r, itemOpts)
 	want := Spec{Sort: "created", Dir: Desc, Page: 2, PageSize: 25, defaultSize: 25,
 		Filters: map[string][]string{"status": {"open"}, "owner": {"me"}}}
-	if !reflect.DeepEqual(got, want) {
+	if !reflect.DeepEqual(got, expect(want, itemOpts)) {
 		t.Errorf("ParseCurrent with header = %+v, want %+v", got, want)
 	}
 	if u := CurrentURL(r); u.Path != "/items" || u.Query().Get("page") != "2" {
@@ -612,5 +629,33 @@ func TestParseCurrent(t *testing.T) {
 	}
 	if u := CurrentURL(nil); u == nil || u.Path != "" {
 		t.Errorf("CurrentURL(nil) = %v", u)
+	}
+}
+
+// TestURL_OmitsDefaultSort: a parsed Spec in its Options' default order
+// writes no sort or dir (the address bar after a mutation or a filter
+// change matches a fresh visit); the default key in the other direction,
+// or another key, writes both; a hand-built Spec always writes them.
+func TestURL_OmitsDefaultSort(t *testing.T) {
+	o := Options{DefaultSort: "updated", DefaultDir: Desc, AllowedSorts: []string{"updated", "name"}}
+	if u := ParseValues(values(t, ""), o).URL("/items"); u != "/items" {
+		t.Errorf("default order URL = %q, want bare base", u)
+	}
+	if u := ParseValues(values(t, "sort=updated&dir=desc&status=draft"), Options{DefaultSort: "updated", DefaultDir: Desc, FilterKeys: []string{"status"}}).URL("/items"); u != "/items?status=draft" {
+		t.Errorf("explicit default order URL = %q, want only the filter", u)
+	}
+	if u := ParseValues(values(t, "sort=updated&dir=asc"), o).URL("/items"); u != "/items?dir=asc&sort=updated" {
+		t.Errorf("default key, other direction URL = %q", u)
+	}
+	if u := ParseValues(values(t, "sort=name"), o).URL("/items"); u != "/items?dir=asc&sort=name" {
+		t.Errorf("other key URL = %q", u)
+	}
+	if u := (Spec{Sort: "updated", Dir: Desc}).URL("/items"); u != "/items?dir=desc&sort=updated" {
+		t.Errorf("hand-built URL = %q, want sort and dir written", u)
+	}
+	// Values follows URL: the filter bar's hidden inputs carry no sort at
+	// the default order either.
+	if v := ParseValues(values(t, ""), o).Values(); v.Has("sort") || v.Has("dir") {
+		t.Errorf("Values at default order = %v, want no sort/dir", v)
 	}
 }

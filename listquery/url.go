@@ -43,7 +43,7 @@ func (s Spec) Values() url.Values { return s.values() }
 
 func (s Spec) values() url.Values {
 	q := url.Values{}
-	if s.Sort != "" {
+	if s.Sort != "" && !(s.Sort == s.defaultSort && s.Dir == s.defaultDir) {
 		q.Set(s.Param("sort"), s.Sort)
 		if s.Dir == Asc || s.Dir == Desc {
 			q.Set(s.Param("dir"), string(s.Dir))

@@ -63,7 +63,7 @@ templ body(p Props, base string) {
 // bulkForm is the bulk-actions form: one button per action; row
 // checkboxes join it through their form attribute (see the package doc).
 templ bulkForm(p Props) {
-	@form.Form(form.Props{ID: p.bulkFormID(), Class: "hidden md:flex flex-wrap items-center gap-2"}) {
+	@form.Form(form.Props{ID: p.bulkFormID(), Class: "flex flex-wrap items-center gap-2"}) {
 		for _, a := range p.BulkActions {
 			@action.Button(p.bulkAction(a))
 		}

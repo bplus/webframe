@@ -36,7 +36,9 @@ import (
 // hx-get (same URL), hx-target and hx-push-url="true".
 //
 // Phone collapse (below md, 768px): th and td of a Hidden column carry
-// `hidden md:table-cell`; the row-actions cell holds two renderings, an
+// `hidden md:table-cell`; the selection column stays at every width (the
+// app declared selection; Hidden is its lever for making room); the
+// row-actions cell holds two renderings, an
 // inline `hidden md:flex` group of ghost action.Buttons and a `md:hidden`
 // dropdown whose trigger is a ghost icon button labelled "Row actions".
 // Menu items follow toolbar: a link action is a dropdown.Item with Href,
@@ -96,7 +98,7 @@ func DataTable(props ...Props) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Caption)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 55, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 57, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -165,7 +167,7 @@ func DataTable(props ...Props) templ.Component {
 							}
 							return nil
 						})
-						templ_7745c5c3_Err = table.Head(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", headPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = table.Head(table.CellProps{Class: utils.TwMerge("w-px", headPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -365,7 +367,7 @@ func head(p Props, col Column, base string) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(col.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 114, Col: 15}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 116, Col: 15}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -383,7 +385,7 @@ func head(p Props, col Column, base string) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(col.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 118, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 120, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -444,7 +446,7 @@ func sortIcon(spec listquery.Spec, key string) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(state)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 127, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 129, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -551,7 +553,7 @@ func row(p Props, r Row, actions bool) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = table.Cell(table.CellProps{Class: utils.TwMerge("hidden md:table-cell w-px", cellPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var23), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = table.Cell(table.CellProps{Class: utils.TwMerge("w-px", cellPad(p.Dense))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var23), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -667,7 +669,7 @@ func cell(c Cell) templ.Component {
 			var templ_7745c5c3_Var27 templ.SafeURL
 			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(c.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 190, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 192, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
@@ -737,7 +739,7 @@ func cellContent(c Cell) templ.Component {
 				var templ_7745c5c3_Var30 string
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(c.Text)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 203, Col: 11}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 205, Col: 11}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
@@ -753,7 +755,7 @@ func cellContent(c Cell) templ.Component {
 			var templ_7745c5c3_Var31 string
 			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(c.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 206, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 208, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 			if templ_7745c5c3_Err != nil {
@@ -890,7 +892,7 @@ func rowActions(actions []action.Action) templ.Component {
 							var templ_7745c5c3_Var38 string
 							templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(a.Label)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 233, Col: 16}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 235, Col: 16}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 							if templ_7745c5c3_Err != nil {
@@ -918,7 +920,7 @@ func rowActions(actions []action.Action) templ.Component {
 							var templ_7745c5c3_Var40 string
 							templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(a.Label)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 237, Col: 16}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/datatable/datatable.templ`, Line: 239, Col: 16}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 							if templ_7745c5c3_Err != nil {

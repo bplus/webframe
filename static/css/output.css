@@ -1968,6 +1968,12 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   @media (width < 48rem) {
+    .max-md\:order-last {
+      order: 9999;
+    }
+    .max-md\:basis-full {
+      flex-basis: 100%;
+    }
     .max-md\:flex-wrap {
       flex-wrap: wrap;
     }

@@ -163,7 +163,7 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 			{Key: "type", Label: "Type", Sortable: true, Hidden: true},
 			{Key: "status", Label: "Status", Shrink: true},
 			{Key: "used_in", Label: "Used in", Hidden: true},
-			{Key: "updated", Label: "Updated", Sortable: true, Mono: true, Shrink: true},
+			{Key: "updated", Label: "Updated", Sortable: true, Mono: true, Shrink: true, Hidden: true},
 		},
 		Rows:        rows,
 		Spec:        page.Spec,

@@ -44,8 +44,9 @@
 //
 // Phone collapse (below md, 768px): the filter bar wraps; the toolbar
 // collapses each side past its first action into a "⋯" menu (toolbar's
-// default Overflow); the datatable drops Hidden columns and folds row
-// actions into a "⋯" menu; pagination wraps with the summary above the
+// default Overflow) and the bulk buttons wrap onto their own row; the
+// datatable drops Hidden columns, keeps the selection column and folds
+// row actions into a "⋯" menu; pagination wraps with the summary above the
 // Previous/Next pair and hides the numbered list. With Aside set, the aside
 // stacks under the results (layout.TwoColumn's md:flex-row).
 //

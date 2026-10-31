@@ -9,7 +9,12 @@ import (
 )
 
 // Toolbar renders <div role="toolbar"> holding the Left action group,
-// the children in a flex-1 min-w-0 middle slot, and the Right group.
+// the children in a flex-1 min-w-0 middle slot, and the Right group
+// (ml-auto, so it sits at the end even when the middle slot is on
+// another row). Below md the middle slot takes the full width and moves
+// to its own row under the two groups (max-md:basis-full order-last), so
+// bulk buttons wrap instead of being clipped; an empty slot is hidden
+// (empty:hidden) and adds no row.
 //
 // Phone collapse (below md, 768px): when either side has more actions
 // than Props.Overflow (default 1), each side is rendered twice, like the
@@ -49,28 +54,30 @@ templ Toolbar(props ...Props) {
 		class={ utils.TwMerge("flex flex-wrap items-center gap-2", p.Class) }
 		{ p.Attributes... }
 	>
-		@side(p.Left, p.overflow(), collapse, dropdown.PlacementBottomStart)
-		<div class="flex-1 min-w-0">
+		@side(p.Left, p.overflow(), collapse, dropdown.PlacementBottomStart, "")
+		<div class="flex-1 min-w-0 empty:hidden max-md:basis-full max-md:order-last">
 			{ children... }
 		</div>
-		@side(p.Right, p.overflow(), collapse, dropdown.PlacementBottomEnd)
+		@side(p.Right, p.overflow(), collapse, dropdown.PlacementBottomEnd, "ml-auto")
 	</div>
 }
 
 // side renders one action group: once when not collapsing, otherwise a
 // desktop rendering plus a phone rendering with the overflow menu.
-templ side(actions []action.Action, n int, collapse bool, placement dropdown.Placement) {
+templ side(actions []action.Action, n int, collapse bool, placement dropdown.Placement, class string) {
 	if len(actions) > 0 {
 		if !collapse {
-			@action.Group(actions)
+			<div class={ utils.TwMerge("flex flex-wrap items-center gap-2", class) }>
+				@action.Group(actions)
+			</div>
 		} else {
-			<div class="hidden md:flex flex-wrap items-center gap-2">
+			<div class={ utils.TwMerge("hidden md:flex flex-wrap items-center gap-2", class) }>
 				for _, a := range actions {
 					@action.Button(a)
 				}
 			</div>
 			{{ inline, menu := split(actions, n) }}
-			<div class="flex md:hidden items-center gap-2">
+			<div class={ utils.TwMerge("flex md:hidden items-center gap-2", class) }>
 				for _, a := range inline {
 					@action.Button(a)
 				}

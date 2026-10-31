@@ -60,6 +60,14 @@ type Spec struct {
 	// per when PageSize equals it. Zero on a hand-built Spec: per is then
 	// written whenever PageSize > 0.
 	defaultSize int
+	// defaultSort and defaultDir are Options.DefaultSort/DefaultDir as
+	// ParseValues resolved them. URL omits sort and dir when both equal
+	// them, so the default order never shows in the address bar (a
+	// mutation's HX-Replace-Url, a filter change, a page link all write the
+	// same URL a fresh visit has). Zero on a hand-built Spec: sort and dir
+	// are then written whenever Sort is set.
+	defaultSort string
+	defaultDir  Dir
 }
 
 // Options controls Parse. Zero values mean: no default sort, Asc, page size 25,
@@ -143,6 +151,7 @@ func ParseValues(v url.Values, o Options) Spec {
 	if s.Dir != Asc && s.Dir != Desc {
 		s.Dir = Asc
 	}
+	s.defaultSort, s.defaultDir = o.DefaultSort, s.Dir
 	if s.Sort != o.DefaultSort {
 		s.Dir = Asc
 	}
