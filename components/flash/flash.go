@@ -98,9 +98,9 @@ func Success(w http.ResponseWriter, r *http.Request, title, body string) {
 // writes no header at all. Take never panics on garbage.
 //
 // Take has the signature appshell.App.Flash expects: App.Flash = flash.Take
-// is the whole wiring. appshell calls it once per response that includes
-// the shell, before the first body write (so the clearing Set-Cookie is
-// sent), and never for a body-only or part-only htmx response.
+// is the whole wiring. appshell calls it once per response (shell render
+// or htmx fragment; see the package doc), before the first body write, so
+// the clearing Set-Cookie is sent.
 func Take(w http.ResponseWriter, r *http.Request) templ.Component {
 	c, err := r.Cookie(CookieName)
 	if err != nil {

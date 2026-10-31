@@ -31,11 +31,8 @@ func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	if app, ok := appshell.FromContext(r.Context()); ok {
 		return app.Render(w, r, title, ErrorPage(p))
 	}
-	// No App means no app name for the title suffix. Document builds
-	// "{title} — {name}" and collapses to name alone only when title is
-	// empty, so the title goes in the name slot to get "<title>{title}</title>"
-	// rather than a dangling " — ".
-	return appshell.RenderBare(w, r, title, "", ErrorPage(p))
+	// No App: no app name, so the document title is the page title alone.
+	return appshell.RenderBare(w, r, "", title, ErrorPage(p))
 }
 
 // NotFound answers r with the default 404 page.

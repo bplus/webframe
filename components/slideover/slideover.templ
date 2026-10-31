@@ -275,9 +275,10 @@ templ Trigger(props ...TriggerProps) {
 // full width, top corners rounded, a decorative drag handle above the
 // header, capped at the Height tier (60vh by default) and never taller than
 // its content. In every case the header is pinned and a Body child scrolls
-// inside the panel. The panel sits at z-index 60 and the backdrop at 55,
-// above the shell's toast container (50), so a toast never lands on top of
-// an open sheet. It includes a built-in header (Title text and, unless
+// inside the panel. The panel sits at z-index 60 and the backdrop at 55;
+// the shell's toast container is above both (70) and its phone stack is at
+// the top of the screen, so a toast fired while a sheet is open is seen
+// and never covers the sheet's buttons. It includes a built-in header (Title text and, unless
 // HideCloseButton, an icon.X close button); children render below that
 // header and are expected to be Body and/or Footer to complete the flex
 // column.
@@ -365,7 +366,8 @@ templ Panel(props ...PanelProps) {
 	<div
 		class={
 			utils.TwMerge(
-				// Base positioning (above the toast container's z-50)
+				// Base positioning (above page content; below the toast
+				// container's z-70)
 				"fixed z-[60]",
 				position,
 				geometry,

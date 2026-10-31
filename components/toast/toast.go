@@ -44,6 +44,11 @@ func Send(w http.ResponseWriter, r *http.Request, p Props) error {
 	if !appshell.IsHX(r) {
 		return nil
 	}
+	// When the toast is the whole response (a handler with nothing to swap
+	// answers hx-swap="none" with just a toast) the body is HTML too.
+	if h := w.Header(); h.Get("Content-Type") == "" {
+		h.Set("Content-Type", "text/html; charset=utf-8")
+	}
 	return OOB(p).Render(r.Context(), w)
 }
 

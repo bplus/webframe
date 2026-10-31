@@ -31,12 +31,14 @@ type App struct {
 	User func(*http.Request) *User
 	// Flash, when non-nil, supplies the one-shot message for the Shell's
 	// #wf-flash slot. Render and RenderParts call it exactly once per
-	// response that includes the Shell (a non-htmx request, a boosted link,
-	// a history restore) and pass the result into Props.Flash; they never
-	// call it for a body-only or part-only htmx response, and RenderBare
-	// never calls it. It runs before the first byte of the body is written,
-	// so it may set or clear cookies on w. A nil result renders the empty
-	// slot. appshell holds no cookie logic itself: an app wires
+	// response: one that includes the Shell (a non-htmx request, a boosted
+	// link, a history restore) renders the result inside the slot; a
+	// body-only or part-only htmx response appends it after the fragment
+	// as an out-of-band swap of #wf-flash (nothing when the result is nil),
+	// so a flash set by an htmx action shows at once. RenderBare never
+	// calls it. It runs before the first byte of the body is written, so it
+	// may set or clear cookies on w. A nil result renders the empty slot on
+	// a Shell render. appshell holds no cookie logic itself: an app wires
 	// App.Flash = flash.Take.
 	Flash func(w http.ResponseWriter, r *http.Request) templ.Component
 }

@@ -350,10 +350,6 @@ func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 		}
 		return app.RenderBare(w, r, p.title(), AuthPage(p))
 	}
-	if p.AppName == "" {
-		// Document's title is "{title} — {name}", or name alone when the
-		// title is empty; with no app name the mode title stands alone.
-		return appshell.RenderBare(w, r, p.title(), "", AuthPage(p))
-	}
+	// With no app name the document title is the mode title alone.
 	return appshell.RenderBare(w, r, p.AppName, p.title(), AuthPage(p))
 }
