@@ -25,8 +25,10 @@
 // Sort select (phone): a sortable column marked Hidden loses its header,
 // the sort link, below md, so when any Column is Sortable the bar's last
 // control is a <select> named Spec.Param("sort"), labelled "Sort", with
-// two options per sortable column, "{Label} ↑" and "{Label} ↓", both
-// value=Key; the ↓ option carries data-tui-filterbar-set-dir="desc" and ↑
+// two options per sortable column, "{Label} ↑" and "{Label} ↓" (a Label
+// past 32 runes is cut with "…" and the full text goes in the option's
+// title), both value=Key; the ↓ option carries
+// data-tui-filterbar-set-dir="desc" and ↑
 // "asc" (under the Spec's prefix), which filterbar.min.js writes into the
 // bar's hidden dir input before every update, so choosing an option
 // issues the same sort=Key&dir=… request a header click does. The option
@@ -84,6 +86,8 @@ package listpage
 
 import (
 	"net/http"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/a-h/templ"
 	"github.com/bplus/webframe/components/action"
@@ -111,6 +115,12 @@ const (
 	// defaultOrderLabel is the Sort select's option when no sortable column
 	// is the current sort.
 	defaultOrderLabel = "Default order"
+	// maxSortLabelRunes caps a column label in the Sort select's options: a
+	// <select> is as wide as its longest option and sits in a row that
+	// does not wrap, so a long label plus " ↓" would push the phone bar
+	// past 358px. A longer label is cut to maxSortLabelRunes-1 runes plus
+	// "…" and the full option text goes in the option's title.
+	maxSortLabelRunes = 32
 	// introClass styles the intro <p> in Page and its out-of-band copy
 	// alike, so the replacement does not move anything.
 	introClass = "text-sm text-muted-foreground"
@@ -239,6 +249,17 @@ func (p Props) hasSortControl() bool { return len(p.sortableColumns()) > 0 }
 // hasFilterBar reports whether anything would render in the filter bar.
 func (p Props) hasFilterBar() bool { return p.hasFilterControls() || p.hasSortControl() }
 
+// truncateLabel cuts label to maxSortLabelRunes runes, the last an "…",
+// when it is longer; it reports whether it did. Trailing spaces before the
+// ellipsis are dropped.
+func truncateLabel(label string) (string, bool) {
+	if utf8.RuneCountInString(label) <= maxSortLabelRunes {
+		return label, false
+	}
+	runes := []rune(label)
+	return strings.TrimRight(string(runes[:maxSortLabelRunes-1]), " ") + "…", true
+}
+
 // sortConfig builds the Sort select (see the package doc): named
 // Spec.Param("sort"), two options per sortable column whose
 // data-tui-filterbar-set-<dir param> attribute sets the hidden dir input
@@ -269,11 +290,18 @@ func (p Props) sortConfig() filterbar.FilterConfig {
 			if p.Spec.IsDefaultOrder(c.Key, d) {
 				value, setTo = "", ""
 			}
+			arrow := utils.IfElse(d == listquery.Asc, "↑", "↓")
+			label, cut := truncateLabel(c.Label)
+			attrs := templ.Attributes{setDir: setTo}
+			if cut {
+				// The full text stays reachable: title on the option.
+				attrs["title"] = c.Label + " " + arrow
+			}
 			opts = append(opts, filterbar.FilterOption{
-				Label:      c.Label + " " + utils.IfElse(d == listquery.Asc, "↑", "↓"),
+				Label:      label + " " + arrow,
 				Value:      value,
 				Selected:   sel,
-				Attributes: templ.Attributes{setDir: setTo},
+				Attributes: attrs,
 			})
 		}
 	}

@@ -10,9 +10,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures an ErrorPage. Code picks the default wording: 404, 403
-// and 500 have their own; any other number renders with 500's wording and
-// the given number. Title and Message override the defaults when set.
+// Props configures an ErrorPage. Code picks the default wording: 404, 403,
+// 405 and 500 have their own; any other number renders with 500's wording
+// and the given number. Title and Message override the defaults when set.
 // Home is the single call to action; nil renders {Label: "Go home"} linking
 // to the App's HomeHref when an appshell.App is in the render context, else
 // "/". RequestID renders in small monospace text under the message when
@@ -38,6 +38,8 @@ func defaults(p Props) (title, message string) {
 		title, message = "Page not found", "The page you asked for does not exist or has moved."
 	case 403:
 		title, message = "Not allowed", "You do not have access to this page."
+	case 405:
+		title, message = "Not allowed here", "This address does not accept that request."
 	default:
 		title, message = "Something went wrong", "The server hit an error. Try again, and if it keeps happening, tell us the request id below."
 	}

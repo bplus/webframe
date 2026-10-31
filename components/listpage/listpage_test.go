@@ -611,6 +611,35 @@ func TestPage_SortControl(t *testing.T) {
 	wantNone(t, out, "Default order")
 }
 
+// TestPage_SortOptionLabelTruncated: a sortable column label past 32
+// runes is cut to 31 runes plus "…" in the Sort select (so the phone bar
+// never grows past its row), with the arrow kept and the full option text
+// in the option's title; runes, not bytes, are counted; a label of exactly
+// 32 runes is left alone and carries no title.
+func TestPage_SortOptionLabelTruncated(t *testing.T) {
+	long := "Dernière modification de cet élément" // 36 runes, multibyte
+	exact := strings.Repeat("ab", 16)                // 32 runes
+	p := itemProps(t, "sort=name")
+	p.Columns = append(p.Columns,
+		datatable.Column{Key: "updated", Label: long, Sortable: true},
+		datatable.Column{Key: "type", Label: exact, Sortable: true},
+	)
+	out := renderPage(t, p)
+	short := "Dernière modification de cet él…"
+	if n := len([]rune(short)); n != 32 {
+		t.Fatalf("test label is %d runes, want 32", n)
+	}
+	wantAll(t, out,
+		`<option value="updated" data-tui-filterbar-set-dir="asc" title="`+long+` ↑">`+short+` ↑</option>`,
+		`<option value="" data-tui-filterbar-set-dir="" title="`+long+` ↓">`+short+` ↓</option>`,
+		`<option value="type" data-tui-filterbar-set-dir="asc">`+exact+` ↑</option>`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
+	)
+	wantNone(t, out, `>`+long+` ↑<`, `title="`+exact)
+	// The table header keeps the full label: only the select is cut.
+	wantAll(t, out, `>`+long+`<`)
+}
+
 func TestPage_SortOnlyBar(t *testing.T) {
 	// Sortable columns but no filters and no search: the bar still renders,
 	// holding only the Sort select (no Clear filters), and is md:hidden as a

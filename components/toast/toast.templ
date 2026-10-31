@@ -100,9 +100,25 @@ func (p Props) timeoutMS() int64 {
 
 // initExpr is the Alpine x-init expression that hides the toast after the
 // timeout. show=false runs the leave transition and then display:none, so
-// the stack collapses around it.
+// the stack collapses around it; effectExpr then removes the element.
 func (p Props) initExpr() string {
 	return fmt.Sprintf("setTimeout(() => show = false, %d)", p.timeoutMS())
+}
+
+// removeDelayMS is how long after show=false the toast element is removed
+// from the DOM: longer than x-transition's default leave (75ms), so the
+// fade finishes first, and a plain timer, so a toast whose transition
+// never runs (reduced motion, a transition override) is removed all the
+// same.
+const removeDelayMS = 300
+
+// effectExpr is the Alpine x-effect expression that removes the toast
+// element once show is false. x-effect re-runs when show changes; it is a
+// no-op while show is true, so the element is removed exactly once, after
+// the leave transition x-show ran. Without it a dismissed toast would stay
+// in #toast-container as display:none for the life of the page.
+func effectExpr() string {
+	return fmt.Sprintf("if (!show) setTimeout(() => $el.remove(), %d)", removeDelayMS)
 }
 
 // rootClass is the floating card: opaque so the page does not bleed through
@@ -139,8 +155,10 @@ templ kindIcon(k Kind) {
 // Toast renders one toast. Error toasts carry role="alert"; every other
 // kind carries role="status". Alpine on the root owns its lifetime: the
 // dismiss button and (unless Sticky) a timer set show=false, x-transition
-// fades it, and x-show then removes it from the flow so the stack
-// collapses. Rendered on its own it appears wherever it is placed (the
+// fades it, x-show then removes it from the flow so the stack collapses,
+// and an x-effect removes the element from the DOM removeDelayMS later
+// (also when no transition ran), so a long-lived page does not collect
+// dead toasts. Rendered on its own it appears wherever it is placed (the
 // showcase renders it inline); OOB and Send add the out-of-band swap that
 // sends it to #toast-container. It renders nothing when Title and Body are
 // both empty.
@@ -155,6 +173,7 @@ templ Toast(p Props) {
 			x-data="{ show: true }"
 			x-show="show"
 			x-transition
+			x-effect={ effectExpr() }
 			if !p.Sticky {
 				x-init={ p.initExpr() }
 			}
