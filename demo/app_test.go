@@ -111,7 +111,6 @@ func TestInteractionFragments(t *testing.T) {
 	mux.HandleFunc("POST /api/click", HandleClick)
 	mux.HandleFunc("GET /api/search", HandleSearch)
 	mux.HandleFunc("POST /api/validate", HandleValidate)
-	mux.HandleFunc("POST /api/toast", HandleToast)
 	mux.HandleFunc("POST /api/picked", HandlePicked)
 	h := App.Middleware(mux)
 
@@ -131,7 +130,7 @@ func TestInteractionFragments(t *testing.T) {
 		{"POST", "/api/validate?name=Bo", []string{`id="field-name-feedback"`}, []string{"Looks good", "<p"}},
 		{"POST", "/api/picked?framework=vue&q=Vue&source=showcase", []string{"framework=vue", "q=Vue"}, []string{"nothing picked"}},
 		{"POST", "/api/picked?q=Vu", []string{"framework=", "nothing picked"}, nil},
-		{"POST", "/api/toast?variant=error", []string{`hx-swap-oob="beforeend:#toast-container"`, "Something went wrong", "x-init="}, nil},
+		// /api/toast is htmx-only (toast.Send); feedback_test.go covers it.
 	} {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, httptest.NewRequest(c.method, c.target, nil))
