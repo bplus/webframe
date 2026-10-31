@@ -161,3 +161,19 @@ now also skips controls carrying `data-tui-filterbar-state` (a control
 promoted to carry list state in place of a hidden input, see
 `filterbar.Props.Hidden`), alongside `type="hidden"`. Nothing else in the
 file changed.
+
+Batch 3 (Task A0) adds `confirm.js`, first-party (webframe, not templUI, not
+third-party), committed empty so `appshell.Scripts` can include it.
+
+Batch 3 (Task A3) fills `confirm.js`: unminified, about 80 lines, no
+dependencies beyond htmx's `htmx:confirm` event and the public
+`window.tui.dialog` API (`open`/`close` by instance id) that the
+templUI-shipped `dialog.min.js` already exposes. It intercepts every
+`htmx:confirm` that carries an `hx-confirm` question when the page has the
+`#wf-confirm` host (`confirmdialog.Host`, rendered by `appshell.Document`),
+fills the dialog's `data-wf-confirm-part` elements from the trigger's
+`data-wf-confirm-*` attributes, opens it, and calls
+`evt.detail.issueRequest(true)` on confirm. It watches the panel's
+`data-tui-dialog-open` attribute (a MutationObserver) to learn about every
+close `dialog.min.js` performs (Cancel, Escape, backdrop). `dialog.min.js`
+itself is unchanged.

@@ -24,10 +24,15 @@ const (
 	VariantGhost Variant = "ghost"
 )
 
-// Confirm describes a confirmation prompt shown before an Action runs.
-// For now only Message is used (emitted as hx-confirm).
+// Confirm describes the confirmation shown before an Action runs. Message
+// is emitted as hx-confirm: with confirm.js and the confirmdialog host on
+// the page (appshell.Document renders both) that opens the styled dialog,
+// without them the browser's native box runs. Title, ConfirmLabel and
+// CancelLabel ride along as data-wf-confirm-* attributes for the dialog;
+// empty fields fall back to confirmdialog's defaults ("Are you sure?",
+// "Confirm", "Cancel").
 type Confirm struct {
-	Title, Message, ConfirmLabel string
+	Title, Message, ConfirmLabel, CancelLabel string
 }
 
 // Action describes one button or link. A plain Href renders an
@@ -86,10 +91,37 @@ func (a Action) attrs() templ.Attributes {
 	if a.HxSwap != "" {
 		hx["hx-swap"] = a.HxSwap
 	}
-	if a.Confirm != nil {
-		hx["hx-confirm"] = a.Confirm.Message
+	return utils.MergeAttributes(hx, a.ConfirmAttributes(), a.Attributes)
+}
+
+// ConfirmAttributes returns the attributes that route the action through
+// the confirm dialog, or an empty map when Confirm is nil: hx-confirm with
+// the Message (kept as both the trigger and the native fallback), then
+// data-wf-confirm-title, data-wf-confirm-label and data-wf-confirm-cancel
+// for the non-empty Title, ConfirmLabel and CancelLabel, and
+// data-wf-confirm-destructive="true" when the Variant is destructive so the
+// dialog shows its destructive confirm button. Button uses it; renderers that
+// build a menu item's attributes themselves should too, so every place an
+// action renders agrees.
+func (a Action) ConfirmAttributes() templ.Attributes {
+	attrs := templ.Attributes{}
+	if a.Confirm == nil {
+		return attrs
 	}
-	return utils.MergeAttributes(hx, a.Attributes)
+	attrs["hx-confirm"] = a.Confirm.Message
+	if a.Confirm.Title != "" {
+		attrs["data-wf-confirm-title"] = a.Confirm.Title
+	}
+	if a.Confirm.ConfirmLabel != "" {
+		attrs["data-wf-confirm-label"] = a.Confirm.ConfirmLabel
+	}
+	if a.Confirm.CancelLabel != "" {
+		attrs["data-wf-confirm-cancel"] = a.Confirm.CancelLabel
+	}
+	if a.Variant == VariantDestructive {
+		attrs["data-wf-confirm-destructive"] = "true"
+	}
+	return attrs
 }
 
 func (a Action) buttonProps() button.Props {

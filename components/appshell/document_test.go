@@ -64,12 +64,16 @@ func TestDocument_RendersChildren(t *testing.T) {
 
 func TestDocument_ConfirmHostOnceAfterToastContainer(t *testing.T) {
 	got := renderDoc(t, DocProps{AppName: "A"}, templ.Raw("<p>hi</p>"))
-	const host = `<div id="wf-confirm"></div>`
-	if n := strings.Count(got, `id="wf-confirm"`); n != 1 {
+	const host = `id="wf-confirm"`
+	if n := strings.Count(got, host); n != 1 {
 		t.Fatalf("want exactly one #wf-confirm, got %d in:\n%s", n, got)
 	}
-	if !strings.Contains(got, host) {
-		t.Errorf("confirm host is not empty in:\n%s", got)
+	// The host is confirmdialog.Host: a closed dialog.Dialog instance named
+	// wf-confirm (what confirm.js opens), not an empty div.
+	for _, want := range []string{`data-dialog-instance="wf-confirm"`, `data-wf-confirm-part="cancel"`, `data-tui-dialog-hidden="true"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("confirm host missing %q in:\n%s", want, got)
+		}
 	}
 	toast := strings.Index(got, `id="toast-container"`)
 	confirm := strings.Index(got, host)

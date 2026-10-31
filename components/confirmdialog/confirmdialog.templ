@@ -1,0 +1,93 @@
+package confirmdialog
+
+import (
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/utils"
+)
+
+// ConfirmDialog renders one closed dialog.Dialog (no Trigger) holding a
+// title, a message and a Cancel / Confirm footer. It opens only through
+// dialog.min.js (window.tui.dialog.open(id)); confirm.js does that for the
+// Host instance. Every text element and both confirm buttons carry a
+// data-wf-confirm-part attribute (title, message, cancel, confirm,
+// confirm-destructive) that confirm.js writes through; the root carries the
+// resolved defaults as data-wf-confirm-* attributes. The panel is
+// role="alertdialog" labelled by the title and described by the message;
+// the templUI X button is hidden so Cancel and Confirm are the only choices.
+//
+// Closed, the dialog is a bare div whose backdrop and panel are display:none
+// (dialog's data-tui-dialog-hidden), so it occupies no height and nothing on
+// the page moves when it mounts.
+//
+// Phone: the panel is dialog's own max-w-[calc(100%-2rem)] (16px gutters at
+// 390). The footer is a wrapping row; below 400px each button is w-full, so
+// they stack one per row (Cancel above Confirm) and both stay visible.
+//
+// @temporal-coupling dialog.Script() (dialog.min.js) must be on the page or
+// the dialog never opens; appshell.Scripts includes it.
+templ ConfirmDialog(p Props) {
+	{{ p = p.withDefaults() }}
+	{{ id := p.ID }}
+	if id == "" {
+		{{ id = utils.RandomID() }}
+	}
+	@dialog.Dialog(dialog.Props{ID: id, Class: p.Class, Attributes: hostAttrs(p)}) {
+		@dialog.Content(dialog.ContentProps{
+			HideCloseButton:  true,
+			DisableAutoFocus: true,
+			Attributes: templ.Attributes{
+				"role":             "alertdialog",
+				"aria-modal":       "true",
+				"aria-labelledby":  id + "-title",
+				"aria-describedby": id + "-message",
+			},
+		}) {
+			@dialog.Header() {
+				@dialog.Title(dialog.TitleProps{ID: id + "-title", Attributes: templ.Attributes{"data-wf-confirm-part": "title"}}) {
+					{ p.Title }
+				}
+				@dialog.Description(dialog.DescriptionProps{ID: id + "-message", Attributes: templ.Attributes{"data-wf-confirm-part": "message"}}) {
+					{ p.Message }
+				}
+			}
+			@dialog.Footer(dialog.FooterProps{Class: "flex-row flex-wrap justify-end"}) {
+				@dialog.Close() {
+					@button.Button(button.Props{
+						Variant:    button.VariantOutline,
+						Class:      footerButtonClass,
+						Attributes: templ.Attributes{"data-wf-confirm-part": "cancel"},
+					}) {
+						{ p.CancelLabel }
+					}
+				}
+				@button.Button(button.Props{
+					Variant:    button.VariantDefault,
+					Class:      footerButtonClass,
+					Attributes: templ.Attributes{"data-wf-confirm-part": "confirm", "hidden": p.Destructive},
+				}) {
+					{ p.ConfirmLabel }
+				}
+				@button.Button(button.Props{
+					Variant:    button.VariantDestructive,
+					Class:      footerButtonClass,
+					Attributes: templ.Attributes{"data-wf-confirm-part": "confirm-destructive", "hidden": !p.Destructive},
+				}) {
+					{ p.ConfirmLabel }
+				}
+			}
+		}
+	}
+}
+
+// footerButtonClass makes a footer button full-width below 400px so the two
+// wrap one per row there and sit side by side above it.
+const footerButtonClass = "w-full min-[400px]:w-auto"
+
+// Host renders the page's single ConfirmDialog instance with ID HostID
+// ("wf-confirm") and default texts. appshell.Document places it after the
+// toast container; confirm.js fills and opens it for every htmx request
+// that carries hx-confirm.
+templ Host() {
+	@ConfirmDialog(Props{ID: HostID})
+}
