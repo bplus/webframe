@@ -56,7 +56,7 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These 4 files carry none of the templUI header markers, and their
+These 5 files carry none of the templUI header markers, and their
 introducing commits directly describe original component work rather than
 vendoring or installing something — evidence is strong enough to call these
 confirmed local, not just inferred:
@@ -67,6 +67,7 @@ confirmed local, not just inferred:
 | `trafficstream.min.js` | Local | Introduced in `46d1bab` ("Add traffic stream demo component"). No `.templ` version header. Readable, unminified-looking source. | Part of the webframe module (see above). |
 | `theme-toggle.js` | Local | The only standalone `.js` file, and fully readable. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
 | `autocomplete.js` | Local | Written for webframe in page-layer batch 1b (autocomplete component, paired with `components/autocomplete/autocomplete.templ`). Unminified, first-party; depends only on HTMX's `htmx:beforeRequest` / `htmx:afterSwap` events. | Part of the webframe module (see above). |
+| `confirm.js` | Local | Written for webframe in page-layer batch 3 (the `htmx:confirm` interceptor behind `action.Confirm`, paired with `components/confirmdialog/confirmdialog.templ`). Unminified, first-party; depends on HTMX's `htmx:confirm` event and the `window.tui.dialog` API of the templUI-shipped `dialog.min.js`. | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -143,6 +144,23 @@ control or a stale `page=` therefore leaves the URL, while parameters the bar
 does not own are kept (the search string is edited, not replaced). Nothing
 else in the file changed.
 
+Batch 3 (Task A0) adds `confirm.js`, first-party (webframe, not templUI, not
+third-party), committed empty so `appshell.Scripts` can include it; it is
+listed under Local above.
+
+Batch 3 (Task A3) fills `confirm.js`: unminified, about 80 lines, no
+dependencies beyond htmx's `htmx:confirm` event and the public
+`window.tui.dialog` API (`open`/`close` by instance id) that the
+templUI-shipped `dialog.min.js` already exposes. It intercepts every
+`htmx:confirm` that carries an `hx-confirm` question when the page has the
+`#wf-confirm` host (`confirmdialog.Host`, rendered by `appshell.Document`),
+fills the dialog's `data-wf-confirm-part` elements from the trigger's
+`data-wf-confirm-*` attributes, opens it, and calls
+`evt.detail.issueRequest(true)` on confirm. It watches the panel's
+`data-tui-dialog-open` attribute (a MutationObserver) to learn about every
+close `dialog.min.js` performs (Cancel, Escape, backdrop). `dialog.min.js`
+itself is unchanged.
+
 Batch 3 (Task A12, phone sort control) makes a third local edit to
 `filterbar.min.js`, in three places: a new `applySets(bar)` function, before
 `collectParams`, reads the selected `<option>` of every
@@ -160,18 +178,13 @@ promoted to carry list state in place of a hidden input, see
 `filterbar.Props.Hidden`), alongside `type="hidden"`. Nothing else in the
 file changed.
 
-Batch 3 (Task A0) adds `confirm.js`, first-party (webframe, not templUI, not
-third-party), committed empty so `appshell.Scripts` can include it.
-
-Batch 3 (Task A3) fills `confirm.js`: unminified, about 80 lines, no
-dependencies beyond htmx's `htmx:confirm` event and the public
-`window.tui.dialog` API (`open`/`close` by instance id) that the
-templUI-shipped `dialog.min.js` already exposes. It intercepts every
-`htmx:confirm` that carries an `hx-confirm` question when the page has the
-`#wf-confirm` host (`confirmdialog.Host`, rendered by `appshell.Document`),
-fills the dialog's `data-wf-confirm-part` elements from the trigger's
-`data-wf-confirm-*` attributes, opens it, and calls
-`evt.detail.issueRequest(true)` on confirm. It watches the panel's
-`data-tui-dialog-open` attribute (a MutationObserver) to learn about every
-close `dialog.min.js` performs (Cancel, Escape, backdrop). `dialog.min.js`
-itself is unchanged.
+Batch 3 (Task A11, colors from theme tokens) edits the first-party
+`trafficstream.min.js` in its `updateConnection` calls only: the class
+names it swaps onto the connection dot change from palette classes to
+tokens (`bg-amber-500` → `bg-warning` for Paused and Reconnecting,
+`bg-emerald-500` → `bg-success` for Live, `bg-slate-400` →
+`bg-muted-foreground` for Static). Because `input.css` uses `source(none)`
+and never scans JS, those three classes are kept alive by an
+`@source inline("bg-success bg-warning bg-muted-foreground")` line there;
+a future class written only by a script needs the same by-hand entry.
+Nothing else in the file changed.
