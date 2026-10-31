@@ -142,3 +142,20 @@ the bar's optional `data-tui-filterbar-drop` attribute (comma-separated;
 control or a stale `page=` therefore leaves the URL, while parameters the bar
 does not own are kept (the search string is edited, not replaced). Nothing
 else in the file changed.
+
+Batch 3 (Task A12, phone sort control) makes a third local edit to
+`filterbar.min.js`, in three places: a new `applySets(bar)` function, before
+`collectParams`, reads the selected `<option>` of every
+`select[data-tui-filterbar-control]` in the bar and, for each of its
+attributes named `data-tui-filterbar-set-<name>`, writes the attribute's
+value into the bar's control whose `name` is `<name>` (compared
+case-insensitively, since the HTML parser lowercases attribute names; the
+select itself is skipped), so one option can set a second parameter
+(`filterbar.FilterOption.Attributes`; listpage's Sort select sets `dir`).
+`triggerUpdate` calls `applySets(bar)` before `collectParams(bar)`, so the
+rule holds for every update, not only a change of that select (a filter
+change in the default order must still send the matching `dir`). `resetAll`
+now also skips controls carrying `data-tui-filterbar-state` (a control
+promoted to carry list state in place of a hidden input, see
+`filterbar.Props.Hidden`), alongside `type="hidden"`. Nothing else in the
+file changed.

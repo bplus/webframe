@@ -117,3 +117,16 @@ func sortedKeys(m map[string]string) []string {
 	sort.Strings(keys)
 	return keys
 }
+
+// stateControl returns the control in filters promoted to carry the list
+// state named key (see Props.Hidden): the first TypeSelect or TypeSearch
+// FilterConfig whose ID is key. ok is false when there is none; a
+// TypeToggle with that ID does not count.
+func stateControl(filters []FilterConfig, key string) (f FilterConfig, ok bool) {
+	for _, c := range filters {
+		if c.ID == key && (c.Type == TypeSelect || c.Type == TypeSearch) {
+			return c, true
+		}
+	}
+	return FilterConfig{}, false
+}

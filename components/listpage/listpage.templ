@@ -88,14 +88,16 @@ templ Results(p Props) {
 // request targeting the results, RespondResults for a mutation): Results,
 // then the out-of-band updates htmx applies elsewhere on the page before
 // swapping the region: the filter bar's hidden sort/dir/per inputs (so a
-// sort chosen from a table header is what the next filter change sends)
-// and the intro line (so its counts follow a delete or publish). Each
-// replaces an element of the same id and shape, so nothing on the page
-// moves. Never rendered inside Page, where the originals already are.
+// sort chosen from a table header is what the next filter change sends),
+// with the Sort select in the hidden sort input's place when the bar has
+// one (so the select shows the served sort), and the intro line (so its
+// counts follow a delete or publish). Each replaces an element of the
+// same id and shape, so nothing on the page moves. Never rendered inside
+// Page, where the originals already are.
 templ resultsPart(p Props) {
 	@Results(p)
 	if p.hasFilterBar() {
-		@filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs())
+		@filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs(), p.sortControls()...)
 	}
 	if p.Intro != "" {
 		<p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>

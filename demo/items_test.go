@@ -139,9 +139,14 @@ func TestItems_ResultsSwap(t *testing.T) {
 		t.Errorf("results swap does not start with the results div:\n%s", body[:min(200, len(body))])
 	}
 	wantAll(t, body, `id="items-results"`, "Blade of the Fallen Star", "1–14 of 14 items",
-		// After the results, out of band: the bar's hidden inputs with the
-		// served sort (so the next filter change keeps it) and the intro.
-		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		// After the results, out of band: the bar's hidden inputs and its
+		// Sort select (the phone sort control, in the hidden sort input's
+		// place since the columns are sortable) with the served sort, so the
+		// next filter change keeps it and the select shows it, and the intro.
+		`<input type="hidden" id="items-filterbar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<select id="items-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">Name ↑</option>`,
+		`<option value="updated" data-tui-filterbar-set-dir="desc">Updated ↓</option>`,
 		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 11 published · 3 drafts</p>`)
 	wantNone(t, body, "<h1", "<html", "wf-topbar", "wf-sidebar", "Search items", "data-tui-filterbar-hx-get")
 	// Any other htmx target gets the page body without the shell.
@@ -283,7 +288,8 @@ func TestItems_Delete(t *testing.T) {
 	// The response itself carries the live intro and the bar's hidden
 	// state out of band, and the address bar follows the served state.
 	inOrder(t, body, `id="items-results"`,
-		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<select id="items-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">Name ↑</option>`,
 		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">13 items · 10 published · 3 drafts</p>`)
 	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?dir=asc&sort=name" {
 		t.Errorf("HX-Replace-Url = %q", got)
