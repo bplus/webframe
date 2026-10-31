@@ -1,0 +1,107 @@
+package errorpage
+
+import (
+	"context"
+	"strconv"
+
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/utils"
+)
+
+// Props configures an ErrorPage. Code picks the default wording: 404, 403
+// and 500 have their own; any other number renders with 500's wording and
+// the given number. Title and Message override the defaults when set.
+// Home is the single call to action; nil renders {Label: "Go home"} linking
+// to the App's HomeHref when an appshell.App is in the render context, else
+// "/". RequestID renders in small monospace text under the message when
+// set, so a user can quote it. Details, when non-nil, renders last (a
+// stack trace in development, for instance).
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Code           int
+	Title, Message string
+	Home           *action.Action
+	RequestID      string
+	Details        templ.Component
+}
+
+// defaults returns the title and message for p's Code, with p's own Title
+// and Message winning when set.
+func defaults(p Props) (title, message string) {
+	switch p.Code {
+	case 404:
+		title, message = "Page not found", "The page you asked for does not exist or has moved."
+	case 403:
+		title, message = "Not allowed", "You do not have access to this page."
+	default:
+		title, message = "Something went wrong", "The server hit an error. Try again, and if it keeps happening, tell us the request id below."
+	}
+	if p.Title != "" {
+		title = p.Title
+	}
+	if p.Message != "" {
+		message = p.Message
+	}
+	return title, message
+}
+
+// code returns the status number to display: p.Code, or 500 when unset.
+func code(p Props) int {
+	if p.Code == 0 {
+		return 500
+	}
+	return p.Code
+}
+
+// home returns the call to action: p.Home, or "Go home" linking to the
+// App's HomeHref (from ctx) or "/".
+func home(ctx context.Context, p Props) action.Action {
+	if p.Home != nil {
+		return *p.Home
+	}
+	href := "/"
+	if app, ok := appshell.FromContext(ctx); ok && app.HomeHref != "" {
+		href = app.HomeHref
+	}
+	return action.Action{Label: "Go home", Href: href, Variant: action.VariantPrimary}
+}
+
+// ErrorPage renders one error page body: the status code in large muted
+// digits, the title as the page h1, the message, the request id (when
+// set) in small monospace, the Home action as a button, then Details.
+// Everything sits in one centered column no wider than max-w-md.
+//
+// On a phone (390px) it is the same single centered column; the code uses
+// tabular-nums and no letter-spacing, so three digits never overflow the
+// 16px gutters and nothing scrolls horizontally.
+//
+// @pure
+templ ErrorPage(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ title, message := defaults(p) }}
+	@layout.Stack(layout.StackProps{
+		ID:    p.ID,
+		Class: utils.TwMerge("mx-auto w-full max-w-md py-12 text-center", p.Class),
+		Align: layout.AlignCenter,
+		Attributes: p.Attributes,
+	}) {
+		<p class="text-6xl font-semibold tabular-nums text-muted-foreground" aria-hidden="true">{ strconv.Itoa(code(p)) }</p>
+		<h1 class="text-2xl font-semibold tracking-tight">{ title }</h1>
+		<p class="text-muted-foreground">{ message }</p>
+		if p.RequestID != "" {
+			<p class="font-mono text-xs text-muted-foreground break-all">Request id: { p.RequestID }</p>
+		}
+		@action.Button(home(ctx, p))
+		if p.Details != nil {
+			@p.Details
+		}
+	}
+}

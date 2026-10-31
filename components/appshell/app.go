@@ -159,8 +159,13 @@ func RenderBare(w http.ResponseWriter, r *http.Request, name, title string, body
 	return renderDocument(w, r, DocProps{Title: title, AppName: name}, body)
 }
 
-// setHeaders sets the response headers every render shares.
-func setHeaders(w http.ResponseWriter) {
+// SetHeaders sets the response headers every render shares: Content-Type
+// (text/html) and Vary on the htmx request headers. Render, RenderParts
+// and RenderBare call it themselves, so a handler only needs it when it
+// writes a non-200 status before rendering: net/http freezes the header
+// map at WriteHeader, so the order is SetHeaders, WriteHeader, Render.
+// errorpage.Respond does exactly that.
+func SetHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Add("Vary", varyHeaders)
 }
@@ -168,7 +173,7 @@ func setHeaders(w http.ResponseWriter) {
 // renderDocument writes body alone when WantsFragment(r), otherwise the
 // Document described by p holding body as its only child.
 func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body templ.Component) error {
-	setHeaders(w)
+	SetHeaders(w)
 	ctx := r.Context()
 	if WantsFragment(r) {
 		return body.Render(ctx, w)
@@ -193,7 +198,7 @@ func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body tem
 // Only the third shape includes the Shell, so only it calls App.Flash
 // (once, before any output), and the result fills the #wf-flash slot.
 func (a *App) RenderParts(w http.ResponseWriter, r *http.Request, title string, full templ.Component, parts map[string]templ.Component) error {
-	setHeaders(w)
+	SetHeaders(w)
 	ctx := r.Context()
 	if WantsFragment(r) {
 		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
