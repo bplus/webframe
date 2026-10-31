@@ -128,3 +128,23 @@ func TestStatusLabel(t *testing.T) {
 		}
 	}
 }
+
+// StatusPtr is Status behind a pointer, fresh on every call, so the fields
+// that take *Props (datatable.Cell.Badge, descriptionlist.Item.Badge) can
+// be set without an address helper.
+func TestStatusPtr(t *testing.T) {
+	p := StatusPtr("published")
+	if p == nil {
+		t.Fatal("StatusPtr returned nil")
+	}
+	if p.Variant != VariantSuccess {
+		t.Errorf("StatusPtr(%q).Variant = %q, want %q", "published", p.Variant, VariantSuccess)
+	}
+	if StatusPtr("nope").Variant != VariantOutline {
+		t.Errorf("unknown kind should fall back to outline")
+	}
+	a, b := StatusPtr("draft"), StatusPtr("draft")
+	if a == b {
+		t.Error("StatusPtr must return a new pointer on every call")
+	}
+}

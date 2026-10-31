@@ -545,7 +545,11 @@
 .wf-hover-shell {
   display: grid;
   grid-template-columns: 1fr;
-  min-height: 180px;
+  /* 180px, unless the popover's size step left less room on its side:
+     --wf-pop-max is set on the popover element and inherited here; the
+     -2px matches the max-height's allowance for the popover's borders. A
+     min-height larger than the max-height would win and overflow. */
+  min-height: min(180px, calc(var(--wf-pop-max, 180px) - 2px));
 }
 
 .wf-hover-shell--with-art {

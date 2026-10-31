@@ -62,6 +62,17 @@ func Status(kind string) Props {
 	return Props{Variant: VariantOutline}
 }
 
+// StatusPtr is Status for the fields that take *Props (datatable.Cell.Badge,
+// descriptionlist.Item.Badge): it returns the address of a fresh Props so
+// callers stop writing a one-line helper for it. Prefer datatable.BadgeCell
+// and descriptionlist.BadgeItem, which call it.
+//
+// @pure returns a new pointer on every call; nothing is shared.
+func StatusPtr(kind string) *Props {
+	p := Status(kind)
+	return &p
+}
+
 // StatusLabel turns a status word into display text: surrounding spaces
 // are trimmed, dashes and underscores become spaces, and only the first
 // letter is upper-cased ("in-progress" → "In progress", "FAILED" → "Failed").

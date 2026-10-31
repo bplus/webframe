@@ -317,3 +317,22 @@ func TestDataTable_ShortRow(t *testing.T) {
 		t.Errorf("td count = %d, want %d", got, len(itemColumns))
 	}
 }
+
+// BadgeCell builds the badge cell callers used to assemble by hand:
+// kind picks the variant through badge.StatusPtr, text is the badge's text.
+func TestDataTable_BadgeCell(t *testing.T) {
+	c := BadgeCell("Published", "published")
+	if c.Badge == nil || c.Badge.Variant != badge.VariantSuccess || c.Text != "Published" {
+		t.Fatalf("BadgeCell = %+v", c)
+	}
+	if BadgeCell("x", "whatever").Badge.Variant != badge.VariantOutline {
+		t.Errorf("unknown kind should fall back to outline")
+	}
+	rows := itemRows()
+	rows[0].Cells[2] = BadgeCell(badge.StatusLabel("in-progress"), "in-progress")
+	out := render(t, Props{Columns: itemColumns, Rows: rows, Base: "/items"})
+	wantAll(t, out, "text-info", "In progress")
+	i := strings.Index(out, "text-info")
+	after := out[i:strings.Index(out[i:], "</span>")+i]
+	wantAll(t, after, "In progress")
+}
