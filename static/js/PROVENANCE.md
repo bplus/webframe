@@ -56,7 +56,7 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These 5 files carry none of the templUI header markers, and their
+These 6 files carry none of the templUI header markers, and their
 introducing commits directly describe original component work rather than
 vendoring or installing something — evidence is strong enough to call these
 confirmed local, not just inferred:
@@ -210,5 +210,14 @@ swapped content).
 
 Batch 4 (Task A8) also gives `theme-toggle.js` the same re-run guard
 (`window.wf.theme`) that `confirm.js` has (`window.wf.confirm`); the rest of
-the file is unchanged. `autocomplete.js` and the templUI-shipped component
-scripts have no such guard (input #20, pre-existing).
+the file is unchanged.
+
+Batch 4 integration (B1) gives `autocomplete.js` the same guard: its IIFE
+returns at once when `window.wf.autocomplete` is already set (the object the
+script itself publishes at the end of its first run, with `pick` and
+`close`), so a second copy arriving in swapped content adds no second set of
+document-level listeners. Three lines; nothing else in the file changed. The
+four first-party scripts in `appshell.Scripts` (`confirm.js`,
+`htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`) are now all guarded;
+the templUI-shipped component scripts still are not (input #20, carried to
+the batch 5 inputs).
