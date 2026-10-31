@@ -372,10 +372,12 @@ func Results(p Props) templ.Component {
 // request targeting the results, RespondResults for a mutation): Results,
 // then the out-of-band updates htmx applies elsewhere on the page before
 // swapping the region: the filter bar's hidden sort/dir/per inputs (so a
-// sort chosen from a table header is what the next filter change sends)
-// and the intro line (so its counts follow a delete or publish). Each
-// replaces an element of the same id and shape, so nothing on the page
-// moves. Never rendered inside Page, where the originals already are.
+// sort chosen from a table header is what the next filter change sends),
+// with the Sort select in the hidden sort input's place when the bar has
+// one (so the select shows the served sort), and the intro line (so its
+// counts follow a delete or publish). Each replaces an element of the
+// same id and shape, so nothing on the page moves. Never rendered inside
+// Page, where the originals already are.
 func resultsPart(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -402,7 +404,7 @@ func resultsPart(p Props) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.hasFilterBar() {
-			templ_7745c5c3_Err = filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs()).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs(), p.sortControls()...).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -420,7 +422,7 @@ func resultsPart(p Props) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.introID())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 101, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 103, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -446,7 +448,7 @@ func resultsPart(p Props) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.Intro)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 101, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 103, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {

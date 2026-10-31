@@ -29,6 +29,15 @@ type FilterOption struct {
 	Label    string
 	Value    string
 	Selected bool
+	// Attributes spread onto the <option> (TypeSelect only; a toggle pill
+	// ignores them). filterbar.min.js gives one attribute a meaning:
+	// data-tui-filterbar-set-<name>="<value>" on the selected option of a
+	// select writes <value> into the bar's control named <name> (a hidden
+	// input, usually; names compare case-insensitively) before every
+	// update, so one choice can set two parameters. listpage's Sort select
+	// sets dir this way: "Name ↓" is value="name" plus
+	// data-tui-filterbar-set-dir="desc".
+	Attributes templ.Attributes
 }
 
 // FilterConfig describes one control in a FilterBar.
@@ -50,6 +59,13 @@ type FilterConfig struct {
 	// TypeToggle, whose state lives in Options[i].Selected. WithSelected
 	// fills it from the query.
 	Value string
+	// PhoneOnly renders the control only below md (768px): its wrapper
+	// carries md:hidden. filterbar.min.js reads a control's value whatever
+	// its display, so the control's parameter still rides along with
+	// every update on md and up; the page is expected to offer the same
+	// choice another way there (listpage's Sort select stands in for the
+	// table's sort headers, which are the sort control on md and up).
+	PhoneOnly bool
 }
 
 // Props configures FilterBar. Class merges after the built-in classes
@@ -74,6 +90,18 @@ type Props struct {
 	// nothing. With Props.ID set each input also gets id HiddenID(ID,
 	// name), so a response that swaps another region can replace the
 	// bar's hidden state out of band (HiddenOOB).
+	//
+	// A key that is also the ID of a TypeSelect or TypeSearch control in
+	// Filters renders no input: that control carries the state instead
+	// (the map value for the key is ignored; the control's own
+	// Selected/Value is the state). The control gets the input's id
+	// (HiddenID) and the data-tui-filterbar-state marker, so "Clear
+	// filters" leaves it alone exactly as it leaves a hidden input, and
+	// HiddenOOB renders the control in the input's place when it is
+	// passed the control. listpage's Sort select is such a control: a
+	// visible way to set the sort parameter the bar used to carry
+	// blind. A TypeToggle key is not promoted (a toggle is several
+	// buttons, not one control) and renders its input as usual.
 	Hidden map[string]string
 	// Drop lists query parameter names (beyond the bar's own controls)
 	// that filterbar.min.js removes from the page URL on every change,
@@ -117,8 +145,13 @@ type Props struct {
 //
 // Exposed on window as tui.filterbar: getParams(bar), trigger(bar) and
 // reset(bar), where bar is the root <div>; reset clears every control
-// but the hidden inputs and then triggers the update, exactly as the
-// "Clear filters" button does.
+// but the hidden inputs and the state-carrying controls
+// (data-tui-filterbar-state, see Props.Hidden) and then triggers the
+// update, exactly as the "Clear filters" button does. Before every
+// update the script also applies each select's selected option's
+// data-tui-filterbar-set-<name> attributes (FilterOption.Attributes) to
+// the bar's control of that name, so a hidden input a select governs
+// always agrees with the select when the request goes out.
 templ FilterBar(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -148,14 +181,20 @@ templ FilterBar(props ...Props) {
 		{ p.Attributes... }
 	>
 		for _, k := range sortedKeys(p.Hidden) {
-			@hiddenInput(p.ID, k, p.Hidden[k], false)
+			{{ _, promoted := stateControl(p.Filters, k) }}
+			if !promoted {
+				@hiddenInput(p.ID, k, p.Hidden[k], false)
+			}
 		}
 		for _, f := range p.Filters {
+			{{ _, state := p.Hidden[f.ID] }}
+			{{ state = state && (f.Type == TypeSelect || f.Type == TypeSearch) }}
+			{{ id := utils.If(state, HiddenID(p.ID, f.ID)) }}
 			switch f.Type {
 				case TypeSelect:
-					@filterSelect(f)
+					@filterSelect(f, id, state)
 				case TypeSearch:
-					@filterSearch(f)
+					@filterSearch(f, id, state)
 				case TypeToggle:
 					@filterToggle(f)
 			}
@@ -201,52 +240,122 @@ templ hiddenInput(barID, name, value string, oob bool) {
 // Render it at the top level of the response, after the swapped
 // region. Nothing renders without a barID or with an empty map; the
 // inputs are invisible, so nothing on the page moves.
-templ HiddenOOB(barID string, hidden map[string]string) {
+//
+// controls are the bar's state-carrying controls (a TypeSelect or
+// TypeSearch FilterConfig whose ID is a key of hidden, see Props.Hidden),
+// with their current Selected/Value: for such a key the bare control
+// (the <select> or <input>, without its label wrapper) is rendered in
+// the input's place, with the same id and hx-swap-oob="true", so the
+// control shows the state the response served. Pass the same configs
+// FilterBar rendered; a control whose ID is not a key of hidden is
+// ignored. The replaced control keeps its wrapper and size, so nothing
+// on the page moves.
+templ HiddenOOB(barID string, hidden map[string]string, controls ...FilterConfig) {
 	if barID != "" {
 		for _, k := range sortedKeys(hidden) {
-			@hiddenInput(barID, k, hidden[k], true)
+			{{ f, promoted := stateControl(controls, k) }}
+			if promoted && f.Type == TypeSelect {
+				@selectControl(f, HiddenID(barID, k), true, true)
+			} else if promoted {
+				@searchControl(f, HiddenID(barID, k), true, true)
+			} else {
+				@hiddenInput(barID, k, hidden[k], true)
+			}
 		}
 	}
 }
 
-templ filterSelect(f FilterConfig) {
-	<div class="flex items-center gap-2">
-		<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</label>
-		<select
-			name={ f.ID }
-			data-tui-filterbar-control
-			class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-		>
-			if f.Placeholder != "" {
-				<option value="">{ f.Placeholder }</option>
+// wrapperClass is the class list of a control's label+control wrapper:
+// md:hidden when the control is PhoneOnly.
+func wrapperClass(f FilterConfig) string {
+	return utils.TwMerge("flex items-center gap-2", utils.If(f.PhoneOnly, "md:hidden"))
+}
+
+// filterSelect is a labelled select; id and state are set when the
+// control carries list state (see Props.Hidden).
+templ filterSelect(f FilterConfig, id string, state bool) {
+	<div class={ wrapperClass(f) }>
+		<label
+			if id != "" {
+				for={ id }
 			}
-			for _, opt := range f.Options {
-				<option
-					value={ opt.Value }
-					if opt.Selected {
-						selected
-					}
-				>{ opt.Label }</option>
-			}
-		</select>
+			class="text-xs font-medium text-muted-foreground whitespace-nowrap"
+		>{ f.Label }</label>
+		@selectControl(f, id, state, false)
 	</div>
 }
 
-templ filterSearch(f FilterConfig) {
-	<div class="flex items-center gap-2">
-		<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</label>
-		<input
-			type="search"
-			name={ f.ID }
-			data-tui-filterbar-control
-			if f.Value != "" {
-				value={ f.Value }
+// selectControl is the bare <select>: an id when given, the control
+// marker, the state marker when it carries list state, and
+// hx-swap-oob="true" when rendered by HiddenOOB. Each option spreads its
+// Attributes last.
+templ selectControl(f FilterConfig, id string, state, oob bool) {
+	<select
+		if id != "" {
+			id={ id }
+		}
+		name={ f.ID }
+		data-tui-filterbar-control
+		if state {
+			data-tui-filterbar-state
+		}
+		if oob {
+			hx-swap-oob="true"
+		}
+		class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+	>
+		if f.Placeholder != "" {
+			<option value="">{ f.Placeholder }</option>
+		}
+		for _, opt := range f.Options {
+			<option
+				value={ opt.Value }
+				if opt.Selected {
+					selected
+				}
+				{ opt.Attributes... }
+			>{ opt.Label }</option>
+		}
+	</select>
+}
+
+// filterSearch is a labelled search box; id and state as for
+// filterSelect.
+templ filterSearch(f FilterConfig, id string, state bool) {
+	<div class={ wrapperClass(f) }>
+		<label
+			if id != "" {
+				for={ id }
 			}
-			data-tui-filterbar-debounce="400"
-			placeholder={ f.Placeholder }
-			class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
-		/>
+			class="text-xs font-medium text-muted-foreground whitespace-nowrap"
+		>{ f.Label }</label>
+		@searchControl(f, id, state, false)
 	</div>
+}
+
+// searchControl is the bare search <input>; id, state and oob as for
+// selectControl.
+templ searchControl(f FilterConfig, id string, state, oob bool) {
+	<input
+		type="search"
+		if id != "" {
+			id={ id }
+		}
+		name={ f.ID }
+		data-tui-filterbar-control
+		if state {
+			data-tui-filterbar-state
+		}
+		if oob {
+			hx-swap-oob="true"
+		}
+		if f.Value != "" {
+			value={ f.Value }
+		}
+		data-tui-filterbar-debounce="400"
+		placeholder={ f.Placeholder }
+		class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+	/>
 }
 
 templ filterToggle(f FilterConfig) {

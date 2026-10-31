@@ -144,3 +144,20 @@ does not own are kept (the search string is edited, not replaced). Nothing
 else in the file changed.
 
 Batch 3 (Task A0) adds `confirm.js`, first-party (webframe, not templUI, not third-party), committed empty so `appshell.Scripts` can include it; batch 3 task A3 fills it with the `htmx:confirm` interceptor.
+
+Batch 3 (Task A12, phone sort control) makes a third local edit to
+`filterbar.min.js`, in three places: a new `applySets(bar)` function, before
+`collectParams`, reads the selected `<option>` of every
+`select[data-tui-filterbar-control]` in the bar and, for each of its
+attributes named `data-tui-filterbar-set-<name>`, writes the attribute's
+value into the bar's control whose `name` is `<name>` (compared
+case-insensitively, since the HTML parser lowercases attribute names; the
+select itself is skipped), so one option can set a second parameter
+(`filterbar.FilterOption.Attributes`; listpage's Sort select sets `dir`).
+`triggerUpdate` calls `applySets(bar)` before `collectParams(bar)`, so the
+rule holds for every update, not only a change of that select (a filter
+change in the default order must still send the matching `dir`). `resetAll`
+now also skips controls carrying `data-tui-filterbar-state` (a control
+promoted to carry list state in place of a hidden input, see
+`filterbar.Props.Hidden`), alongside `type="hidden"`. Nothing else in the
+file changed.
