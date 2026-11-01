@@ -35,7 +35,7 @@
 // when a long chip leaves too little space). The on-screen keyboard's
 // Enter/Return key adds the tag because the component listens to keydown
 // Enter; a comma on the keyboard adds too. Each chip's remove button is a
-// 20px target inside the chip; the input itself is at least 28px tall.
+// 24px target inside the chip; the input itself is at least 28px tall.
 // Suggestions render a <datalist>, which phones show as autocomplete
 // suggestions above the keyboard.
 package tagsinput

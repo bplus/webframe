@@ -193,7 +193,7 @@ Nothing else in the file changed.
 
 Batch 4 (Task A8) adds `htmx-errors.js`, first-party (webframe, not
 templUI, not third-party), listed under Local above; `appshell.Scripts`
-loads it right after `confirm.js`. Unminified, about 40 lines, no
+loads it right after `confirm.js`. Unminified, about 60 lines (version 2 adds the leading-`<` sniff), no
 dependencies beyond htmx's `htmx:beforeSwap` event. When
 `evt.detail.isError` is true (the `[45]..` codes under the webframe
 `htmx-config`) it sets `evt.detail.shouldSwap = false` if the response's
