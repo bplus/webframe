@@ -56,6 +56,11 @@ templ Shell(props ...Props) {
 			class={ utils.TwMerge("wf-shell wf-shell--sidebar", p.Class) }
 			{ p.Attributes... }
 		>
+			if p.Palette != nil {
+				<div class="wf-sidebar-phone-actions">
+					@commandpalette.Trigger(*p.Palette)
+				</div>
+			}
 			<details class="wf-sidebar-toggle" x-data={ sidebarOpenData } :open="open">
 				<summary>Menu</summary>
 				<aside class="wf-sidebar">

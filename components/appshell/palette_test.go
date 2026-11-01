@@ -27,8 +27,15 @@ func TestShell_PaletteTriggerOnlyWhenSet(t *testing.T) {
 			t.Errorf("%q: trigger rendered without Props.Palette:\n%s", layout, got)
 		}
 		got = renderShell(t, Props{AppName: "A", Layout: layout, Palette: palette()}, nil)
-		if n := strings.Count(got, triggerMarker); n != 1 {
-			t.Errorf("%q: want one trigger, got %d in:\n%s", layout, n, got)
+		// Topbar: one trigger. Sidebar: two, the footer copy for md and up
+		// and a phone-only copy on the "Menu" row (the footer is folded
+		// away below md), each shown by CSS at its own widths.
+		want := 1
+		if layout == LayoutSidebar {
+			want = 2
+		}
+		if n := strings.Count(got, triggerMarker); n != want {
+			t.Errorf("%q: want %d trigger(s), got %d in:\n%s", layout, want, n, got)
 		}
 		// The trigger is a button, not the palette: Shell never renders the dialog.
 		if strings.Contains(got, "data-tui-dialog-content") {
@@ -43,10 +50,12 @@ func TestShell_PaletteTriggerOnlyWhenSet(t *testing.T) {
 		t.Errorf("topbar trigger not inside wf-topbar-right (right=%d trig=%d):\n%s", right, trig, got)
 	}
 	got = renderShell(t, Props{AppName: "A", Layout: LayoutSidebar, Palette: palette()}, nil)
+	phone := strings.Index(got, `class="wf-sidebar-phone-actions"`)
 	footer := strings.Index(got, `class="wf-sidebar-footer"`)
-	trig = strings.Index(got, triggerMarker)
-	if footer < 0 || trig < footer {
-		t.Errorf("sidebar trigger not inside wf-sidebar-footer (footer=%d trig=%d):\n%s", footer, trig, got)
+	first := strings.Index(got, triggerMarker)
+	last := strings.LastIndex(got, triggerMarker)
+	if phone < 0 || first < phone || footer < 0 || last < footer {
+		t.Errorf("sidebar triggers: want one after wf-sidebar-phone-actions (%d) and one after wf-sidebar-footer (%d), got %d and %d:\n%s", phone, footer, first, last, got)
 	}
 }
 

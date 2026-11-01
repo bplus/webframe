@@ -3058,6 +3058,9 @@
 .wf-sidebar-toggle > summary {
   display: none;
 }
+.wf-sidebar-phone-actions {
+  display: none;
+}
 .wf-sidebar {
   display: flex;
   flex-direction: column;
@@ -3158,6 +3161,16 @@
   }
   .wf-sidebar-toggle {
     border-bottom: 1px solid var(--color-border);
+  }
+  .wf-shell--sidebar {
+    position: relative;
+  }
+  .wf-sidebar-phone-actions {
+    display: flex;
+    position: absolute;
+    top: 0.45rem;
+    right: 0.75rem;
+    z-index: 1;
   }
   .wf-sidebar-toggle > summary {
     display: block;

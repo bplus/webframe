@@ -330,6 +330,7 @@
 }
 
 .wf-sidebar-toggle > summary { display: none; }
+.wf-sidebar-phone-actions { display: none; }
 
 .wf-sidebar {
   display: flex;
@@ -424,6 +425,16 @@
   }
   .wf-sidebar-toggle {
     border-bottom: 1px solid var(--color-border);
+  }
+  /* The palette trigger sits on the "Menu" row on a phone, where the
+     sidebar footer (its desktop home) is folded away. */
+  .wf-shell--sidebar { position: relative; }
+  .wf-sidebar-phone-actions {
+    display: flex;
+    position: absolute;
+    top: 0.45rem;
+    right: 0.75rem;
+    z-index: 1;
   }
   .wf-sidebar-toggle > summary {
     display: block;
