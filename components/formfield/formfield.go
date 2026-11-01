@@ -2,12 +2,45 @@
 // and validation feedback, and groups such fields into a responsive
 // fieldset. The feedback line renders nothing on success unless the
 // caller opts in with Field.Success, so a valid field reserves no space.
+//
+// Every Type submits a plain form field named Field.Name that a handler
+// reads with r.FormValue (or r.Form[...], r.FormFile), and every Type
+// re-renders from Field.Value as a string, so a failed POST echoes what
+// the user sent without parsing it first:
+//
+//   - text-like types, TypeTextarea, TypeSelect, TypeRadio, TypeHidden:
+//     Value is the control's value;
+//   - TypeCheckbox, TypeToggle: checked when Value != "", submit "on";
+//   - TypeTags (tagsinput): Value is the tags joined with commas, as the
+//     widget submits them; Options' labels are the suggestions;
+//   - TypeRating (rating, input mode): Value is the chosen star as an
+//     integer string ("3"), Max the star count (5 by default); nothing is
+//     submitted until a star is chosen;
+//   - TypeDate, TypeDateTime, TypeTime (datetimepicker): Value is the
+//     native wire format ("2006-01-02", "2006-01-02T15:04", "15:04");
+//     MinValue and MaxValue bound it in the same format; the handler
+//     parses with datetimepicker.Parse;
+//   - TypeFile (filedrop): Accept, Multiple and Preview configure the
+//     zone; the form must be multipart (formpage.Props.Multipart); a file
+//     input cannot be refilled, so Value is ignored and a re-rendered page
+//     shows the zone empty.
+//
+// The wiring is the same for every Type: the label points at the control
+// that receives focus, that control carries aria-describedby naming the
+// help line and the Feedback slot, aria-invalid="true" when Error is set,
+// and `required` (or aria-required where the submitting control is not
+// the one the browser validates); the Feedback slot sits last.
 package formfield
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/a-h/templ"
 
+	"github.com/bplus/webframe/components/datetimepicker"
 	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/rating"
 )
 
 // Type selects the control a Field renders. The zero value is a text input.
@@ -18,8 +51,15 @@ const (
 	TypeEmail    Type = "email"
 	TypePassword Type = "password"
 	TypeNumber   Type = "number"
+	// TypeDate, TypeDateTime and TypeTime render datetimepicker (the
+	// browser's native picker). Value, MinValue and MaxValue are in the
+	// control's wire format: "2006-01-02", "2006-01-02T15:04", "15:04".
 	TypeDate     Type = "date"
 	TypeDateTime Type = "datetime"
+	TypeTime     Type = "time"
+	// TypeFile renders filedrop: a drop zone around a hidden file input.
+	// Accept, Multiple and Preview configure it; the form must be
+	// multipart. Value is ignored (a file input cannot be refilled).
 	TypeFile     Type = "file"
 	TypeTextarea Type = "textarea"
 	TypeSelect   Type = "select"
@@ -30,7 +70,22 @@ const (
 	// checked, and the switch submits "on" when checked. The label text
 	// sits inline after the switch, inside the Toggle's own <label>.
 	TypeToggle Type = "toggle"
+	// TypeTags renders tagsinput: Value is the current tags joined with
+	// commas (what the widget submits), Options' labels are offered as
+	// suggestions, Placeholder goes on the text input. Required is a
+	// label marker plus aria-required: the text input is not the
+	// submitting control, so `required` on it would block a form whose
+	// tags are complete; enforce on the server.
+	TypeTags Type = "tags"
+	// TypeRating renders rating in input mode: Value is the chosen star
+	// as an integer string, Max the star count (DefaultRatingMax when
+	// zero). The field label labels the fieldset (aria-labelledby).
+	TypeRating Type = "rating"
 )
+
+// DefaultRatingMax is the star count of a TypeRating field whose Max is
+// zero or negative.
+const DefaultRatingMax = rating.DefaultMax
 
 // Width controls how many Fieldset grid columns a field spans on
 // desktop. The zero value spans the full row.
@@ -54,7 +109,24 @@ type Field struct {
 	Options     []Option // Select and Radio
 	Help        string   // muted line under the control
 	Placeholder string
-	Value       string // Checkbox/Toggle: checked when Value != ""; Radio/Select: selected option value
+	// Value is the control's value as a string. Checkbox/Toggle: checked
+	// when Value != ""; Radio/Select: the selected option value; Tags: the
+	// tags joined with commas; Rating: the chosen star ("3"); Date,
+	// DateTime, Time: the native wire format; File: ignored.
+	Value string
+	// Max is the star count of a TypeRating field; DefaultRatingMax (5)
+	// when zero or negative. Other types ignore it.
+	Max int
+	// MinValue and MaxValue bound a TypeDate, TypeDateTime or TypeTime
+	// field (the min/max attributes) in the control's wire format. Other
+	// types ignore them.
+	MinValue, MaxValue string
+	// Accept is the accept attribute of a TypeFile field ("image/*,.pdf").
+	Accept string
+	// Multiple lets a TypeFile field take more than one file.
+	Multiple bool
+	// Preview shows image thumbnails in a TypeFile field's file list.
+	Preview bool
 	// Required marks the label with * and puts `required` on the control,
 	// which the browser enforces when the field sits inside form.Form (or
 	// any <form>). For TypeSelect the control that submits is a hidden
@@ -110,7 +182,8 @@ type FieldsetProps struct {
 	Fields []Field
 }
 
-// inputType maps the input-backed Types onto input.Type.
+// inputType maps the input-backed Types onto input.Type. Dates, times
+// and files render through their own widgets, not here.
 func inputType(t Type) input.Type {
 	switch t {
 	case TypeEmail:
@@ -119,15 +192,66 @@ func inputType(t Type) input.Type {
 		return input.TypePassword
 	case TypeNumber:
 		return input.TypeNumber
-	case TypeDate:
-		return input.TypeDate
-	case TypeDateTime:
-		return input.TypeDateTime
-	case TypeFile:
-		return input.TypeFile
 	default:
 		return input.TypeText
 	}
+}
+
+// dateKind maps the date-like Types onto datetimepicker.Kind.
+func dateKind(t Type) datetimepicker.Kind {
+	switch t {
+	case TypeDateTime:
+		return datetimepicker.KindDateTime
+	case TypeTime:
+		return datetimepicker.KindTime
+	default:
+		return datetimepicker.KindDate
+	}
+}
+
+// tagValues splits a TypeTags Value on commas, trimming each tag and
+// dropping empties, so "" yields no chips and "a, b" yields two.
+func (f Field) tagValues() []string {
+	var out []string
+	for _, t := range strings.Split(f.Value, ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// suggestions are the Options' labels, offered by a TypeTags field as
+// completions.
+func (f Field) suggestions() []string {
+	if len(f.Options) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(f.Options))
+	for _, o := range f.Options {
+		if o.Label != "" {
+			out = append(out, o.Label)
+		}
+	}
+	return out
+}
+
+// ratingValue parses a TypeRating Value; anything that is not a positive
+// integer lights nothing.
+func (f Field) ratingValue() int {
+	n, err := strconv.Atoi(strings.TrimSpace(f.Value))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
+// ratingMax is the star count: Max, or DefaultRatingMax.
+func (f Field) ratingMax() int {
+	if f.Max <= 0 {
+		return DefaultRatingMax
+	}
+	return f.Max
 }
 
 // HelpID is the id of the field's help line (rendered only when Help is
@@ -148,10 +272,12 @@ func (f Field) describedBy() string {
 
 // validateTrigger is the hx-trigger Validate uses for a Type: "change"
 // for the controls that never blur meaningfully (the select's hidden
-// input, checkboxes, radios, the switch), "blur changed" otherwise.
+// input, checkboxes, radios, the switch, the rating's radios, the file
+// input, the tags text input which commits a tag on blur anyway), "blur
+// changed" otherwise.
 func validateTrigger(t Type) string {
 	switch t {
-	case TypeSelect, TypeCheckbox, TypeRadio, TypeToggle:
+	case TypeSelect, TypeCheckbox, TypeRadio, TypeToggle, TypeRating, TypeFile, TypeTags:
 		return "change"
 	default:
 		return "blur changed"
@@ -219,6 +345,44 @@ func (f Field) toggleAttrs() templ.Attributes {
 	for k, v := range f.ariaStateAttrs() {
 		if _, set := out[k]; !set {
 			out[k] = v
+		}
+	}
+	return out
+}
+
+// widgetAttrs returns the attributes for a control a widget package
+// renders (tagsinput, rating, datetimepicker, filedrop): controlAttrs
+// without the `required` attribute, which those widgets emit themselves
+// from their Required prop (or, for tags, must not carry at all), plus
+// aria-invalid="true" when invalid is set and Error is non-empty, and
+// aria-required="true" when announceRequired and Required. invalid is
+// false for a widget whose own HasError prop already writes aria-invalid
+// (tagsinput's text input), so the attribute is never written twice.
+func (f Field) widgetAttrs(invalid, announceRequired bool) templ.Attributes {
+	out := f.controlAttrs(true)
+	delete(out, "required")
+	if invalid && f.Error != "" {
+		if _, set := out["aria-invalid"]; !set {
+			out["aria-invalid"] = "true"
+		}
+	}
+	if announceRequired && f.Required {
+		if _, set := out["aria-required"]; !set {
+			out["aria-required"] = "true"
+		}
+	}
+	return out
+}
+
+// ratingAttrs are the rating fieldset's attributes: widgetAttrs plus
+// aria-labelledby pointing at the field's label, since the visible label
+// is a form.Label above the stars (the rating's own legend is the hidden
+// "Rating").
+func (f Field) ratingAttrs() templ.Attributes {
+	out := f.widgetAttrs(true, true)
+	if f.Label != "" {
+		if _, set := out["aria-labelledby"]; !set {
+			out["aria-labelledby"] = f.ControlID() + "-label"
 		}
 	}
 	return out

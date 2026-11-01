@@ -1,0 +1,36 @@
+package prose
+
+// Prose renders <div class="wf-prose ..."> holding either p.HTML verbatim
+// (the one permitted templ.Raw in the library: the caller vouches for the
+// markup, see the HTML type) or p.Text escaped as paragraphs, one <p> per
+// blank-line-separated block with <br> between the lines inside it. With
+// both set, HTML wins. Element typography comes from the .wf-prose rules in
+// the stylesheet, so the content needs no classes.
+//
+// Phone width (390px): the measure cap yields to the viewport; <pre> and
+// <table> scroll inside their own box; long words wrap.
+templ Prose(p Props) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ p.rootClass() }
+		{ p.Attributes... }
+	>
+		if p.HTML != "" {
+			@templ.Raw(string(p.HTML))
+		} else {
+			for _, para := range p.paragraphs() {
+				@paragraph(para)
+			}
+		}
+	</div>
+}
+
+// paragraph renders one <p> holding paragraphHTML(lines): the lines
+// escaped one by one and joined with <br>. Written as one Raw so templ
+// adds no whitespace text nodes around the <br> (it keeps the whitespace
+// between a text node and an adjacent control block as a space).
+templ paragraph(lines []string) {
+	<p>@templ.Raw(paragraphHTML(lines))</p>
+}
