@@ -1,0 +1,81 @@
+package rating
+
+import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
+)
+
+// Rating renders stars. With ReadOnly it is a <span role="img"
+// aria-label="3 of 5"> holding Max star icons, the first Value lit in the
+// warning color and the rest faded; the icons are decorative and the label
+// carries the meaning. Otherwise it is a <fieldset> with the Label as its
+// legend and Max radios named Name (values 1..Max, visually hidden) each
+// followed by a star <label>; the checked radio and every star before it are
+// lit, hovering previews a value, arrow keys move the selection, and the form
+// submits Name=<n>. Only the first Props value is used. No script.
+//
+// Phone width (390px): every star is a tap target of the Size's box (44px
+// at SizeLg); the row wraps when Max stars do not fit.
+templ Rating(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	if p.ReadOnly {
+		@readOnly(p)
+	} else {
+		@radios(p)
+	}
+}
+
+// readOnly is the static star row.
+templ readOnly(p Props) {
+	<span
+		id={ p.ControlID() }
+		class={ utils.TwMerge("inline-flex items-center gap-0.5", p.Class) }
+		role="img"
+		aria-label={ p.ariaLabel() }
+		{ p.Attributes... }
+	>
+		for i := 1; i <= p.max(); i++ {
+			@icon.Star(icon.Props{Size: p.iconSize(), Fill: "currentColor", Class: starIconClass(i <= p.Value)})
+		}
+	</span>
+}
+
+// radios is the input mode: a fieldset of hidden radios with star labels.
+templ radios(p Props) {
+	<fieldset
+		id={ p.ControlID() }
+		class={ utils.TwMerge("m-0 inline-flex min-w-0 flex-col gap-1 border-0 p-0 disabled:pointer-events-none disabled:opacity-60", p.Class) }
+		disabled?={ p.Disabled }
+		{ p.Attributes... }
+	>
+		if p.Label != "" {
+			<legend class="text-sm font-medium leading-none">{ p.Label }</legend>
+		} else {
+			<legend class="sr-only">Rating</legend>
+		}
+		<div class="wf-rating inline-flex flex-wrap items-center">
+			for i := 1; i <= p.max(); i++ {
+				<input
+					type="radio"
+					id={ p.radioID(i) }
+					if p.Name != "" {
+						name={ p.Name }
+					}
+					value={ strconv.Itoa(i) }
+					class="sr-only"
+					checked?={ i == p.Value }
+					required?={ p.Required && i == 1 }
+				/>
+				<label for={ p.radioID(i) } class={ p.starLabelClass() }>
+					@icon.Star(icon.Props{Size: p.iconSize(), Fill: "currentColor", Class: "pointer-events-none"})
+					<span class="sr-only">{ starText(i) }</span>
+				</label>
+			}
+		</div>
+	</fieldset>
+}

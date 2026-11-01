@@ -1,0 +1,104 @@
+package filedrop
+
+import (
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
+)
+
+// zoneClass is the dashed drop target. It highlights while a drag is over
+// it (data-over, set by Alpine), shows a focus ring when the hidden input
+// has keyboard focus (has-focus-visible) and the destructive border when
+// the input carries aria-invalid="true" (field wiring).
+func (p Props) zoneClass() string {
+	return utils.TwMerge(
+		"relative flex w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-input bg-transparent px-4 py-6 text-center transition-colors",
+		"hover:border-primary/60 data-over:border-primary data-over:bg-primary/5",
+		"has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+		"has-aria-invalid:border-destructive",
+		utils.IfElse(p.Disabled, "cursor-not-allowed opacity-50", "cursor-pointer"),
+	)
+}
+
+// FileDrop renders the drop zone, the hidden file input, the refusal
+// message slot and the file list, all under one Alpine root. The <label>
+// is the zone and wraps the <input class="sr-only" type="file">, so
+// clicking, tapping or dropping anywhere on it reaches the input; the list
+// and the message are hidden until there is something to show (x-cloak
+// until Alpine starts, x-show after), so the page does not move until the
+// user acts. Only the first Props value is used. Requires Alpine (loaded
+// by appshell).
+//
+// Phone width (390px): full-width zone, tap opens the native picker; the
+// list stacks one file per row.
+templ FileDrop(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		id={ p.baseID() }
+		class={ utils.TwMerge("flex w-full min-w-0 flex-col gap-2", p.Class) }
+		x-data={ p.alpineData() }
+	>
+		<label
+			for={ p.ControlID() }
+			class={ p.zoneClass() }
+			x-bind:data-over="over"
+			x-on:dragenter.prevent="over = !disabled"
+			x-on:dragover.prevent="over = !disabled"
+			x-on:dragleave="over = false"
+			x-on:drop.prevent="drop($event)"
+		>
+			<input
+				type="file"
+				id={ p.ControlID() }
+				if p.Name != "" {
+					name={ p.Name }
+				}
+				if p.Accept != "" {
+					accept={ p.Accept }
+				}
+				multiple?={ p.Multiple }
+				required?={ p.Required }
+				disabled?={ p.Disabled }
+				class="sr-only"
+				x-ref="input"
+				x-on:change="accept($event.target.files)"
+				{ p.Attributes... }
+			/>
+			@icon.Upload(icon.Props{Size: 24, Class: "pointer-events-none text-muted-foreground"})
+			<span class="pointer-events-none text-sm font-medium text-foreground">{ p.label() }</span>
+			if p.hint() != "" {
+				<span class="pointer-events-none text-xs text-muted-foreground">{ p.hint() }</span>
+			}
+		</label>
+		<p role="alert" class="text-sm text-destructive" x-show="error" x-text="error" x-cloak></p>
+		<ul role="list" class="flex flex-col gap-2" x-show="files.length > 0" x-cloak>
+			<template x-for="(f, i) in files" :key="f.name + ':' + f.size + ':' + i">
+				<li class="flex min-w-0 items-center gap-3 rounded-md border border-border px-3 py-2 text-sm">
+					if p.Preview {
+						<template x-if="f.url">
+							<img class="h-10 w-10 shrink-0 rounded object-cover" x-bind:src="f.url" alt=""/>
+						</template>
+						<template x-if="!f.url">
+							@icon.File(icon.Props{Size: 20, Class: "shrink-0 text-muted-foreground"})
+						</template>
+					} else {
+						@icon.File(icon.Props{Size: 20, Class: "shrink-0 text-muted-foreground"})
+					}
+					<span class="min-w-0 flex-1 truncate" x-text="f.name"></span>
+					<span class="shrink-0 text-xs text-muted-foreground" x-text="size(f.size)"></span>
+					<button
+						type="button"
+						class="shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+						x-bind:aria-label="'Remove ' + f.name"
+						x-on:click="remove(i)"
+						disabled?={ p.Disabled }
+					>
+						@icon.X(icon.Props{Size: 16})
+					</button>
+				</li>
+			</template>
+		</ul>
+	</div>
+}
