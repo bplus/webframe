@@ -1,17 +1,20 @@
 package demo
 
 import (
+	"net/http"
+
 	"github.com/bplus/webframe/components/commandpalette"
 )
 
-// demoPalette is the command palette both shells carry (App and
-// SidebarApp set Palette to it): the five pages of the Items app in the
+// demoPaletteFor is the command palette both shells carry (App and
+// SidebarApp set PaletteFor to it): the five pages of the Items app in the
 // untitled first group, then every item in the store under "Items", with
 // the item's type as hidden keywords so typing "weapon" lists the weapons.
-// It is built once, when the package loads, from the seeded store: the
-// App.Palette field is a value, not a per-request function, so an item
-// created or deleted afterwards is not reflected until the server restarts.
-var demoPalette = paletteProps(Items.All())
+// It is built per shell render from the store, so an item created or
+// deleted appears in (or leaves) the palette on the next page.
+func demoPaletteFor(*http.Request) *commandpalette.Props {
+	return paletteProps(Items.All())
+}
 
 // paletteProps declares the palette for items.
 //

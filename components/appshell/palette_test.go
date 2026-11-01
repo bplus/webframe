@@ -126,3 +126,72 @@ func TestApp_RenderWiresPalette(t *testing.T) {
 		t.Errorf("palette rendered without App.Palette:\n%s", got)
 	}
 }
+
+// TestApp_PaletteFor: PaletteFor builds the palette per request and wins
+// over Palette; it is called exactly once per shell render and its result
+// feeds both the trigger and the dialog; two requests get their own item
+// sets; a nil result renders no palette; a fragment render never calls it.
+func TestApp_PaletteFor(t *testing.T) {
+	calls := 0
+	app := &App{
+		Name:    "A",
+		Palette: palette(), // ignored while PaletteFor is set
+		PaletteFor: func(r *http.Request) *commandpalette.Props {
+			calls++
+			if r.URL.Path == "/none" {
+				return nil
+			}
+			return &commandpalette.Props{Items: []commandpalette.Item{{Label: "Only " + r.URL.Query().Get("q"), Href: "/" + r.URL.Query().Get("q")}}}
+		},
+	}
+	body := templ.Raw("<p>page</p>")
+	srv := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := app.Render(w, r, "T", body); err != nil {
+			t.Fatalf("render: %v", err)
+		}
+	}))
+	get := func(target string, hx bool) string {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, target, nil)
+		if hx {
+			req.Header.Set("HX-Request", "true")
+		}
+		srv.ServeHTTP(rec, req)
+		return rec.Body.String()
+	}
+	first := get("/?q=alpha", false)
+	if calls != 1 {
+		t.Fatalf("PaletteFor called %d times for one shell render, want 1", calls)
+	}
+	second := get("/?q=beta", false)
+	if calls != 2 {
+		t.Fatalf("PaletteFor called %d times for two shell renders, want 2", calls)
+	}
+	for _, c := range []struct{ body, want, not string }{{first, "alpha", "beta"}, {second, "beta", "alpha"}} {
+		if !strings.Contains(c.body, `data-label="Only `+c.want+`"`) || strings.Contains(c.body, "Only "+c.not) {
+			t.Errorf("want only the %s item set:\n%s", c.want, c.body)
+		}
+		// Palette (the static one) is ignored: none of its items render.
+		if strings.Contains(c.body, `href="/movies"`) {
+			t.Errorf("static Palette rendered although PaletteFor is set:\n%s", c.body)
+		}
+		if n := strings.Count(c.body, triggerMarker); n != 1 {
+			t.Errorf("want one trigger, got %d", n)
+		}
+		if n := strings.Count(c.body, `id="wf-palette"`); n != 1 {
+			t.Errorf("want one palette, got %d", n)
+		}
+	}
+	// nil result: neither trigger nor dialog.
+	if got := get("/none", false); strings.Contains(got, "wf-palette") {
+		t.Errorf("nil PaletteFor result still rendered a palette:\n%s", got)
+	}
+	// A fragment render has no shell and does not call PaletteFor.
+	before := calls
+	if got := get("/?q=gamma", true); strings.Contains(got, "wf-palette") {
+		t.Errorf("fragment carries the palette:\n%s", got)
+	}
+	if calls != before {
+		t.Errorf("PaletteFor called on a fragment render")
+	}
+}

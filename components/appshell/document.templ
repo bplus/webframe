@@ -19,7 +19,8 @@ type DocProps struct {
 	Head templ.Component
 	// Palette, when non-nil, renders commandpalette.Palette once at the end
 	// of <body>, before #toast-container. (*App).RenderParts fills it from
-	// App.Palette; RenderBare leaves it nil.
+	// App.Palette (or App.PaletteFor's result for the request); RenderBare
+	// leaves it nil.
 	Palette *commandpalette.Props
 }
 

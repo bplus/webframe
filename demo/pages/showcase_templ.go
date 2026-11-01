@@ -15715,7 +15715,7 @@ func proseSection() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = prose.Prose(prose.Props{ID: "prose-specimen", HTML: prose.HTML(proseSpecimen)}).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = prose.Prose(prose.Props{ID: "prose-specimen", HTML: proseSpecimen}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

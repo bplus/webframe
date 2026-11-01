@@ -1,0 +1,13 @@
+package testdata
+
+import "github.com/bplus/webframe/components/prose"
+
+var intro = prose.Props{ID: "intro", HTML: `<h2>Intro</h2><p class="lead">Hello</p>`}
+
+templ Help() {
+	{{ s := prose.HTML("<p class=\"x\">a</p>") }}
+	{{ bad := "<p class=\"x\">b</p>" }}
+	@prose.Prose(prose.Props{HTML: s})
+	@prose.Prose(prose.Props{HTML: prose.HTML("<table><tr><td>c</td></tr></table>")})
+	<p>{ bad }</p>
+}

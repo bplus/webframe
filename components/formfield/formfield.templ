@@ -212,10 +212,11 @@ templ radioControl(f Field) {
 
 // tagsControl renders tagsinput with f.ControlID() as the text input's
 // id (the label's target and the focused control), the comma-split Value
-// as chips and the Options' labels as suggestions. HasError puts
-// aria-invalid on the text input; the attributes add aria-describedby
-// (merged by the widget with its own hint id), aria-required and the
-// Validate wiring, never `required` (the text input is not what submits).
+// as chips, the Options' labels as suggestions and MaxTags as the cap.
+// HasError puts aria-invalid on the text input; the attributes add
+// aria-describedby (merged by the widget with its own hint id),
+// aria-required and the Validate wiring, never `required` (the text input
+// is not what submits).
 templ tagsControl(f Field) {
 	@tagsinput.TagsInput(tagsinput.Props{
 		ID:          f.ControlID(),
@@ -225,6 +226,7 @@ templ tagsControl(f Field) {
 		Disabled:    f.Disabled,
 		HasError:    f.Error != "",
 		Suggestions: f.suggestions(),
+		MaxTags:     f.MaxTags,
 		Attributes:  f.widgetAttrs(false, true),
 	})
 }

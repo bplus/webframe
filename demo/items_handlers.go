@@ -75,6 +75,11 @@ var itemStatusOptions = []formfield.Option{
 	{Label: "Draft", Value: "draft"},
 }
 
+// maxItemTags caps an item's tags: Field.MaxTags on the form's tags field
+// (the widget stops at the cap) and the validator (a handcrafted request
+// cannot exceed it).
+const maxItemTags = 5
+
 // itemTagSuggestions are the tags the form's tags field offers as
 // completions (TypeTags renders Options' labels as a datalist); any other
 // tag can still be typed.
@@ -462,7 +467,7 @@ func itemFormProps(it *Item) formpage.Props {
 				{Name: "type", Label: "Type", Type: formfield.TypeSelect, Required: true, Options: itemTypeOptions, Placeholder: "Choose a type"},
 				{Name: "status", Label: "Status", Type: formfield.TypeRadio, Options: itemStatusOptions, Value: "draft"},
 				{Name: "remixable", Label: "Remixable", Type: formfield.TypeToggle, Help: "Let other builders start from this item."},
-				{Name: "tags", Label: "Tags", Type: formfield.TypeTags, Options: itemTagSuggestions, Placeholder: "Add a tag", Help: "Enter or a comma adds a tag; Backspace removes the last one."},
+				{Name: "tags", Label: "Tags", Type: formfield.TypeTags, Options: itemTagSuggestions, MaxTags: maxItemTags, Placeholder: "Add a tag", Help: "Enter or a comma adds a tag, up to five; Backspace removes the last one."},
 			}},
 			{Title: "Release", Fields: []formfield.Field{
 				{Name: "released", Label: "Released", Type: formfield.TypeDate, MaxValue: datetimepicker.Format(datetimepicker.KindDate, time.Now()), Help: "The day the item shipped; not in the future.", Width: formfield.WidthHalf},
@@ -636,6 +641,10 @@ func validateItemField(name, value, exceptID string) string {
 	case "status":
 		if value != "published" && value != "draft" {
 			return "Choose Published or Draft"
+		}
+	case "tags":
+		if len(parseTags(value)) > maxItemTags {
+			return fmt.Sprintf("At most %d tags", maxItemTags)
 		}
 	case "rating":
 		if _, err := parseRating(value); err != nil {

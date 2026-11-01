@@ -515,3 +515,15 @@ func TestField_WidgetsDisabled(t *testing.T) {
 		}
 	}
 }
+
+// TestField_TagsMaxTags: MaxTags reaches tagsinput as its cap (data-max on
+// the root and the "n/max" count); zero means no cap (data-max="0").
+func TestField_TagsMaxTags(t *testing.T) {
+	out := render(t, FormField(Field{Name: "tags", Label: "Tags", Type: TypeTags, Value: "a,b", MaxTags: 5}))
+	mustContain(t, out, `id="field-tags-root"`, `data-max="5"`, "2/5")
+	out = render(t, FormField(Field{Name: "tags", Label: "Tags", Type: TypeTags, Value: "a,b"}))
+	mustContain(t, out, `data-max="0"`)
+	if strings.Contains(out, "2/0") {
+		t.Errorf("count shown without a cap: %s", out)
+	}
+}

@@ -2430,7 +2430,7 @@ templ ratingSection() {
 templ proseSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "prose", Title: "Prose", Description: "The typography specimen is one prose.HTML value with no class on any element: at 390px the table scrolls inside its own box and the long URL in the last paragraph wraps instead of widening the page; the Text sample below it is escaped, so its <script> tag reads as text and its blank line makes a second paragraph."}) {
 		@panel.Panel(panel.Props{ID: "prose-html", Level: 4, Title: "prose.HTML: trusted markup", Subtitle: "Headings, lists, a table, a quote, inline and block code, an image and a rule, styled by the scope alone."}) {
-			@prose.Prose(prose.Props{ID: "prose-specimen", HTML: prose.HTML(proseSpecimen)})
+			@prose.Prose(prose.Props{ID: "prose-specimen", HTML: proseSpecimen})
 		}
 		@panel.Panel(panel.Props{ID: "prose-text", Level: 4, Title: "prose.Text: escaped plain text", Subtitle: "What an item's notes go through: blank lines separate paragraphs, a single newline is a line break, and markup is text."}) {
 			@prose.Prose(prose.Props{ID: "prose-text-sample", Size: prose.SizeSm, Text: proseTextSample})

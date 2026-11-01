@@ -96,66 +96,68 @@ func TestPages_SettingsForm(t *testing.T) {
 	wantNone(t, body, "Please fix", `aria-invalid="true"`)
 	// The digest toggle is on, mentions off.
 	inOrder(t, body, `role="switch" checked id="field-digest"`, `role="switch" id="field-mentions"`)
-	// The Environment editor and the Danger zone come after the form and
-	// before the save bar, which is the page's last child so it stays stuck
-	// across both. Two forms: the settings form and the editor's own.
-	inOrder(t, body, "</form>", `id="environment"`, `id="danger-zone"`, "wf-settings-bar")
-	if n := strings.Count(body, "</form>"); n != 2 {
-		t.Errorf("%d forms, want 2 (the settings form and the Environment editor's)", n)
+	// The Environment group is the form's last section (its editor is the
+	// group's Content, posted by the Save button); the Danger zone comes
+	// after the form and before the save bar, which is the page's last child
+	// so it stays stuck across both. One form.
+	inOrder(t, body, `id="settings"`, `id="notifications"`, `id="environment"`, `name="env.key"`, "</form>", `id="danger-zone"`, "wf-settings-bar")
+	if n := strings.Count(body, "</form>"); n != 1 {
+		t.Errorf("%d forms, want 1 (the Environment editor is inside the settings form)", n)
 	}
 }
 
 // TestPages_SettingsBatch5: the quiet-hours time field round-trips through
-// the settings form, and the Environment editor (its own form, outside the
-// settings form) saves its rows through /settings/environment.
+// the settings form, and the Environment editor (the Environment group's
+// Content, inside the settings form) saves its rows with the fields through
+// the one Save button (POST /settings).
 func TestPages_SettingsBatch5(t *testing.T) {
 	h := pagesHandler(t)
 	body := do(h, "GET", "/settings", nil, nil).Body.String()
 	wantAll(t, body,
 		// The time field with the stored value.
 		"Quiet hours start", `type="time"`, `name="quiet_start"`, `value="22:00"`,
-		// The Environment editor: its form, the two rows as env.key/env.value
-		// pairs, the cap, the add button.
-		`id="environment"`, "Environment", `id="environment-form"`, `action="/settings/environment"`, `hx-post="/settings/environment"`,
-		`name="env.key"`, `name="env.value"`, `value="REGION"`, `value="eu-west"`, `value="LOG_LEVEL"`, `value="info"`, `data-max="8"`, "Add variable", "Save environment",
+		// The Environment editor inside the form: the two rows as
+		// env.key/env.value pairs, the cap, the add button.
+		`id="environment"`, "Environment",
+		`name="env.key"`, `name="env.value"`, `value="REGION"`, `value="eu-west"`, `value="LOG_LEVEL"`, `value="info"`, `data-max="8"`, "Add variable",
 	)
-	inOrder(t, body, `id="settings"`, "</form>", `id="environment-form"`, "</form>", `id="danger-zone"`)
-	// A bad time is an error; the display name rule still applies.
-	rec := do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"ten pm"}}, hx("settings"))
+	// No form or save button of its own, no environment route.
+	wantNone(t, body, `id="environment-form"`, "/settings/environment", "Save environment")
+	inOrder(t, body, `id="settings"`, `id="environment"`, `name="env.key"`, "</form>", `id="danger-zone"`)
+	// A bad time is an error; the display name rule still applies; the
+	// submitted rows come back in the re-rendered form and nothing is stored.
+	rec := do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"ten pm"}, "env.key": {"TYPED"}, "env.value": {"kept"}}, hx("settings"))
 	if rec.Code != 422 {
 		t.Fatalf("POST /settings with a bad time = %d, want 422", rec.Code)
 	}
-	wantAll(t, rec.Body.String(), "Enter the time as HH:MM", `value="ten pm"`)
-	// A good time saves.
-	rec = do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"23:30"}}, nil)
-	if rec.Code != http.StatusSeeOther {
-		t.Fatalf("POST /settings = %d, want 303", rec.Code)
+	wantAll(t, rec.Body.String(), "Enter the time as HH:MM", `value="ten pm"`, `value="TYPED"`, `value="kept"`)
+	if rows := Settings.Env(); len(rows) != 2 || rows[0].Key != "REGION" {
+		t.Errorf("env rows changed on an invalid submit: %+v", rows)
+	}
+	// A good time saves, and the rows with it: they zip in order, a blank
+	// key is dropped, and an htmx submit goes back to the page (HX-Redirect),
+	// which shows the saved time and rows.
+	rec = do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"23:30"}, "env.key": {"REGION", "  ", "DEBUG"}, "env.value": {"us-east", "ignored", "1"}}, hx(""))
+	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/settings" || rec.Body.Len() != 0 {
+		t.Fatalf("htmx POST /settings = %d HX-Redirect %q body %q", rec.Code, rec.Header().Get("HX-Redirect"), rec.Body.String())
 	}
 	if got := Settings.Values()["quiet_start"]; got != "23:30" {
 		t.Errorf("quiet_start = %q, want 23:30", got)
-	}
-	wantAll(t, do(h, "GET", "/settings", nil, nil).Body.String(), `value="23:30"`)
-	// The editor: rows zip in order, a blank key is dropped, the browser
-	// goes back to the page, which shows the saved rows.
-	rec = do(h, "POST", "/settings/environment", url.Values{"env.key": {"REGION", "  ", "DEBUG"}, "env.value": {"us-east", "ignored", "1"}}, hx(""))
-	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/settings" || rec.Body.Len() != 0 {
-		t.Fatalf("htmx POST /settings/environment = %d HX-Redirect %q body %q", rec.Code, rec.Header().Get("HX-Redirect"), rec.Body.String())
 	}
 	if rows := Settings.Env(); len(rows) != 2 || rows[0].Key != "REGION" || rows[0].Value != "us-east" || rows[1].Key != "DEBUG" || rows[1].Value != "1" {
 		t.Errorf("env rows = %+v", rows)
 	}
 	body = do(h, "GET", "/settings", nil, nil).Body.String()
-	wantAll(t, body, `value="us-east"`, `value="DEBUG"`)
+	wantAll(t, body, `value="23:30"`, `value="us-east"`, `value="DEBUG"`)
 	wantNone(t, body, `value="LOG_LEVEL"`, "Environment saved")
 	// A plain POST: 303 back to the page; more than eight rows are cut.
-	keys, values := url.Values{}, []string{}
+	form := url.Values{"display_name": {"Morgan"}, "quiet_start": {"23:30"}}
 	for i := 0; i < 10; i++ {
-		keys.Add("env.key", "K"+strconv.Itoa(i))
-		values = append(values, "v")
+		form.Add("env.key", "K"+strconv.Itoa(i))
+		form.Add("env.value", "v")
 	}
-	keys["env.value"] = values
-	if rec = do(h, "POST", "/settings/environment", keys, nil); rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings" {
-		t.Errorf("plain POST /settings/environment = %d Location %q", rec.Code, rec.Header().Get("Location"))
+	if rec = do(h, "POST", "/settings", form, nil); rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings" {
+		t.Errorf("plain POST /settings = %d Location %q", rec.Code, rec.Header().Get("Location"))
 	}
 	if rows := Settings.Env(); len(rows) != maxEnvRows {
 		t.Errorf("%d env rows, want %d", len(rows), maxEnvRows)
