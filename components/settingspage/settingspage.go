@@ -78,7 +78,7 @@ type Props struct {
 	// HxPost submits over htmx: the form gets hx-post=Action,
 	// hx-target="#"+ID and hx-swap="outerHTML", so an error re-render
 	// (Respond on a plain htmx request targeting the form) swaps the
-	// whole form, save bar included, in place. Action and Method are
+	// whole form in place (the save bar lives outside it). Action and Method are
 	// still emitted, so the form works without JS.
 	HxPost bool
 	Groups []Group

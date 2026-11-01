@@ -150,6 +150,7 @@ func TestLinkAttrs(t *testing.T) {
 	attrs := LinkAttrs(Props{ID: "mail"}, "/mail/42")
 	want := map[string]string{
 		"data-wf-splitpane-link": "true",
+		"hx-boost":               "false",
 		"hx-target":              "#mail-detail",
 		"hx-push-url":            "true",
 	}

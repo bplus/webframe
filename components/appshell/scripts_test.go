@@ -84,3 +84,16 @@ func TestShell_LiveElementsSwallowErrors(t *testing.T) {
 		t.Errorf("sidebar badge span lacks data-wf-swallow-errors: %s", badgeTag)
 	}
 }
+
+func TestScripts_SplitPaneAfterErrorGuard(t *testing.T) {
+	got := renderScripts(t)
+	errors := strings.Index(got, "/static/js/htmx-errors.js")
+	split := strings.Index(got, "/static/js/splitpane.js")
+	tabs := strings.Index(got, "/static/js/tabs.min.js")
+	if errors < 0 || split < 0 || tabs < 0 || !(errors < split && split < tabs) {
+		t.Errorf("want htmx-errors.js < splitpane.js < tabs.min.js, got %d, %d, %d", errors, split, tabs)
+	}
+	if strings.Count(got, "/static/js/splitpane.js") != 1 {
+		t.Errorf("splitpane.js loaded %d times", strings.Count(got, "/static/js/splitpane.js"))
+	}
+}

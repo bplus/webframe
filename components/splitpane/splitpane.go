@@ -29,10 +29,10 @@
 //
 // or, through action, action.Action{Href: "/mail/42", Label: subject,
 // Attributes: splitpane.LinkAttrs(p, "/mail/42")}. LinkAttrs holds
-// hx-get=href, hx-target=DetailTarget(p), hx-push-url="true" (the address
-// bar follows the pick) and
-// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]"; href itself
-// is the caller's (see LinkAttrs for why).
+// data-wf-splitpane-link, hx-target=DetailTarget(p), hx-push-url="true"
+// (the address bar follows the pick) and hx-boost="false"; no hx-get:
+// static/js/splitpane.js decides the click (below). href itself is the
+// caller's (see LinkAttrs for why).
 //
 // # Why a script decides, not a trigger filter
 //
@@ -70,6 +70,7 @@ package splitpane
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/a-h/templ"
 
@@ -177,7 +178,18 @@ func LinkAttrs(p Props, href string) templ.Attributes {
 		"data-wf-splitpane-link": "true",
 		"hx-target":              DetailTarget(p),
 		"hx-push-url":            "true",
+		// An app with hx-boost on an ancestor must not boost these: a
+		// boosted GET is a full-document render that would land inside the
+		// detail region. splitpane.js owns the click.
+		"hx-boost": "false",
 	}
+}
+
+// listItemID is the stable id of the i-th List link (ID-list-i): the oob
+// copy a detail response carries keeps the ids, so htmx restores focus to
+// the picked link after the swap.
+func (p Props) listItemID(i int) string {
+	return p.listID() + "-" + strconv.Itoa(i)
 }
 
 // ListItem is one entry of List: Href is the item's detail route (the
@@ -224,6 +236,6 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	// The detail part also carries the list out of band, so the selected
 	// item in the list follows the pick (the caller built p.List for this
 	// URL, with Selected on the shown item).
-	parts := map[string]templ.Component{p.detailID(): detailPart(p)}
+	parts := map[string]templ.Component{p.detailID(): detailPart(p, title)}
 	return app.RenderParts(w, r, title, SplitPane(p), parts)
 }

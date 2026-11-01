@@ -1,6 +1,7 @@
 package splitpane
 
 import (
+	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/icon"
@@ -81,15 +82,21 @@ templ listColumn(p Props) {
 	</div>
 }
 
-// detailPart is what a detail-only response carries: the detail region's
-// content, then the list column out of band so its selected state follows.
-templ detailPart(p Props) {
+// detailPart is what a detail-only response carries: a <title> (htmx
+// applies it, so the tab and the history entry follow the pick), the
+// detail region's content, then the list column out of band (when List is
+// set) so its selected state follows. The list links keep stable ids, so
+// htmx gives focus back to the picked link after the swap.
+templ detailPart(p Props, title string) {
+	if t := appshell.PageTitle(ctx, title); t != "" {
+		<title>{ t }</title>
+	}
 	@detailContent(p)
-	<div id={ p.listColID() } hx-swap-oob="true">
-		if p.List != nil {
+	if p.List != nil {
+		<div id={ p.listColID() } hx-swap-oob="true">
 			@p.List
-		}
-	</div>
+		</div>
+	}
 }
 
 // detailContent is the detail region's content: nothing when Detail is
@@ -133,9 +140,10 @@ func backAction(p Props) action.Action {
 templ List(p Props, items []ListItem) {
 	<nav aria-label="Items">
 		<ul id={ p.listID() } class="flex flex-col gap-0.5">
-			for _, it := range items {
+			for i, it := range items {
 				<li>
 					<a
+						id={ p.listItemID(i) }
 						href={ templ.URL(it.Href) }
 						{ LinkAttrs(p, it.Href)... }
 						class={ listItemClass(it) }

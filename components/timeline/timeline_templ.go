@@ -590,8 +590,7 @@ func Timeline(props ...Props) templ.Component {
 	})
 }
 
-// The class strings live in this .templ file (not timeline.go) because
-// input.css pins Tailwind's sources to components/**/*.templ.
+// The tone class strings live here with the markup that uses them.
 // Tone returns the background class for the dot of variant v, from the
 // tokens the badge of the same variant uses: destructive, success, warning
 // and info are solid dots in their token; secondary is a muted dot; outline

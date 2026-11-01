@@ -26,6 +26,7 @@
     var target = a.getAttribute('hx-target');
     if (!target || !document.querySelector(target)) return;
     evt.preventDefault();
-    window.htmx.ajax('GET', a.getAttribute('href'), { source: a, target: target, swap: 'innerHTML' });
+    var p = window.htmx.ajax('GET', a.getAttribute('href'), { source: a, target: target, swap: 'innerHTML' });
+    if (p && p.catch) p.catch(function () { /* htmx already reported the error */ });
   });
 })();

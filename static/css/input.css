@@ -6,6 +6,7 @@
    missing from output.css. */
 @source "../../components/**/*.go";
 @source not "../../components/**/*_test.go";
+@source not "../../components/icon/*.go"; /* icon name tables, not classes */
 @source "../../demo/**/*.templ";
 
 /* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */

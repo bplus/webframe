@@ -267,8 +267,9 @@ func TestPages_BrowseItem(t *testing.T) {
 		t.Fatalf("htmx GET /browse/3 = %d", rec.Code)
 	}
 	body = rec.Body.String()
-	if !strings.HasPrefix(strings.TrimSpace(body), `<div class="md:hidden mb-4">`) {
-		t.Errorf("detail part does not start with the back link:\n%s", body[:min(200, len(body))])
+	// A <title> first (htmx applies it after the swap), then the back link.
+	if !strings.HasPrefix(strings.TrimSpace(body), `<title>Ring of Hoarded Light — Browse — Webframe</title><div class="md:hidden mb-4">`) {
+		t.Errorf("detail part does not start with the title then the back link:\n%s", body[:min(200, len(body))])
 	}
 	// The detail content, then the list out of band (the selected item
 	// follows the pick on md and up); never the detail region or the shell.

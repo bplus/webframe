@@ -27,8 +27,8 @@
 // needs no change for that width, measured against its markup: its
 // title/actions row is flex-col below md with the badge and the two
 // buttons in a flex-wrap row (about 270px together); its search and three
-// selects are a one-column grid below md (the md:grid-cols-[...] fixed
-// 180px/140px tracks apply from md up only), so each control takes the
+// selects are a one-column grid below md (its fixed 180px/140px tracks
+// apply from md up only), so each control takes the
 // full width; the table sits in its own overflow-auto box of Props.Stream.
 // Height pixels, so its seven columns scroll horizontally inside the panel
 // while the page itself never overflows (the same arrangement datatable

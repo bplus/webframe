@@ -51,7 +51,9 @@ type Props struct {
 	Attributes templ.Attributes
 	Items      []Item
 	// Location, when set, is the zone every item is shown and grouped in.
-	// nil uses each item's own location (time.Time.Location).
+	// nil uses each item's own location (time.Time.Location); a feed that
+	// mixes locations (UTC rows beside time.Now()) should set it, or the
+	// same calendar day can appear as two groups.
 	Location *time.Location
 	// OldestFirst orders items (and day groups) ascending. The zero value
 	// shows the newest first.
