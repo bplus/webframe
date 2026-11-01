@@ -3,6 +3,7 @@ package appshell
 import (
 	"context"
 	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/confirmdialog"
 )
 
@@ -16,6 +17,10 @@ type DocProps struct {
 	Lang string
 	// Head, when non-nil, renders extra content at the end of <head>.
 	Head templ.Component
+	// Palette, when non-nil, renders commandpalette.Palette once at the end
+	// of <body>, before #toast-container. (*App).RenderParts fills it from
+	// App.Palette; RenderBare leaves it nil.
+	Palette *commandpalette.Props
 }
 
 // htmxConfig makes htmx swap 4xx and 5xx responses like 2xx ones (htmx 2
@@ -60,7 +65,9 @@ func docLang(p DocProps) string {
 // (charset, viewport, title, stylesheet, flash-free theme init reading
 // localStorage "wf-theme" and defaulting to light, blocking htmx, deferred
 // alpine, optional p.Head), then <body class="wf-theme antialiased"> holding
-// the children, the #toast-container, the page's one confirm dialog
+// the children, the command palette when p.Palette is set (closed and
+// zero-height until mod+k or the shell's trigger opens it), the
+// #toast-container, the page's one confirm dialog
 // (confirmdialog.Host, id "wf-confirm", closed and zero-height until
 // confirm.js opens it for an hx-confirm request), the Scripts bundle, and an
 // inline htmx:afterSwap listener that calls Alpine.initTree on swapped-in
@@ -98,6 +105,9 @@ templ Document(p DocProps) {
 		</head>
 		<body class="wf-theme antialiased">
 			{ children... }
+			if p.Palette != nil {
+				@commandpalette.Palette(*p.Palette)
+			}
 			<div id="toast-container" class="wf-toast-container"></div>
 			@confirmdialog.Host()
 			@Scripts()

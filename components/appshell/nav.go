@@ -6,6 +6,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/commandpalette"
 )
 
 // Layout selects how Shell arranges navigation.
@@ -91,9 +92,13 @@ type Props struct {
 	CurrentPath string
 	// MaxVisible is how many topbar items show before the "More"
 	// disclosure; defaults to 4.
-	MaxVisible  int
-	User        *User
-	Right       templ.Component
+	MaxVisible int
+	User       *User
+	Right      templ.Component
+	// Palette, when non-nil, puts commandpalette.Trigger first in the
+	// right controls (topbar) or the sidebar footer. The palette itself is
+	// rendered by Document from DocProps.Palette, not by Shell.
+	Palette     *commandpalette.Props
 	ThemeToggle bool
 	LiveDot     *LiveDot
 	Width       Width
