@@ -1,24 +1,54 @@
 package pages
 
-import "github.com/bplus/webframe/components/descriptionlist"
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/descriptionlist"
+	"github.com/bplus/webframe/components/diffview"
+	"github.com/bplus/webframe/components/jsonviewer"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/prose"
+)
 
 // The Items app's pages are declared in Go (demo/items_handlers.go) as
-// listpage, detailpage and formpage Props; only the two tab fragments
-// below need a template, and both are component calls or allowed text.
+// listpage, detailpage and formpage Props; only the two tab fragments and
+// the tag badges below need a template, and all are component calls or
+// allowed text.
 
 // ItemNotes is the Notes tab panel of an item's detail page: the item's
-// notes as one paragraph, or a placeholder sentence when it has none.
+// notes through prose.Text (plain text, escaped; a blank line starts a new
+// paragraph), or a placeholder sentence when it has none.
 templ ItemNotes(notes string) {
 	if notes != "" {
-		<p>{ notes }</p>
+		@prose.Prose(prose.Props{ID: "item-notes", Text: notes})
 	} else {
 		<p>No notes yet.</p>
 	}
 }
 
+// TagBadges renders an item's tags as a wrapping row of secondary badges
+// (the detail page's Tags row).
+templ TagBadges(tags []string) {
+	@layout.Inline(layout.InlineProps{Gap: layout.GapS, Wrap: true}) {
+		for _, t := range tags {
+			@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+				{ t }
+			}
+		}
+	}
+}
+
 // ItemHistory is the History tab panel, loaded lazily (GET
 // /items/{id}/history): a dense description list whose labels are dates
-// and whose values are what happened.
-templ ItemHistory(lines []descriptionlist.Item) {
-	@descriptionlist.DescriptionList(descriptionlist.Props{Items: lines, Dense: true})
+// and whose values are what happened, the notes diffed against their
+// previous version, and the item's record as a collapsible JSON tree.
+templ ItemHistory(lines []descriptionlist.Item, diff diffview.Props, record jsonviewer.Props) {
+	@layout.Stack(layout.StackProps{Gap: layout.GapL}) {
+		@descriptionlist.DescriptionList(descriptionlist.Props{Items: lines, Dense: true})
+		@layout.Section(layout.SectionProps{Level: 3, ID: "notes-changes", Title: "Notes changes", Description: "The notes against their previous version; a status line is part of the text."}) {
+			@diffview.DiffView(diff)
+		}
+		@layout.Section(layout.SectionProps{Level: 3, ID: "item-record", Title: "Record", Description: "The stored item as JSON; open and close a node, or copy its path."}) {
+			@jsonviewer.JSONViewer(record)
+		}
+	}
 }

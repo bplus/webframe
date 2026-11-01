@@ -8,13 +8,19 @@ import (
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/datetimepicker"
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/keyvalueeditor"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/settingspage"
 	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/demo/pages"
 )
+
+// maxEnvRows caps the Environment editor (MaxRows on the widget, and the
+// handler truncates a longer submit).
+const maxEnvRows = 8
 
 // settingsFormID is the settingspage ID (the <form> id and htmx swap
 // target).
@@ -22,20 +28,27 @@ const settingsFormID = "settings"
 
 // Account is the demo's one account, the record the settings page edits.
 // Values are the form's field values by name; an unchecked toggle is "".
+// Env is the Environment editor's rows, saved by its own form.
 type Account struct {
 	mu     sync.RWMutex
 	values map[string]string
+	env    []keyvalueeditor.Row
 }
 
 // NewAccount returns the demo account with its seed values: a display
-// name and email, the weekly digest on, mention alerts off.
+// name and email, the weekly digest on, mention alerts off, quiet hours
+// from ten in the evening, and two environment rows.
 func NewAccount() *Account {
-	return &Account{values: map[string]string{
-		"display_name": "Morgan",
-		"email":        "morgan@example.com",
-		"digest":       "on",
-		"mentions":     "",
-	}}
+	return &Account{
+		values: map[string]string{
+			"display_name": "Morgan",
+			"email":        "morgan@example.com",
+			"digest":       "on",
+			"mentions":     "",
+			"quiet_start":  "22:00",
+		},
+		env: []keyvalueeditor.Row{{Key: "REGION", Value: "eu-west"}, {Key: "LOG_LEVEL", Value: "info"}},
+	}
 }
 
 // Settings is the demo server's account. Tests replace it with a fresh one.
@@ -62,11 +75,28 @@ func (a *Account) Save(vals map[string]string) {
 	}
 }
 
+// Env returns a copy of the environment rows.
+func (a *Account) Env() []keyvalueeditor.Row {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return append([]keyvalueeditor.Row(nil), a.env...)
+}
+
+// SaveEnv replaces the environment rows.
+func (a *Account) SaveEnv(rows []keyvalueeditor.Row) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.env = append([]keyvalueeditor.Row(nil), rows...)
+}
+
 // settingsProps declares the settings page: Profile (display name, email),
-// Notifications (two toggles), the Danger zone as After (a section with
-// one destructive action, outside the form) and the save bar with Cancel
-// back to the dashboard.
-func settingsProps(values map[string]string) settingspage.Props {
+// Notifications (two toggles and the quiet-hours start time), then After:
+// the Environment editor and the Danger zone, both outside the form. The
+// Environment editor is not a formfield type and a settingspage.Group holds
+// only Fields, so it cannot sit inside the settings form; it is its own
+// form.Form (pages.EnvironmentSection) posting to /settings/environment.
+// The save bar closes the page with Cancel back to the dashboard.
+func settingsProps(values map[string]string, env []keyvalueeditor.Row) settingspage.Props {
 	return settingspage.Props{
 		ID:     settingsFormID,
 		Header: pageheader.Props{Title: "Settings", Subtitle: "Your profile and how the demo reaches you."},
@@ -80,11 +110,26 @@ func settingsProps(values map[string]string) settingspage.Props {
 			{ID: "notifications", Title: "Notifications", Description: "What the demo would send if it sent anything.", Fields: []formfield.Field{
 				{Name: "digest", Label: "Weekly digest", Type: formfield.TypeToggle, Help: "One email a week with what changed in your packs."},
 				{Name: "mentions", Label: "Mentions", Type: formfield.TypeToggle, Help: "An email when another builder names one of your items."},
+				{Name: "quiet_start", Label: "Quiet hours start", Type: formfield.TypeTime, Help: "No email after this time until eight in the morning.", Width: formfield.WidthHalf},
 			}},
 		},
 		Values: values,
-		After:  pages.DangerZone(deleteAccountAction()),
+		After:  pages.SettingsAfter(environmentProps(env), deleteAccountAction()),
 		Cancel: &action.Action{Label: "Cancel", Href: "/dashboard"},
+	}
+}
+
+// environmentProps declares the Environment editor: rows named env (so the
+// handler reads keyvalueeditor.Parse(r.Form, "env")), capped at maxEnvRows.
+func environmentProps(rows []keyvalueeditor.Row) keyvalueeditor.Props {
+	return keyvalueeditor.Props{
+		ID:               "env",
+		Name:             "env",
+		Rows:             rows,
+		KeyPlaceholder:   "NAME",
+		ValuePlaceholder: "value",
+		MaxRows:          maxEnvRows,
+		AddLabel:         "Add variable",
 	}
 }
 
@@ -129,13 +174,17 @@ func submittedSettings(r *http.Request, p settingspage.Props) map[string]string 
 }
 
 // validateSettings returns the errors by field name: the display name must
-// not be blank. Other fields have no rules.
+// not be blank; the quiet-hours start, when given, must be a time the
+// native control writes ("22:00"). Other fields have no rules.
 //
 // @pure
 func validateSettings(vals map[string]string) map[string]string {
 	errs := make(map[string]string)
 	if strings.TrimSpace(vals["display_name"]) == "" {
 		errs["display_name"] = "Display name is required"
+	}
+	if _, err := datetimepicker.Parse(datetimepicker.KindTime, vals["quiet_start"], nil); err != nil {
+		errs["quiet_start"] = "Enter the time as HH:MM"
 	}
 	return errs
 }
@@ -146,7 +195,7 @@ func validateSettings(vals map[string]string) map[string]string {
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleSettings(w http.ResponseWriter, r *http.Request) {
-	if err := settingspage.Respond(w, r, "Settings", settingsProps(Settings.Values())); err != nil {
+	if err := settingspage.Respond(w, r, "Settings", settingsProps(Settings.Values(), Settings.Env())); err != nil {
 		log.Printf("demo: render settings: %v", err)
 	}
 }
@@ -164,7 +213,7 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	p := settingsProps(nil)
+	p := settingsProps(nil, Settings.Env())
 	vals := submittedSettings(r, p)
 	if errs := validateSettings(vals); len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
@@ -175,6 +224,28 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 	}
 	vals["display_name"] = strings.TrimSpace(vals["display_name"])
 	Settings.Save(vals)
+	redirectTo(w, r, "/settings")
+}
+
+// HandleEnvironmentSave handles the Environment editor's submit (POST
+// /settings/environment): keyvalueeditor.Parse zips the env.key/env.value
+// fields into rows and drops the blank-keyed ones, the first maxEnvRows
+// are saved, and the browser goes back to /settings (HX-Redirect for an
+// htmx submit, else 303), where the editor shows the saved rows. There is
+// nothing to reject, so there is no error re-render and no message.
+//
+// @boundary HTTP
+// @side-effects mutates Settings; writes a redirect
+func HandleEnvironmentSave(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	rows := keyvalueeditor.Parse(r.Form, "env")
+	if len(rows) > maxEnvRows {
+		rows = rows[:maxEnvRows]
+	}
+	Settings.SaveEnv(rows)
 	redirectTo(w, r, "/settings")
 }
 
