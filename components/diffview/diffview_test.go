@@ -207,9 +207,22 @@ func TestSideBySidePairing(t *testing.T) {
 	if !strings.Contains(html, `data-mode="side-by-side"`) {
 		t.Errorf("mode attribute")
 	}
-	// Both renderings are present: inline hidden from md up, side-by-side shown from md up.
-	if !strings.Contains(html, `class="overflow-x-auto md:hidden"`) || !strings.Contains(html, `class="hidden overflow-x-auto md:block"`) {
-		t.Errorf("expected the two breakpoint-gated renderings in:\n%s", html)
+	// Both renderings are present: inline hidden from md up, side-by-side
+	// shown from md up. TwMerge emits classes in any order, so look at the
+	// wrapper tags one class at a time.
+	inlineWrap := html[strings.LastIndex(html[:strings.Index(html, `data-layout="inline"`)], "<div"):]
+	inlineWrap = inlineWrap[:strings.Index(inlineWrap, ">")]
+	sideWrap := html[strings.LastIndex(html[:strings.Index(html, `data-layout="side-by-side"`)], "<div"):]
+	sideWrap = sideWrap[:strings.Index(sideWrap, ">")]
+	for _, c := range []string{"overflow-x-auto", "md:hidden"} {
+		if !strings.Contains(inlineWrap, c) {
+			t.Errorf("inline wrapper lacks %q: %s", c, inlineWrap)
+		}
+	}
+	for _, c := range []string{"hidden", "overflow-x-auto", "md:block"} {
+		if !strings.Contains(sideWrap, c) {
+			t.Errorf("side-by-side wrapper lacks %q: %s", c, sideWrap)
+		}
 	}
 	side := html[strings.Index(html, `data-layout="side-by-side"`):]
 	rs := rows(side)
