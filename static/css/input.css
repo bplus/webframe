@@ -698,12 +698,16 @@
     border-top: 1px solid var(--color-border);
     min-height: 120px;
   }
+}
 
-  /* dashboardgrid.Grid/.Slot compute grid-template-columns
-     and grid-column:span as inline styles from a runtime Cols/ColSpan
-     value, so no Tailwind responsive utility class can target them --
-     !important is the only way to collapse a dashboard grid to one
-     column under 900px. */
+/* dashboardgrid.Grid/.Slot compute grid-template-columns
+   and grid-column:span as inline styles from a runtime Cols/ColSpan
+   value, so no Tailwind responsive utility class can target them --
+   !important is the only way to collapse a dashboard grid to one
+   column. The breakpoint is Tailwind's md (48rem = 768px at the default
+   root font size), the same point layout.TwoColumn, cardgrid and the
+   rest collapse at; until batch 5 it was 900px. */
+@media (max-width: 47.99rem) {
   .wf-dashgrid {
     grid-template-columns: 1fr !important;
   }
