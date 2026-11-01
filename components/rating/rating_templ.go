@@ -253,7 +253,7 @@ func radios(p Props) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"wf-rating inline-flex flex-wrap items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"wf-rating inline-flex flex-wrap items-center rounded-md [fieldset[aria-invalid=true]_&]:ring-2 [fieldset[aria-invalid=true]_&]:ring-destructive/40\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -150,3 +150,12 @@ func TestControlID(t *testing.T) {
 		t.Errorf("neither: got %q", got)
 	}
 }
+
+func TestRating_ErrorVisual(t *testing.T) {
+	out := render(t, Rating(Props{Name: "r", Max: 3, Attributes: templ.Attributes{"aria-invalid": "true"}}))
+	for _, want := range []string{`aria-invalid="true"`, "[fieldset[aria-invalid=true]_&]:ring-2", "ring-destructive/40"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}

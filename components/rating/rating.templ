@@ -58,7 +58,7 @@ templ radios(p Props) {
 		} else {
 			<legend class="sr-only">Rating</legend>
 		}
-		<div class="wf-rating inline-flex flex-wrap items-center">
+		<div class="wf-rating inline-flex flex-wrap items-center rounded-md [fieldset[aria-invalid=true]_&]:ring-2 [fieldset[aria-invalid=true]_&]:ring-destructive/40">
 			for i := 1; i <= p.max(); i++ {
 				<input
 					type="radio"
