@@ -17,7 +17,6 @@ func RegisterPageRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /dashboard", side(HandleDashboard))
 	mux.Handle("GET /settings", side(HandleSettings))
 	mux.Handle("POST /settings", side(HandleSettingsSave))
-	mux.Handle("POST /settings/environment", side(HandleEnvironmentSave))
 	mux.Handle("POST /settings/delete-account", side(HandleDeleteAccount))
 	mux.Handle("GET /browse", side(HandleBrowse))
 	mux.Handle("GET /browse/{id}", side(HandleBrowseItem))

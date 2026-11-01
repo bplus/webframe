@@ -778,10 +778,11 @@ func radioControl(f Field) templ.Component {
 
 // tagsControl renders tagsinput with f.ControlID() as the text input's
 // id (the label's target and the focused control), the comma-split Value
-// as chips and the Options' labels as suggestions. HasError puts
-// aria-invalid on the text input; the attributes add aria-describedby
-// (merged by the widget with its own hint id), aria-required and the
-// Validate wiring, never `required` (the text input is not what submits).
+// as chips, the Options' labels as suggestions and MaxTags as the cap.
+// HasError puts aria-invalid on the text input; the attributes add
+// aria-describedby (merged by the widget with its own hint id),
+// aria-required and the Validate wiring, never `required` (the text input
+// is not what submits).
 func tagsControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -811,6 +812,7 @@ func tagsControl(f Field) templ.Component {
 			Disabled:    f.Disabled,
 			HasError:    f.Error != "",
 			Suggestions: f.suggestions(),
+			MaxTags:     f.MaxTags,
 			Attributes:  f.widgetAttrs(false, true),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -979,7 +981,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(f.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 289, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -992,7 +994,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 289, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -1005,7 +1007,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(f.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 289, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -1059,7 +1061,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 305, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 307, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -1085,7 +1087,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 				var templ_7745c5c3_Var38 string
 				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 311, Col: 12}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 313, Col: 12}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 				if templ_7745c5c3_Err != nil {
@@ -1108,7 +1110,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(success)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 314, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 316, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -1168,7 +1170,7 @@ func Fieldset(p FieldsetProps) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 325, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 327, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {
@@ -1212,7 +1214,7 @@ func Fieldset(p FieldsetProps) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(p.Legend)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 331, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 333, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {

@@ -465,7 +465,7 @@ func TestItems_Batch5Form(t *testing.T) {
 	wantAll(t, body,
 		`enctype="multipart/form-data"`,
 		// Tags: the hidden field, the suggestion datalist, the text input.
-		`name="tags"`, `id="field-tags-options"`, `<option value="legendary">`, `placeholder="Add a tag"`,
+		`name="tags"`, `id="field-tags-options"`, `<option value="legendary">`, `placeholder="Add a tag"`, `id="field-tags-root"`, `data-max="5"`, "0/5",
 		// Release date with today as max; rating radios 1..5; the file drop.
 		`type="date"`, `name="released"`, `max="`+time.Now().Format("2006-01-02")+`"`,
 		`name="rating"`, `id="field-rating-5"`, "Leave every star empty for unrated.",
@@ -495,6 +495,10 @@ func TestItems_Batch5Form(t *testing.T) {
 	form.Set("rating", "lots")
 	body = do(h, "POST", "/items", form, hx("item-form")).Body.String()
 	wantAll(t, body, "Enter the release date as YYYY-MM-DD", "Rating must be 0 to 5")
+	// More tags than the cap (Field.MaxTags stops the user in the widget;
+	// the validator stops a handcrafted request).
+	form.Set("tags", "a,b,c,d,e,f")
+	wantAll(t, do(h, "POST", "/items", form, hx("item-form")).Body.String(), "At most 5 tags")
 	// Blur validation knows the two fields too.
 	body = do(h, "POST", "/items/validate", url.Values{"rating": {"7"}}, hx("")).Body.String()
 	wantAll(t, body, `id="field-rating-feedback"`, "Rating must be 0 to 5")

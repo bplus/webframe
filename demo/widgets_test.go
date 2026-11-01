@@ -125,6 +125,19 @@ func TestWidgets_Palette(t *testing.T) {
 		// The palette is the last thing before the toast container.
 		inOrder(t, body, "</main>", `id="wf-palette"`, `id="toast-container"`)
 	}
+	// The palette follows the store (App.PaletteFor builds it per render):
+	// create an item and the next page lists it.
+	rec := do(h, "POST", "/items", url.Values{"name": {"Palette Probe"}, "type": {"weapon"}, "status": {"draft"}, "released": {"2026-01-05"}, "rating": {"3"}}, nil)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("POST /items = %d, want 303: %s", rec.Code, rec.Body.String())
+	}
+	for _, path := range []string{"/items", "/"} {
+		body := do(h, "GET", path, nil, nil).Body.String()
+		wantAll(t, body, `data-label="Palette Probe"`, `href="/items/15"`)
+		if n := strings.Count(body, `data-label="`); n != 20 {
+			t.Errorf("GET %s after a create: %d palette items, want 20 (5 pages + 15 items)", path, n)
+		}
+	}
 	for _, path := range []string{"/signin", "/signed-out", "/forbidden"} {
 		body := do(h, "GET", path, nil, nil).Body.String()
 		wantNone(t, body, `id="wf-palette"`, "data-wf-palette-trigger")

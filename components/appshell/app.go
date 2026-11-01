@@ -40,8 +40,16 @@ type App struct {
 	// #toast-container, so mod+k and the trigger open it on every page
 	// rendered through Render / RenderParts. RenderBare pages have no
 	// shell, no trigger and no palette. ShellProps copies it into
-	// Props.Palette; RenderPartsStatus into DocProps.Palette.
+	// Props.Palette; RenderPartsStatus into DocProps.Palette. PaletteFor,
+	// when set, replaces it.
 	Palette *commandpalette.Props
+	// PaletteFor, when non-nil, builds the command palette per request
+	// (items that follow a store, or depend on the signed-in user) and
+	// takes precedence over Palette. It is called exactly once per shell
+	// render, by ShellProps, and the result serves both the trigger and the
+	// document's palette; a nil result renders no palette for that
+	// request. Fragment renders and RenderBare never call it.
+	PaletteFor func(*http.Request) *commandpalette.Props
 	// User returns the signed-in user for r; nil means no user menu.
 	User func(*http.Request) *User
 	// Flash, when non-nil, supplies the one-shot message for the Shell's
@@ -244,7 +252,18 @@ func WantsFragment(r *http.Request) bool {
 // gets only that part, any other target gets the full body.
 const varyHeaders = "HX-Request, HX-Boosted, HX-History-Restore-Request, HX-Target"
 
-// ShellProps builds the Shell Props for r from the App's fields.
+// palette returns the command palette for r: PaletteFor's result when it
+// is set, else Palette.
+func (a *App) palette(r *http.Request) *commandpalette.Props {
+	if a.PaletteFor != nil {
+		return a.PaletteFor(r)
+	}
+	return a.Palette
+}
+
+// ShellProps builds the Shell Props for r from the App's fields. Palette
+// is resolved here (PaletteFor is called once); RenderPartsStatus reuses
+// the resolved value for the document, so trigger and dialog always agree.
 func (a *App) ShellProps(r *http.Request) Props {
 	p := Props{
 		AppName:     a.Name,
@@ -257,7 +276,7 @@ func (a *App) ShellProps(r *http.Request) Props {
 		ThemeToggle: a.ThemeToggle,
 		LiveDot:     a.LiveDot,
 		Right:       a.Right,
-		Palette:     a.Palette,
+		Palette:     a.palette(r),
 		Width:       a.Width,
 	}
 	if a.User != nil {
@@ -415,6 +434,6 @@ func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status i
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return Shell(props).Render(templ.WithChildren(ctx, full), w)
 	})
-	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head, Palette: a.Palette})
+	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head, Palette: props.Palette})
 	return doc.Render(templ.WithChildren(ctx, page), w)
 }

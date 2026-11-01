@@ -158,7 +158,7 @@ func lintSource(file, src string) ([]Violation, []Fence) {
 			Message: err.Error(),
 		}}, nil
 	}
-	w := &walker{file: file}
+	w := &walker{file: file, prose: proseScopeOf(src)}
 	for _, h := range tf.Header {
 		w.reportGo(h.Expression, false)
 	}

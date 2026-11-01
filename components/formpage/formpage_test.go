@@ -324,3 +324,31 @@ func TestRespond_ErrorsAre422(t *testing.T) {
 		t.Errorf("error re-render lacks aria-invalid:\n%s", rec.Body.String())
 	}
 }
+
+// TestBody_SectionContent: a Section's Content renders inside the <form>
+// (so the submit button posts it with the fields), inside its own section
+// after the fieldset and before the submit row; a section with Content and
+// no Fields renders no fieldset; nil Content renders nothing beyond the
+// fieldset.
+func TestBody_SectionContent(t *testing.T) {
+	p := itemProps()
+	p.Sections[1].Content = templ.Raw(`<p id="extra">EXTRA</p>`)
+	p.Sections = append(p.Sections, Section{Title: "Notes", Content: templ.Raw(`<p id="notes">NOTESCONTENT</p>`)})
+	out := render(t, Body(p))
+	mustOrder(t, out, "<form", "Options", "<fieldset", `name="featured"`, "</fieldset>", `id="extra"`, "EXTRA", "</section>",
+		"Notes", "NOTESCONTENT", "</section>", `type="submit"`, "</form>")
+	if n := strings.Count(out, "<fieldset"); n != 2 {
+		t.Errorf("got %d fieldsets, want 2 (one per section with fields):\n%s", n, out)
+	}
+	notes := out[strings.Index(out, "NOTESCONTENT"):]
+	notes = notes[:strings.Index(notes, "</section>")]
+	mustNotContain(t, notes, "<fieldset")
+	// Nil Content: the section holds the fieldset and nothing after it.
+	out = render(t, Body(itemProps()))
+	sec := out[strings.Index(out, "Options"):]
+	sec = sec[:strings.Index(sec, "</section>")]
+	after := sec[strings.LastIndex(sec, "</fieldset>")+len("</fieldset>"):]
+	if strings.TrimSpace(after) != "" {
+		t.Errorf("content after the fieldset without Content: %q", after)
+	}
+}

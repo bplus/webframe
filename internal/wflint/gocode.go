@@ -31,6 +31,87 @@ var goRuleText = map[string][2]string{
 	"html-from-go-string": {"a Go string literal holding HTML markup (a quoted class= or style= attribute, or a block element such as <div> with markup around it) is not allowed in app code", "render a webframe component instead"},
 }
 
+// proseImportPath is the one package whose HTML values may be built from
+// string literals in app code: prose is the sanctioned route for trusted
+// content markup (its HTML type is the one templ.Raw in the library).
+const proseImportPath = "github.com/bplus/webframe/components/prose"
+
+// proseImportRe finds the file's import of prose, with its alias when it
+// has one: a one-line import statement or a line of an import block. The
+// import keyword is tried before the line start so it is never read as the
+// alias.
+var proseImportRe = regexp.MustCompile(`(?m)(?:\bimport|^)[ \t]*(?:([A-Za-z_]\w*)[ \t]+)?"` + regexp.QuoteMeta(proseImportPath) + `"`)
+
+// htmlKeyRe finds the HTML: key of a prose.Props literal.
+var htmlKeyRe = regexp.MustCompile(`\bHTML:\s*`)
+
+// proseScope knows how one file refers to the prose package, so the
+// html-from-go-string rule can leave a literal alone when it is content
+// handed to prose: the argument of a prose.HTML(...) conversion or the value
+// of the HTML: key in a prose.Props{...} literal, under whatever name the
+// file imports the package. A nil *proseScope means the file does not
+// import prose (or imports it blank), so nothing is exempt.
+type proseScope struct {
+	conv *regexp.Regexp // alias.HTML(
+	lit  *regexp.Regexp // alias.Props{
+}
+
+// proseScopeOf resolves the file's import of prose from the whole source
+// (a .go file, or a .templ file whose import block is one of its Go
+// sections). A dot import is not resolved: the exemption needs a selector.
+func proseScopeOf(src string) *proseScope {
+	m := proseImportRe.FindStringSubmatch(src)
+	if m == nil {
+		return nil
+	}
+	alias := m[1]
+	switch alias {
+	case "":
+		alias = "prose"
+	case "_":
+		return nil
+	}
+	q := `\b` + regexp.QuoteMeta(alias)
+	return &proseScope{
+		conv: regexp.MustCompile(q + `\.HTML\(`),
+		lit:  regexp.MustCompile(q + `\.Props\{`),
+	}
+}
+
+// exempt returns the byte ranges of src whose string literals are content
+// handed to prose: the whole argument list of each alias.HTML(...) and the
+// value expression after each HTML: key inside an alias.Props{...} literal
+// (up to the next comma or closing brace at the same depth).
+func (s *proseScope) exempt(src string) [][2]int {
+	if s == nil {
+		return nil
+	}
+	var out [][2]int
+	for _, loc := range s.conv.FindAllStringIndex(src, -1) {
+		open := loc[1] - 1
+		out = append(out, [2]int{open, open + len(delimBody(src[open:], '(', ')'))})
+	}
+	for _, loc := range s.lit.FindAllStringIndex(src, -1) {
+		open := loc[1] - 1
+		body := delimBody(src[open:], '{', '}')
+		for _, m := range htmlKeyRe.FindAllStringIndex(body, -1) {
+			start := open + m[1]
+			out = append(out, [2]int{start, start + exprEnd(body[m[1]:])})
+		}
+	}
+	return out
+}
+
+// inRanges reports whether off falls inside one of ranges.
+func inRanges(off int, ranges [][2]int) bool {
+	for _, r := range ranges {
+		if off >= r[0] && off < r[1] {
+			return true
+		}
+	}
+	return false
+}
+
 // quotedValue matches the start of a quoted attribute value: = followed by a
 // quote, which an interpreted literal escapes ("class=\"x\"").
 const quotedValue = `=\\?["'` + "`" + `]`
@@ -111,8 +192,10 @@ type goFinding struct {
 // goFindings returns every breach in src, sorted by offset. With component
 // (src is a @component(...) or {! } call expression), any Class: is a
 // props-class; otherwise only a Class: inside a Props literal is, and Go
-// string literals holding HTML markup are reported as html-from-go-string.
-func goFindings(src string, component bool) []goFinding {
+// string literals holding HTML markup are reported as html-from-go-string,
+// except the literals prose exempts (content handed to prose.HTML or to
+// the HTML field of prose.Props; see proseScope).
+func goFindings(src string, component bool, prose *proseScope) []goFinding {
 	var out []goFinding
 	seen := map[goFinding]bool{}
 	add := func(off int, rule string) {
@@ -131,7 +214,11 @@ func goFindings(src string, component bool) []goFinding {
 		}
 	} else {
 		offs, vals := goStringLits(src)
+		exempt := prose.exempt(src)
 		for i, v := range vals {
+			if inRanges(offs[i], exempt) {
+				continue
+			}
 			if markupAttrRe.MatchString(v) || (markupTagRe.MatchString(v) && markupAroundRe.MatchString(v)) {
 				add(offs[i], "html-from-go-string")
 			}
@@ -159,7 +246,7 @@ func goFindings(src string, component bool) []goFinding {
 // props-class, attrs-map.
 func goCodeViolations(src string) []string {
 	found := map[string]bool{}
-	for _, f := range goFindings(src, true) {
+	for _, f := range goFindings(src, true, nil) {
 		found[f.rule] = true
 	}
 	var rules []string
@@ -175,21 +262,23 @@ func goCodeViolations(src string) []string {
 // of s when unbalanced. Braces inside interpreted, raw and rune literals are
 // skipped.
 func braceBody(s string) string {
+	return delimBody(s, '{', '}')
+}
+
+// delimBody returns s (which starts with open) up to its matching close, or
+// all of s when unbalanced. Delimiters inside interpreted, raw and rune
+// literals are skipped.
+func delimBody(s string, open, close byte) string {
 	depth := 0
 	for i := 0; i < len(s); i++ {
 		switch c := s[i]; c {
 		case '"', '\'':
-			for i++; i < len(s) && s[i] != c && s[i] != '\n'; i++ {
-				if s[i] == '\\' {
-					i++
-				}
-			}
+			i = skipQuoted(s, i)
 		case '`':
-			for i++; i < len(s) && s[i] != '`'; i++ {
-			}
-		case '{':
+			i = skipRaw(s, i)
+		case open:
 			depth++
-		case '}':
+		case close:
 			depth--
 			if depth == 0 {
 				return s[:i+1]
@@ -199,13 +288,61 @@ func braceBody(s string) string {
 	return s
 }
 
+// exprEnd returns the length of the Go expression that starts s: up to the
+// first ',', '}' or ')' at depth zero outside string and rune literals, or
+// len(s) when none closes it.
+func exprEnd(s string) int {
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '"', '\'':
+			i = skipQuoted(s, i)
+		case '`':
+			i = skipRaw(s, i)
+		case '{', '(', '[':
+			depth++
+		case '}', ')', ']':
+			if depth == 0 {
+				return i
+			}
+			depth--
+		case ',':
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return len(s)
+}
+
+// skipQuoted returns the index of the closing quote of the interpreted
+// string or rune literal opening at s[i] (or of the line end, for an
+// unterminated one).
+func skipQuoted(s string, i int) int {
+	q := s[i]
+	for i++; i < len(s) && s[i] != q && s[i] != '\n'; i++ {
+		if s[i] == '\\' {
+			i++
+		}
+	}
+	return i
+}
+
+// skipRaw returns the index of the closing backquote of the raw string
+// literal opening at s[i] (or len(s) for an unterminated one).
+func skipRaw(s string, i int) int {
+	for i++; i < len(s) && s[i] != '`'; i++ {
+	}
+	return i
+}
+
 // reportGo reports the Go-side rules breached by expr, each at the line and
 // column of the match. component marks a @component(...) or {! } call
 // expression (see goFindings).
 func (w *walker) reportGo(expr parser.Expression, component bool) {
 	base := int(expr.Range.From.Line) + 1
 	col := int(expr.Range.From.Col) + 1
-	for _, f := range goFindings(expr.Value, component) {
+	for _, f := range goFindings(expr.Value, component, w.prose) {
 		before := expr.Value[:f.off]
 		line := base + strings.Count(before, "\n")
 		c := col + f.off
@@ -243,7 +380,7 @@ func lintGo(file, src string) []Violation {
 	if isGenerated(file, src) {
 		return nil
 	}
-	w := &walker{file: file}
+	w := &walker{file: file, prose: proseScopeOf(src)}
 	w.reportGo(parser.Expression{Value: src}, false)
 	if !strings.HasSuffix(file, "_test.go") {
 		return w.out

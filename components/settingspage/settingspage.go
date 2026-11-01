@@ -46,10 +46,18 @@ import (
 )
 
 // Group is one titled group of settings, rendered as a layout.Section
-// (h2, with ID as the section id when set) holding a formfield.Fieldset.
+// (h2, with ID as the section id when set) holding a formfield.Fieldset of
+// Fields, then Content when set.
 type Group struct {
 	ID, Title, Description string
 	Fields                 []formfield.Field
+	// Content, when non-nil, renders inside the section after the fieldset
+	// and inside the <form>, so a widget that is not a formfield.Field (a
+	// keyvalueeditor, a prose note, a codeblock) is posted by the save bar's
+	// button with the fields and is re-rendered by an error swap of the
+	// form; the handler reads it from r.Form like any field. A group with
+	// Content and no Fields renders no fieldset, only the Content.
+	Content templ.Component
 }
 
 // Props configures a settings page. Only Groups and Action are needed for
@@ -105,6 +113,12 @@ type Props struct {
 	// Validate is the default blur-validation URL (formfield.Field.Validate)
 	// for every field that has none of its own; "" wires nothing.
 	Validate string
+	// Multipart emits enctype="multipart/form-data"; required for a
+	// TypeFile field. The handler of a multipart form must call
+	// r.ParseMultipartForm before reading any value: a prior r.ParseForm
+	// parses only the URL query and leaves the body unread, so r.FormValue
+	// then returns "" for every field in the body.
+	Multipart bool
 }
 
 // id returns the <form> id with the default applied.
@@ -148,9 +162,9 @@ func (p Props) Field(name string) (formfield.Field, bool) {
 }
 
 // formProps builds the form.Form Props: the id, classes and Attributes,
-// Action/Method/Hidden always, the htmx trio when HxPost is set. The form
-// is a column with the same gap as the page root, so the banner and the
-// sections are spaced like the page's own children.
+// Action/Method/Hidden/Multipart always, the htmx trio when HxPost is set.
+// The form is a column with the same gap as the page root, so the banner
+// and the sections are spaced like the page's own children.
 func (p Props) formProps() form.Props {
 	fp := form.Props{
 		ID:         p.id(),
@@ -159,6 +173,7 @@ func (p Props) formProps() form.Props {
 		Action:     p.Action,
 		Method:     p.Method,
 		Hidden:     p.Hidden,
+		Multipart:  p.Multipart,
 	}
 	if p.HxPost {
 		fp.HxPost = p.Action

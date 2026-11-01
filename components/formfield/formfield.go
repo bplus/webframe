@@ -72,10 +72,12 @@ const (
 	TypeToggle Type = "toggle"
 	// TypeTags renders tagsinput: Value is the current tags joined with
 	// commas (what the widget submits), Options' labels are offered as
-	// suggestions, Placeholder goes on the text input. Required is a
-	// label marker plus aria-required: the text input is not the
-	// submitting control, so `required` on it would block a form whose
-	// tags are complete; enforce on the server.
+	// suggestions, Placeholder goes on the text input, MaxTags caps the
+	// count (0 means no cap). Required is a label marker plus
+	// aria-required: the text input is not the submitting control, so
+	// `required` on it would block a form whose tags are complete; enforce
+	// on the server, as the cap too (the widget stops the user, not a
+	// handcrafted request).
 	TypeTags Type = "tags"
 	// TypeRating renders rating in input mode: Value is the chosen star
 	// as an integer string, Max the star count (DefaultRatingMax when
@@ -117,6 +119,10 @@ type Field struct {
 	// Max is the star count of a TypeRating field; DefaultRatingMax (5)
 	// when zero or negative. Other types ignore it.
 	Max int
+	// MaxTags caps a TypeTags field (tagsinput.Props.MaxTags): at the cap
+	// the text input is read-only and the widget shows "n/max". 0 means no
+	// cap. Other types ignore it.
+	MaxTags int
 	// MinValue and MaxValue bound a TypeDate, TypeDateTime or TypeTime
 	// field (the min/max attributes) in the control's wire format. Other
 	// types ignore them.

@@ -15,9 +15,10 @@ import (
 // nav item. The Items pages are served through SidebarApp instead (see
 // RegisterItemRoutes); the "Items" entry here links across to them. Flash
 // is flash.Take, so a one-shot message set before a redirect shows once on
-// the next page the shell renders. Palette is the same command palette as
-// the Items app's, so the showcase's palette section can be tried where it
-// is read; OnPanic answers a handler panic with the styled 500 page.
+// the next page the shell renders. PaletteFor builds the same command
+// palette as the Items app's per request, so the showcase's palette section
+// can be tried where it is read; OnPanic answers a handler panic with the
+// styled 500 page.
 var App = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -35,9 +36,9 @@ var App = &appshell.App{
 		{Label: "Actions", Href: "/#actions"},
 		{Label: "Feedback", Href: "/#feedback"},
 	},
-	Flash:   flash.Take,
-	Palette: demoPalette,
-	OnPanic: errorpage.PanicHandler,
+	Flash:      flash.Take,
+	PaletteFor: demoPaletteFor,
+	OnPanic:    errorpage.PanicHandler,
 }
 
 // SidebarApp is the shell of the Items app (a dashboard sketch of
@@ -51,8 +52,9 @@ var App = &appshell.App{
 // are never active themselves (the shell compares paths). Flash is wired
 // exactly as on App: the two shells share the one wf_flash cookie, so a
 // flash set by an Items handler shows wherever the browser lands next.
-// Palette (demoPalette) lists the pages and the seeded items; the shell
-// renders its trigger in the sidebar footer and the dialog once per page.
+// PaletteFor (demoPaletteFor) lists the pages and the store's items as of
+// each render; the shell renders its trigger in the sidebar footer and the
+// dialog once per page.
 var SidebarApp = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -75,9 +77,9 @@ var SidebarApp = &appshell.App{
 			{Label: "Saved", Href: "/items?type=accessory"},
 		}},
 	},
-	Flash:   flash.Take,
-	Palette: demoPalette,
-	OnPanic: errorpage.PanicHandler,
+	Flash:      flash.Take,
+	PaletteFor: demoPaletteFor,
+	OnPanic:    errorpage.PanicHandler,
 }
 
 // Routes mounts every demo route on mux: the embedded static files, the
@@ -102,8 +104,8 @@ func Routes(mux *http.ServeMux) {
 	RegisterItemRoutes(mux)
 
 	// The batch 4 and 5 pages on the same shell: GET /dashboard; GET and
-	// POST /settings, POST /settings/environment, /settings/delete-account;
-	// GET /browse, /browse/{id}; GET /logs and its poll, GET /logs/tail.
+	// POST /settings, POST /settings/delete-account; GET /browse,
+	// /browse/{id}; GET /logs and its poll, GET /logs/tail.
 	RegisterPageRoutes(mux)
 
 	// The pages outside the app's own content: sign in, signed out,

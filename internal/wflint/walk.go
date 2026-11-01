@@ -11,6 +11,9 @@ type walker struct {
 	file   string
 	out    []Violation
 	fences []Fence
+	// prose is how the file names the prose package (nil when it does not
+	// import it); html-from-go-string leaves prose's content literals alone.
+	prose *proseScope
 }
 
 func (w *walker) report(r parser.Range, rule, msg, hint string) {
