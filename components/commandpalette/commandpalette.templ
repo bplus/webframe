@@ -1,0 +1,161 @@
+package commandpalette
+
+import (
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/input"
+)
+
+// Palette renders one closed dialog.Dialog (id Props.ID, default
+// DefaultID) holding a search input (role="combobox") over a
+// <ul role="listbox"> of the server-rendered Items grouped by Group. Each
+// item is an <a role="option" href> with its icon, label and right-aligned
+// Shortcut hint; the label and Keywords sit on the row as data-label /
+// data-keywords, which is what the filter reads. Alpine (one x-data on the
+// dialog root, see paletteData) filters case-insensitively on label plus
+// keywords, hides groups left empty, shows Empty when nothing matches,
+// tracks the active row (ArrowUp/ArrowDown wrap, Home/End), follows the
+// active item's href on Enter (the anchor's own click) and closes on Escape
+// through window.tui.dialog.close. The shortcut (Props.Shortcut, "mod+k":
+// Cmd+K on a Mac, Ctrl+K elsewhere) is one document keydown listener the
+// first palette's x-init registers, guarded on window.wf.palette; it opens
+// through window.tui.dialog.open(id) and focuses the input, and toggles
+// the palette closed when it is already open.
+//
+// Closed, the dialog is a bare div whose backdrop and panel are
+// display:none (dialog's data-tui-dialog-hidden), so it has no height and
+// nothing on the page moves when it mounts. Every close path (Escape, the
+// backdrop, close()) clears the query and returns focus to the element
+// that had it when the palette opened.
+//
+// Phone (below sm): the panel is a top sheet spanning the width (fixed
+// inset-x-0 top-0, rounded at the bottom, max-h-[85dvh], padded for the
+// status bar safe area); the list scrolls inside it and the input is
+// focused as the palette opens (synchronously in the trigger's click
+// handler, so the keyboard opens under the sheet). Desktop: dialog's
+// centered panel at max-w-lg; the list is at most 60vh tall and scrolls.
+//
+// @temporal-coupling dialog.Script() (dialog.min.js) and Alpine must be on
+// the page or the palette never opens; appshell.Document provides both.
+templ Palette(p Props) {
+	{{ p = p.withDefaults() }}
+	{{ groups := groupItems(p.Items) }}
+	{{ n := 0 }}
+	@dialog.Dialog(dialog.Props{ID: p.ID, Class: p.Class, Attributes: rootAttrs(p)}) {
+		@dialog.Content(dialog.ContentProps{
+			HideCloseButton:  true,
+			DisableAutoFocus: true,
+			Class:            contentClass,
+			Attributes: templ.Attributes{
+				"role":       "dialog",
+				"aria-modal": "true",
+				"aria-label": "Command palette",
+			},
+		}) {
+			<div class="flex shrink-0 items-center gap-2 border-b px-3">
+				@icon.Search(icon.Props{Size: 16, Class: "shrink-0 text-muted-foreground"})
+				@input.Input(input.Props{
+					ID:          inputID(p.ID),
+					Type:        input.TypeSearch,
+					Placeholder: p.Placeholder,
+					Class:       "h-12 rounded-none border-0 px-0 shadow-none focus-visible:border-0 focus-visible:ring-0",
+					Attributes: templ.Attributes{
+						"data-wf-palette-input": "",
+						"role":                  "combobox",
+						"aria-expanded":         "true",
+						"aria-controls":         listID(p.ID),
+						"aria-autocomplete":     "list",
+						"aria-haspopup":         "listbox",
+						"autocomplete":          "off",
+						"autocapitalize":        "off",
+						"spellcheck":            "false",
+						"x-model":               "q",
+						"x-on:input":            "changed($event)",
+						"x-on:keydown":          "key($event)",
+					},
+				})
+			</div>
+			<ul
+				id={ listID(p.ID) }
+				role="listbox"
+				aria-label="Commands"
+				data-wf-palette-list
+				class="min-h-0 flex-1 overflow-y-auto p-2 sm:max-h-[60vh]"
+				x-on:pointermove="hover($event)"
+			>
+				for gi, g := range groups {
+					<li
+						role="group"
+						data-wf-palette-group
+						if g.Name != "" {
+							aria-labelledby={ groupID(p.ID, gi) }
+						}
+						class="[&+&]:mt-2"
+					>
+						if g.Name != "" {
+							<div id={ groupID(p.ID, gi) } role="presentation" class="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">{ g.Name }</div>
+						}
+						<ul role="none">
+							for _, it := range g.Items {
+								<li role="none" data-wf-palette-item data-label={ it.Label } data-keywords={ it.Keywords }>
+									<a
+										id={ optionID(p.ID, n) }
+										role="option"
+										aria-selected="false"
+										tabindex="-1"
+										href={ templ.SafeURL(it.Href) }
+										class="flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground outline-none data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+									>
+										if it.Icon != nil {
+											<span class="shrink-0 text-muted-foreground [&_svg]:size-4">
+												@it.Icon
+											</span>
+										}
+										<span class="min-w-0 flex-1 truncate">{ it.Label }</span>
+										if it.Shortcut != "" {
+											<kbd class="ml-auto shrink-0 rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground">{ it.Shortcut }</kbd>
+										}
+									</a>
+								</li>
+								{{ n++ }}
+							}
+						</ul>
+					</li>
+				}
+			</ul>
+			<p data-wf-palette-empty hidden role="status" class="shrink-0 px-3 py-6 text-center text-sm text-muted-foreground">{ p.Empty }</p>
+		}
+	}
+}
+
+// Trigger renders the button that opens the palette described by p: a
+// small ghost button.Button with icon.Search, the word "Search" and a
+// <kbd> hint (Hint(p.Shortcut), "⌘K" by default), both shown from md up;
+// below md it is the icon alone (aria-label "Search"). Its click calls
+// window.wf.palette.open with the palette's id read from the button's own
+// data-wf-palette-trigger attribute, which opens the dialog and focuses
+// the input in the same gesture, so a phone keyboard opens too. appshell
+// renders it in the topbar's right controls and the sidebar footer when
+// App.Palette is set.
+templ Trigger(p Props) {
+	{{ p = p.withDefaults() }}
+	@button.Button(button.Props{
+		Variant: button.VariantGhost,
+		Size:    button.SizeSm,
+		Class:   "gap-2 px-2 text-muted-foreground hover:text-foreground",
+		Attributes: templ.Attributes{
+			"data-wf-palette-trigger": p.ID,
+			"aria-label":              "Search",
+			"aria-haspopup":           "dialog",
+			"aria-controls":           p.ID,
+			"aria-keyshortcuts":       keyShortcuts(p.Shortcut),
+			"x-data":                  "",
+			"x-on:click":              "window.wf && window.wf.palette && window.wf.palette.open($el.dataset.wfPaletteTrigger)",
+		},
+	}) {
+		@icon.Search(icon.Props{Size: 16})
+		<span class="hidden md:inline">Search</span>
+		<kbd class="hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground md:inline-flex">{ Hint(p.Shortcut) }</kbd>
+	}
+}

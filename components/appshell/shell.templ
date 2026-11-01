@@ -3,13 +3,15 @@ package appshell
 import (
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/avatar"
+	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/utils"
 )
 
 // Shell renders the app chrome that goes inside Document's <body>: the
 // navigation (a topbar, or a sidebar when Layout is LayoutSidebar), the
-// right-side controls (live dot, Right, user menu, theme toggle), and
+// right-side controls (palette trigger, live dot, Right, user menu, theme
+// toggle), and
 // <main class="wf-content"> holding the #wf-flash slot (empty, or
 // Props.Flash) followed by the children (the page body).
 //
@@ -166,7 +168,13 @@ templ navLink(item NavItem, path, base, extra string) {
 	</a>
 }
 
+// rightControls is the control group shared by the topbar's right side and
+// the sidebar footer: the palette trigger (when Props.Palette is set), the
+// live dot, Right, the user menu, the theme toggle.
 templ rightControls(p Props) {
+	if p.Palette != nil {
+		@commandpalette.Trigger(*p.Palette)
+	}
 	if p.LiveDot != nil {
 		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ everyTrigger(p.LiveDot.Every) } hx-swap="none" data-wf-swallow-errors></div>
 	}

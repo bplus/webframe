@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
+
+	"github.com/bplus/webframe/components/commandpalette"
 )
 
 // App is the app-wide configuration shared by every page: name, navigation,
@@ -27,6 +29,15 @@ type App struct {
 	// Right, when non-nil, renders in the topbar's right group (before the
 	// user menu); ShellProps copies it into Props.Right.
 	Right templ.Component
+	// Palette, when non-nil, gives the app a command palette: Shell renders
+	// commandpalette.Trigger (the Search button with its ⌘K hint) first in
+	// the topbar's right controls or the sidebar footer, and Document
+	// renders commandpalette.Palette once at the end of <body>, before
+	// #toast-container, so mod+k and the trigger open it on every page
+	// rendered through Render / RenderParts. RenderBare pages have no
+	// shell, no trigger and no palette. ShellProps copies it into
+	// Props.Palette; RenderPartsStatus into DocProps.Palette.
+	Palette *commandpalette.Props
 	// User returns the signed-in user for r; nil means no user menu.
 	User func(*http.Request) *User
 	// Flash, when non-nil, supplies the one-shot message for the Shell's
@@ -120,6 +131,7 @@ func (a *App) ShellProps(r *http.Request) Props {
 		ThemeToggle: a.ThemeToggle,
 		LiveDot:     a.LiveDot,
 		Right:       a.Right,
+		Palette:     a.Palette,
 		Width:       a.Width,
 	}
 	if a.User != nil {
@@ -277,6 +289,6 @@ func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status i
 	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return Shell(props).Render(templ.WithChildren(ctx, full), w)
 	})
-	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head})
+	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head, Palette: a.Palette})
 	return doc.Render(templ.WithChildren(ctx, page), w)
 }
