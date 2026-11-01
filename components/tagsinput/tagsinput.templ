@@ -27,6 +27,7 @@ templ TagsInput(props ...Props) {
 		x-data={ alpineData }
 		data-max={ p.maxAttr() }
 		data-sep={ p.Separator }
+		data-placeholder={ p.Placeholder }
 		if p.Disabled {
 			data-disabled
 		}
@@ -56,8 +57,9 @@ templ TagsInput(props ...Props) {
 			<div class="min-w-32 flex-1">
 				@input.Input(input.Props{
 					ID:          p.ID,
-					Placeholder: p.Placeholder,
-					Disabled:    p.Disabled || p.atMax(),
+					Placeholder: utils.IfElse(p.atMax(), "Limit reached", p.Placeholder),
+					Readonly:    p.atMax(),
+					Disabled:    p.Disabled,
 					HasError:    p.HasError,
 					Class:       textInputClass,
 					Attributes:  p.inputAttrs(),
@@ -93,7 +95,7 @@ templ chip(p Props, label string, live bool) {
 		}
 		<button
 			type="button"
-			class="-my-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+			class="-my-1.5 inline-flex size-6 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
 			if live {
 				x-bind:aria-label="'Remove ' + tag"
 				x-bind:disabled="disabled"

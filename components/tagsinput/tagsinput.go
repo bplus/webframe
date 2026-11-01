@@ -18,7 +18,9 @@
 //
 // First paint without JavaScript is complete: the chips are server-rendered
 // from Values, the hidden field already carries the joined value, the count
-// is written, and the text input is disabled when Values is at MaxTags.
+// is written, and the text input is readonly (placeholder "Limit reached",
+// still focusable so a phone's keyboard stays open) when Values is at
+// MaxTags.
 // Alpine (x-data on the root, inline in this component) then takes over:
 // its init() reads the tag list from the rendered <li data-tag> chips,
 // removes them and re-renders the same chips from its own state, so the
@@ -75,7 +77,8 @@ type Props struct {
 	// Placeholder is the text input's placeholder.
 	Placeholder string
 	// MaxTags caps the number of tags; 0 means no cap. At the cap the text
-	// input is disabled and the hint shows "n/max".
+	// input turns readonly with the placeholder "Limit reached" and the
+	// hint shows "n/max".
 	MaxTags int
 	// Disabled disables the input, the chip remove buttons and the hidden
 	// field, so a disabled tags input submits nothing (as a disabled
@@ -149,13 +152,18 @@ func (p Props) describedBy() string {
 // and the rendered chips, so no JS is built from strings here.
 func (p Props) inputAttrs() templ.Attributes {
 	own := templ.Attributes{
-		"x-model":          "text",
-		"x-on:keydown":     "onKey($event)",
-		"x-on:blur":        "commit()",
-		"x-on:change":      "commit()",
-		"x-bind:disabled":  "disabled || atMax",
-		"aria-describedby": p.describedBy(),
-		"autocomplete":     "off",
+		"x-model":         "text",
+		"x-on:keydown":    "onKey($event)",
+		"x-on:blur":       "commit()",
+		"x-on:change":     "commit()",
+		"x-bind:disabled": "disabled",
+		// At the cap the input stays focusable (readonly), so adding the
+		// last tag does not drop focus and close a phone's keyboard; the
+		// placeholder explains the state.
+		"x-bind:readonly":    "atMax",
+		"x-bind:placeholder": "atMax ? 'Limit reached' : placeholder",
+		"aria-describedby":   p.describedBy(),
+		"autocomplete":       "off",
 	}
 	if len(p.Suggestions) > 0 {
 		own["list"] = p.optionsID()
@@ -196,12 +204,13 @@ const textInputClass = "h-7 min-w-32 flex-1 border-0 bg-transparent px-1 shadow-
 // the cap; onKey handles Enter and comma (add) and Backspace on an empty
 // input (remove the last chip).
 const alpineData = `{
-	tags: [], text: '', max: 0, sep: ',', disabled: false,
+	tags: [], text: '', max: 0, sep: ',', disabled: false, placeholder: '',
 	init() {
 		const root = this.$el;
 		this.max = Number(root.dataset.max) || 0;
 		this.sep = root.dataset.sep || ',';
 		this.disabled = root.hasAttribute('data-disabled');
+		this.placeholder = root.dataset.placeholder || '';
 		const chips = root.querySelectorAll('li[data-tag]');
 		this.tags = Array.from(chips, li => li.dataset.tag);
 		chips.forEach(li => li.remove());

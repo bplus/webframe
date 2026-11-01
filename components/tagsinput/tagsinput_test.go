@@ -114,11 +114,15 @@ func TestTagsInput_MaxTagsCountAndCap(t *testing.T) {
 	}
 
 	atCap := render(t, TagsInput(Props{ID: "t", Name: "t", Values: []string{"a", "b", "c"}, MaxTags: 3}))
-	mustContain(t, atCap, `3/3`, `x-bind:disabled="disabled || atMax"`)
-	// The text input is disabled at the cap; the hidden field and the chip
-	// buttons are not.
-	if !disabledAttr.MatchString(textInputTag(t, atCap)) {
-		t.Errorf("text input should be disabled at the cap:\n%s", atCap)
+	mustContain(t, atCap, `3/3`, `x-bind:readonly="atMax"`, `placeholder="Limit reached"`)
+	// At the cap the text input is readonly, never disabled (disabling a
+	// focused control drops focus and closes a phone's keyboard); the
+	// hidden field and the chip buttons are untouched.
+	if disabledAttr.MatchString(textInputTag(t, atCap)) {
+		t.Errorf("text input must stay enabled (readonly) at the cap:\n%s", atCap)
+	}
+	if !strings.Contains(textInputTag(t, atCap), " readonly") {
+		t.Errorf("text input should be readonly at the cap:\n%s", atCap)
 	}
 	mustContain(t, atCap, `<input type="hidden" name="t" value="a,b,c" x-bind:value="tags.join(sep)">`)
 	mustContain(t, atCap, `aria-label="Remove a">`)

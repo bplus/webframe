@@ -115,7 +115,7 @@ func TestPalette_EscapesLabelsAndKeywords(t *testing.T) {
 
 func TestPalette_PhoneTopSheetAndDesktopPanel(t *testing.T) {
 	got := render(t, Palette(sample()))
-	for _, want := range []string{"left-0", "right-0", "top-0", "rounded-b-xl", "max-h-[85dvh]", "sm:max-w-lg", "sm:left-[50%]", "sm:top-[50%]", "sm:rounded-lg", "sm:max-h-[60vh]", "overflow-y-auto"} {
+	for _, want := range []string{"left-0", "right-0", "top-0", "rounded-b-xl", "max-h-[60dvh]", "sm:max-w-lg", "sm:left-[50%]", "sm:top-[50%]", "sm:rounded-lg", "sm:max-h-[60vh]", "overflow-y-auto"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}

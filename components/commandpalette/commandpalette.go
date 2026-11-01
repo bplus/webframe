@@ -197,12 +197,12 @@ func rootAttrs(p Props) templ.Attributes {
 
 // contentClass reshapes dialog.Content's centered panel. Below sm it is a
 // top sheet: fixed to the top edge, spanning the width, rounded at the
-// bottom only, at most 85dvh tall with the list scrolling inside, padded
+// bottom only, at most 60dvh tall (so the list stays above a phone keyboard, which dvh does not account for) with the list scrolling inside, padded
 // for the status bar's safe area. From sm up it is the dialog's usual
 // centered panel at max-w-lg. The panel is a column (input row, list,
 // empty text) with no padding of its own.
 const contentClass = "flex flex-col gap-0 p-0 overflow-hidden " +
-	"left-0 right-0 top-0 translate-x-0 translate-y-0 w-full max-w-none rounded-none rounded-b-xl max-h-[85dvh] pt-[env(safe-area-inset-top,0px)] " +
+	"left-0 right-0 top-0 translate-x-0 translate-y-0 w-full max-w-none rounded-none rounded-b-xl max-h-[60dvh] pt-[env(safe-area-inset-top,0px)] " +
 	"sm:left-[50%] sm:right-auto sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:rounded-lg sm:max-h-[80vh] sm:pt-0"
 
 // paletteData is the Alpine x-data on the dialog root. It owns the query
