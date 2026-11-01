@@ -149,7 +149,41 @@ func TestControlID(t *testing.T) {
 	if got := (Props{Name: "n"}).ControlID(); got != "filedrop-n-input" {
 		t.Errorf("derived from Name: got %q", got)
 	}
-	if got := (Props{}).ControlID(); got != "filedrop-input" {
+	if got := (Props{}).ControlID(); !strings.HasPrefix(got, "id-") || !strings.HasSuffix(got, "-input") {
 		t.Errorf("neither: got %q", got)
+	}
+}
+
+// TestFileDrop_RandomIDPerRender: with neither ID nor Name, two drop zones
+// get distinct ids and, within one render, the root id and the input id
+// derive from the same stem.
+func TestFileDrop_RandomIDPerRender(t *testing.T) {
+	rootAttr := regexp.MustCompile(`<div id="(id-[^"]+)"`)
+	inputAttr := regexp.MustCompile(`<input type="file" id="(id-[^"]+)"`)
+	a := render(t, FileDrop(Props{}))
+	b := render(t, FileDrop(Props{}))
+	ra, rb := rootAttr.FindStringSubmatch(a), rootAttr.FindStringSubmatch(b)
+	ia := inputAttr.FindStringSubmatch(a)
+	if ra == nil || rb == nil || ia == nil {
+		t.Fatalf("no random ids:\n%s\n%s", a, b)
+	}
+	if ra[1] == rb[1] {
+		t.Errorf("two unnamed drop zones share id %q", ra[1])
+	}
+	if ia[1] != ra[1]+"-input" {
+		t.Errorf("input id %q does not derive from root id %q", ia[1], ra[1])
+	}
+	if !strings.Contains(a, `for="`+ra[1]+`-input"`) {
+		t.Errorf("label for does not point at the input:\n%s", a)
+	}
+}
+
+// TestFileDrop_DestroyRevokesURLs: the Alpine data has a destroy() that
+// revokes the object URLs, so a swapped-out drop zone leaks none.
+func TestFileDrop_DestroyRevokesURLs(t *testing.T) {
+	out := render(t, FileDrop(Props{Name: "f", Preview: true}))
+	mustContain(t, out, "destroy() {", "URL.revokeObjectURL(f.url)")
+	if got := strings.Count(out, "destroy()"); got != 1 {
+		t.Errorf("want destroy() once in x-data, got %d", got)
 	}
 }

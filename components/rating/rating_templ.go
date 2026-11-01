@@ -51,6 +51,7 @@ func Rating(props ...Props) templ.Component {
 		if len(props) > 0 {
 			p = props[0]
 		}
+		p = p.resolve()
 		if p.ReadOnly {
 			templ_7745c5c3_Err = readOnly(p).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -100,7 +101,7 @@ func readOnly(p Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 36, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 37, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -126,7 +127,7 @@ func readOnly(p Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.ariaLabel())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 39, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 40, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -192,7 +193,7 @@ func radios(p Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 51, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 52, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -237,7 +238,7 @@ func radios(p Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 57, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 58, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -265,7 +266,7 @@ func radios(p Props) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.radioID(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 65, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 66, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -283,7 +284,7 @@ func radios(p Props) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 67, Col: 19}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 68, Col: 19}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -301,7 +302,7 @@ func radios(p Props) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 69, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 70, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -339,7 +340,7 @@ func radios(p Props) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.radioID(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 74, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 75, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -373,7 +374,7 @@ func radios(p Props) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(starText(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 76, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/rating/rating.templ`, Line: 77, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {

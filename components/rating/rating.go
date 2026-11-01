@@ -13,7 +13,7 @@
 // Phone width (390px): each star is its own tap target, 24px at SizeSm, 32px
 // at SizeMd and 44px at SizeLg (the recommended minimum for touch, so a
 // rating a user is asked to give should be SizeLg). Five stars at SizeLg are
-// 236px wide and fit; a wider Max wraps onto a second row.
+// 220px wide and fit; a wider Max wraps onto a second row.
 package rating
 
 import (
@@ -21,6 +21,8 @@ import (
 	"strconv"
 
 	"github.com/a-h/templ"
+
+	"github.com/bplus/webframe/utils"
 )
 
 // Size sets the tap target and the star glyph. The zero value is SizeMd.
@@ -43,7 +45,8 @@ const DefaultMax = 5
 // Attributes spread onto the root (the <span role="img"> when ReadOnly, the
 // <fieldset> otherwise), after the built-in attributes.
 type Props struct {
-	// ID is the root's id. When empty, ControlID derives one from Name.
+	// ID is the root's id. When empty, ControlID derives one from Name, or
+	// makes a random one when Name is empty too.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -80,7 +83,9 @@ func (p Props) max() int {
 
 // ControlID is the id of the element that receives the field wiring
 // (aria-describedby, aria-invalid): the fieldset in input mode, the span in
-// read-only mode. It is ID when set, else "rating-"+Name, else "rating".
+// read-only mode. It is ID when set, else "rating-"+Name, else a fresh
+// utils.RandomID() (Rating resolves that once per render, so two read-only
+// ratings on one page never share an id; set ID for stable markup).
 func (p Props) ControlID() string {
 	if p.ID != "" {
 		return p.ID
@@ -88,7 +93,17 @@ func (p Props) ControlID() string {
 	if p.Name != "" {
 		return "rating-" + p.Name
 	}
-	return "rating"
+	return utils.RandomID()
+}
+
+// resolve pins the id for one render: with neither ID nor Name, ControlID
+// would mint a new random id on every call, so it is called once here and
+// stored in ID for the root and the radios to share.
+func (p Props) resolve() Props {
+	if p.ID == "" && p.Name == "" {
+		p.ID = utils.RandomID()
+	}
+	return p
 }
 
 // radioID is the id of the n-th radio: ControlID()+"-"+n.

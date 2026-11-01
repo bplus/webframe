@@ -2534,9 +2534,6 @@
     .md\:inline-flex {
       display: inline-flex;
     }
-    .md\:table {
-      display: table;
-    }
     .md\:table-cell {
       display: table-cell;
     }
@@ -3404,7 +3401,7 @@
 }
 .wf-code .wf-code-line {
   display: grid;
-  grid-template-columns: 3ch minmax(0, 1fr);
+  grid-template-columns: calc(var(--wf-code-digits, 3) * 1ch + 0.5ch) minmax(0, 1fr);
   column-gap: 1.5ch;
   counter-increment: wf-code-line;
 }

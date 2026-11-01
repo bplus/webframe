@@ -9,7 +9,8 @@
 //
 // Side-by-side rendering strategy: the component renders the hunk twice,
 // an inline table shown below md (`md:hidden`) and a side-by-side table
-// shown from md up (`hidden md:table`). Two renderings were chosen over one
+// shown from md up (inside a `hidden overflow-x-auto md:block` wrapper).
+// Two renderings were chosen over one
 // CSS-grid table that collapses because the two layouts do not share a row
 // order (side-by-side pairs a deletion with the following addition; inline
 // keeps the diff's own order), so one DOM could not serve both without

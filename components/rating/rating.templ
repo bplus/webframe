@@ -23,6 +23,7 @@ templ Rating(props ...Props) {
 	if len(props) > 0 {
 		{{ p = props[0] }}
 	}
+	{{ p = p.resolve() }}
 	if p.ReadOnly {
 		@readOnly(p)
 	} else {

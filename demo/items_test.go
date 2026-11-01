@@ -467,12 +467,18 @@ func TestItems_Batch5Form(t *testing.T) {
 		// Tags: the hidden field, the suggestion datalist, the text input.
 		`name="tags"`, `id="field-tags-options"`, `<option value="legendary">`, `placeholder="Add a tag"`, `id="field-tags-root"`, `data-max="5"`, "0/5",
 		// Release date with today as max; rating radios 1..5; the file drop.
-		`type="date"`, `name="released"`, `max="`+time.Now().Format("2006-01-02")+`"`,
+		`type="date"`, `name="released"`,
 		`name="rating"`, `id="field-rating-5"`, "Leave every star empty for unrated.",
 		`type="file"`, `name="artwork"`, `accept="image/*"`, "Drop a file here or choose",
 		"Release", "Plain text; a blank line starts a new paragraph.",
 	)
 	wantNone(t, body, `id="field-rating-6"`)
+	// The max is today, computed by the handler from its own time.Now();
+	// asserting the exact date would flake across midnight, so check the
+	// shape (an ISO date in this century) on the released field's input.
+	if m := regexp.MustCompile(`name="released"[^>]*\bmax="(20\d\d-\d\d-\d\d)"`).FindStringSubmatch(body); m == nil {
+		t.Errorf("released max is not an ISO date in:\n%s", body)
+	}
 
 	// Errors: a future date and a rating out of range, with the tags kept.
 	tomorrow := time.Now().Add(48 * time.Hour).Format("2006-01-02")

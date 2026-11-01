@@ -192,3 +192,18 @@ func TestGroupItems(t *testing.T) {
 		t.Errorf("group X = %+v", gs[0].Items)
 	}
 }
+
+// TestPalette_UnsafeHrefNeutralised: an item's Href goes through templ's
+// URL sanitizer, so a javascript: href renders about:invalid.
+func TestPalette_UnsafeHrefNeutralised(t *testing.T) {
+	got := render(t, Palette(Props{Items: []Item{{Label: "Evil", Href: "javascript:alert(1)"}, {Label: "Fine", Href: "/ok?x=1&y=2"}}}))
+	if !strings.Contains(got, `href="about:invalid`) {
+		t.Errorf("javascript: href must be neutralised to about:invalid:\n%s", got)
+	}
+	if strings.Contains(got, `javascript:`) {
+		t.Errorf("javascript: leaked into href:\n%s", got)
+	}
+	if !strings.Contains(got, `href="/ok?x=1&amp;y=2"`) {
+		t.Errorf("a plain href must survive:\n%s", got)
+	}
+}

@@ -6,8 +6,10 @@ import "github.com/bplus/webframe/components/copybutton"
 // (Language label left, copy button right) only when Language or Copy is
 // set, a <pre><code> with the text escaped, line numbers as a CSS counter
 // on per-line <span class="wf-code-line"> elements when LineNumbers (rules
-// in the .wf-code section of static/css/input.css; no JS), soft wrap or
-// horizontal scroll per Wrap, a MaxHeight cap that scrolls inside, and a
+// in the .wf-code section of static/css/input.css; no JS; the figure's
+// --wf-code-digits custom property sizes the gutter to the line count),
+// soft wrap or horizontal scroll per Wrap, a MaxHeight cap that scrolls
+// inside, and a
 // <figcaption> when Caption is set. A scrollable <pre> (no Wrap, or a
 // MaxHeight) carries tabindex="0" so keyboard users can scroll it.
 //
@@ -25,6 +27,7 @@ templ CodeBlock(props ...Props) {
 		class={ p.rootClass() }
 		if p.LineNumbers {
 			data-wf-code-numbered
+			style={ p.digitsStyle() }
 		}
 		{ p.Attributes... }
 	>

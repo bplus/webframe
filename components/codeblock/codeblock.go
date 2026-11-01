@@ -14,6 +14,7 @@
 package codeblock
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -69,14 +70,27 @@ func (p Props) hasHeader() bool {
 }
 
 // lines splits Code for line numbering, dropping one trailing newline.
+// Windows line ends are normalized first, so a CRLF file numbers one line
+// per line and no "\r" reaches the output.
 func (p Props) lines() []string {
-	return strings.Split(strings.TrimSuffix(p.Code, "\n"), "\n")
+	return strings.Split(p.text(), "\n")
 }
 
-// text is Code with one trailing newline dropped, for the un-numbered
-// rendering, so both modes show the same lines.
+// text is Code with "\r\n" normalized to "\n" and one trailing newline
+// dropped, for the un-numbered rendering, so both modes show the same
+// lines.
 func (p Props) text() string {
-	return strings.TrimSuffix(p.Code, "\n")
+	return strings.TrimSuffix(strings.ReplaceAll(p.Code, "\r\n", "\n"), "\n")
+}
+
+// digitsStyle is the figure's style attribute when LineNumbers is set: the
+// --wf-code-digits custom property holding the digit count of the last
+// line number, which the .wf-code gutter rule in input.css turns into its
+// width (so a 1000-line block gets a 4-digit gutter and a 9-line block a
+// 1-digit one). It is a SafeCSS because the value is an integer this
+// package computed, never caller input.
+func (p Props) digitsStyle() templ.SafeCSS {
+	return templ.SafeCSS("--wf-code-digits:" + strconv.Itoa(len(strconv.Itoa(len(p.lines())))) + ";")
 }
 
 // codeClass is the "language-<name>" class on <code>, empty without a

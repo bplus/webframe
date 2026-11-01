@@ -1,7 +1,7 @@
 // Package tagsinput renders a free-text tag editor: a framed box holding
 // one chip per tag (each with a remove button) and a text input that adds
-// a tag on Enter, on comma and on blur; Backspace on the empty input
-// removes the last chip. The tags are submitted as one plain form field,
+// a tag on Enter, on the separator key (comma by default) and on blur;
+// Backspace on the empty input removes the last chip. The tags are submitted as one plain form field,
 // <input type="hidden" name={Name}>, whose value is the tags joined with
 // Separator ("," by default), so the handler reads them with strings.Split:
 //
@@ -34,8 +34,9 @@
 // takes the remaining width of the last row (it drops to its own full row
 // when a long chip leaves too little space). The on-screen keyboard's
 // Enter/Return key adds the tag because the component listens to keydown
-// Enter; a comma on the keyboard adds too. Each chip's remove button is a
-// 24px target inside the chip; the input itself is at least 28px tall.
+// Enter; the separator key (comma by default) adds too. Each chip's remove
+// button is a 24px target inside the chip; the input itself is at least
+// 28px tall.
 // Suggestions render a <datalist>, which phones show as autocomplete
 // suggestions above the keyboard.
 package tagsinput
@@ -43,6 +44,7 @@ package tagsinput
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/a-h/templ"
 
@@ -72,7 +74,10 @@ type Props struct {
 	// Name is the hidden field's name; the submitted value is the tags
 	// joined with Separator.
 	Name string
-	// Values are the current tags, rendered as chips in order.
+	// Values are the current tags, rendered as chips in order. They are
+	// normalized first (trimmed, empties dropped, case-insensitive
+	// duplicates reduced to the first spelling), as commit() does to typed
+	// text.
 	Values []string
 	// Placeholder is the text input's placeholder.
 	Placeholder string
@@ -95,7 +100,12 @@ type Props struct {
 	HasError bool
 }
 
-// resolve fills the defaults: a random ID and the default separator.
+// resolve fills the defaults (a random ID and the default separator) and
+// normalizes Values the way commit() normalizes typed text: each tag is
+// trimmed, empties are dropped and a case-insensitive duplicate keeps its
+// first spelling. The chips (keyed by tag in the x-for), the hidden joined
+// value and the count are all rendered from the normalized list, so they
+// agree with each other and with what Alpine would have produced.
 func (p Props) resolve() Props {
 	if p.ID == "" {
 		p.ID = utils.RandomID()
@@ -103,7 +113,45 @@ func (p Props) resolve() Props {
 	if p.Separator == "" {
 		p.Separator = DefaultSeparator
 	}
+	p.Values = normalize(p.Values)
 	return p
+}
+
+// normalize trims, drops empties and dedupes case-insensitively, keeping
+// the first spelling and the order of first appearance. nil in, nil out.
+func normalize(values []string) []string {
+	if len(values) == 0 {
+		return values
+	}
+	seen := make(map[string]bool, len(values))
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		key := strings.ToLower(v)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, v)
+	}
+	return out
+}
+
+// hintText is the sr-only instruction line: it names the key that adds a
+// tag (Enter, plus the separator when it is one character the user can
+// type) and Backspace.
+func (p Props) hintText() string {
+	switch {
+	case p.Separator == DefaultSeparator:
+		return "Enter or comma adds a tag; Backspace on an empty input removes the last one."
+	case utf8.RuneCountInString(p.Separator) == 1:
+		return "Enter or " + p.Separator + " adds a tag; Backspace on an empty input removes the last one."
+	default:
+		return "Enter adds a tag; Backspace on an empty input removes the last one."
+	}
 }
 
 // HintID is the id of the hint paragraph (instructions and the n/max
@@ -201,8 +249,9 @@ const textInputClass = "h-7 min-w-32 flex-1 border-0 bg-transparent px-1 shadow-
 // the same chips from state (same tick as the walk: no paint in between).
 // commit() splits the text on the separator (so a paste adds several),
 // trims, drops empties, rejects case-insensitive duplicates and stops at
-// the cap; onKey handles Enter and comma (add) and Backspace on an empty
-// input (remove the last chip).
+// the cap; onKey handles Enter and the separator key (add; the separator
+// only when it is one character, so a multi-character Separator adds on
+// Enter alone) and Backspace on an empty input (remove the last chip).
 const alpineData = `{
 	tags: [], text: '', max: 0, sep: ',', disabled: false, placeholder: '',
 	init() {
@@ -228,7 +277,7 @@ const alpineData = `{
 	},
 	removeAt(i) { if (!this.disabled) this.tags.splice(i, 1) },
 	onKey(e) {
-		if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); this.commit(); return }
+		if (e.key === 'Enter' || (this.sep.length === 1 && e.key === this.sep)) { e.preventDefault(); this.commit(); return }
 		if (e.key === 'Backspace' && this.text === '' && this.tags.length > 0) { e.preventDefault(); this.tags.pop() }
 	}
 }`

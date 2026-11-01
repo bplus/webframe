@@ -104,7 +104,7 @@ templ Palette(p Props) {
 										role="option"
 										aria-selected="false"
 										tabindex="-1"
-										href={ templ.SafeURL(it.Href) }
+										href={ it.Href }
 										class="flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground outline-none data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
 									>
 										if it.Icon != nil {

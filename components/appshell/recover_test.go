@@ -216,3 +216,262 @@ func TestMiddleware_NoPanicUntouched(t *testing.T) {
 		t.Errorf("%d %q %q", rec.Code, rec.Body.String(), rec.Header().Get("X-Custom"))
 	}
 }
+
+// TestMiddleware_OnPanicPanics: a hook that panics before writing is logged
+// (a second line, with the first still there) and the default bare page
+// answers 500, so a broken error page does not drop the connection.
+func TestMiddleware_OnPanicPanics(t *testing.T) {
+	logs := captureLog(t)
+	a := testApp()
+	a.OnPanic = func(w http.ResponseWriter, r *http.Request, id string, err any) {
+		w.Header().Set("HX-Retarget", "#somewhere") // set, never sent
+		panic("hook broke")
+	}
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("first") }))
+	req := httptest.NewRequest("GET", "/broken", nil)
+	req.Header.Set("X-Request-Id", "rid-4")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Request id: rid-4") || !strings.Contains(strings.ToLower(body), "<!doctype html>") {
+		t.Errorf("default page missing:\n%s", body)
+	}
+	if rec.Header().Get("HX-Retarget") != "" {
+		t.Errorf("header set by the broken hook leaked: %q", rec.Header().Get("HX-Retarget"))
+	}
+	got := logs.String()
+	for _, want := range []string{
+		"appshell: panic serving GET /broken (request rid-4): first",
+		"appshell: OnPanic panicked for GET /broken (request rid-4): hook broke",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("log line %q missing, got:\n%s", want, got)
+		}
+	}
+	if n := strings.Count(got, "appshell: "); n != 2 {
+		t.Errorf("want exactly two log lines, got %d:\n%s", n, got)
+	}
+}
+
+// TestMiddleware_OnPanicPanicsAfterWrite: a hook that panics after writing
+// is logged only; nothing is appended.
+func TestMiddleware_OnPanicPanicsAfterWrite(t *testing.T) {
+	logs := captureLog(t)
+	a := testApp()
+	a.OnPanic = func(w http.ResponseWriter, r *http.Request, id string, err any) {
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = io.WriteString(w, "half")
+		panic("late hook")
+	}
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("first") }))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if rec.Code != 502 || rec.Body.String() != "half" {
+		t.Errorf("%d %q, want 502 \"half\" untouched", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(logs.String(), "OnPanic panicked") {
+		t.Errorf("second panic not logged:\n%s", logs.String())
+	}
+}
+
+// TestMiddleware_StripsRedirectHeadersOn500: a handler that had set a
+// redirect (HTTP or htmx) before panicking gets a plain 500, not a 500
+// that redirects, retargets or rewrites the URL bar; unrelated headers
+// stay.
+func TestMiddleware_StripsRedirectHeadersOn500(t *testing.T) {
+	captureLog(t)
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, k := range redirectHeaders {
+			w.Header().Set(k, "/elsewhere")
+		}
+		w.Header().Set("X-Keep", "yes")
+		panic("mid-redirect")
+	}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/", nil))
+	if rec.Code != 500 {
+		t.Fatalf("status %d, want 500", rec.Code)
+	}
+	for _, k := range redirectHeaders {
+		if v := rec.Header().Get(k); v != "" {
+			t.Errorf("%s = %q, want stripped", k, v)
+		}
+	}
+	if rec.Header().Get("X-Keep") != "yes" {
+		t.Errorf("unrelated header dropped")
+	}
+	if len(redirectHeaders) != 8 || redirectHeaders[0] != "Location" {
+		t.Errorf("redirectHeaders = %q", redirectHeaders)
+	}
+}
+
+// TestMiddleware_NestedSharesOneID: an inner Middleware reuses the id the
+// outer one stored, over a differing X-Request-Id header, so the log line
+// and the 500 page name one id.
+func TestMiddleware_NestedSharesOneID(t *testing.T) {
+	var inner, outer string
+	outerApp, innerApp := testApp(), testApp()
+	h := outerApp.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		outer = RequestID(r.Context())
+		innerApp.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			inner = RequestID(r.Context())
+		})).ServeHTTP(w, r)
+	}))
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Request-Id", "from-proxy")
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	if outer != "from-proxy" || inner != outer {
+		t.Errorf("outer %q inner %q, want one id from the header", outer, inner)
+	}
+	outer, inner = "", ""
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil))
+	if outer == "" || inner != outer {
+		t.Errorf("outer %q inner %q, want one generated id", outer, inner)
+	}
+}
+
+// flushThrough serves h over a real connection and checks that the first
+// chunk reaches the client before the handler finishes: the handler writes
+// "first", flushes, and waits for the test to have read it before writing
+// "second".
+func flushThrough(t *testing.T, h http.Handler) {
+	t.Helper()
+	srv := httptest.NewServer(h)
+	defer srv.Close()
+	res, err := http.Get(srv.URL)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer res.Body.Close()
+	buf := make([]byte, 5)
+	if _, err := io.ReadFull(res.Body, buf); err != nil || string(buf) != "first" {
+		t.Fatalf("first chunk = %q %v, want \"first\" before the handler returns", buf, err)
+	}
+	close(flushGate)
+	rest, err := io.ReadAll(res.Body)
+	if err != nil || string(rest) != "second" {
+		t.Errorf("rest = %q %v", rest, err)
+	}
+}
+
+var flushGate chan struct{}
+
+// TestMiddleware_FlushThroughController: a handler flushing with
+// http.NewResponseController(w).Flush() flushes through the wrapper.
+func TestMiddleware_FlushThroughController(t *testing.T) {
+	flushGate = make(chan struct{})
+	flushThrough(t, testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, "first")
+		if err := http.NewResponseController(w).Flush(); err != nil {
+			t.Errorf("Flush: %v", err)
+		}
+		<-flushGate
+		_, _ = io.WriteString(w, "second")
+	})))
+}
+
+// TestMiddleware_FlushThroughFlusher: the same with the classic
+// w.(http.Flusher) assertion an SSE handler makes.
+func TestMiddleware_FlushThroughFlusher(t *testing.T) {
+	flushGate = make(chan struct{})
+	flushThrough(t, testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, "first")
+		f, ok := w.(http.Flusher)
+		if !ok {
+			t.Errorf("wrapper is not an http.Flusher")
+			return
+		}
+		f.Flush()
+		<-flushGate
+		_, _ = io.WriteString(w, "second")
+	})))
+}
+
+// TestMiddleware_HijackReachable: the wrapper is an http.Hijacker and the
+// hijack goes through to the real connection: the handler takes it over
+// and writes a raw response the client reads.
+func TestMiddleware_HijackReachable(t *testing.T) {
+	logs := captureLog(t)
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Errorf("wrapper is not an http.Hijacker")
+			return
+		}
+		conn, rw, err := hj.Hijack()
+		if err != nil {
+			t.Errorf("Hijack: %v", err)
+			return
+		}
+		defer conn.Close()
+		_, _ = rw.WriteString("HTTP/1.1 200 OK\r\nContent-Length: 3\r\nConnection: close\r\n\r\nraw")
+		_ = rw.Flush()
+		panic("after hijack") // logged; nothing may be written onto the hijacked connection
+	}))
+	srv := httptest.NewServer(h)
+	defer srv.Close()
+	res, err := http.Get(srv.URL)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	if res.StatusCode != 200 || string(body) != "raw" {
+		t.Errorf("%d %q, want the hijacked raw response", res.StatusCode, body)
+	}
+	if got := logs.String(); !strings.Contains(got, "(request ") || strings.Contains(got, "render default 500") || strings.Contains(got, "hijacked") {
+		t.Errorf("want the panic logged and no 500 attempted on the hijacked connection, got:\n%s", got)
+	}
+	// Against a recorder (no Hijack underneath) the assertion still holds
+	// and the call reports the error instead of panicking.
+	rec := httptest.NewRecorder()
+	testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, _, err := w.(http.Hijacker).Hijack(); err == nil {
+			t.Errorf("Hijack on a recorder should fail")
+		}
+	})).ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+}
+
+// readerFromRecorder is a recorder that, like net/http's response, has a
+// ReadFrom; the wrapper must hand the copy to it.
+type readerFromRecorder struct {
+	*httptest.ResponseRecorder
+	readFromCalls int
+}
+
+func (r *readerFromRecorder) ReadFrom(src io.Reader) (int64, error) {
+	r.readFromCalls++
+	return io.Copy(r.ResponseRecorder, src)
+}
+
+// TestMiddleware_ReadFromPassthrough: io.Copy onto the wrapper (what
+// http.ServeContent does) reaches the underlying writer's ReadFrom when it
+// has one, falls back to Write when it has none, and counts as written
+// either way so a later panic appends no 500.
+func TestMiddleware_ReadFromPassthrough(t *testing.T) {
+	captureLog(t)
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := w.(io.ReaderFrom); !ok {
+			t.Errorf("wrapper is not an io.ReaderFrom")
+		}
+		// struct{io.Reader} hides strings.Reader's WriteTo, which io.Copy
+		// would otherwise prefer over the destination's ReadFrom.
+		if _, err := io.Copy(w, struct{ io.Reader }{strings.NewReader("payload")}); err != nil {
+			t.Errorf("copy: %v", err)
+		}
+		panic("after copy")
+	}))
+	rf := &readerFromRecorder{ResponseRecorder: httptest.NewRecorder()}
+	h.ServeHTTP(rf, httptest.NewRequest("GET", "/", nil))
+	if rf.readFromCalls != 1 || rf.Body.String() != "payload" || rf.Code != 200 {
+		t.Errorf("ReadFrom calls %d, body %q, code %d", rf.readFromCalls, rf.Body.String(), rf.Code)
+	}
+	plain := httptest.NewRecorder()
+	h.ServeHTTP(plain, httptest.NewRequest("GET", "/", nil))
+	if plain.Body.String() != "payload" || plain.Code != 200 {
+		t.Errorf("fallback: body %q, code %d", plain.Body.String(), plain.Code)
+	}
+}

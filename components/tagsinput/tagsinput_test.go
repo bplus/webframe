@@ -193,3 +193,43 @@ func TestTagsInput_ZeroProps(t *testing.T) {
 	out := render(t, TagsInput())
 	mustContain(t, out, `x-data=`, `role="list"`)
 }
+
+// TestTagsInput_ValuesNormalized: Values are trimmed, empties dropped and
+// case-insensitive duplicates reduced to the first spelling before
+// rendering, so the chips, the hidden joined value and the count agree.
+func TestTagsInput_ValuesNormalized(t *testing.T) {
+	out := render(t, TagsInput(Props{ID: "t", Name: "t", Values: []string{"a", "A", " b ", ""}, MaxTags: 5}))
+	mustContain(t, out, `data-tag="a"`, `data-tag="b"`, `value="a,b"`, "2/5", `aria-label="Remove a"`, `aria-label="Remove b"`)
+	mustNotContain(t, out, `data-tag="A"`, `data-tag=" b "`, `data-tag=""`)
+	if got := strings.Count(out, "<li data-tag="); got != 2 {
+		t.Errorf("want 2 server-rendered chips, got %d:\n%s", got, out)
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	if got := normalize(nil); got != nil {
+		t.Errorf("normalize(nil) = %v, want nil", got)
+	}
+	got := normalize([]string{" x", "y ", "X", "", "  ", "y", "z"})
+	want := []string{"x", "y", "z"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("normalize = %q, want %q", got, want)
+	}
+}
+
+// TestTagsInput_SeparatorKeyCommits: the keydown handler commits on Enter
+// and on the separator key read from data-sep (not on a hard-coded comma),
+// and the sr-only hint names that key; a multi-character separator leaves
+// Enter alone.
+func TestTagsInput_SeparatorKeyCommits(t *testing.T) {
+	semi := render(t, TagsInput(Props{ID: "t", Name: "t", Separator: ";"}))
+	mustContain(t, semi, `data-sep=";"`, `e.key === &#39;Enter&#39; || (this.sep.length === 1 &amp;&amp; e.key === this.sep)`, "Enter or ; adds a tag;")
+	mustNotContain(t, semi, `e.key === &#39;,&#39;`, "Enter or comma adds a tag")
+
+	comma := render(t, TagsInput(Props{ID: "t", Name: "t"}))
+	mustContain(t, comma, `data-sep=","`, "Enter or comma adds a tag;")
+
+	multi := render(t, TagsInput(Props{ID: "t", Name: "t", Separator: ", "}))
+	mustContain(t, multi, `data-sep=", "`, "Enter adds a tag;")
+	mustNotContain(t, multi, "Enter or")
+}

@@ -128,3 +128,37 @@ func TestCodeBlock_CaptionIDClassAttributes(t *testing.T) {
 		t.Errorf("no Caption must render no figcaption:\n%s", none)
 	}
 }
+
+// TestCodeBlock_CRLFNormalized: Windows line ends count as one line each
+// and no carriage return reaches the output.
+func TestCodeBlock_CRLFNormalized(t *testing.T) {
+	out := render(t, codeblock.CodeBlock(codeblock.Props{Code: "a\r\nb\r\nc\r\n", LineNumbers: true}))
+	if got := strings.Count(out, `<span class="wf-code-line">`); got != 3 {
+		t.Errorf("want 3 numbered lines, got %d:\n%s", got, out)
+	}
+	if strings.Contains(out, "\r") {
+		t.Errorf("carriage return leaked into the output:\n%q", out)
+	}
+	plain := render(t, codeblock.CodeBlock(codeblock.Props{Code: "a\r\nb\r\n"}))
+	if strings.Contains(plain, "\r") || !strings.Contains(plain, "a\nb") {
+		t.Errorf("un-numbered rendering not normalized:\n%q", plain)
+	}
+}
+
+// TestCodeBlock_GutterDigits: the figure carries --wf-code-digits with the
+// digit count of the last line number, only when LineNumbers is set.
+func TestCodeBlock_GutterDigits(t *testing.T) {
+	long := strings.Repeat("x\n", 1000)
+	out := render(t, codeblock.CodeBlock(codeblock.Props{Code: long, LineNumbers: true}))
+	if !strings.Contains(out, `style="--wf-code-digits:4;"`) {
+		t.Errorf("1000 lines want a 4-digit gutter:\n%s", out[:min(len(out), 400)])
+	}
+	short := render(t, codeblock.CodeBlock(codeblock.Props{Code: "one\ntwo", LineNumbers: true}))
+	if !strings.Contains(short, `style="--wf-code-digits:1;"`) {
+		t.Errorf("2 lines want a 1-digit gutter:\n%s", short)
+	}
+	none := render(t, codeblock.CodeBlock(codeblock.Props{Code: long}))
+	if strings.Contains(none, "--wf-code-digits") {
+		t.Errorf("no line numbers, no digits property:\n%s", none[:min(len(none), 400)])
+	}
+}

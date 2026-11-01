@@ -63,6 +63,7 @@ func FileDrop(props ...Props) templ.Component {
 		if len(props) > 0 {
 			p = props[0]
 		}
+		p = p.resolve()
 		var templ_7745c5c3_Var2 = []any{utils.TwMerge("flex w-full min-w-0 flex-col gap-2", p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
@@ -75,7 +76,7 @@ func FileDrop(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.baseID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 39, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 40, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -101,7 +102,7 @@ func FileDrop(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.alpineData())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 41, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 42, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -123,7 +124,7 @@ func FileDrop(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 44, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 45, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -149,7 +150,7 @@ func FileDrop(props ...Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 54, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 55, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -167,7 +168,7 @@ func FileDrop(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 56, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 57, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -186,7 +187,7 @@ func FileDrop(props ...Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Accept)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 59, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 60, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -238,7 +239,7 @@ func FileDrop(props ...Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.label())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 70, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 71, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -256,7 +257,7 @@ func FileDrop(props ...Props) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.hint())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 72, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filedrop/filedrop.templ`, Line: 73, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {

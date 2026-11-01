@@ -37,7 +37,7 @@ import (
 // built-in attributes.
 type Props struct {
 	// ID is the root's id. ControlID derives the input's id from it (or from
-	// Name).
+	// Name; a random id when both are empty).
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -61,7 +61,9 @@ type Props struct {
 	Disabled    bool
 }
 
-// baseID is the id stem: ID, else "filedrop-"+Name, else "filedrop".
+// baseID is the id stem: ID, else "filedrop-"+Name, else a fresh
+// utils.RandomID() (FileDrop resolves that once per render, so the root
+// and the input agree and two unnamed drop zones never share an id).
 func (p Props) baseID() string {
 	if p.ID != "" {
 		return p.ID
@@ -69,7 +71,17 @@ func (p Props) baseID() string {
 	if p.Name != "" {
 		return "filedrop-" + p.Name
 	}
-	return "filedrop"
+	return utils.RandomID()
+}
+
+// resolve pins the id stem for one render: with neither ID nor Name,
+// baseID would mint a new random id on every call, so it is called once
+// here and stored in ID.
+func (p Props) resolve() Props {
+	if p.ID == "" && p.Name == "" {
+		p.ID = utils.RandomID()
+	}
+	return p
 }
 
 // ControlID is the id of the hidden <input type="file">, the control a
@@ -141,11 +153,15 @@ func trimZero(s string) string {
 //     for image thumbnails when preview is on and revoking the old ones.
 //   - remove(i): drops the i-th file from the input and relists.
 //   - size(n): formats bytes like FormatSize.
+//   - destroy(): revokes every object URL still held; Alpine calls it when
+//     the root leaves the DOM (a 422 swap replaces the form, say), so the
+//     thumbnails do not leak for the rest of the page's life.
 const alpineScript = `accept(list) { this.error = ''; const picked = Array.from(list || []); if (picked.length === 0) return; const dt = new DataTransfer(); const refused = []; for (const f of picked) { if (this.max > 0 && f.size > this.max) { refused.push(f.name); continue; } if (!this.multiple && dt.items.length > 0) break; dt.items.add(f); } this.$refs.input.files = dt.files; this.sync(); if (refused.length > 0) { this.error = refused.join(', ') + (refused.length > 1 ? ' are larger than ' + this.maxLabel + ' and were not added' : ' is larger than ' + this.maxLabel + ' and was not added'); } }, ` +
 	`drop(e) { this.over = false; if (this.disabled) return; this.accept(e.dataTransfer.files); }, ` +
 	`sync() { for (const f of this.files) { if (f.url) URL.revokeObjectURL(f.url); } this.files = Array.from(this.$refs.input.files).map(f => ({ name: f.name, size: f.size, url: this.preview && f.type.startsWith('image/') ? URL.createObjectURL(f) : '' })); }, ` +
 	`remove(i) { const dt = new DataTransfer(); Array.from(this.$refs.input.files).forEach((f, j) => { if (j !== i) dt.items.add(f); }); this.$refs.input.files = dt.files; this.sync(); }, ` +
-	`size(n) { if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(1).replace(/\.0$/, '') + ' KB'; if (n < 1073741824) return (n / 1048576).toFixed(1).replace(/\.0$/, '') + ' MB'; return (n / 1073741824).toFixed(1).replace(/\.0$/, '') + ' GB'; }`
+	`size(n) { if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(1).replace(/\.0$/, '') + ' KB'; if (n < 1073741824) return (n / 1048576).toFixed(1).replace(/\.0$/, '') + ' MB'; return (n / 1073741824).toFixed(1).replace(/\.0$/, '') + ' GB'; }, ` +
+	`destroy() { for (const f of this.files) { if (f.url) URL.revokeObjectURL(f.url); } this.files = []; }`
 
 // alpineData is the root's x-data: the instance values (max, multiple,
 // preview, disabled, the formatted limit) and the shared methods.

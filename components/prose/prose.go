@@ -28,7 +28,11 @@
 // width, long words and URLs in paragraphs and inline code wrap
 // (overflow-wrap: anywhere), <pre> blocks and tables scroll horizontally
 // inside their own box (overflow-x: auto; a table is display: block for
-// that) instead of widening the page.
+// that) instead of widening the page. Note that `.wf-prose table` being
+// display: block drops the table role for assistive tech (a screen reader
+// no longer announces rows and columns); when a table must stay navigable
+// as a table, add role="table" to the <table> in the HTML (and role="row"
+// / role="cell" on its parts if the reader still flattens it).
 package prose
 
 import (

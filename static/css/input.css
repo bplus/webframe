@@ -624,12 +624,14 @@
 /* Line numbers are a CSS counter on the per-line spans the component emits
    when LineNumbers is set (figure[data-wf-code-numbered]); no JS. Each line
    is a two-column grid (number gutter, text) so a soft-wrapped continuation
-   (Wrap) lines up under the text, not under the number. The gutter is not
-   selectable, so copying by selection copies the code only. */
+   (Wrap) lines up under the text, not under the number. The gutter is as
+   wide as the last line number's digits (--wf-code-digits, set on the
+   figure by the component; 3 when absent) plus half a character. The
+   gutter is not selectable, so copying by selection copies the code only. */
 .wf-code[data-wf-code-numbered] code { counter-reset: wf-code-line; }
 .wf-code .wf-code-line {
   display: grid;
-  grid-template-columns: 3ch minmax(0, 1fr);
+  grid-template-columns: calc(var(--wf-code-digits, 3) * 1ch + 0.5ch) minmax(0, 1fr);
   column-gap: 1.5ch;
   counter-increment: wf-code-line;
 }

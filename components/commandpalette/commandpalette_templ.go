@@ -251,9 +251,9 @@ func Palette(p Props) templ.Component {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var11 templ.SafeURL
-						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(it.Href))
+						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 107, Col: 39}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 107, Col: 24}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {

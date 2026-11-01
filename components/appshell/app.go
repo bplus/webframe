@@ -1,12 +1,14 @@
 package appshell
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -74,9 +76,13 @@ type App struct {
 	// An app that wants the styled page in the shell assigns
 	// errorpage.PanicHandler (appshell cannot import errorpage, so the hook
 	// is the seam). Middleware never calls it once headers have gone out;
-	// a panic there is logged only. If OnPanic itself panics, the second
-	// panic propagates to net/http, which logs it and closes the
-	// connection.
+	// a panic there is logged only. Before the hook runs, Middleware deletes
+	// any unsent Location and HX-Redirect/HX-Location/HX-Refresh/HX-Reswap/
+	// HX-Retarget/HX-Push-Url/HX-Replace-Url headers the handler had set, so
+	// a 500 never redirects, retargets or rewrites the URL bar. If OnPanic
+	// itself panics before writing, that is logged too and the default bare
+	// 500 page answers instead; after it has written, the second panic is
+	// logged only.
 	OnPanic func(w http.ResponseWriter, r *http.Request, requestID string, err any)
 }
 
@@ -92,30 +98,39 @@ const (
 // request context (Shell marks the active nav item from the path; RequestID
 // reads the id), and recovers a panic in next.
 //
-// The request id is the X-Request-Id header when the request carries one
-// (a proxy or load balancer in front of the app), else 8 random bytes in
-// hex, made once per request.
+// The request id is the one an enclosing Middleware already stored in the
+// context (two Apps nested, or the same Middleware installed twice, share
+// one id), else the X-Request-Id header when the request carries one (a
+// proxy or load balancer in front of the app), else 8 random bytes in hex,
+// made once per request.
 //
 // A panic in next is logged as
 //
 //	appshell: panic serving {method} {path} (request {id}): {value}
 //
 // followed by the goroutine's stack. Then, if the handler had not yet
-// written a status or any body (Middleware watches WriteHeader, Write and
-// Flush through a small ResponseWriter wrapper), App.OnPanic (or its
-// default, a bare 500 document) answers the request. If headers had
+// written a status or any body (Middleware watches WriteHeader, Write,
+// Flush, ReadFrom and Hijack through a small ResponseWriter wrapper), the
+// unsent redirect headers are deleted (see App.OnPanic) and App.OnPanic (or
+// its default, a bare 500 document) answers the request. If headers had
 // already gone out, nothing more is written: the response ends as it
 // stands and the connection stays usable, since the handler returns
 // normally from net/http's point of view. http.ErrAbortHandler is
 // re-panicked unchanged so net/http keeps treating it as the quiet abort
 // it is.
 //
-// The wrapper implements http.Flusher (through http.ResponseController, so
-// an SSE handler's w.(http.Flusher) still works) and Unwrap, so
-// ResponseController reaches the underlying writer for everything else.
+// The wrapper implements http.Flusher and http.Hijacker (both through
+// http.ResponseController, so an SSE handler's w.(http.Flusher) and a
+// websocket upgrader's w.(http.Hijacker) still work), io.ReaderFrom when
+// the underlying writer does (so http.ServeContent and http.FileServer keep
+// net/http's sendfile path) and Unwrap, so ResponseController reaches the
+// underlying writer for everything else.
 func (a *App) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := r.Header.Get("X-Request-Id")
+		id := RequestID(r.Context())
+		if id == "" {
+			id = r.Header.Get("X-Request-Id")
+		}
 		if id == "" {
 			id = newRequestID()
 		}
@@ -136,14 +151,65 @@ func (a *App) Middleware(next http.Handler) http.Handler {
 			if rw.wrote {
 				return
 			}
-			onPanic := a.OnPanic
-			if onPanic == nil {
-				onPanic = a.defaultOnPanic
-			}
-			onPanic(rw, r, id, v)
+			stripRedirectHeaders(rw.Header())
+			a.answerPanic(rw, r, id, v)
 		}()
 		next.ServeHTTP(rw, r)
 	})
+}
+
+// redirectHeaders are the response headers a handler may have set before
+// it panicked that would make the 500 act on the client: an HTTP redirect,
+// or an htmx instruction to redirect, refresh, retarget or reswap the
+// answer, or to touch the URL bar. Middleware deletes them before the 500
+// is written, so an error page is only ever shown where the request came
+// from.
+var redirectHeaders = []string{
+	"Location",
+	"HX-Redirect", "HX-Location", "HX-Refresh",
+	"HX-Reswap", "HX-Retarget",
+	"HX-Push-Url", "HX-Replace-Url",
+}
+
+// stripRedirectHeaders deletes redirectHeaders from h (unsent, since the
+// recover path only runs it before WriteHeader).
+func stripRedirectHeaders(h http.Header) {
+	for _, k := range redirectHeaders {
+		h.Del(k)
+	}
+}
+
+// answerPanic writes the 500 through App.OnPanic, or the default when the
+// app set none. The hook runs under its own recover: if it panics before
+// writing anything, the second panic is logged as
+//
+//	appshell: OnPanic panicked for {method} {path} (request {id}): {value}
+//
+// with its stack, and the default bare 500 page answers instead, so a
+// broken error page never turns into a dropped connection. If the hook
+// panics after it has written, the second panic is logged only.
+// http.ErrAbortHandler from the hook is re-panicked, as from the handler.
+func (a *App) answerPanic(rw *recordingWriter, r *http.Request, id string, v any) {
+	if a.OnPanic == nil {
+		a.defaultOnPanic(rw, r, id, v)
+		return
+	}
+	defer func() {
+		v2 := recover()
+		if v2 == nil {
+			return
+		}
+		if v2 == http.ErrAbortHandler {
+			panic(v2)
+		}
+		log.Printf("appshell: OnPanic panicked for %s %s (request %s): %v\n%s", r.Method, r.URL.Path, id, v2, debug.Stack())
+		if rw.wrote {
+			return
+		}
+		stripRedirectHeaders(rw.Header())
+		a.defaultOnPanic(rw, r, id, v)
+	}()
+	a.OnPanic(rw, r, id, v)
 }
 
 // RequestID returns the request id Middleware stored for this request
@@ -201,6 +267,36 @@ func (w *recordingWriter) Flush() {
 	w.wrote = true
 	_ = http.NewResponseController(w.ResponseWriter).Flush()
 }
+
+// Hijack hands the connection to the handler, as http.Hijacker does,
+// through http.ResponseController (so a wrapped writer that only has
+// Unwrap still hijacks). A hijacked connection counts as written: nothing
+// of the 500 may go onto it afterwards.
+func (w *recordingWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	conn, rw, err := http.NewResponseController(w.ResponseWriter).Hijack()
+	if err == nil {
+		w.wrote = true
+	}
+	return conn, rw, err
+}
+
+// ReadFrom copies src to the response, as io.ReaderFrom does: through the
+// underlying writer's own ReadFrom when it has one (net/http's response
+// does, and uses sendfile for a *os.File from http.ServeContent or
+// http.FileServer), else through Write. The copy counts as written even
+// when src is empty, since net/http's ReadFrom sends the headers first.
+func (w *recordingWriter) ReadFrom(src io.Reader) (int64, error) {
+	w.wrote = true
+	if rf, ok := w.ResponseWriter.(io.ReaderFrom); ok {
+		return rf.ReadFrom(src)
+	}
+	return io.Copy(writerOnly{w.ResponseWriter}, src)
+}
+
+// writerOnly hides every method but Write, so io.Copy in ReadFrom does not
+// find a ReadFrom on the underlying writer (there is none, that is why we
+// are here) or on the wrapper (which would recurse).
+type writerOnly struct{ io.Writer }
 
 // Unwrap lets http.ResponseController reach the underlying writer.
 func (w *recordingWriter) Unwrap() http.ResponseWriter {

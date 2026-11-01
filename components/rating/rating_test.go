@@ -39,7 +39,7 @@ func mustNotContain(t *testing.T, out string, nots ...string) {
 
 func TestRating_ReadOnlyAria(t *testing.T) {
 	out := render(t, Rating(Props{ReadOnly: true, Value: 3}))
-	mustContain(t, out, `role="img"`, `aria-label="3 of 5"`, `id="rating"`)
+	mustContain(t, out, `role="img"`, `aria-label="3 of 5"`, `id="id-`)
 	mustNotContain(t, out, "<fieldset", "<input", "<legend")
 	if got := strings.Count(out, "<svg"); got != 5 {
 		t.Errorf("want 5 stars, got %d", got)
@@ -146,8 +146,35 @@ func TestControlID(t *testing.T) {
 	if got := (Props{Name: "n"}).ControlID(); got != "rating-n" {
 		t.Errorf("derived from Name: got %q", got)
 	}
-	if got := (Props{}).ControlID(); got != "rating" {
-		t.Errorf("neither: got %q", got)
+	if got := (Props{}).ControlID(); !strings.HasPrefix(got, "id-") {
+		t.Errorf("neither: got %q, want a utils.RandomID()", got)
+	}
+}
+
+// TestRating_RandomIDPerRender: two ratings with neither ID nor Name get
+// distinct ids, and within one input-mode render the fieldset and its
+// radios share the one id (resolved once).
+func TestRating_RandomIDPerRender(t *testing.T) {
+	idAttr := regexp.MustCompile(`id="(id-[^"]+)"`)
+	a := render(t, Rating(Props{ReadOnly: true, Value: 3}))
+	b := render(t, Rating(Props{ReadOnly: true, Value: 3}))
+	ma, mb := idAttr.FindStringSubmatch(a), idAttr.FindStringSubmatch(b)
+	if ma == nil || mb == nil {
+		t.Fatalf("no random id:\n%s\n%s", a, b)
+	}
+	if ma[1] == mb[1] {
+		t.Errorf("two read-only ratings share id %q", ma[1])
+	}
+	in := render(t, Rating(Props{Max: 2}))
+	ids := idAttr.FindAllStringSubmatch(in, -1)
+	if len(ids) != 3 {
+		t.Fatalf("want fieldset + 2 radio ids, got %d in:\n%s", len(ids), in)
+	}
+	root := ids[0][1]
+	for _, m := range ids[1:] {
+		if !strings.HasPrefix(m[1], root+"-") {
+			t.Errorf("radio id %q does not derive from the root id %q", m[1], root)
+		}
 	}
 }
 
