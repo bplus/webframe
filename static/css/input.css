@@ -502,9 +502,11 @@
 }
 
 /* ── Bottom-stuck bars ── */
-/* A form with a sticky save bar (settingspage) keeps a focused control
-   clear of the bar when the browser scrolls it into view on Tab. */
-form:has(.wf-settings-bar) :where(input, select, textarea, button, [tabindex]) {
+/* A settings page (settingspage.Page, root .wf-settings) keeps a focused
+   control clear of its sticky save bar when the browser scrolls it into
+   view on Tab. The bar is the page's last child, outside the form, so the
+   rule keys on the page root rather than the form. */
+.wf-settings :where(input, select, textarea, button, [tabindex]) {
   scroll-margin-bottom: 5rem;
 }
 

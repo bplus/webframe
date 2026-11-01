@@ -53,11 +53,10 @@ func HandleBrowseItem(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// browseProps declares the pane: every item as a link in the list, each
-// carrying splitpane.LinkAttrs so a click swaps the detail from md up and
-// navigates below; the item whose id is selectedID is marked
-// aria-current. Detail is nil on /browse and the item's detail on
-// /browse/{id}; Back leads to /browse.
+// browseProps declares the pane: the list column is splitpane.List with one
+// row per item (name, type as the meta line), the item whose id is
+// selectedID marked selected. Detail is nil on /browse and the item's
+// detail on /browse/{id}; Back leads to /browse.
 func browseProps(selectedID string, detail templ.Component) splitpane.Props {
 	p := splitpane.Props{
 		ID:          browseID,
@@ -68,16 +67,16 @@ func browseProps(selectedID string, detail templ.Component) splitpane.Props {
 		Title:       "Item details",
 		Placeholder: emptystate.EmptyState(emptystate.Props{Title: "Select an item", Description: "Pick one from the list to see its details here."}),
 	}
-	var links []pages.BrowseLink
+	var items []splitpane.ListItem
 	for _, it := range Items.All() {
-		href := "/browse/" + it.ID
-		links = append(links, pages.BrowseLink{
-			Label:   it.Name,
-			Attrs:   splitpane.LinkAttrs(p, href),
-			Current: it.ID == selectedID,
+		items = append(items, splitpane.ListItem{
+			Href:     "/browse/" + it.ID,
+			Title:    it.Name,
+			Meta:     itemTypeLabel(it.Type),
+			Selected: it.ID == selectedID,
 		})
 	}
-	p.List = pages.BrowseList(links)
+	p.List = splitpane.List(p, items)
 	return p
 }
 

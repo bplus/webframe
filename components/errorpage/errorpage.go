@@ -40,6 +40,11 @@
 //	http.ListenAndServe(addr, app.Middleware(styledErrors(mux)))
 //
 // The wrapper sits inside App.Middleware so the page renders in the shell.
+// It replaces any "/" catch-all route the app registered for its 404 page:
+// with a catch-all in the table every path has a pattern, mux.Handler
+// never returns an empty one, and the 405 branch never fires (a wrong
+// method on a real route would fall into the catch-all and render as a
+// 404). Register the real routes only and let the wrapper answer the rest.
 // An app that is content with the mux's plain 405 (an API path, a form
 // that is only ever posted by its own page) needs none of this.
 package errorpage

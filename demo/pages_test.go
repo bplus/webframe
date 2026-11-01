@@ -84,8 +84,9 @@ func TestPages_SettingsForm(t *testing.T) {
 		// Groups, fields and the stored values.
 		`id="profile"`, "Profile", `name="display_name"`, `value="Morgan"`, `name="email"`, `type="email"`, `value="morgan@example.com"`,
 		`id="notifications"`, "Notifications", `role="switch"`, `name="digest"`, `name="mentions"`,
-		// The save bar, always present, with both buttons.
-		"wf-settings-bar", "sticky bottom-0", "Save changes", `type="submit"`, "Cancel", `href="/dashboard"`,
+		// The save bar, always present, with both buttons; the submit button
+		// sits outside the form and names it.
+		"wf-settings-bar", "sticky bottom-0", "Save changes", `type="submit"`, `form="settings"`, "Cancel", `href="/dashboard"`,
 		// The Danger zone after the form: a destructive action that confirms.
 		`id="danger-zone"`, "Danger zone", "Delete account", `hx-post="/settings/delete-account"`,
 		`hx-confirm="Every item and pack you own goes with it. This cannot be undone."`, `data-wf-confirm-title="Delete your account?"`,
@@ -94,8 +95,12 @@ func TestPages_SettingsForm(t *testing.T) {
 	wantNone(t, body, "Please fix", `aria-invalid="true"`)
 	// The digest toggle is on, mentions off.
 	inOrder(t, body, `role="switch" checked id="field-digest"`, `role="switch" id="field-mentions"`)
-	// The Danger zone comes after the save bar, outside the form.
-	inOrder(t, body, "wf-settings-bar", "</form>", `id="danger-zone"`)
+	// The Danger zone comes after the form and before the save bar, which is
+	// the page's last child so it stays stuck across the Danger zone.
+	inOrder(t, body, "</form>", `id="danger-zone"`, "wf-settings-bar")
+	if n := strings.Count(body, "</form>"); n != 1 {
+		t.Errorf("%d forms, want 1 (the Danger zone is outside it)", n)
+	}
 }
 
 func TestPages_SettingsErrors(t *testing.T) {
@@ -113,10 +118,10 @@ func TestPages_SettingsErrors(t *testing.T) {
 		"Please fix the 1 error below.", "Display name is required", `aria-invalid="true"`,
 		// Every submitted value kept: the typed email, mentions now on, digest off.
 		`value="new@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`,
-		// The save bar is still there, unchanged.
-		"wf-settings-bar", "Save changes", "Cancel",
 	)
-	wantNone(t, body, "<h1", "<html", `value="Morgan"`, "Danger zone")
+	// The part is the form alone: the save bar and the Danger zone stay on
+	// the page untouched.
+	wantNone(t, body, "<h1", "<html", `value="Morgan"`, "Danger zone", "wf-settings-bar", "Save changes", "Cancel")
 	if n := strings.Count(body, `aria-invalid="true"`); n != 1 {
 		t.Errorf("aria-invalid count = %d, want 1", n)
 	}
@@ -132,6 +137,7 @@ func TestPages_SettingsErrors(t *testing.T) {
 		t.Errorf("plain POST /settings with errors = %d, want 422", rec.Code)
 	}
 	wantAll(t, rec.Body.String(), "<!doctype", "Please fix the 1 error below.", "Danger zone", "wf-settings-bar")
+	inOrder(t, rec.Body.String(), "</form>", "Danger zone", "wf-settings-bar")
 }
 
 func TestPages_SettingsSaveRedirects(t *testing.T) {
@@ -200,11 +206,12 @@ func TestPages_BrowseList(t *testing.T) {
 	body := rec.Body.String()
 	wantAll(t, body,
 		"<!doctype", "wf-shell--sidebar", "Browse — Webframe</title>", `aria-current="page"`,
-		`id="browse"`, `id="browse-detail"`, `aria-label="Item details"`, `<ul id="browse-list">`,
-		// Every item is a link carrying splitpane.LinkAttrs.
+		`id="browse"`, `id="browse-detail"`, `aria-label="Item details"`, `<nav aria-label="Items">`, `<ul id="browse-list"`,
+		// Every item is a splitpane.List row: a link carrying LinkAttrs, the
+		// name as the title, the type as the meta line.
 		`href="/browse/1"`, `hx-get="/browse/1"`, `href="/browse/14"`, `hx-target="#browse-detail"`, `hx-push-url="true"`,
 		`hx-trigger="click[matchMedia(&#39;(min-width: 48rem)&#39;).matches]"`,
-		"Blade of the Fallen Star", "Mantle of Ember",
+		"Blade of the Fallen Star", `title="Blade of the Fallen Star"`, "Mantle of Ember", ">Weapon<", ">Accessory<", "text-muted-foreground",
 		// Nothing selected: the placeholder in the detail region, no detail,
 		// no back link.
 		"Select an item",
@@ -214,9 +221,11 @@ func TestPages_BrowseList(t *testing.T) {
 		t.Errorf("%d list links carry the detail target, want 14", n)
 	}
 	// No item is marked current on the list route.
-	if n := strings.Count(body, `aria-current="page">`); n != 1 {
+	if n := strings.Count(body, `aria-current="page"`); n != 1 {
 		t.Errorf("aria-current appears %d times, want 1 (the sidebar's Browse entry)", n)
 	}
+	list := body[strings.Index(body, `<nav aria-label="Items">`):strings.Index(body, "</nav>")]
+	wantNone(t, list, "bg-muted", "aria-current")
 }
 
 func TestPages_BrowseItem(t *testing.T) {
@@ -230,13 +239,25 @@ func TestPages_BrowseItem(t *testing.T) {
 	body := rec.Body.String()
 	wantAll(t, body,
 		"<!doctype", "wf-shell--sidebar", "Ring of Hoarded Light — Browse — Webframe</title>",
-		`<ul id="browse-list">`, "Mantle of Ember", `aria-current="page">Ring of Hoarded Light`,
+		`<ul id="browse-list"`, "Mantle of Ember",
 		`id="browse-detail"`, "<dl", "Accessory", "Starfall Pack", ">Published<", "5d ago",
 		"All items", `href="/browse"`, "md:hidden", `href="/items/3"`, "Open item",
 	)
+	// The shown item is the selected row: aria-current and bg-muted on its
+	// link, and only on its link.
+	sel := body[strings.LastIndex(body[:strings.Index(body, `href="/browse/3"`)], "<a"):]
+	sel = sel[:strings.Index(sel, "</a>")]
+	wantAll(t, sel, `aria-current="page"`, "bg-muted", "Ring of Hoarded Light")
+	list := body[strings.Index(body, `<nav aria-label="Items">`):strings.Index(body, "</nav>")]
+	if n := strings.Count(list, "bg-muted"); n != 1 {
+		t.Errorf("bg-muted appears %d times in the list, want 1 (the selected row)", n)
+	}
+	if n := strings.Count(list, `aria-current="page"`); n != 1 {
+		t.Errorf("aria-current appears %d times in the list, want 1", n)
+	}
 	// The list comes before the detail region, which holds the back link
 	// and the description list.
-	inOrder(t, body, `<ul id="browse-list">`, `id="browse-detail"`, "All items", "<dl")
+	inOrder(t, body, `<ul id="browse-list"`, `id="browse-detail"`, "All items", "<dl")
 	// Browse stays the active sidebar entry on a detail URL (Match).
 	wantAll(t, body, `aria-current="page">Browse`)
 
@@ -251,17 +272,17 @@ func TestPages_BrowseItem(t *testing.T) {
 		t.Errorf("detail part does not start with the back link:\n%s", body[:min(200, len(body))])
 	}
 	wantAll(t, body, "All items", "<dl", "Ring of Hoarded Light", "Starfall Pack", "Open item")
-	wantNone(t, body, `id="browse-detail"`, `<ul id="browse-list">`, "Mantle of Ember", "<html", "<h1", "wf-sidebar")
+	wantNone(t, body, `id="browse-detail"`, `<ul id="browse-list"`, "Mantle of Ember", "<html", "<h1", "wf-sidebar")
 	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Target") {
 		t.Errorf("Vary %q lacks HX-Target", v)
 	}
 	// Any other htmx target gets the pane without the shell.
 	body = do(h, "GET", "/browse/3", nil, hx("main")).Body.String()
-	wantAll(t, body, `id="browse"`, `<ul id="browse-list">`, "<dl")
+	wantAll(t, body, `id="browse"`, `<ul id="browse-list"`, "<dl")
 	wantNone(t, body, "<html", "wf-sidebar")
 	// A boosted request gets the whole document.
 	body = do(h, "GET", "/browse/3", nil, map[string]string{"HX-Request": "true", "HX-Boosted": "true", "HX-Target": "browse-detail"}).Body.String()
-	wantAll(t, body, "<!doctype", "wf-shell--sidebar", `<ul id="browse-list">`)
+	wantAll(t, body, "<!doctype", "wf-shell--sidebar", `<ul id="browse-list"`)
 	// Unknown ids are the 404 page in the sidebar shell.
 	rec = do(h, "GET", "/browse/999", nil, nil)
 	if rec.Code != 404 {

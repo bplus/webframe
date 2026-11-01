@@ -2,6 +2,7 @@ package splitpane
 
 import (
 	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/utils"
 )
@@ -95,4 +96,57 @@ func backAction(p Props) action.Action {
 		Variant: action.VariantGhost,
 		Icon:    icon.ArrowLeft(icon.Props{Size: 16}),
 	}
+}
+
+// List renders the list column: a <nav aria-label="Items"> holding a <ul>
+// (id ID+"-list") with one link per item. Each link carries href and
+// LinkAttrs(p, href), so a click swaps the detail from md up and navigates
+// below; the Selected item has aria-current="page" and a bg-muted
+// background, the others show it on hover. The title is font-medium and
+// truncates to one line with the full text in the link's title attribute;
+// Meta sits under it in text-xs text-muted-foreground, or beside the title
+// in a badge when Badge is set. Rows are py-2.5 so they are comfortable to
+// tap. An empty items slice renders the nav with an empty <ul>, so a swap
+// of the list keeps the nav and its label.
+//
+// @pure
+templ List(p Props, items []ListItem) {
+	<nav aria-label="Items">
+		<ul id={ p.listID() } class="flex flex-col gap-0.5">
+			for _, it := range items {
+				<li>
+					<a
+						href={ templ.URL(it.Href) }
+						{ LinkAttrs(p, it.Href)... }
+						class={ listItemClass(it) }
+						title={ it.Title }
+						if it.Selected {
+							aria-current="page"
+						}
+					>
+						<span class="flex items-center justify-between gap-3">
+							<span class="min-w-0 truncate font-medium">{ it.Title }</span>
+							if it.Meta != "" && it.Badge != nil {
+								@badge.Badge(*it.Badge) {
+									{ it.Meta }
+								}
+							}
+						</span>
+						if it.Meta != "" && it.Badge == nil {
+							<span class="block truncate text-xs text-muted-foreground">{ it.Meta }</span>
+						}
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
+}
+
+// listItemClass is one list link: a block row with comfortable touch
+// height, rounded, highlighted on hover and bg-muted when Selected.
+func listItemClass(it ListItem) string {
+	return utils.TwMerge(
+		"block rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+		utils.If(it.Selected, "bg-muted"),
+	)
 }
