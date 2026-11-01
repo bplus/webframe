@@ -496,6 +496,27 @@
 [data-wf-tabs-sizing="fixed"][data-wf-tabs-height="s"] { --wf-tabs-h: 12rem; }
 [data-wf-tabs-sizing="fixed"][data-wf-tabs-height="l"] { --wf-tabs-h: 32rem; }
 
+/* ── Code blocks (codeblock.CodeBlock, root .wf-code) ── */
+/* Line numbers are a CSS counter on the per-line spans the component emits
+   when LineNumbers is set (figure[data-wf-code-numbered]); no JS. Each line
+   is a two-column grid (number gutter, text) so a soft-wrapped continuation
+   (Wrap) lines up under the text, not under the number. The gutter is not
+   selectable, so copying by selection copies the code only. */
+.wf-code[data-wf-code-numbered] code { counter-reset: wf-code-line; }
+.wf-code .wf-code-line {
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1fr);
+  column-gap: 1.5ch;
+  counter-increment: wf-code-line;
+}
+.wf-code .wf-code-line::before {
+  content: counter(wf-code-line);
+  text-align: right;
+  color: var(--color-muted-foreground);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ── HTMX indicator ── */
 .htmx-indicator {
   opacity: 0;
