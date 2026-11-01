@@ -11,16 +11,30 @@ import (
 
 // Item is one record of the demo's "Items" app (a dashboard
 // sketch): a mod item with a type, a publish status, the mod pack it is
-// used in, its last update and free-text notes.
+// used in, its last update, free-text notes, and (since batch 5) tags, a
+// release date, a 0–5 rating and the name of an uploaded artwork file. The
+// json tags name the keys the detail page's History tab shows the record
+// under (jsonviewer); the zero Released is left out rather than printed as
+// year 1.
 type Item struct {
-	ID        string
-	Name      string
-	Type      string // weapon, armor, accessory
-	Status    string // published, draft
-	UsedIn    string // "" when the item is in no pack
-	Updated   time.Time
-	Notes     string
-	Remixable bool
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`    // weapon, armor, accessory
+	Status    string    `json:"status"`  // published, draft
+	UsedIn    string    `json:"used_in"` // "" when the item is in no pack
+	Updated   time.Time `json:"updated"`
+	Notes     string    `json:"notes"`
+	Remixable bool      `json:"remixable"`
+	// Tags are free-text labels, in the order they were entered, with no
+	// duplicates (compared case-insensitively).
+	Tags []string `json:"tags"`
+	// Released is the release date (midnight UTC); zero when unknown.
+	Released time.Time `json:"released,omitzero"`
+	// Rating is 0 (unrated) to 5.
+	Rating int `json:"rating"`
+	// Artwork is the file name of the uploaded artwork. The demo keeps the
+	// name only: the bytes are read to check they are an image and dropped.
+	Artwork string `json:"artwork,omitempty"`
 }
 
 // itemTypeLabels maps a type value to its display label.
@@ -50,25 +64,29 @@ type ItemStore struct {
 }
 
 // seedItems are the 14 items of the dashboard sketch; Updated is an age
-// relative to the store's creation time.
+// relative to the store's creation time. Tags, the release date and the
+// rating are batch 5 demo data: drafts have no release date and no rating.
 var seedItems = []struct {
 	name, typ, status, usedIn string
 	age                       time.Duration
+	tags                      []string
+	released                  string // 2006-01-02, "" for none
+	rating                    int
 }{
-	{"Blade of the Fallen Star", "weapon", "published", "Starfall Pack", 2 * day},
-	{"Cloak of Whispers", "armor", "draft", "", 3 * day},
-	{"Ring of Hoarded Light", "accessory", "published", "Starfall Pack", 5 * day},
-	{"Netherese Lesser Folly", "weapon", "published", "Netherese Relics", 1 * week},
-	{"Gloves of the Tidecaller", "armor", "published", "", 1 * week},
-	{"Amulet of Still Water", "accessory", "draft", "", 2 * week},
-	{"Hollowed Greatbow", "weapon", "published", "Starfall Pack", 2 * week},
-	{"Boots of Quiet Steps", "armor", "published", "Netherese Relics", 3 * week},
-	{"Circlet of Borrowed Thought", "accessory", "published", "", 3 * week},
-	{"Ashen Dagger", "weapon", "published", "Netherese Relics", 1 * month},
-	{"Helm of the Last Watch", "armor", "draft", "", 1 * month},
-	{"Pendant of the Weave", "accessory", "published", "Starfall Pack", 1 * month},
-	{"Stormsinger Lute", "weapon", "published", "", 2 * month},
-	{"Mantle of Ember", "armor", "published", "Netherese Relics", 2 * month},
+	{"Blade of the Fallen Star", "weapon", "published", "Starfall Pack", 2 * day, []string{"legendary", "fire", "two-handed"}, "2026-09-12", 5},
+	{"Cloak of Whispers", "armor", "draft", "", 3 * day, []string{"stealth"}, "", 0},
+	{"Ring of Hoarded Light", "accessory", "published", "Starfall Pack", 5 * day, []string{"radiant", "rare"}, "2026-09-20", 4},
+	{"Netherese Lesser Folly", "weapon", "published", "Netherese Relics", 1 * week, []string{"netherese", "cursed", "legendary"}, "2026-08-02", 3},
+	{"Gloves of the Tidecaller", "armor", "published", "", 1 * week, []string{"water"}, "2026-08-15", 4},
+	{"Amulet of Still Water", "accessory", "draft", "", 2 * week, nil, "", 0},
+	{"Hollowed Greatbow", "weapon", "published", "Starfall Pack", 2 * week, []string{"ranged", "two-handed"}, "2026-07-30", 4},
+	{"Boots of Quiet Steps", "armor", "published", "Netherese Relics", 3 * week, []string{"stealth", "netherese"}, "2026-07-11", 3},
+	{"Circlet of Borrowed Thought", "accessory", "published", "", 3 * week, []string{"psionic", "rare"}, "2026-06-28", 2},
+	{"Ashen Dagger", "weapon", "published", "Netherese Relics", 1 * month, []string{"fire", "light", "netherese"}, "2026-06-01", 3},
+	{"Helm of the Last Watch", "armor", "draft", "", 1 * month, []string{"heavy"}, "", 0},
+	{"Pendant of the Weave", "accessory", "published", "Starfall Pack", 1 * month, []string{"arcane"}, "2026-05-19", 5},
+	{"Stormsinger Lute", "weapon", "published", "", 2 * month, []string{"bard", "thunder"}, "2026-04-03", 4},
+	{"Mantle of Ember", "armor", "published", "Netherese Relics", 2 * month, []string{"fire", "netherese"}, "2026-03-21", 3},
 }
 
 const (
@@ -82,19 +100,31 @@ const (
 func NewItemStore(now time.Time) *ItemStore {
 	s := &ItemStore{next: 1}
 	for _, seed := range seedItems {
+		var released time.Time
+		if seed.released != "" {
+			released, _ = time.Parse("2006-01-02", seed.released)
+		}
 		s.items = append(s.items, Item{
-			ID:      strconv.Itoa(s.next),
-			Name:    seed.name,
-			Type:    seed.typ,
-			Status:  seed.status,
-			UsedIn:  seed.usedIn,
-			Updated: now.Add(-seed.age),
-			Notes:   "Seeded from the 2026-10-21 dashboard sketch.",
+			ID:       strconv.Itoa(s.next),
+			Name:     seed.name,
+			Type:     seed.typ,
+			Status:   seed.status,
+			UsedIn:   seed.usedIn,
+			Updated:  now.Add(-seed.age),
+			Notes:    seedNotes,
+			Tags:     append([]string(nil), seed.tags...),
+			Released: released,
+			Rating:   seed.rating,
 		})
 		s.next++
 	}
 	return s
 }
+
+// seedNotes is every seeded item's Notes: two paragraphs, so the Notes tab
+// (prose.Text) shows a paragraph break and the History tab's diff has
+// lines to work with.
+const seedNotes = "Seeded from the 2026-10-21 dashboard sketch.\n\nDrops from the first vault chest; the second paragraph is here so the notes block shows a paragraph break."
 
 // Items is the demo server's store. Tests replace it with a fresh one.
 var Items = NewItemStore(time.Now())

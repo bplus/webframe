@@ -12,9 +12,11 @@ import (
 )
 
 // The handlers below are the demo's pages outside its own content: the
-// three auth pages (no shell) and the three error pages (in the shell),
-// plus the mux's catch-all. None of them keeps state; the sign-in form
-// refuses every submission, since the demo has no accounts.
+// three auth pages (no shell) and the three error pages (in the shell).
+// None of them keeps state; the sign-in form refuses every submission,
+// since the demo has no accounts. Unknown paths and wrong methods are
+// answered by errorpage.Handler around the mux (see Handler in app.go),
+// not by a handler here.
 
 // signInFields are the sign-in form's two fields. Email is required and
 // typed so the browser checks it; the password field never echoes a value.
@@ -110,17 +112,5 @@ func HandleErrorPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		log.Printf("demo: render error page %s: %v", r.PathValue("code"), err)
-	}
-}
-
-// HandleNotFound is the mux's catch-all: every path no other pattern
-// claims answers 404 with the error page, in the shell, with the nav still
-// working.
-//
-// @boundary HTTP
-// @side-effects writes HTML response with status 404
-func HandleNotFound(w http.ResponseWriter, r *http.Request) {
-	if err := errorpage.NotFound(w, r); err != nil {
-		log.Printf("demo: render not found %s: %v", r.URL.Path, err)
 	}
 }

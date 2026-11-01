@@ -16,13 +16,17 @@ import (
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/cardgrid"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/codeblock"
 	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/datetimepicker"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/components/diffview"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/figure"
+	"github.com/bplus/webframe/components/filedrop"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/gameicon"
@@ -30,13 +34,18 @@ import (
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/image"
 	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/jsonviewer"
+	"github.com/bplus/webframe/components/keyvalueeditor"
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/logviewer"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/popover"
+	"github.com/bplus/webframe/components/prose"
 	"github.com/bplus/webframe/components/radio"
+	"github.com/bplus/webframe/components/rating"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
 	"github.com/bplus/webframe/components/skeleton"
@@ -47,6 +56,7 @@ import (
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
+	"github.com/bplus/webframe/components/tagsinput"
 	"github.com/bplus/webframe/components/textarea"
 	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toolbar"
@@ -101,6 +111,19 @@ templ Showcase() {
 				<a href="#selectbox">Selectbox</a>
 				<a href="#autocomplete">Autocomplete</a>
 				<a href="#form">Form</a>
+				<a href="#tagsinput">Tags input</a>
+				<a href="#keyvalueeditor">Key/value editor</a>
+				<a href="#filedrop">File drop</a>
+				<a href="#datetimepicker">Date and time</a>
+				<a href="#rating">Rating</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Content</strong>
+				<a href="#prose">Prose</a>
+				<a href="#codeblock">Code block</a>
+				<a href="#logviewer">Log viewer</a>
+				<a href="#jsonviewer">JSON viewer</a>
+				<a href="#diffview">Diff view</a>
 			}
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				<strong>Overlays and navigation</strong>
@@ -109,6 +132,7 @@ templ Showcase() {
 				<a href="#tabs">Tabs</a>
 				<a href="#popover">Popover</a>
 				<a href="#hovercard">Hover Card</a>
+				<a href="#commandpalette">Command palette</a>
 			}
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				<strong>Behavior patterns</strong>
@@ -152,10 +176,9 @@ templ Showcase() {
 			}
 		}
 	}
-	// typographySection was removed in the page-layer batch 1 rewrite; it
-	// returns in batch 5 as a prose specimen.
 	@buildingBlocksGroup()
 	@formsGroup()
+	@contentGroup()
 	@overlaysGroup()
 	@patternsGroup()
 	@pageLayerGroup()
@@ -163,7 +186,7 @@ templ Showcase() {
 }
 
 // ═══════════════════════════════════════
-// Groups: the six top-level sections (h2), each holding per-topic
+// Groups: the seven top-level sections (h2), each holding per-topic
 // sections (h3) whose panels are h4.
 // ═══════════════════════════════════════
 templ buildingBlocksGroup() {
@@ -189,6 +212,23 @@ templ formsGroup() {
 		@formfieldsSection()
 		@selectboxSection()
 		@autocompleteSection()
+		@tagsinputSection()
+		@keyvalueeditorSection()
+		@filedropSection()
+		@datetimepickerSection()
+		@ratingSection()
+	}
+}
+
+// contentGroup holds the batch 5 content widgets: trusted and plain text
+// through prose, source text, a log, a JSON tree and a diff.
+templ contentGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "content", Title: "Content"}) {
+		@proseSection()
+		@codeblockSection()
+		@logviewerSection()
+		@jsonviewerSection()
+		@diffviewSection()
 	}
 }
 
@@ -199,6 +239,7 @@ templ overlaysGroup() {
 		@tabsSection()
 		@popoverSection()
 		@hovercardSection()
+		@commandpaletteSection()
 	}
 }
 
@@ -2263,5 +2304,288 @@ templ errorswapSection() {
 			<span id="boom-result">Nothing here has changed.</span>
 		}
 		<p>htmx is configured to swap error responses so a 422 form, a 409 toast and a 404 page reach the user; htmx-errors.js refuses the swap only when the body is not HTML or the target is marked <code>data-wf-swallow-errors</code>, as the shell's live badges are.</p>
+		@panel.Panel(panel.Props{ID: "panic", Level: 4, Title: "A handler panic", Subtitle: "Follow the link: the handler panics on purpose, the shell's middleware recovers it, and the styled 500 page renders in the shell with the request id the server log carries; the Back button returns here with nothing changed."}) {
+			@action.Button(action.Action{Label: "Panic in a handler", Href: "/api/panic", Variant: action.VariantDestructive})
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Batch 5 form widgets
+// ═══════════════════════════════════════
+templ tagsinputSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "tagsinput", Title: "Tags input", Description: "Type a tag and press Enter or a comma, Backspace on the empty box removes the last chip, and at five tags the box turns read-only with \"Limit reached\" while keeping focus, so a phone's keyboard stays open; the hidden field submits the tags comma-joined."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "MaxTags 5, three to start, suggestions"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@label.Label(label.Props{For: "showcase-tags"}) {
+					Tags
+				}
+				@tagsinput.TagsInput(tagsinput.Props{
+					ID:          "showcase-tags",
+					Name:        "tags",
+					Values:      []string{"legendary", "fire", "two-handed"},
+					MaxTags:     5,
+					Placeholder: "Add a tag",
+					Suggestions: []string{"cursed", "rare", "radiant", "stealth", "netherese"},
+				})
+			}
+		}
+	}
+}
+
+templ keyvalueeditorSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "keyvalueeditor", Title: "Key/value editor", Description: "Add row appends under the last row and focuses its key while nothing above it moves, removing a row collapses the list, and the fifth row disables Add row; at 390px each row stacks key over value in its own frame, and the rows submit as env.key and env.value pairs the handler zips back together."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "MaxRows 5, two to start"}) {
+			@keyvalueeditor.KeyValueEditor(keyvalueeditor.Props{
+				ID:               "showcase-env",
+				Name:             "env",
+				Rows:             []keyvalueeditor.Row{{Key: "REGION", Value: "eu-west"}, {Key: "LOG_LEVEL", Value: "info"}},
+				KeyPlaceholder:   "NAME",
+				ValuePlaceholder: "value",
+				MaxRows:          5,
+				AddLabel:         "Add variable",
+			})
+		}
+	}
+}
+
+templ filedropSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "filedrop", Title: "File drop", Description: "Tap or click the zone (on a phone the native picker offers the photo library), or drag files onto it on a desktop: image files show a thumbnail in the list, a file over 1 MB is refused with a message while the others stay, and the remove button drops one file; a new pick replaces the selection, as the native input does."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Preview on, images only, several files"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@label.Label(label.Props{For: "showcase-files-input"}) {
+					Artwork
+				}
+				@filedrop.FileDrop(filedrop.Props{
+					ID:       "showcase-files",
+					Name:     "files",
+					Accept:   "image/*",
+					Multiple: true,
+					MaxSize:  1 << 20,
+					Preview:  true,
+				})
+			}
+		}
+	}
+}
+
+templ datetimepickerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "datetimepicker", Title: "Date and time", Description: "Three native controls, one per kind: on a phone each opens the platform's own picker (the wheel sheet on iOS, the dialog on Android) and nothing custom has to fit the screen; the date is capped at the end of 2026 by Max, and the time shows seconds because its Step is 15."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Date, date and time, time"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapL}) {
+				@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+					@label.Label(label.Props{For: "showcase-date"}) {
+						Released
+					}
+					@datetimepicker.DateTimePicker(datetimepicker.Props{ID: "showcase-date", Name: "released", Kind: datetimepicker.KindDate, Value: showcaseReleased, Max: "2026-12-31"})
+				}
+				@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+					@label.Label(label.Props{For: "showcase-datetime"}) {
+						Build starts
+					}
+					@datetimepicker.DateTimePicker(datetimepicker.Props{ID: "showcase-datetime", Name: "starts", Kind: datetimepicker.KindDateTime, Value: showcaseReleased.Add(9*time.Hour + 30*time.Minute)})
+				}
+				@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+					@label.Label(label.Props{For: "showcase-time"}) {
+						Quiet hours start
+					}
+					@datetimepicker.DateTimePicker(datetimepicker.Props{ID: "showcase-time", Name: "quiet", Kind: datetimepicker.KindTime, Value: showcaseReleased.Add(22 * time.Hour), Step: 15})
+				}
+			}
+		}
+	}
+}
+
+// showcaseReleased is the date the three pickers start from (midnight UTC,
+// so the rendered values are deterministic).
+var showcaseReleased = time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
+
+templ ratingSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "rating", Title: "Rating", Description: "The three read-only rows are announced as \"n of 5\" and cannot be changed; in the input row every star is a 44px target, the arrow keys move the choice once a star has focus, hovering previews a value and the checked one returns when the pointer leaves, and the form would submit stars=n."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Read-only in three sizes"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@rating.Rating(rating.Props{ID: "showcase-rating-sm", ReadOnly: true, Value: 3, Size: rating.SizeSm, Label: "Small"})
+					<small>SizeSm, 3 of 5</small>
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@rating.Rating(rating.Props{ID: "showcase-rating-md", ReadOnly: true, Value: 4, Label: "Medium"})
+					<small>SizeMd, 4 of 5</small>
+				}
+				@layout.Inline(layout.InlineProps{Gap: layout.GapS, Align: layout.AlignCenter}) {
+					@rating.Rating(rating.Props{ID: "showcase-rating-lg", ReadOnly: true, Value: 5, Size: rating.SizeLg, Label: "Large"})
+					<small>SizeLg, 5 of 5</small>
+				}
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "As an input"}) {
+			@rating.Rating(rating.Props{ID: "showcase-rating-input", Name: "stars", Value: 2, Size: rating.SizeLg, Label: "Your rating"})
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Batch 5 content widgets
+// ═══════════════════════════════════════
+templ proseSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "prose", Title: "Prose", Description: "The typography specimen is one prose.HTML value with no class on any element: at 390px the table scrolls inside its own box and the long URL in the last paragraph wraps instead of widening the page; the Text sample below it is escaped, so its <script> tag reads as text and its blank line makes a second paragraph."}) {
+		@panel.Panel(panel.Props{ID: "prose-html", Level: 4, Title: "prose.HTML: trusted markup", Subtitle: "Headings, lists, a table, a quote, inline and block code, an image and a rule, styled by the scope alone."}) {
+			@prose.Prose(prose.Props{ID: "prose-specimen", HTML: prose.HTML(proseSpecimen)})
+		}
+		@panel.Panel(panel.Props{ID: "prose-text", Level: 4, Title: "prose.Text: escaped plain text", Subtitle: "What an item's notes go through: blank lines separate paragraphs, a single newline is a line break, and markup is text."}) {
+			@prose.Prose(prose.Props{ID: "prose-text-sample", Size: prose.SizeSm, Text: proseTextSample})
+		}
+	}
+}
+
+// proseTextSample is the Text sample: two paragraphs, a line break and a
+// script tag that must come out as text.
+const proseTextSample = "Drops from the first vault chest.\nSells for 400 gold.\n\nTODO: the second paragraph. A <script>alert('not run')</script> tag here is just text."
+
+templ codeblockSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "codeblock", Title: "Code block", Description: "Select across the numbered lines and the numbers are not selected, the copy button copies the code, the first block scrolls sideways inside itself at 390px while the second wraps its long line, and the third is capped in height and scrolls inside."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Line numbers, language label, copy"}) {
+			@codeblock.CodeBlock(codeblock.Props{ID: "code-numbered", Code: showcaseGoSnippet, Language: "go", LineNumbers: true, Copy: true})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Wrap on, caption"}) {
+			@codeblock.CodeBlock(codeblock.Props{ID: "code-wrapped", Code: showcaseLongLine, Language: "text", Wrap: true, Caption: "One line of 180 characters, soft-wrapped; without Wrap it would scroll inside the block."})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "MaxHeight sm"}) {
+			@codeblock.CodeBlock(codeblock.Props{ID: "code-capped", Code: showcaseGoSnippet + "\n" + showcaseGoSnippet + "\n" + showcaseGoSnippet, Language: "go", LineNumbers: true, MaxHeight: codeblock.HeightSm})
+		}
+	}
+}
+
+// showcaseGoSnippet and showcaseLongLine are the code block samples.
+const showcaseGoSnippet = "// Create stores it under a fresh id with Updated set to now.\nfunc (s *ItemStore) Create(it Item) Item {\n\ts.mu.Lock()\n\tdefer s.mu.Unlock()\n\tit.ID = strconv.Itoa(s.next)\n\ts.next++\n\tit.Updated = time.Now()\n\ts.items = append(s.items, it)\n\treturn it\n}"
+
+const showcaseLongLine = "GET /items?sort=updated&dir=desc&per=25&page=1&type=weapon&type=armor&status=published&q=of+the+fallen HTTP/1.1 Host: localhost:3333 Accept: text/html HX-Request: true HX-Target: items-results"
+
+templ logviewerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "logviewer", Title: "Log viewer", Description: "Type in the filter box and only matching lines stay (time and text, case-insensitive) without the box changing height; the live one is the Logs page, which polls every three seconds, follows only while you are at the bottom and stays put after you scroll up, and trims to 200 lines."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Static lines with the filter, HeightSm"}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+				@logviewer.LogViewer(logviewer.Props{ID: "showcase-log", Lines: showcaseLogLines(), Filter: true, Height: logviewer.HeightSm, MaxLines: 50})
+				<p>The live viewer: <a href="/logs">Logs</a> in the Items app; create, edit, publish or delete an item in another tab and the line arrives within three seconds.</p>
+			}
+		}
+	}
+}
+
+// showcaseLogLines are the static log viewer's lines: every level, fixed
+// times.
+func showcaseLogLines() []logviewer.Line {
+	at := time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC)
+	return []logviewer.Line{
+		{At: at, Level: logviewer.LevelInfo, Text: "demo started; items store seeded with 14 items"},
+		{At: at.Add(2 * time.Second), Text: "GET /items 200 12ms"},
+		{At: at.Add(5 * time.Second), Text: "GET /items/1 200 4ms"},
+		{At: at.Add(9 * time.Second), Level: logviewer.LevelInfo, Text: "created item #15 Sunforged Maul (weapon, draft)"},
+		{At: at.Add(14 * time.Second), Level: logviewer.LevelWarn, Text: "deleted item #2 Cloak of Whispers"},
+		{At: at.Add(20 * time.Second), Level: logviewer.LevelError, Text: "refused to delete item #1 Blade of the Fallen Star: protected"},
+		{At: at.Add(26 * time.Second), Text: "POST /items/publish 200 3ms"},
+		{At: at.Add(27 * time.Second), Level: logviewer.LevelInfo, Text: "published 2 items (2 selected)"},
+	}
+}
+
+templ jsonviewerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "jsonviewer", Title: "JSON viewer", Description: "The root and its children are open and everything deeper is closed (Collapsed 2); open the nested nodes down to the eighth level at 390px and the indent stops growing after the sixth, so the deepest value still fits, and each copy button copies that node's path such as $.packs[0].items[1].name."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Collapsed 2, CopyPath"}) {
+			@jsonviewer.JSONViewer(jsonviewer.Props{ID: "showcase-json", Value: showcaseJSON(), Collapsed: 2, CopyPath: true})
+		}
+	}
+}
+
+// showcaseJSON is the JSON viewer's value: a nested record eight levels
+// deep (packs → items → stats → damage → dice → sides → range → max).
+func showcaseJSON() map[string]any {
+	return map[string]any{
+		"id":        "starfall",
+		"name":      "Starfall Pack",
+		"published": true,
+		"version":   3,
+		"items": []any{
+			map[string]any{"id": "1", "name": "Blade of the Fallen Star", "type": "weapon", "rating": 5, "tags": []string{"legendary", "fire", "two-handed"}},
+			map[string]any{"id": "3", "name": "Ring of Hoarded Light", "type": "accessory", "rating": 4, "tags": []string{"radiant", "rare"}},
+		},
+		"packs": []any{
+			map[string]any{
+				"id": "starfall",
+				"items": []any{
+					map[string]any{
+						"name": "Blade of the Fallen Star",
+						"stats": map[string]any{
+							"damage": map[string]any{
+								"dice": map[string]any{
+									"sides": map[string]any{
+										"range": map[string]any{"min": 1, "max": 8},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"url":   "https://example.com/packs/starfall/releases/2026-09-12/download/starfall-pack-v3-full-archive.zip",
+		"notes": nil,
+	}
+}
+
+templ diffviewSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "diffview", Title: "Diff view", Description: "The same two-file diff twice: the first is inline at every width, the second is side by side from 768px and inline below it, so at 390px both read the same and the long line in the second file scrolls inside its hunk, not the page; the added file's header carries the Added badge."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Inline"}) {
+			@diffview.DiffView(diffview.Props{ID: "showcase-diff-inline", Files: showcaseDiffFiles()})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Side by side (inline below 768px)"}) {
+			@diffview.DiffView(diffview.Props{ID: "showcase-diff-split", Files: showcaseDiffFiles(), Mode: diffview.ModeSideBySide})
+		}
+	}
+}
+
+// showcaseDiff is the unified diff both diff views parse: a modified file
+// with one hunk (a changed line, a deleted line, an added line and a long
+// added line) and an added file.
+const showcaseDiff = `diff --git a/items/1/notes.txt b/items/1/notes.txt
+--- a/items/1/notes.txt
++++ b/items/1/notes.txt
+@@ -1,4 +1,5 @@
+ Seeded from the 2026-10-21 dashboard sketch.
+-Status: draft
++Status: published
+-TODO: describe where it drops.
+ Sells for 400 gold.
++Drops from the first vault chest; the chest is behind the second portcullis of the lower vault and opens only after the Starfall Pack's first quest is complete.
++Rating: 5
+diff --git a/items/1/tags.txt b/items/1/tags.txt
+new file mode 100644
+--- /dev/null
++++ b/items/1/tags.txt
+@@ -0,0 +1,3 @@
++legendary
++fire
++two-handed
+`
+
+// showcaseDiffFiles parses showcaseDiff; the text is fixed, so a parse
+// error is a programming error and the files come back empty.
+func showcaseDiffFiles() []diffview.File {
+	files, _ := diffview.Parse(showcaseDiff)
+	return files
+}
+
+// ═══════════════════════════════════════
+// Command palette
+// ═══════════════════════════════════════
+templ commandpaletteSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "commandpalette", Title: "Command palette", Description: "Press ⌘K (Ctrl+K elsewhere) or the Search button in the top bar: the palette opens with its input focused, typing filters the pages and items by label and type as you type, the arrow keys move, Enter follows the item, and Escape closes it and returns focus to the button; at 390px it is a sheet at the top of the screen with the keyboard open under it."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "The shell's palette", Subtitle: "The same list the Items app carries: its five pages and the fourteen seeded items under Items, with each item's type as hidden keywords, so \"weapon\" lists the weapons."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS, Align: layout.AlignCenter}) {
+				@button.Button(button.Props{Variant: button.VariantOutline, Attributes: templ.Attributes{"x-data": "", "x-on:click": "window.wf && window.wf.palette && window.wf.palette.open()"}}) {
+					Open the palette
+				}
+				<span>or press <kbd>⌘K</kbd>; the shell renders the dialog once per page and its trigger in the top bar.</span>
+			}
+		}
 	}
 }
