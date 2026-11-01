@@ -56,9 +56,7 @@ templ SplitPane(p Props) {
 		{ p.Attributes... }
 	>
 		<div class={ listClass(p) }>
-			if p.List != nil {
-				@p.List
-			}
+			@listColumn(p)
 		</div>
 		<section
 			id={ p.detailID() }
@@ -69,6 +67,28 @@ templ SplitPane(p Props) {
 		>
 			@detailContent(p)
 		</section>
+	</div>
+}
+
+// listColumn wraps List in <div id={ID-listcol}> so a detail response can
+// carry a fresh copy of the list out of band (the selected item moves with
+// the pick on md and up, where only the detail region is swapped).
+templ listColumn(p Props) {
+	<div id={ p.listColID() }>
+		if p.List != nil {
+			@p.List
+		}
+	</div>
+}
+
+// detailPart is what a detail-only response carries: the detail region's
+// content, then the list column out of band so its selected state follows.
+templ detailPart(p Props) {
+	@detailContent(p)
+	<div id={ p.listColID() } hx-swap-oob="true">
+		if p.List != nil {
+			@p.List
+		}
 	</div>
 }
 

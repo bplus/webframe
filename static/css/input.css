@@ -1,6 +1,11 @@
 @import "tailwindcss" source(none);
 
 @source "../../components/**/*.templ";
+/* Component helpers sometimes build class strings in Go (cardgrid.gridClasses,
+   timeline tones); scan those too, minus tests, so no class is silently
+   missing from output.css. */
+@source "../../components/**/*.go";
+@source not "../../components/**/*_test.go";
 @source "../../demo/**/*.templ";
 
 /* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */

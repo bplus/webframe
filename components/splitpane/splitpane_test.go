@@ -149,10 +149,9 @@ func TestDetailTarget(t *testing.T) {
 func TestLinkAttrs(t *testing.T) {
 	attrs := LinkAttrs(Props{ID: "mail"}, "/mail/42")
 	want := map[string]string{
-		"hx-get":      "/mail/42",
-		"hx-target":   "#mail-detail",
-		"hx-push-url": "true",
-		"hx-trigger":  "click[matchMedia('(min-width: 48rem)').matches]",
+		"data-wf-splitpane-link": "true",
+		"hx-target":              "#mail-detail",
+		"hx-push-url":            "true",
 	}
 	if len(attrs) != len(want) {
 		t.Errorf("attrs = %v, want exactly %v", attrs, want)
@@ -205,8 +204,7 @@ func TestList_LinksCarryHrefAndLinkAttrs(t *testing.T) {
 	for _, it := range mailItems {
 		a := anchor(t, out, it.Href)
 		wantAll(t, a,
-			`href="`+it.Href+`"`, `hx-get="`+it.Href+`"`, `hx-target="#mail-detail"`, `hx-push-url="true"`,
-			`hx-trigger="click[matchMedia(&#39;(min-width: 48rem)&#39;).matches]"`,
+			`href="`+it.Href+`"`, `data-wf-splitpane-link="true"`, `hx-target="#mail-detail"`, `hx-push-url="true"`,
 			`title="`+it.Title+`"`, "font-medium", "truncate", "py-2.5", "hover:bg-accent", it.Title,
 		)
 		if strings.Count(a, `href="`) != 1 {
@@ -291,8 +289,14 @@ func TestRespond_TargetedDetail(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := rec.Body.String()
-	wantAll(t, out, "DETAILBODY", "<span>Back</span>")
-	wantNone(t, out, "LISTROW", `id="mail-detail"`, "<html", "<body")
+	// The detail content, then the list column out of band (so the
+	// selected item follows the pick); never the detail region itself or
+	// the document.
+	wantAll(t, out, "DETAILBODY", "<span>Back</span>", `<div id="mail-listcol" hx-swap-oob="true">`, "LISTROW")
+	wantNone(t, out, `id="mail-detail"`, "<html", "<body")
+	if strings.Index(out, "DETAILBODY") > strings.Index(out, "hx-swap-oob") {
+		t.Errorf("detail content must come before the oob list:\n%s", out)
+	}
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
 		t.Errorf("Content-Type %q", ct)
 	}
@@ -301,7 +305,8 @@ func TestRespond_TargetedDetail(t *testing.T) {
 	}
 	// With a "#" prefix too.
 	rec, _ = serve(t, "/mail/42", detailProps(), map[string]string{"HX-Request": "true", "HX-Target": "#mail-detail"})
-	wantNone(t, rec.Body.String(), "LISTROW")
+	wantAll(t, rec.Body.String(), "DETAILBODY", "hx-swap-oob")
+	wantNone(t, rec.Body.String(), `id="mail-detail"`)
 }
 
 func TestRespond_OtherTargetGetsPane(t *testing.T) {

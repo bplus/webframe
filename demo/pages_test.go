@@ -209,8 +209,7 @@ func TestPages_BrowseList(t *testing.T) {
 		`id="browse"`, `id="browse-detail"`, `aria-label="Item details"`, `<nav aria-label="Items">`, `<ul id="browse-list"`,
 		// Every item is a splitpane.List row: a link carrying LinkAttrs, the
 		// name as the title, the type as the meta line.
-		`href="/browse/1"`, `hx-get="/browse/1"`, `href="/browse/14"`, `hx-target="#browse-detail"`, `hx-push-url="true"`,
-		`hx-trigger="click[matchMedia(&#39;(min-width: 48rem)&#39;).matches]"`,
+		`href="/browse/1"`, `data-wf-splitpane-link="true"`, `href="/browse/14"`, `hx-target="#browse-detail"`, `hx-push-url="true"`,
 		"Blade of the Fallen Star", `title="Blade of the Fallen Star"`, "Mantle of Ember", ">Weapon<", ">Accessory<", "text-muted-foreground",
 		// Nothing selected: the placeholder in the detail region, no detail,
 		// no back link.
@@ -271,8 +270,11 @@ func TestPages_BrowseItem(t *testing.T) {
 	if !strings.HasPrefix(strings.TrimSpace(body), `<div class="md:hidden mb-4">`) {
 		t.Errorf("detail part does not start with the back link:\n%s", body[:min(200, len(body))])
 	}
-	wantAll(t, body, "All items", "<dl", "Ring of Hoarded Light", "Starfall Pack", "Open item")
-	wantNone(t, body, `id="browse-detail"`, `<ul id="browse-list"`, "Mantle of Ember", "<html", "<h1", "wf-sidebar")
+	// The detail content, then the list out of band (the selected item
+	// follows the pick on md and up); never the detail region or the shell.
+	wantAll(t, body, "All items", "<dl", "Ring of Hoarded Light", "Starfall Pack", "Open item",
+		`<div id="browse-listcol" hx-swap-oob="true">`, `<ul id="browse-list"`, `aria-current="page"`)
+	wantNone(t, body, `id="browse-detail"`, "<html", "<h1", "wf-sidebar")
 	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Target") {
 		t.Errorf("Vary %q lacks HX-Target", v)
 	}

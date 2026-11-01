@@ -34,20 +34,23 @@
 // hx-trigger="click[matchMedia('(min-width: 48rem)').matches]"; href itself
 // is the caller's (see LinkAttrs for why).
 //
-// # Why the trigger filter
+// # Why a script decides, not a trigger filter
 //
 // From md up a click should swap only the detail region, so the link is an
 // htmx request targeting it; Respond answers that request (HX-Target names
 // the detail id) with the detail region's content alone. Below md there is
 // no detail region to swap into (it is hidden, the list fills the width),
 // and the server cannot tell a phone from a desktop by the request. So the
-// phone must not send the htmx request at all: the hx-trigger event filter
-// makes htmx ignore the click below md, the anchor's default action
-// runs, and the browser navigates to href as a plain page load. The server
-// then sees /mail/42 without an HX-Target, renders the whole document, and
-// the pane shows the detail with the Back link. The filter asks the same
-// media query Tailwind's md breakpoint uses (48rem), so the two agree at
-// any root font size.
+// phone must not send the htmx request at all. An hx-get with a filtered
+// hx-trigger cannot do that: htmx calls preventDefault on the anchor before
+// it evaluates the filter, so the link would go dead on a phone (measured
+// 2026-10-31). Instead the link carries data-wf-splitpane-link, hx-target
+// and hx-push-url but no hx-get, and static/js/splitpane.js (loaded by
+// appshell.Scripts) takes the click only when matchMedia('(min-width:
+// 48rem)') matches, calling htmx.ajax with the link as the source so
+// hx-target and hx-push-url apply. Below md the anchor navigates as a plain
+// page load; the server sees /mail/42 without an HX-Target, renders the
+// whole document, and the pane shows the detail with the Back link.
 //
 // # Phone
 //
@@ -91,10 +94,6 @@ const defaultID = "splitpane"
 
 // defaultBackLabel is the phone back link's text when BackLabel is empty.
 const defaultBackLabel = "Back"
-
-// mdTrigger is the hx-trigger on list links: htmx handles the click only
-// from md (768px) up; below that the anchor navigates by itself.
-const mdTrigger = "click[matchMedia('(min-width: 48rem)').matches]"
 
 // Props declares the pane. List renders in the list column; Detail, when
 // non-nil, in the detail region (nil means no item is selected: the
@@ -160,9 +159,10 @@ func DetailTarget(p Props) string {
 
 // LinkAttrs returns the htmx attributes a list link needs so a click swaps
 // the detail from md up and navigates below: hx-get=href,
-// hx-target=DetailTarget(p), hx-push-url="true" and
-// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]". It does
-// not include href: the caller sets that on the <a> (or as the
+// data-wf-splitpane-link="true", hx-target=DetailTarget(p) and
+// hx-push-url="true" (no hx-get: static/js/splitpane.js, in the shell's
+// bundle, issues the htmx request itself from md up and leaves the click
+// alone below md, so the anchor navigates). It does not include href: the caller sets that on the <a> (or as the
 // action.Action's Href) and passes the same value here. Two reasons: an
 // action.Action already renders its Href, so an href in Attributes would
 // emit the attribute twice; and app code may not spread an attribute map
@@ -171,13 +171,12 @@ func DetailTarget(p Props) string {
 // spreading inside the library. The handler behind href is the detail
 // route, which calls Respond; it answers the htmx request with the detail
 // region's content and the plain navigation with the whole page. See the
-// package doc for why the trigger is filtered.
+// package doc for why a script, not a trigger filter, decides.
 func LinkAttrs(p Props, href string) templ.Attributes {
 	return templ.Attributes{
-		"hx-get":      href,
-		"hx-target":   DetailTarget(p),
-		"hx-push-url": "true",
-		"hx-trigger":  mdTrigger,
+		"data-wf-splitpane-link": "true",
+		"hx-target":              DetailTarget(p),
+		"hx-push-url":            "true",
 	}
 }
 
@@ -201,6 +200,12 @@ func (p Props) listID() string {
 	return p.id() + "-list"
 }
 
+// listColID is the id of the list column's inner wrapper, the element a
+// detail response replaces out of band.
+func (p Props) listColID() string {
+	return p.id() + "-listcol"
+}
+
 // Respond writes the pane for r through the appshell.App installed by
 // (*App).Middleware: a plain htmx request whose HX-Target is DetailID
 // (a list click from md up) receives only the detail region's content,
@@ -216,6 +221,9 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
-	parts := map[string]templ.Component{p.detailID(): detailContent(p)}
+	// The detail part also carries the list out of band, so the selected
+	// item in the list follows the pick (the caller built p.List for this
+	// URL, with Selected on the shown item).
+	parts := map[string]templ.Component{p.detailID(): detailPart(p)}
 	return app.RenderParts(w, r, title, SplitPane(p), parts)
 }

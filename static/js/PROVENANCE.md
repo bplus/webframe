@@ -56,7 +56,7 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These 6 files carry none of the templUI header markers, and their
+These 7 files carry none of the templUI header markers, and their
 introducing commits directly describe original component work rather than
 vendoring or installing something — evidence is strong enough to call these
 confirmed local, not just inferred:
@@ -69,6 +69,7 @@ confirmed local, not just inferred:
 | `autocomplete.js` | Local | Written for webframe in page-layer batch 1b (autocomplete component, paired with `components/autocomplete/autocomplete.templ`). Unminified, first-party; depends only on HTMX's `htmx:beforeRequest` / `htmx:afterSwap` events. | Part of the webframe module (see above). |
 | `confirm.js` | Local | Written for webframe in page-layer batch 3 (the `htmx:confirm` interceptor behind `action.Confirm`, paired with `components/confirmdialog/confirmdialog.templ`). Unminified, first-party; depends on HTMX's `htmx:confirm` event and the `window.tui.dialog` API of the templUI-shipped `dialog.min.js`. | Part of the webframe module (see above). |
 | `htmx-errors.js` | Local | Written for webframe in page-layer batch 4 (the `htmx:beforeSwap` error-swap guard loaded by `appshell.Scripts` right after `confirm.js`). Unminified, first-party; depends only on HTMX's `htmx:beforeSwap` event (`evt.detail.isError`, `.xhr`, `.target`, `.shouldSwap`). | Part of the webframe module (see above). |
+| `splitpane.js` | Local | Written for webframe in page-layer batch 4 (split pane list links: takes the click from the md breakpoint up and calls `htmx.ajax`; below md the anchor navigates). Unminified, first-party; depends on `window.htmx.ajax` and `matchMedia`. | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -221,3 +222,11 @@ four first-party scripts in `appshell.Scripts` (`confirm.js`,
 `htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`) are now all guarded;
 the templUI-shipped component scripts still are not (input #20, carried to
 the batch 5 inputs).
+
+Batch 4 integration adds `splitpane.js`, first-party (webframe, not templUI,
+not third-party): a delegated click listener for `a[data-wf-splitpane-link]`
+that, from the md breakpoint up, calls `htmx.ajax` with the link as source
+(so its `hx-target` and `hx-push-url` apply) and below md lets the anchor
+navigate. It replaces the filtered `hx-trigger` approach, which went dead on
+phones because htmx prevents the anchor's default before evaluating the
+filter. Guarded against re-runs with `window.wf.splitpane`.

@@ -34,6 +34,7 @@ import (
 templ Scripts() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/confirm.js") }></script>
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/htmx-errors.js") }></script>
+	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/splitpane.js") }></script>
 	@tabs.Script()
 	@popover.Script()
 	@dropdown.Script()
