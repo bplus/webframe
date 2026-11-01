@@ -219,7 +219,9 @@ const paletteData = `{
 	q: '',
 	active: 0,
 	init() {
-		const root = this.$el;
+		// $root, not $el: a method called from a child's x-on handler sees that
+		// child as $el (measured 2026-10-31: the filter never hid a row).
+		const root = this.$root;
 		if (!(window.wf && window.wf.palette)) {
 			window.wf = window.wf || {};
 			const api = window.wf.palette = {
@@ -258,12 +260,12 @@ const paletteData = `{
 		if (content) new MutationObserver(() => { if (content.getAttribute('data-tui-dialog-open') === 'false') this.closed() }).observe(content, { attributes: true, attributeFilter: ['data-tui-dialog-open'] });
 		this.update()
 	},
-	items() { return Array.from(this.$el.querySelectorAll('[data-wf-palette-item]')) },
+	items() { return Array.from(this.$root.querySelectorAll('[data-wf-palette-item]')) },
 	visible() { return this.items().filter(li => !li.hidden) },
 	update() {
 		const q = this.q.trim().toLowerCase();
 		this.items().forEach(li => { li.hidden = !!q && !((li.dataset.label || '') + ' ' + (li.dataset.keywords || '')).toLowerCase().includes(q) });
-		this.$el.querySelectorAll('[data-wf-palette-group]').forEach(g => { g.hidden = !g.querySelector('[data-wf-palette-item]:not([hidden])') });
+		this.$root.querySelectorAll('[data-wf-palette-group]').forEach(g => { g.hidden = !g.querySelector('[data-wf-palette-item]:not([hidden])') });
 		const vis = this.visible();
 		if (this.active >= vis.length) this.active = Math.max(0, vis.length - 1);
 		let current = '';
@@ -275,9 +277,9 @@ const paletteData = `{
 			o.dataset.active = on ? 'true' : 'false';
 			if (on) current = o.id
 		});
-		const input = this.$el.querySelector('[data-wf-palette-input]');
+		const input = this.$root.querySelector('[data-wf-palette-input]');
 		if (input) input.setAttribute('aria-activedescendant', current);
-		const empty = this.$el.querySelector('[data-wf-palette-empty]');
+		const empty = this.$root.querySelector('[data-wf-palette-empty]');
 		if (empty) empty.hidden = vis.length > 0
 	},
 	changed(e) { if (e && e.target) this.q = e.target.value; this.active = 0; this.update() },
@@ -301,7 +303,7 @@ const paletteData = `{
 				if (o) o.click();
 				break
 			}
-			case 'Escape': e.preventDefault(); e.stopPropagation(); window.wf.palette.close(this.$el.id); break
+			case 'Escape': e.preventDefault(); e.stopPropagation(); window.wf.palette.close(this.$root.id); break
 		}
 	},
 	hover(e) {
