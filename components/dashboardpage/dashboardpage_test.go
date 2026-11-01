@@ -197,7 +197,7 @@ func TestPage_ClassAndAttributes(t *testing.T) {
 // TestPhoneCollapse pins how the grid stacks on a phone. dashboardgrid
 // computes its columns and spans as inline styles, so the only phone
 // breakpoint is the pair of !important rules in static/css/input.css keyed
-// on the wf-dashgrid / wf-dashslot classes. Both halves must hold: the
+// on the wf-dashgrid / wf-dashslot classes, at md like every other layout. Both halves must hold: the
 // rendered page carries the hooks on the grid and every slot, and the
 // stylesheet still collapses them to one column with span 1.
 func TestPhoneCollapse(t *testing.T) {
@@ -217,9 +217,11 @@ func TestPhoneCollapse(t *testing.T) {
 		t.Fatalf("read input.css: %v", err)
 	}
 	src := string(css)
-	start := strings.Index(src, "@media (max-width: 900px)")
+	// The breakpoint is Tailwind's md (48rem), as a max-width: 47.99rem
+	// so the two never both apply; 900px until batch 5.
+	start := strings.Index(src, "@media (max-width: 47.99rem)")
 	if start < 0 {
-		t.Fatalf("input.css has no @media (max-width: 900px) block")
+		t.Fatalf("input.css has no @media (max-width: 47.99rem) block")
 	}
 	end := strings.Index(src[start:], "\n}")
 	if end < 0 {

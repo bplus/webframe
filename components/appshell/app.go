@@ -2,9 +2,13 @@ package appshell
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"io"
+	"log"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -54,6 +58,18 @@ type App struct {
 	// a Shell render. appshell holds no cookie logic itself: an app wires
 	// App.Flash = flash.Take.
 	Flash func(w http.ResponseWriter, r *http.Request) templ.Component
+	// OnPanic answers a panic that Middleware recovered before the handler
+	// wrote a status or any body: it gets the recovered value and the
+	// request id Middleware already logged, and writes the whole 500
+	// response (status, headers, body). nil means the default: a bare
+	// Document (no shell) with a one-line message and the id, status 500.
+	// An app that wants the styled page in the shell assigns
+	// errorpage.PanicHandler (appshell cannot import errorpage, so the hook
+	// is the seam). Middleware never calls it once headers have gone out;
+	// a panic there is logged only. If OnPanic itself panics, the second
+	// panic propagates to net/http, which logs it and closes the
+	// connection.
+	OnPanic func(w http.ResponseWriter, r *http.Request, requestID string, err any)
 }
 
 type ctxKey int
@@ -61,16 +77,126 @@ type ctxKey int
 const (
 	appKey ctxKey = iota
 	pathKey
+	requestIDKey
 )
 
-// Middleware stores the App and the request path in the request context so
-// Shell can mark the active nav item without being handed the path.
+// Middleware stores the App, the request path and the request id in the
+// request context (Shell marks the active nav item from the path; RequestID
+// reads the id), and recovers a panic in next.
+//
+// The request id is the X-Request-Id header when the request carries one
+// (a proxy or load balancer in front of the app), else 8 random bytes in
+// hex, made once per request.
+//
+// A panic in next is logged as
+//
+//	appshell: panic serving {method} {path} (request {id}): {value}
+//
+// followed by the goroutine's stack. Then, if the handler had not yet
+// written a status or any body (Middleware watches WriteHeader, Write and
+// Flush through a small ResponseWriter wrapper), App.OnPanic (or its
+// default, a bare 500 document) answers the request. If headers had
+// already gone out, nothing more is written: the response ends as it
+// stands and the connection stays usable, since the handler returns
+// normally from net/http's point of view. http.ErrAbortHandler is
+// re-panicked unchanged so net/http keeps treating it as the quiet abort
+// it is.
+//
+// The wrapper implements http.Flusher (through http.ResponseController, so
+// an SSE handler's w.(http.Flusher) still works) and Unwrap, so
+// ResponseController reaches the underlying writer for everything else.
 func (a *App) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.Header.Get("X-Request-Id")
+		if id == "" {
+			id = newRequestID()
+		}
 		ctx := context.WithValue(r.Context(), appKey, a)
 		ctx = context.WithValue(ctx, pathKey, r.URL.Path)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		ctx = context.WithValue(ctx, requestIDKey, id)
+		r = r.WithContext(ctx)
+		rw := &recordingWriter{ResponseWriter: w}
+		defer func() {
+			v := recover()
+			if v == nil {
+				return
+			}
+			if v == http.ErrAbortHandler {
+				panic(v)
+			}
+			log.Printf("appshell: panic serving %s %s (request %s): %v\n%s", r.Method, r.URL.Path, id, v, debug.Stack())
+			if rw.wrote {
+				return
+			}
+			onPanic := a.OnPanic
+			if onPanic == nil {
+				onPanic = a.defaultOnPanic
+			}
+			onPanic(rw, r, id, v)
+		}()
+		next.ServeHTTP(rw, r)
 	})
+}
+
+// RequestID returns the request id Middleware stored for this request
+// (the X-Request-Id header's value, or the generated one), or "" when the
+// handler chain has no Middleware. An error page shows it and the panic
+// log line carries it, so a user can quote the id and the log can be
+// found.
+func RequestID(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey).(string)
+	return id
+}
+
+// newRequestID returns 8 random bytes as 16 hex digits. crypto/rand's
+// Read never returns an error on supported platforms (Go 1.24).
+func newRequestID() string {
+	var b [8]byte
+	_, _ = rand.Read(b[:])
+	return hex.EncodeToString(b[:])
+}
+
+// defaultOnPanic is App.OnPanic when the app set none: the status is 500
+// and the body is a bare Document (no shell, no nav; nothing of the app
+// beyond its name in the title and its Head) holding PanicPage, or the
+// page alone for a plain htmx request, as RenderBare does.
+func (a *App) defaultOnPanic(w http.ResponseWriter, r *http.Request, requestID string, _ any) {
+	SetHeaders(w)
+	w.WriteHeader(http.StatusInternalServerError)
+	if err := renderDocument(w, r, DocProps{Title: "Something went wrong", AppName: a.Name, Head: a.Head}, PanicPage(requestID)); err != nil {
+		log.Printf("appshell: render default 500 for %s %s (request %s): %v", r.Method, r.URL.Path, requestID, err)
+	}
+}
+
+// recordingWriter is the ResponseWriter Middleware hands the handler: it
+// remembers whether anything reached the client, so the recover path knows
+// whether a 500 can still be written.
+type recordingWriter struct {
+	http.ResponseWriter
+	wrote bool
+}
+
+func (w *recordingWriter) WriteHeader(code int) {
+	w.wrote = true
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *recordingWriter) Write(b []byte) (int, error) {
+	w.wrote = true
+	return w.ResponseWriter.Write(b)
+}
+
+// Flush sends the headers (200 if none were written) and any buffered
+// body, as http.Flusher does; the error from a writer that cannot flush is
+// dropped, as the http.Flusher interface has no way to report it.
+func (w *recordingWriter) Flush() {
+	w.wrote = true
+	_ = http.NewResponseController(w.ResponseWriter).Flush()
+}
+
+// Unwrap lets http.ResponseController reach the underlying writer.
+func (w *recordingWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 // FromContext returns the App stored by Middleware.

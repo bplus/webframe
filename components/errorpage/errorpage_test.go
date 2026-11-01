@@ -3,8 +3,10 @@ package errorpage
 import (
 	"bytes"
 	"context"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -278,35 +280,10 @@ func TestRespond_ClearsPendingFlash(t *testing.T) {
 	}
 }
 
-// styledErrors is the package doc's ServeMux wrapper, verbatim, so the
-// documented pattern is proven against the real mux.
-func styledErrors(mux *http.ServeMux) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, pattern := mux.Handler(r); pattern != "" {
-			mux.ServeHTTP(w, r) // a real route, or the mux's own redirect
-			return
-		}
-		var allowed []string
-		probe := r.Clone(r.Context())
-		for _, m := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"} {
-			probe.Method = m
-			if _, pattern := mux.Handler(probe); pattern != "" {
-				allowed = append(allowed, m)
-			}
-		}
-		if len(allowed) == 0 {
-			_ = NotFound(w, r)
-			return
-		}
-		w.Header().Set("Allow", strings.Join(allowed, ", "))
-		_ = MethodNotAllowed(w, r)
-	})
-}
-
 // TestServeMuxWrapperRoutes405: Go's ServeMux answers a method mismatch
-// with a plain-text 405 on its own; the documented wrapper turns it into
-// the styled page (with Allow), leaves real routes alone and still gives
-// an unknown path the 404 page.
+// with a plain-text 405 on its own; Handler turns it into the styled page
+// (with Allow), leaves real routes alone and still gives an unknown path
+// the 404 page.
 func TestServeMuxWrapperRoutes405(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /items", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ITEMS")) })
@@ -320,7 +297,7 @@ func TestServeMuxWrapperRoutes405(t *testing.T) {
 	}
 
 	app := &appshell.App{Name: "Demo", HomeHref: "/"}
-	h := app.Middleware(styledErrors(mux))
+	h := app.Middleware(Handler(mux))
 	do := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, httptest.NewRequest(method, path, nil))
@@ -329,7 +306,8 @@ func TestServeMuxWrapperRoutes405(t *testing.T) {
 
 	rec = do("POST", "/items")
 	assertHeaders(t, rec, http.StatusMethodNotAllowed)
-	if allow := rec.Result().Header.Get("Allow"); allow != "GET, HEAD, DELETE" {
+	// The mux's own Allow (sorted), copied over.
+	if allow := rec.Result().Header.Get("Allow"); allow != "DELETE, GET, HEAD" {
 		t.Errorf("Allow = %q", allow)
 	}
 	for _, want := range []string{">405<", "Not allowed here", "This address does not accept that request.", "<title>Not allowed here — Demo</title>"} {
@@ -347,5 +325,140 @@ func TestServeMuxWrapperRoutes405(t *testing.T) {
 	assertHeaders(t, rec, http.StatusNotFound)
 	if !strings.Contains(rec.Body.String(), "Page not found") || rec.Result().Header.Get("Allow") != "" {
 		t.Errorf("unknown path: %d Allow=%q", rec.Code, rec.Result().Header.Get("Allow"))
+	}
+}
+
+// TestHandler_HeadAndOptions: a HEAD on a GET route is the route itself
+// (the mux treats HEAD as GET), so it is never a 405; OPTIONS is probed
+// and listed in Allow when registered.
+func TestHandler_HeadAndOptions(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /items", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ITEMS")) })
+	mux.HandleFunc("OPTIONS /items", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(204) })
+	h := Handler(mux)
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("HEAD", "/items", nil))
+	if rec.Code != 200 {
+		t.Errorf("HEAD on a GET route: %d, want 200 from the route", rec.Code)
+	}
+
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("PUT", "/items", nil))
+	if rec.Code != 405 {
+		t.Fatalf("PUT: %d", rec.Code)
+	}
+	if allow := rec.Header().Get("Allow"); allow != "GET, HEAD, OPTIONS" {
+		t.Errorf("Allow = %q, want GET, HEAD, OPTIONS", allow)
+	}
+}
+
+// TestHandler_TrailingSlashEdgeMatchesMux: with only "GET /items/"
+// registered, "POST /items" has no route of its own; whatever the bare
+// mux answers (405 with Allow since the mux counts the trailing-slash
+// form's methods, as Go 1.27 does) Handler must answer the same code with
+// the same Allow, only styled. "GET /items" is the mux's own redirect to
+// /items/ and passes through untouched. A wrong method under the subtree
+// is a plain 405.
+func TestHandler_TrailingSlashEdgeMatchesMux(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /items/", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("TREE")) })
+
+	bare := httptest.NewRecorder()
+	mux.ServeHTTP(bare, httptest.NewRequest("POST", "/items", nil))
+	if bare.Code != 404 && bare.Code != 405 {
+		t.Fatalf("bare mux POST /items: %d", bare.Code)
+	}
+
+	h := Handler(mux)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/items", nil))
+	if rec.Code != bare.Code || rec.Header().Get("Allow") != bare.Header().Get("Allow") {
+		t.Errorf("Handler POST /items: %d Allow=%q; bare mux: %d Allow=%q", rec.Code, rec.Header().Get("Allow"), bare.Code, bare.Header().Get("Allow"))
+	}
+	want := map[int]string{404: "Page not found", 405: "Not allowed here"}[bare.Code]
+	if !strings.Contains(rec.Body.String(), want) {
+		t.Errorf("want the styled %d page (%q), got:\n%s", bare.Code, want, rec.Body.String())
+	}
+
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/items", nil))
+	if rec.Code/100 != 3 || rec.Header().Get("Location") != "/items/" {
+		t.Errorf("GET /items: %d Location=%q, want the mux's redirect to /items/", rec.Code, rec.Header().Get("Location"))
+	}
+
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/items/7", nil))
+	if rec.Code != 405 || rec.Header().Get("Allow") != "GET, HEAD" {
+		t.Errorf("POST /items/7: %d Allow=%q, want 405 GET, HEAD", rec.Code, rec.Header().Get("Allow"))
+	}
+}
+
+// TestHandler_UncleanPathRedirectPassesThrough: "//items" with the wrong
+// method is a redirect to the cleaned path (an empty pattern from the mux,
+// but not a 404 or 405), so the mux answers it.
+func TestHandler_UncleanPathRedirectPassesThrough(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /items", func(w http.ResponseWriter, _ *http.Request) {})
+	rec := httptest.NewRecorder()
+	Handler(mux).ServeHTTP(rec, httptest.NewRequest("POST", "//items", nil))
+	if rec.Code/100 != 3 || rec.Header().Get("Location") != "/items" {
+		t.Errorf("POST //items: %d Location=%q, want the mux's redirect to /items", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+// TestHandler_NeverRunsAppHandlers: deciding 404 vs 405 runs only the
+// mux's own answer, never an app handler for another method.
+func TestHandler_NeverRunsAppHandlers(t *testing.T) {
+	ran := 0
+	mux := http.NewServeMux()
+	mux.HandleFunc("DELETE /items/{id}", func(w http.ResponseWriter, _ *http.Request) { ran++ })
+	rec := httptest.NewRecorder()
+	Handler(mux).ServeHTTP(rec, httptest.NewRequest("GET", "/items/3", nil))
+	if rec.Code != 405 || ran != 0 {
+		t.Errorf("code %d, DELETE handler ran %d times", rec.Code, ran)
+	}
+}
+
+// TestHandler_WithoutApp: outside App.Middleware the pages render bare,
+// still with the right status and Allow.
+func TestHandler_WithoutApp(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /x", func(w http.ResponseWriter, _ *http.Request) {})
+	rec := httptest.NewRecorder()
+	Handler(mux).ServeHTTP(rec, httptest.NewRequest("POST", "/x", nil))
+	if rec.Code != 405 || rec.Header().Get("Allow") != "GET, HEAD" {
+		t.Errorf("%d Allow=%q", rec.Code, rec.Header().Get("Allow"))
+	}
+	body := rec.Body.String()
+	if !strings.Contains(strings.ToLower(body), "<!doctype html>") || strings.Contains(body, "wf-shell") {
+		t.Errorf("want a bare document without the shell, got:\n%s", body)
+	}
+}
+
+// TestPanicHandler_RendersInternal: wired as App.OnPanic, a panicking
+// handler answers with the styled 500 page in the shell, showing the id
+// Middleware generated or the X-Request-Id the request carried.
+func TestPanicHandler_RendersInternal(t *testing.T) {
+	var logs bytes.Buffer
+	log.SetOutput(&logs)
+	defer log.SetOutput(os.Stderr)
+
+	app := &appshell.App{Name: "Demo", HomeHref: "/", OnPanic: PanicHandler}
+	h := app.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("boom")
+	}))
+	req := httptest.NewRequest("GET", "/items", nil)
+	req.Header.Set("X-Request-Id", "req_abc123")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	assertHeaders(t, rec, http.StatusInternalServerError)
+	for _, want := range []string{">500<", "Something went wrong", "Request id: req_abc123", "wf-shell", "<title>Something went wrong — Demo</title>"} {
+		if !strings.Contains(rec.Body.String(), want) {
+			t.Errorf("missing %q in:\n%s", want, rec.Body.String())
+		}
+	}
+	if !strings.Contains(logs.String(), "appshell: panic serving GET /items (request req_abc123): boom") {
+		t.Errorf("log line missing, got:\n%s", logs.String())
 	}
 }
