@@ -12,6 +12,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/badge"
 )
 
 func raw(s string) templ.Component {
@@ -143,10 +144,11 @@ func TestDetailTarget(t *testing.T) {
 	}
 }
 
+// TestLinkAttrs: the htmx attributes only; href is the caller's (an
+// action.Action renders its own, and List sets it on the anchor).
 func TestLinkAttrs(t *testing.T) {
 	attrs := LinkAttrs(Props{ID: "mail"}, "/mail/42")
 	want := map[string]string{
-		"href":        "/mail/42",
 		"hx-get":      "/mail/42",
 		"hx-target":   "#mail-detail",
 		"hx-push-url": "true",
@@ -160,6 +162,105 @@ func TestLinkAttrs(t *testing.T) {
 			t.Errorf("%s = %v, want %q", k, attrs[k], v)
 		}
 	}
+	if _, ok := attrs["href"]; ok {
+		t.Errorf("LinkAttrs includes href; the caller sets it: %v", attrs)
+	}
+}
+
+// --- List ---
+
+func renderList(t *testing.T, p Props, items []ListItem) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := List(p, items).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render list: %v", err)
+	}
+	return buf.String()
+}
+
+// anchor returns the <a ...>...</a> element whose href is href.
+func anchor(t *testing.T, out, href string) string {
+	t.Helper()
+	i := strings.Index(out, `href="`+href+`"`)
+	if i < 0 {
+		t.Fatalf("no link to %q in:\n%s", href, out)
+	}
+	start := strings.LastIndex(out[:i], "<a")
+	end := strings.Index(out[i:], "</a>")
+	return out[start : i+end+len("</a>")]
+}
+
+var mailItems = []ListItem{
+	{Href: "/mail/1", Title: "Quarterly numbers", Meta: "Finance"},
+	{Href: "/mail/2", Title: "Re: the long subject line that will not fit on one row", Meta: "Ada", Selected: true},
+	{Href: "/mail/3", Title: "No meta"},
+}
+
+func TestList_LinksCarryHrefAndLinkAttrs(t *testing.T) {
+	out := renderList(t, listProps, mailItems)
+	wantAll(t, out, `<nav aria-label="Items">`, `<ul id="mail-list"`, "</ul></nav>")
+	if n := strings.Count(out, "<li>"); n != 3 {
+		t.Errorf("%d rows, want 3:\n%s", n, out)
+	}
+	for _, it := range mailItems {
+		a := anchor(t, out, it.Href)
+		wantAll(t, a,
+			`href="`+it.Href+`"`, `hx-get="`+it.Href+`"`, `hx-target="#mail-detail"`, `hx-push-url="true"`,
+			`hx-trigger="click[matchMedia(&#39;(min-width: 48rem)&#39;).matches]"`,
+			`title="`+it.Title+`"`, "font-medium", "truncate", "py-2.5", "hover:bg-accent", it.Title,
+		)
+		if strings.Count(a, `href="`) != 1 {
+			t.Errorf("href emitted %d times in %s", strings.Count(a, `href="`), a)
+		}
+	}
+	// The whole list is in order.
+	if !(strings.Index(out, "/mail/1") < strings.Index(out, "/mail/2") && strings.Index(out, "/mail/2") < strings.Index(out, "/mail/3")) {
+		t.Errorf("rows out of order:\n%s", out)
+	}
+}
+
+func TestList_SelectedState(t *testing.T) {
+	out := renderList(t, listProps, mailItems)
+	if n := strings.Count(out, `aria-current="page"`); n != 1 {
+		t.Errorf("aria-current count = %d, want 1:\n%s", n, out)
+	}
+	if n := strings.Count(out, "bg-muted"); n != 1 {
+		t.Errorf("bg-muted count = %d, want 1:\n%s", n, out)
+	}
+	sel := anchor(t, out, "/mail/2")
+	wantAll(t, sel, `aria-current="page"`, "bg-muted")
+	wantNone(t, anchor(t, out, "/mail/1"), "aria-current", "bg-muted")
+	// Nothing selected: no current marker at all.
+	wantNone(t, renderList(t, listProps, mailItems[:1]), "aria-current", "bg-muted")
+}
+
+func TestList_MetaAndBadge(t *testing.T) {
+	out := renderList(t, listProps, mailItems)
+	a := anchor(t, out, "/mail/1")
+	wantAll(t, a, "text-xs", "text-muted-foreground", ">Finance<")
+	// A row without Meta has no second line.
+	wantNone(t, anchor(t, out, "/mail/3"), "text-muted-foreground")
+	// With Badge, Meta renders inside the badge beside the title, not as the
+	// muted line.
+	items := []ListItem{{Href: "/mail/9", Title: "Build", Meta: "Failed", Badge: badge.StatusPtr("failed")}}
+	a = anchor(t, renderList(t, listProps, items), "/mail/9")
+	wantAll(t, a, ">Failed<", "bg-destructive", "font-medium", "Build")
+	wantNone(t, a, "text-muted-foreground")
+}
+
+// TestList_EmptyKeepsNav: no items renders the nav with an empty <ul>, so
+// swapping an emptied list keeps the landmark and its label.
+func TestList_EmptyKeepsNav(t *testing.T) {
+	for name, items := range map[string][]ListItem{"nil": nil, "empty": {}} {
+		out := renderList(t, listProps, items)
+		wantAll(t, out, `<nav aria-label="Items">`, `<ul id="mail-list"`, "</ul></nav>")
+		wantNone(t, out, "<li", "<a")
+		if n := strings.Count(out, "<ul"); n != 1 {
+			t.Errorf("%s: %d <ul>, want 1", name, n)
+		}
+	}
+	// The list id follows the pane id.
+	wantAll(t, renderList(t, Props{}, nil), `<ul id="splitpane-list"`)
 }
 
 // --- Respond ---

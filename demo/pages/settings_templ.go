@@ -11,17 +11,13 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/layout"
-	"github.com/bplus/webframe/components/settingspage"
 )
 
-// Settings is the demo's settings page: settingspage.Page (header, the
-// form with its groups and save bar) followed by the Danger zone, a section
-// holding one destructive action that asks first. The Danger zone is not a
-// settingspage.Group because a Group holds fields only; there is no slot
-// for an action or free content, so the demo composes the page itself and
-// demo.respondSettings answers it the way settingspage.Respond would, with
-// settingspage.Body as the form part.
-func Settings(p settingspage.Props, danger action.Action) templ.Component {
+// DangerZone is the settings page's After content (settingspage.Props.After):
+// an h2 section holding one destructive action that asks first. It sits
+// outside the form, after it and before the save bar, so a submit never
+// posts it and an error re-render never redraws it.
+func DangerZone(danger action.Action) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -54,39 +50,13 @@ func Settings(p settingspage.Props, danger action.Action) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = settingspage.Page(p).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-				if !templ_7745c5c3_IsBuffer {
-					defer func() {
-						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-						if templ_7745c5c3_Err == nil {
-							templ_7745c5c3_Err = templ_7745c5c3_BufErr
-						}
-					}()
-				}
-				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = action.Button(danger).Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				return nil
-			})
-			templ_7745c5c3_Err = layout.Section(layout.SectionProps{ID: "danger-zone", Title: "Danger zone", Description: "Deleting the account removes every item and pack it owns; the dialog asks first, and the demo then refuses.", Level: 2}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = action.Button(danger).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Stack(layout.StackProps{Gap: layout.GapL}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{ID: "danger-zone", Title: "Danger zone", Description: "Deleting the account removes every item and pack it owns; the dialog asks first, and the demo then refuses.", Level: 2}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

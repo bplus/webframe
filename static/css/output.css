@@ -1284,6 +1284,9 @@
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
   }
+  .py-2\.5 {
+    padding-block: calc(var(--spacing) * 2.5);
+  }
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
@@ -2872,7 +2875,7 @@
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator {
   opacity: 1;
 }
-form:has(.wf-settings-bar) :where(input, select, textarea, button, [tabindex]) {
+.wf-settings :where(input, select, textarea, button, [tabindex]) {
   scroll-margin-bottom: 5rem;
 }
 .wf-toast-container {

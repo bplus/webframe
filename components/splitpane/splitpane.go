@@ -19,15 +19,20 @@
 //
 // # List links
 //
-// Every link in the list that opens an item carries LinkAttrs(p, href):
+// The usual list column is List(p, items): a <nav> of links, one per
+// ListItem, each carrying href and LinkAttrs(p, href), with the selected
+// item marked. An app with its own list markup (a component that renders
+// anchors) gives every link that opens an item its href plus
+// LinkAttrs(p, href):
 //
-//	<a { splitpane.LinkAttrs(p, "/mail/42")... }>{ subject }</a>
+//	<a href={ templ.URL("/mail/42") } { splitpane.LinkAttrs(p, "/mail/42")... }>{ subject }</a>
 //
 // or, through action, action.Action{Href: "/mail/42", Label: subject,
-// Attributes: splitpane.LinkAttrs(p, "/mail/42")}. The attributes are
-// href (the plain navigation), hx-get=href, hx-target=DetailTarget(p),
-// hx-push-url="true" (the address bar follows the pick) and
-// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]".
+// Attributes: splitpane.LinkAttrs(p, "/mail/42")}. LinkAttrs holds
+// hx-get=href, hx-target=DetailTarget(p), hx-push-url="true" (the address
+// bar follows the pick) and
+// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]"; href itself
+// is the caller's (see LinkAttrs for why).
 //
 // # Why the trigger filter
 //
@@ -66,6 +71,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/badge"
 )
 
 // Width is the list column's width from md up. The zero value is WidthMd.
@@ -152,23 +158,47 @@ func DetailTarget(p Props) string {
 	return "#" + p.detailID()
 }
 
-// LinkAttrs returns the attributes a list link needs so a click swaps the
-// detail from md up and navigates below: href (the plain navigation and
-// the phone fallback), hx-get=href, hx-target=DetailTarget(p),
-// hx-push-url="true" and hx-trigger="click[matchMedia('(min-width: 48rem)').matches]".
-// Spread it on the <a> (or pass it as an action.Action's Attributes with
-// the same Href). The handler behind href is the detail route, which
-// calls Respond; it answers the htmx request with the detail region's
-// content and the plain navigation with the whole page. See the package
-// doc for why the trigger is filtered.
+// LinkAttrs returns the htmx attributes a list link needs so a click swaps
+// the detail from md up and navigates below: hx-get=href,
+// hx-target=DetailTarget(p), hx-push-url="true" and
+// hx-trigger="click[matchMedia('(min-width: 48rem)').matches]". It does
+// not include href: the caller sets that on the <a> (or as the
+// action.Action's Href) and passes the same value here. Two reasons: an
+// action.Action already renders its Href, so an href in Attributes would
+// emit the attribute twice; and app code may not spread an attribute map
+// onto an element (wflint), so an app that wrote its own anchor would have
+// to copy every attribute out by name, href included. List does the
+// spreading inside the library. The handler behind href is the detail
+// route, which calls Respond; it answers the htmx request with the detail
+// region's content and the plain navigation with the whole page. See the
+// package doc for why the trigger is filtered.
 func LinkAttrs(p Props, href string) templ.Attributes {
 	return templ.Attributes{
-		"href":        href,
 		"hx-get":      href,
 		"hx-target":   DetailTarget(p),
 		"hx-push-url": "true",
 		"hx-trigger":  mdTrigger,
 	}
+}
+
+// ListItem is one entry of List: Href is the item's detail route (the
+// link's href and the LinkAttrs target), Title its one-line name (shown in
+// font-medium, truncated, with the full text in the link's title
+// attribute), Meta a short second line in muted small text (a type, a
+// date, a sender); when Badge is set, Meta renders inside a badge.Badge
+// with those Props beside the title instead (badge.StatusPtr picks the
+// variant from a status word). Selected marks the item the detail region
+// shows: aria-current="page" and the bg-muted background.
+type ListItem struct {
+	Href, Title, Meta string
+	Selected          bool
+	Badge             *badge.Props
+}
+
+// listID is the <ul>'s id, id()+"-list", so an app can target the list
+// alone with a swap.
+func (p Props) listID() string {
+	return p.id() + "-list"
 }
 
 // Respond writes the pane for r through the appshell.App installed by

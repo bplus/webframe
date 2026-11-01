@@ -118,8 +118,9 @@ func TestBody_ErrorsBannerAndFields(t *testing.T) {
 		t.Errorf("aria-invalid count = %d, want 2:\n%s", n, out)
 	}
 	// The banner is inside the form, before the groups, in group order; the
-	// save bar still follows.
-	mustOrder(t, out, "<form", "Please fix", "Display name: Pick a name", "Weekly digest: Not available", `<section id="profile"`, "wf-settings-bar", "</form>")
+	// save bar is not part of the form.
+	mustOrder(t, out, "<form", "Please fix", "Display name: Pick a name", "Weekly digest: Not available", `<section id="profile"`, "</form>")
+	mustNotContain(t, out, "wf-settings-bar")
 
 	p.Errors = map[string]string{"name": "Pick a name"}
 	out = render(t, Body(p))
@@ -132,31 +133,76 @@ func TestBody_NoErrorsNoBanner(t *testing.T) {
 	mustNotContain(t, out, `role="alert"`, "Please fix", `aria-invalid="true"`)
 }
 
-func TestBody_SaveBarAlwaysPresent(t *testing.T) {
+// TestBody_IsTheFormWithoutTheBar: Body is exactly the <form> element and
+// the save bar is not inside it (it is Page's last child), so an htmx
+// error re-render that swaps the form leaves the bar alone.
+func TestBody_IsTheFormWithoutTheBar(t *testing.T) {
 	for name, p := range map[string]Props{
 		"plain":  settingsProps(),
 		"empty":  {},
 		"errors": func() Props { p := settingsProps(); p.Errors = map[string]string{"name": "x"}; return p }(),
 	} {
 		out := render(t, Body(p))
-		mustContain(t, out, "wf-settings-bar", "sticky", "bottom-0", "z-20", "border-t", "bg-background/95", "backdrop-blur", "pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]", `type="submit"`, "<span>Save changes</span>", "bg-primary", "justify-end")
 		if !strings.HasPrefix(out, "<form") || !strings.HasSuffix(out, "</form>") {
 			t.Errorf("%s: Body is not exactly the <form> element:\n%s", name, out)
 		}
-		// The bar is the form's last child: nothing but the closing tags follows it.
-		i := strings.LastIndex(out, `type="submit"`)
-		tail := out[i:]
-		if strings.Contains(tail, "<fieldset") || strings.Contains(tail, "<section") {
+		mustNotContain(t, out, "wf-settings-bar", `type="submit"`, "<span>Save changes</span>", "<span>Cancel</span>")
+	}
+}
+
+// TestPage_SaveBarAlwaysPresentAndLast: the save bar renders once on every
+// page, after the form, as the page root's last child, and its submit
+// button names the form it submits.
+func TestPage_SaveBarAlwaysPresentAndLast(t *testing.T) {
+	for name, p := range map[string]Props{
+		"plain":  settingsProps(),
+		"empty":  {},
+		"errors": func() Props { p := settingsProps(); p.Errors = map[string]string{"name": "x"}; return p }(),
+	} {
+		out := render(t, Page(p))
+		mustContain(t, out, `<div class="wf-settings flex flex-col gap-8">`, "wf-settings-bar", "sticky", "bottom-0", "z-20", "border-t", "bg-background/95", "backdrop-blur", "pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]", `type="submit"`, `form="settings"`, "<span>Save changes</span>", "bg-primary", "justify-end")
+		if !strings.HasPrefix(out, `<div class="wf-settings`) || !strings.HasSuffix(out, "</div>") {
+			t.Errorf("%s: Page is not one wf-settings root:\n%s", name, out)
+		}
+		mustOrder(t, out, "</form>", "wf-settings-bar", `type="submit"`)
+		// The bar is the root's last child: nothing but closing tags follows it.
+		tail := out[strings.LastIndex(out, `type="submit"`):]
+		if strings.Contains(tail, "<fieldset") || strings.Contains(tail, "<section") || strings.Contains(tail, "<form") {
 			t.Errorf("%s: content after the save bar:\n%s", name, tail)
 		}
 		if strings.Count(out, "wf-settings-bar") != 1 {
 			t.Errorf("%s: save bar rendered %d times", name, strings.Count(out, "wf-settings-bar"))
 		}
+		// The form attribute is not inherited by Cancel, nor by the form itself.
+		if strings.Count(out, `form="settings"`) != 1 {
+			t.Errorf("%s: form= attribute count = %d, want 1 (the submit button):\n%s", name, strings.Count(out, `form="settings"`), out)
+		}
+	}
+	// The submit button follows the form's id.
+	p := settingsProps()
+	p.ID = "prefs"
+	mustContain(t, render(t, Page(p)), `<form id="prefs"`, `form="prefs"`)
+}
+
+func TestPage_AfterBetweenFormAndBar(t *testing.T) {
+	p := settingsProps()
+	p.After = templ.Raw(`<section id="danger">AFTERCONTENT</section>`)
+	out := render(t, Page(p))
+	mustOrder(t, out, "<h1", "<form", "</form>", `<section id="danger">`, "AFTERCONTENT", "wf-settings-bar", `type="submit"`)
+	// After is not inside the form, so a submit never posts it and the
+	// targeted re-render (Body) never redraws it.
+	mustNotContain(t, render(t, Body(p)), "AFTERCONTENT")
+	// Nil After renders nothing between the form and the bar.
+	p.After = nil
+	out = render(t, Page(p))
+	between := out[strings.Index(out, "</form>")+len("</form>") : strings.Index(out, "wf-settings-bar")]
+	if strings.TrimSpace(between) != `<div class="` {
+		t.Errorf("content between the form and the bar without After: %q", between)
 	}
 }
 
-func TestBody_SaveBarCancelGhostThenSubmit(t *testing.T) {
-	out := render(t, Body(settingsProps()))
+func TestPage_SaveBarCancelGhostThenSubmit(t *testing.T) {
+	out := render(t, Page(settingsProps()))
 	mustContain(t, out, `href="/"`, "<span>Cancel</span>")
 	mustOrder(t, out, "wf-settings-bar", "<span>Cancel</span>", `type="submit"`, "<span>Save changes</span>")
 	// Cancel is a ghost button: no secondary fill.
@@ -167,30 +213,31 @@ func TestBody_SaveBarCancelGhostThenSubmit(t *testing.T) {
 	// A Cancel with its own Variant keeps it.
 	p := settingsProps()
 	p.Cancel = &action.Action{Label: "Back", Href: "/", Variant: action.VariantOutline}
-	out = render(t, Body(p))
+	out = render(t, Page(p))
 	mustContain(t, out, "<span>Back</span>", "border bg-background")
 
 	// No Cancel: the bar holds the submit button alone.
 	p.Cancel = nil
-	out = render(t, Body(p))
+	out = render(t, Page(p))
 	mustContain(t, out, "wf-settings-bar", `type="submit"`)
 	mustNotContain(t, out, "<span>Cancel</span>", "<span>Back</span>")
 }
 
-func TestBody_SubmitOverridesAndIgnoresHrefHx(t *testing.T) {
+func TestPage_SubmitOverridesAndIgnoresHrefHxForm(t *testing.T) {
 	p := settingsProps()
-	p.Submit = action.Action{Label: "Apply", Variant: action.VariantDestructive, Href: "/ignored", HxPost: "/ignored", HxTarget: "#ignored"}
-	out := render(t, Body(p))
-	mustContain(t, out, `type="submit"`, "<span>Apply</span>", "bg-destructive")
-	mustNotContain(t, out, "<span>Save changes</span>", `href="/ignored"`, `hx-post="/ignored"`, `hx-target="#ignored"`)
+	p.Submit = action.Action{Label: "Apply", Variant: action.VariantDestructive, Href: "/ignored", HxPost: "/ignored", HxTarget: "#ignored", Form: "other"}
+	out := render(t, Page(p))
+	mustContain(t, out, `type="submit"`, `form="settings"`, "<span>Apply</span>", "bg-destructive")
+	mustNotContain(t, out, "<span>Save changes</span>", `href="/ignored"`, `hx-post="/ignored"`, `hx-target="#ignored"`, `form="other"`)
 }
 
 func TestBody_FormDefaultsAndOptions(t *testing.T) {
 	p := settingsProps()
 	p.Hidden = map[string]string{"return": "/"}
 	out := render(t, Body(p))
-	mustContain(t, out, `<form id="settings"`, `action="/settings"`, `method="post"`, `name="return"`, "wf-settings", "flex-col", "gap-8")
-	mustNotContain(t, out, "hx-post=", "hx-target=", "enctype")
+	mustContain(t, out, `<form id="settings"`, `action="/settings"`, `method="post"`, `name="return"`, "flex-col", "gap-8")
+	// wf-settings (the scroll-margin hook) is the page root's, not the form's.
+	mustNotContain(t, out, "hx-post=", "hx-target=", "enctype", "wf-settings")
 
 	p.ID = "prefs"
 	p.Method = "get"
@@ -213,10 +260,10 @@ func TestBody_ValidateDefaultApplied(t *testing.T) {
 	mustNotContain(t, render(t, Body(settingsProps())), "hx-post=")
 }
 
-func TestPage_HeaderThenBody(t *testing.T) {
+func TestPage_HeaderThenBodyThenBar(t *testing.T) {
 	out := render(t, Page(settingsProps()))
 	mustContain(t, out, "<h1", "Settings", `<form id="settings"`, "wf-settings-bar")
-	mustOrder(t, out, "<h1", "Settings", "<form", "wf-settings-bar", "</form>")
+	mustOrder(t, out, `class="wf-settings`, "<h1", "Settings", "<form", "</form>", "wf-settings-bar")
 }
 
 func TestField(t *testing.T) {
@@ -268,19 +315,22 @@ func withErrors() Props {
 
 // TestRespond_TargetedForm422: an HxPost re-render with Errors answers 422
 // with just the form, every submitted value kept, the error under its
-// field and in the banner, and the save bar present.
+// field and in the banner; After and the save bar are not in the part
+// (they stay on the page untouched).
 func TestRespond_TargetedForm422(t *testing.T) {
 	for name, target := range map[string]string{"bare": "settings", "hashed": "#settings"} {
-		rec := serveRespond(t, withErrors(), map[string]string{"HX-Request": "true", "HX-Target": target})
+		p := withErrors()
+		p.After = templ.Raw("<p>AFTERCONTENT</p>")
+		rec := serveRespond(t, p, map[string]string{"HX-Request": "true", "HX-Target": target})
 		if rec.Code != http.StatusUnprocessableEntity {
 			t.Errorf("%s: status %d, want 422", name, rec.Code)
 		}
 		out := rec.Body.String()
-		if !strings.HasPrefix(out, "<form") {
-			t.Errorf("%s: body does not start with the form:\n%s", name, out)
+		if !strings.HasPrefix(out, "<form") || !strings.HasSuffix(strings.TrimSpace(out), "</form>") {
+			t.Errorf("%s: body is not the form alone:\n%s", name, out)
 		}
-		mustContain(t, out, "Please fix the 1 error below.", "Display name: Pick a name", `aria-invalid="true"`, `role="switch" checked`, "wf-settings-bar", "<span>Save changes</span>")
-		mustNotContain(t, out, "<h1", "<html", "wf-topbar")
+		mustContain(t, out, "Please fix the 1 error below.", "Display name: Pick a name", `aria-invalid="true"`, `role="switch" checked`)
+		mustNotContain(t, out, "<h1", "<html", "wf-topbar", "wf-settings-bar", "<span>Save changes</span>", "AFTERCONTENT")
 		if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Request") {
 			t.Errorf("%s: Vary %q lost with the early status", name, v)
 		}
@@ -296,9 +346,12 @@ func TestRespond_NoErrorsIs200(t *testing.T) {
 }
 
 func TestRespond_OtherTargetGetsPage(t *testing.T) {
-	rec := serveRespond(t, withErrors(), map[string]string{"HX-Request": "true", "HX-Target": "main"})
+	p := withErrors()
+	p.After = templ.Raw("<p>AFTERCONTENT</p>")
+	rec := serveRespond(t, p, map[string]string{"HX-Request": "true", "HX-Target": "main"})
 	out := rec.Body.String()
-	mustContain(t, out, "<h1", "Settings", "<form", "wf-settings-bar")
+	mustContain(t, out, "<h1", "Settings", "<form", "AFTERCONTENT", "wf-settings-bar")
+	mustOrder(t, out, "</form>", "AFTERCONTENT", "wf-settings-bar")
 	mustNotContain(t, out, "<html", "wf-topbar")
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Errorf("status %d, want 422", rec.Code)

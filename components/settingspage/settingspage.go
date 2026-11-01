@@ -1,26 +1,34 @@
 // Package settingspage renders a settings screen: a page header, then one
-// <form> holding an error summary banner (errors only), one h2 section per
-// Group of fields, and a save bar that stays stuck to the bottom of the
-// viewport while the form is longer than the screen. The save bar is
-// always rendered (it never appears on the first edit) and holds Cancel
-// (ghost) and Submit ("Save changes", primary), right-aligned. Like
-// formpage, the caller declares the fields once and hands over the current
-// Values (and, after a failed POST, the Errors) by field name; the field
-// resolution, the banner and the submit button are formpage's own
+// <form> holding an error summary banner (errors only) and one h2 section
+// per Group of fields, then optional After content (a section that is not
+// a group of fields, such as a "Danger zone" with its own actions), and
+// last a save bar that stays stuck to the bottom of the viewport while the
+// page is longer than the screen. The save bar is always rendered (it
+// never appears on the first edit) and holds Cancel (ghost) and Submit
+// ("Save changes", primary), right-aligned. It is the page's last child,
+// not the form's: the submit button carries form=<form id>, so it submits
+// the form from outside it, and an htmx error re-render that swaps the
+// form leaves the bar (and After) where they are. Like formpage, the
+// caller declares the fields once and hands over the current Values (and,
+// after a failed POST, the Errors) by field name; the field resolution,
+// the banner and the submit button are formpage's own
 // (formpage.ResolveField, formpage.ErrorBanner, formpage.Submit), so a
 // settings page and a form page behave identically on a round trip.
 //
-// Phone width (390px): the header, banner and sections stack in one column
-// and each Fieldset's grid is one column below md, so every field takes
-// the full width. The save bar spans the width of the content column and
-// its two buttons stay on one row (a third would wrap); its bottom padding
-// adds the device's safe-area inset, so on a phone with a home indicator
-// the buttons sit above it. The bar is the last child of the form, so once
-// the page is scrolled to the end it sits in flow below the last field and
-// covers nothing. While the on-screen keyboard is open, mobile browsers
-// pin bottom-stuck elements to the layout viewport, which may be behind the
-// keyboard until the field loses focus; the bar is reachable again as soon
-// as the keyboard closes.
+// Phone width (390px): the header, banner, sections and After stack in
+// one column and each Fieldset's grid is one column below md, so every
+// field takes the full width. The save bar spans the width of the content
+// column and its two buttons stay on one row (a third would wrap); its
+// bottom padding adds the device's safe-area inset, so on a phone with a
+// home indicator the buttons sit above it. The bar is the last child of
+// the page root, so once the page is scrolled to the end it sits in flow
+// below the last field (or below After) and covers nothing. The page root
+// carries the wf-settings class; the stylesheet gives every focusable
+// control under it a scroll-margin-bottom, so a control the browser
+// scrolls into view on Tab lands clear of the bar. While the on-screen
+// keyboard is open, mobile browsers pin bottom-stuck elements to the
+// layout viewport, which may be behind the keyboard until the field loses
+// focus; the bar is reachable again as soon as the keyboard closes.
 package settingspage
 
 import (
@@ -48,12 +56,21 @@ type Group struct {
 // a working page; everything else has a usable zero value.
 type Props struct {
 	// ID is the <form> id and the htmx swap target; "" means "settings".
+	// The save bar's submit button names it in its form attribute.
 	ID string
 	// Class merges into the <form>'s classes; Attributes spread on it.
 	Class      string
 	Attributes templ.Attributes
 
 	Header pageheader.Props
+	// After, when set, renders after the form and before the save bar:
+	// content that belongs on the settings page but is not a group of
+	// fields, such as a layout.Section titled "Danger zone" holding a
+	// destructive action with its own request. It is outside the form, so
+	// a submit never posts it and an htmx error re-render (which swaps
+	// the form alone) never redraws it; the save bar stays stuck to the
+	// viewport bottom while it scrolls past.
+	After templ.Component
 	// Action is the submit URL (plain; templ sanitizes it).
 	Action string
 	// Method is "post" when empty.
@@ -75,7 +92,8 @@ type Props struct {
 	Errors map[string]string
 	// Submit is the submit button; the zero value is Label "Save changes"
 	// with VariantPrimary. Href and Hx* on it are ignored: it always
-	// renders as <button type="submit">.
+	// renders as <button type="submit" form=ID>, since the save bar sits
+	// outside the form (Form on it is overwritten with the form's id).
 	Submit action.Action
 	// Cancel, when set, renders before Submit in the save bar as a ghost
 	// button unless given another Variant (the zero Variant is the
@@ -131,12 +149,12 @@ func (p Props) Field(name string) (formfield.Field, bool) {
 
 // formProps builds the form.Form Props: the id, classes and Attributes,
 // Action/Method/Hidden always, the htmx trio when HxPost is set. The form
-// is a column with a gap, so the save bar (its last child) sits one gap
-// below the last field when the page is scrolled to the end.
+// is a column with the same gap as the page root, so the banner and the
+// sections are spaced like the page's own children.
 func (p Props) formProps() form.Props {
 	fp := form.Props{
 		ID:         p.id(),
-		Class:      utils.TwMerge("wf-settings flex flex-col gap-8", p.Class),
+		Class:      utils.TwMerge("flex flex-col gap-8", p.Class),
 		Attributes: p.Attributes,
 		Action:     p.Action,
 		Method:     p.Method,
@@ -151,9 +169,14 @@ func (p Props) formProps() form.Props {
 }
 
 // submit returns the Submit action with the defaults applied ("Save
-// changes", primary) and marked Submit.
+// changes", primary), marked Submit, and bound to the form by id: the
+// button renders in the save bar outside the <form>, and the form
+// attribute is what makes a button submit a form it is not inside (htmx
+// honors it too, so an HxPost form still submits over htmx).
 func (p Props) submit() action.Action {
-	return formpage.Submit(p.Submit, "Save changes")
+	a := formpage.Submit(p.Submit, "Save changes")
+	a.Form = p.id()
+	return a
 }
 
 // cancel returns the Cancel action with the ghost default applied, or
@@ -179,10 +202,11 @@ const saveBarClass = "wf-settings-bar sticky bottom-0 z-20 border-t border-borde
 // Respond writes the settings page for r through the appshell App installed
 // by (*App).Middleware, as formpage.Respond does: the whole document for a
 // normal request (plain GET/POST, boosted navigation, history restore),
-// the bare page body (header plus form) for a plain htmx request with any
-// other target, and the <form> alone (Body) for a plain htmx request whose
-// HX-Target is the form's id, which is what an HxPost submit sends, so the
-// error re-render swaps the form, save bar included, in place.
+// the bare page (header, form, After, save bar) for a plain htmx request
+// with any other target, and the <form> alone (Body) for a plain htmx
+// request whose HX-Target is the form's id, which is what an HxPost
+// submit sends, so the error re-render swaps the form in place and leaves
+// After and the save bar untouched.
 //
 // Respond never redirects. The POST handler decides: on validation errors
 // it sets p.Values from the submitted form and p.Errors, then calls Respond,

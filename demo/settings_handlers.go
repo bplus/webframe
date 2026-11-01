@@ -6,8 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/a-h/templ"
-
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/flash"
@@ -65,10 +63,9 @@ func (a *Account) Save(vals map[string]string) {
 }
 
 // settingsProps declares the settings page: Profile (display name, email),
-// Notifications (two toggles) and the save bar with Cancel back to the
-// dashboard. The Danger zone is not a Group: settingspage.Group holds
-// fields only, with no slot for an action, so the demo renders it as its
-// own section after the form (pages.Settings) with deleteAccountAction.
+// Notifications (two toggles), the Danger zone as After (a section with
+// one destructive action, outside the form) and the save bar with Cancel
+// back to the dashboard.
 func settingsProps(values map[string]string) settingspage.Props {
 	return settingspage.Props{
 		ID:     settingsFormID,
@@ -86,6 +83,7 @@ func settingsProps(values map[string]string) settingspage.Props {
 			}},
 		},
 		Values: values,
+		After:  pages.DangerZone(deleteAccountAction()),
 		Cancel: &action.Action{Label: "Cancel", Href: "/dashboard"},
 	}
 }
@@ -142,37 +140,15 @@ func validateSettings(vals map[string]string) map[string]string {
 	return errs
 }
 
-// respondSettings writes the settings page as settingspage.Respond would
-// (RenderPartsStatus with the form as the named part and 422 when Errors is
-// set), but with pages.Settings as the full page: settingspage.Page
-// followed by the Danger zone section. settingspage has no slot for a
-// section that is not a group of fields, so the demo composes the page
-// itself; the form part is settingspage.Body, so an htmx submit still
-// swaps the form alone.
-func respondSettings(w http.ResponseWriter, r *http.Request, p settingspage.Props) {
-	app, err := appshell.Must(r.Context())
-	if err != nil {
-		log.Printf("demo: render settings: %v", err)
-		return
-	}
-	status := 0
-	if len(p.Errors) > 0 {
-		status = http.StatusUnprocessableEntity
-	}
-	full := pages.Settings(p, deleteAccountAction())
-	parts := map[string]templ.Component{settingsFormID: settingspage.Body(p)}
-	if err := app.RenderPartsStatus(w, r, status, "Settings", full, parts); err != nil {
-		log.Printf("demo: render settings: %v", err)
-	}
-}
-
 // HandleSettings renders the settings page with the stored values (GET
 // /settings).
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleSettings(w http.ResponseWriter, r *http.Request) {
-	respondSettings(w, r, settingsProps(Settings.Values()))
+	if err := settingspage.Respond(w, r, "Settings", settingsProps(Settings.Values())); err != nil {
+		log.Printf("demo: render settings: %v", err)
+	}
 }
 
 // HandleSettingsSave handles the form's submit (POST /settings). With a
@@ -192,7 +168,9 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 	vals := submittedSettings(r, p)
 	if errs := validateSettings(vals); len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
-		respondSettings(w, r, p)
+		if err := settingspage.Respond(w, r, "Settings", p); err != nil {
+			log.Printf("demo: render settings errors: %v", err)
+		}
 		return
 	}
 	vals["display_name"] = strings.TrimSpace(vals["display_name"])
