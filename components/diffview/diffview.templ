@@ -1,0 +1,139 @@
+package diffview
+
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/utils"
+)
+
+// Shared cell classes. Gutters are w-8 (four digits) below md and w-12 from
+// md up; every cell is dense monospace. select-none on gutters and markers
+// keeps a copy of the diff text free of line numbers.
+const (
+	gutterClass = "w-8 md:w-12 shrink-0 select-none px-1 text-right align-top text-muted-foreground"
+	markerCell  = "w-4 select-none px-1 text-center align-top"
+	textClass   = "whitespace-pre px-2 align-top"
+	tableClass  = "min-w-full border-collapse font-mono text-xs leading-5"
+	hunkHeader  = "bg-muted/60 px-2 py-1 font-mono text-xs text-muted-foreground whitespace-pre overflow-x-auto"
+)
+
+// DiffView renders p.Files as collapsible per-file sections. Each file is a
+// <details> (open unless Collapsed) whose <summary> carries a status badge
+// and the path, "old → new" for a rename; each hunk is its header line over
+// a table with old/new number gutters, a +/-/space marker and the text,
+// rows tinted bg-success/10 (added) and bg-destructive/10 (deleted).
+// ModeSideBySide renders a second table per hunk with old text left and new
+// text right, shown from md up while the inline table is shown below md
+// (see the package comment for why two renderings).
+//
+// Phone width (390px): always the inline table; gutters w-8; the summary
+// wraps badge over path; a long line scrolls inside the hunk.
+//
+// @pure renders markup only
+templ DiffView(p Props) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex w-full min-w-0 flex-col gap-4", p.Class) }
+		data-mode={ modeAttr(p.Mode) }
+		{ p.Attributes... }
+	>
+		for i, f := range p.Files {
+			@p.fileView(f, i)
+		}
+	</div>
+}
+
+// fileView renders one file's <details> with its header and hunks.
+templ (p Props) fileView(f File, i int) {
+	<details
+		class="group/diff min-w-0 overflow-hidden rounded-lg border border-border bg-card"
+		data-status={ statusAttr(f.Status) }
+		if !p.isCollapsed(f) {
+			open
+		}
+	>
+		<summary
+			if id := summaryID(p.ID, i); id != "" {
+				id={ id }
+			}
+			class="flex cursor-pointer list-none flex-wrap items-center gap-2 bg-muted/40 px-3 py-2 text-sm hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden"
+		>
+			<span class="inline-block w-3 shrink-0 select-none text-muted-foreground transition-transform group-open/diff:rotate-90" aria-hidden="true">▸</span>
+			@badge.Badge(badge.Props{Variant: statusVariant(f.Status)}) {
+				{ statusLabel(f.Status) }
+			}
+			<code class="min-w-0 break-all font-mono text-xs">
+				if f.Status == StatusRenamed && f.OldPath != "" {
+					<span class="text-muted-foreground">{ f.OldPath }</span>
+					<span class="text-muted-foreground" aria-hidden="true">→</span>
+					<span class="sr-only">renamed to</span>
+				}
+				{ f.Path }
+			</code>
+		</summary>
+		<div class="flex flex-col">
+			for _, h := range f.Hunks {
+				@p.hunkView(h)
+			}
+		</div>
+	</details>
+}
+
+// hunkView renders one hunk: the header, then the inline table (hidden from
+// md up in side-by-side mode) and, in side-by-side mode, the paired table
+// (shown from md up).
+templ (p Props) hunkView(h Hunk) {
+	<section class="min-w-0 border-t border-border">
+		if h.Header != "" {
+			<div class={ hunkHeader }>{ h.Header }</div>
+		}
+		<div class={ utils.TwMerge("overflow-x-auto", utils.If(p.Mode == ModeSideBySide, "md:hidden")) }>
+			@inlineTable(h.Lines)
+		</div>
+		if p.Mode == ModeSideBySide {
+			<div class="hidden overflow-x-auto md:block">
+				@sideBySideTable(h.Lines)
+			</div>
+		}
+	</section>
+}
+
+// inlineTable is one row per line: old number, new number, marker, text.
+templ inlineTable(lines []Line) {
+	<table class={ tableClass } data-layout="inline">
+		<tbody>
+			for _, l := range lines {
+				<tr class={ rowClass(l.Kind) } data-kind={ kindAttr(l.Kind) }>
+					<td class={ gutterClass }>{ num(l.OldNo) }</td>
+					<td class={ gutterClass }>{ num(l.NewNo) }</td>
+					<td class={ utils.TwMerge(markerCell, markerClass(l.Kind)) }>{ marker(l.Kind) }</td>
+					<td class={ textClass }>{ l.Text }</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+// sideBySideTable pairs deletions with the additions that follow them: old
+// number and text left, new number and text right; a gap cell is muted.
+templ sideBySideTable(lines []Line) {
+	<table class={ utils.TwMerge(tableClass, "w-full") } data-layout="side-by-side">
+		<colgroup>
+			<col class="w-12"/>
+			<col class="w-1/2"/>
+			<col class="w-12"/>
+			<col class="w-1/2"/>
+		</colgroup>
+		<tbody>
+			for _, pr := range pairLines(lines) {
+				<tr>
+					<td class={ utils.TwMerge(gutterClass, sideClass(pr.Left)) }>{ gutterNo(pr.Left, true) }</td>
+					<td class={ utils.TwMerge(textClass, "border-r border-border", sideClass(pr.Left)) } data-side="old">{ text(pr.Left) }</td>
+					<td class={ utils.TwMerge(gutterClass, sideClass(pr.Right)) }>{ gutterNo(pr.Right, false) }</td>
+					<td class={ utils.TwMerge(textClass, sideClass(pr.Right)) } data-side="new">{ text(pr.Right) }</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
