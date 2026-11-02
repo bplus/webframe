@@ -619,3 +619,21 @@ func TestLint_HTMLFromGoString_ProseExempt(t *testing.T) {
 		t.Errorf("noimport.go: got %+v, want one html-from-go-string at line 3", vs)
 	}
 }
+
+// TestLint_ComposeClean: plain-Go app code that fills containers through
+// the compose package (With, Join, Text) has nothing to report, while the
+// hand-written equivalent built on templ.ComponentFunc is html-from-go.
+func TestLint_ComposeClean(t *testing.T) {
+	if vs := lintOne(t, "testdata/compose_ok.go"); len(vs) != 0 {
+		t.Errorf("compose_ok.go: got %d violations, want 0: %+v", len(vs), vs)
+	}
+	dir := t.TempDir()
+	f := filepath.Join(dir, "helper.go")
+	src := "package x\n\nfunc with(p, c templ.Component) templ.Component {\n\treturn templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {\n\t\treturn p.Render(templ.WithChildren(ctx, c), w)\n\t})\n}\n"
+	if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if vs := lintOne(t, f); len(vs) != 1 || vs[0].Rule != "html-from-go" || vs[0].Line != 4 {
+		t.Errorf("helper.go: got %+v, want one html-from-go at line 4", vs)
+	}
+}

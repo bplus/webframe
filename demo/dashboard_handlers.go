@@ -8,14 +8,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/a-h/templ"
+
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/cardgrid"
 	"github.com/bplus/webframe/components/dashboardpage"
 	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/stattile"
 	"github.com/bplus/webframe/components/timeline"
+	"github.com/bplus/webframe/compose"
 )
 
 // dashboardArt is the art every card on the dashboard shows: the embedded
@@ -73,6 +77,12 @@ func dashboardProps(now time.Time) dashboardpage.Props {
 				Actions:     []action.Action{{Label: "All items", Href: "/items"}},
 				Content:     cardgrid.CardGrid(newestCards(items, now)),
 			},
+			{
+				ID:          "pack-counts",
+				Title:       "Packs",
+				Description: "How many items each pack uses.",
+				Content:     packCounts(items, packs),
+			},
 		},
 	}
 }
@@ -107,6 +117,25 @@ func packsLine(packs []string) string {
 		return "No item is in a pack"
 	}
 	return strings.Join(packs, " · ")
+}
+
+// packCounts is the Packs section: one badge per pack naming it and its
+// item count, in a wrapping row. It is plain Go: compose.With puts content
+// inside a container component without a .templ file.
+func packCounts(items []Item, packs []string) templ.Component {
+	if len(packs) == 0 {
+		return compose.Text("No item is in a pack.")
+	}
+	counts := make(map[string]int)
+	for _, it := range items {
+		counts[it.UsedIn]++
+	}
+	var badges []templ.Component
+	for _, p := range packs {
+		badges = append(badges, compose.With(badge.Badge(badge.Props{Variant: badge.VariantSecondary}),
+			compose.Text(p+" · "+plural(counts[p], "item"))))
+	}
+	return compose.With(layout.Inline(layout.InlineProps{ID: "pack-counts-list", Wrap: true}), badges...)
 }
 
 // recentChanges declares the Recent changes timeline: one event per item
