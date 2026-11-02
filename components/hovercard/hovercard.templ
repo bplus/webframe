@@ -13,13 +13,8 @@ type MetaRow struct {
 	Value string
 }
 
-// Props configures a hover card shown on trigger hover.
-//
-// Invariant: ID must be non-empty and unique on the page — it is passed
-// straight through as both popover.TriggerProps.For and
-// popover.ContentProps.ID, and that match is the only thing binding the
-// trigger to the card. Empty Title, Description, and LinkText fall back to
-// placeholder text at render time; the other fields are optional.
+// Props configures Hover. ID is required and must be unique on the page:
+// it is the only thing binding the trigger to the card.
 type Props struct {
 	ID          string            // unique ID for popover binding
 	Title       string            // main heading
@@ -32,43 +27,17 @@ type Props struct {
 	Placement   popover.Placement // card placement; zero value means popover.PlacementBottomStart
 }
 
-// Hover renders a rich preview card (kicker, title, description, key-value
-// meta rows, optional link and game-icon art panel) that appears when the
-// user hovers its children — use it to preview an entity without navigating.
-// It is a pre-wired composition over the popover package rather than a new
-// overlay primitive.
+// Hover renders a preview card (kicker, title, description, meta rows,
+// optional link and icon panel) shown while the user hovers its children.
+// It is a popover.Trigger plus popover.Content, so it needs popover.Script
+// on the page; the card is exclusive, closing other open popovers. Empty
+// Title, Description and LinkText render placeholder text. Link is
+// URL-sanitized.
 //
-// Takes exactly one required Props (not variadic — Props.ID must be set, see
-// Props). Returns a templ.Component emitting two sibling elements: a
-// popover.Trigger (hover type) whose slot is this component's children (the
-// hover target), and a popover.Content (placement Props.Placement, default bottom-start, arrow,
-// exclusive, 120ms hover in/out delays) holding the generated card markup. Empty
-// Title/Description/LinkText render fallbacks ("Untitled", "No
-// description.", "View details →"); empty Category/Link/IconName omit their
-// sections. Props.Link is emitted as a plain string so templ's URL sanitizer applies (unsafe schemes become about:invalid).
-//
-// Default placement is below the trigger: the trigger is full width, so a
-// sideways placement has no room on either side and the positioning library's
-// flip cannot rescue it, while bottom/top always has a side with room.
-//
-// Phone width (390px): the card never extends past the viewport. When
-// neither side has room for the whole card, flip picks the side with more
-// room, popover.min.js's size step writes that side's available height to
-// --wf-pop-max on the popover element, and the card shell is capped to it
-// with overflow-y auto so the rest scrolls inside the card. Before the
-// script positions the card the cap falls back to 70vh. The shell's 180px
-// min-height yields to the same cap (input.css .wf-hover-shell:
-// min(180px, var(--wf-pop-max) - 2px)), so a landscape phone with less than
-// 180px on the larger side still gets a card that fits and scrolls.
-//
-// Side effects: none server-side — no RandomID, no context writes;
-// deterministic markup from Props and children.
-//
-// @temporal-coupling Interactivity is entirely delegated to the popover
-// machinery: popover.Script() must be included on the page (hovercard has no
-// Script of its own), and Props.ID links the emitted trigger/content pair.
-// Because Content is Exclusive, an open hover card closes when another
-// popover opens.
+// The default placement is below the trigger: the trigger is full width,
+// so a sideways placement has no room to flip into. The card's height is
+// capped to the space popover.min.js reports and scrolls inside, so it
+// never extends past a phone viewport.
 templ Hover(props Props) {
 	{{ placement := props.Placement }}
 	if placement == "" {
@@ -89,12 +58,9 @@ templ Hover(props Props) {
 		Exclusive:     true,
 		Class:         "wf-hover-pop",
 	}) {
-		// Height cap (batch 2 input #13): popover.min.js runs Floating UI's
-		// size step after flip/shift and writes the height available on the
-		// final side to --wf-pop-max on the popover element; the shell is
-		// capped to that (minus the popover's 1px borders) and scrolls
-		// inside. 70vh is the fallback before the script has positioned
-		// the card; 100vh - 20px (the positioning gutter) is the ceiling.
+		// popover.min.js writes the height available on the final side to
+		// --wf-pop-max; the shell is capped to that (minus the 1px borders)
+		// and scrolls inside. 70vh applies before the script has run.
 		<div
 			class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "") }
 			style="max-height:calc(min(var(--wf-pop-max, 70vh), 100vh - 20px) - 2px);overflow-y:auto"

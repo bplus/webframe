@@ -13,19 +13,10 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// JSONViewer renders p.Value as a collapsible JSON tree inside a monospace
-// frame. Objects and arrays are <details> elements whose <summary> shows the
+// JSONViewer renders p.Value as a collapsible JSON tree in a monospace
+// frame. Objects and arrays are <details> elements whose summary shows the
 // key, the size ("{3}" / "[2]") and, with CopyPath, a copy button for the
-// node's path; scalars are one line each, toned by type (strings success,
-// numbers info, booleans warning, null muted). Collapsed, MaxDepth and Sort
-// are described on Props.
-//
-// Phone width (390px): see the package comment. The frame scrolls
-// horizontally only when a single line cannot fit; strings break anywhere
-// and the indent is capped at six levels so deep nesting never pushes the
-// tree past the viewport.
-//
-// @pure marshals p.Value once per render; no state or I/O beyond that
+// node's path; scalars are toned by type.
 func JSONViewer(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -69,7 +60,7 @@ func JSONViewer(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 25, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 16, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -113,7 +104,7 @@ func JSONViewer(p Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(errorText(err))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 36, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 27, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -169,7 +160,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 48, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 39, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -190,7 +181,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(n.emptyLabel())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 50, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 41, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -216,7 +207,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 54, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 45, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -237,7 +228,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(n.sizeLabel())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 56, Col: 96}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 47, Col: 96}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -263,7 +254,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 62, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 53, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -294,7 +285,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(n.sizeLabel())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 70, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 61, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -370,7 +361,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 89, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 80, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -409,7 +400,7 @@ func (p Props) nodeView(n *node, path string, key string, isMember bool, depth i
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(n.scalarText())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 91, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 82, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -462,7 +453,7 @@ func (p Props) keyView(key string, isMember bool) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(keyLabel(key, isMember))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 100, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/jsonviewer/jsonviewer.templ`, Line: 91, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {

@@ -14,26 +14,11 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// ConfirmDialog renders one closed dialog.Dialog (no Trigger) holding a
-// title, a message and a Cancel / Confirm footer. It opens only through
-// dialog.min.js (window.tui.dialog.open(id)); confirm.js does that for the
-// Host instance. Every text element and both confirm buttons carry a
-// data-wf-confirm-part attribute (title, message, cancel, confirm,
-// confirm-destructive) that confirm.js writes through; the root carries the
-// resolved defaults as data-wf-confirm-* attributes. The panel is
-// role="alertdialog" labelled by the title and described by the message;
-// the templUI X button is hidden so Cancel and Confirm are the only choices.
-//
-// Closed, the dialog is a bare div whose backdrop and panel are display:none
-// (dialog's data-tui-dialog-hidden), so it occupies no height and nothing on
-// the page moves when it mounts.
-//
-// Phone: the panel is dialog's own max-w-[calc(100%-2rem)] (16px gutters at
-// 390). The footer is a wrapping row; below 400px each button is w-full, so
-// they stack one per row (Cancel above Confirm) and both stay visible.
-//
-// @temporal-coupling dialog.Script() (dialog.min.js) must be on the page or
-// the dialog never opens; appshell.Scripts includes it.
+// ConfirmDialog renders a closed alert dialog with a title, a message and
+// Cancel / Confirm buttons; there is no close (X) button. It opens only
+// through dialog.min.js, which must be on the page (appshell.Scripts
+// includes it). Closed, it takes no space on the page. Below 400px the
+// buttons stack.
 func ConfirmDialog(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -111,7 +96,7 @@ func ConfirmDialog(p Props) templ.Component {
 						var templ_7745c5c3_Var6 string
 						templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 48, Col: 14}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 33, Col: 14}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 						if templ_7745c5c3_Err != nil {
@@ -142,7 +127,7 @@ func ConfirmDialog(p Props) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Message)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 51, Col: 16}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 36, Col: 16}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -203,7 +188,7 @@ func ConfirmDialog(p Props) templ.Component {
 							var templ_7745c5c3_Var12 string
 							templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.CancelLabel)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 61, Col: 21}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 46, Col: 21}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 							if templ_7745c5c3_Err != nil {
@@ -244,7 +229,7 @@ func ConfirmDialog(p Props) templ.Component {
 						var templ_7745c5c3_Var14 string
 						templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.ConfirmLabel)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 69, Col: 21}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 54, Col: 21}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 						if templ_7745c5c3_Err != nil {
@@ -279,7 +264,7 @@ func ConfirmDialog(p Props) templ.Component {
 						var templ_7745c5c3_Var16 string
 						templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.ConfirmLabel)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 76, Col: 21}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/confirmdialog/confirmdialog.templ`, Line: 61, Col: 21}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 						if templ_7745c5c3_Err != nil {
@@ -330,10 +315,8 @@ func ConfirmDialog(p Props) templ.Component {
 // wrap one per row there and sit side by side above it.
 const footerButtonClass = "w-full min-[400px]:w-auto"
 
-// Host renders the page's single ConfirmDialog instance with ID HostID
-// ("wf-confirm") and default texts. appshell.Document places it after the
-// toast container; confirm.js fills and opens it for every htmx request
-// that carries hx-confirm.
+// Host renders the page's ConfirmDialog with ID HostID and the default
+// texts. confirm.js fills and opens it for every hx-confirm request.
 func Host() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

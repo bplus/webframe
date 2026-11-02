@@ -323,8 +323,7 @@ func TestDataTable_ShortRow(t *testing.T) {
 	}
 }
 
-// BadgeCell builds the badge cell callers used to assemble by hand:
-// kind picks the variant through badge.StatusPtr, text is the badge's text.
+// BadgeCell picks the variant from kind; text is the badge's text.
 func TestDataTable_BadgeCell(t *testing.T) {
 	c := BadgeCell("Published", "published")
 	if c.Badge == nil || c.Badge.Variant != badge.VariantSuccess || c.Text != "Published" {

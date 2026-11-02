@@ -46,25 +46,21 @@ var (
 	subContentIDKey contextKey = "subContentID"
 )
 
-// Props configures the Dropdown root. ID, when set, is used verbatim as the
-// popover content ID shared between Trigger and Content; leave it empty to get
-// a random ID. Supply an explicit ID only when you need to reference the menu
-// from outside (or across an HTMX swap boundary) — it must be unique per page.
+// Props configures Dropdown. ID, when set, is the popover content ID shared by
+// Trigger and Content; empty means a random one. Set it only to reference the
+// menu from outside (or across an HTMX swap); it must be unique per page.
 type Props struct {
 	ID string
 }
 
-// TriggerProps configures the Trigger wrapper. All fields are passed through
-// to the underlying popover.Trigger; zero values are safe defaults.
+// TriggerProps configures Trigger. Fields pass through to popover.Trigger.
 type TriggerProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// ContentProps configures the Content menu panel. Placement positions the
-// panel relative to the trigger and defaults to PlacementBottomStart when
-// left as the zero value.
+// ContentProps configures Content. Placement defaults to PlacementBottomStart.
 type ContentProps struct {
 	ID         string
 	Class      string
@@ -86,11 +82,9 @@ type LabelProps struct {
 	Attributes templ.Attributes
 }
 
-// ItemProps configures a menu Item. Href switches the rendered element from
-// <button> to <a> (Target only applies then). Disabled renders the item inert
-// (pointer-events-none plus the disabled attribute on the button form).
-// PreventClose keeps the menu open after the item is activated, via the
-// data-tui-dropdown-prevent-close attribute read by dropdown.min.js.
+// ItemProps configures Item. Href renders an <a> instead of a <button>
+// (Target applies only then). PreventClose keeps the menu open after the item
+// is activated.
 type ItemProps struct {
 	ID           string
 	Class        string
@@ -115,9 +109,8 @@ type ShortcutProps struct {
 	Attributes templ.Attributes
 }
 
-// SubProps configures a Sub submenu wrapper. ID, when set, is used as the
-// popover content ID linking the nested SubTrigger and SubContent; empty
-// means a random ID is generated.
+// SubProps configures Sub. ID, when set, is the content ID linking SubTrigger
+// and SubContent; empty means a random one.
 type SubProps struct {
 	ID         string
 	Class      string
@@ -138,36 +131,12 @@ type SubContentProps struct {
 	Attributes templ.Attributes
 }
 
-// PortalProps is a dead type within this repository: no templ Portal(...)
-// component exists in this package and nothing in the repo references
-// PortalProps (verified by search excluding generated mirrors). It is
-// vendored from templui v1.3.0, where the Portal component was presumably
-// planned or removed. Kept because it is exported — downstream applications
-// consuming this module could reference it, so deleting it would be a
-// breaking API change.
-type PortalProps struct {
-	ID         string
-	Class      string
-	Attributes templ.Attributes
-}
-
-// Dropdown is the root of a click-triggered menu; it renders no markup of its
-// own, only establishing the shared content ID that links its children.
-// Required nesting: Dropdown > { Trigger, Content > (Group | Label | Item |
-// Separator | Sub) }. Optional props: only props[0] is used, extras are
-// ignored; the zero value works. Returns a templ.Component whose output is
-// exactly its children — the ID travels to Trigger/Content via templ's
-// render context, not the DOM, so both MUST be rendered inside this
-// component's body (in the same render pass) to be linked.
-//
-// Side effects: generates a random ID via utils.RandomID when Props.ID is
-// empty, and stores it in ctx under a package-private key.
-//
-// @temporal-coupling: Trigger and Content resolve the content ID from ctx set
-// here; rendered outside a Dropdown they fall back to utils.PairedID
-// ("wf-dropdown-0", "wf-dropdown-1", …), so the n-th orphaned Trigger links
-// to the n-th orphaned Content of the same render and orphans never share an id.
-// @side-effects
+// Dropdown is the root of a click-triggered menu: Dropdown > { Trigger,
+// Content > (Group | Label | Item | Separator | Sub) }. It renders only its
+// children and passes the shared content ID to Trigger and Content through the
+// render context, so both must render inside it. Outside a Dropdown they fall
+// back to utils.PairedID, which links the n-th orphaned Trigger to the n-th
+// orphaned Content of the same render.
 func Dropdown(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -206,16 +175,8 @@ func Dropdown(props ...Props) templ.Component {
 	})
 }
 
-// Trigger wraps its children in a click-type popover.Trigger wired (via the
-// content ID from the enclosing Dropdown's ctx) to open the sibling Content.
-// Children become the visible trigger element (typically a button). Only
-// props[0] is used; extras are ignored and the zero value is fine. Returns a
-// templ.Component delegating all markup to popover.Trigger.
-//
-// @ai-context: must render inside Dropdown to pick up the correct content ID;
-// otherwise it targets the utils.PairedID fallback. The open/close behavior itself
-// lives in the popover component's JS, not here.
-// @temporal-coupling
+// Trigger wraps its children (typically a button) in a click popover.Trigger
+// that opens the sibling Content.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -280,17 +241,9 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
-// Content renders the floating menu panel as an exclusive popover.Content
-// (opening it closes other exclusive popovers) positioned at
-// PlacementBottomStart unless ContentProps.Placement overrides it. Children
-// are the menu body: Items, Groups, Labels, Separators, Subs. Only props[0]
-// is used; extras ignored. Returns a templ.Component; the panel's DOM ID is
-// the one established by the enclosing Dropdown, so any ContentProps.ID is
-// currently not applied to the element.
-//
-// @temporal-coupling: reads the content ID from ctx set by Dropdown; outside
-// one it falls back to utils.PairedID with Trigger's prefix (so an orphaned
-// pair still links up, and a second orphaned pair gets its own id).
+// Content renders the menu panel as an exclusive popover.Content (opening it
+// closes other exclusive popovers). Its DOM ID comes from the enclosing
+// Dropdown; ContentProps.ID is not applied.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -364,11 +317,7 @@ func Content(props ...ContentProps) templ.Component {
 	})
 }
 
-// Group visually clusters related Items inside Content under role="group".
-// Only props[0] is used; zero value fine. Returns a templ.Component rendering
-// a <div> with children as the group body.
-//
-// @pure
+// Group clusters related Items inside Content under role="group".
 func Group(props ...GroupProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -411,7 +360,7 @@ func Group(props ...GroupProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 270, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 219, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -459,11 +408,7 @@ func Group(props ...GroupProps) templ.Component {
 	})
 }
 
-// Label renders a non-interactive heading (e.g. above a Group) inside
-// Content. Only props[0] is used; zero value fine. Returns a templ.Component
-// rendering a <div> with children as the label text.
-//
-// @pure
+// Label renders a non-interactive heading inside Content.
 func Label(props ...LabelProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -506,7 +451,7 @@ func Label(props ...LabelProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 292, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 237, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -554,17 +499,9 @@ func Label(props ...LabelProps) templ.Component {
 	})
 }
 
-// Item renders one selectable menu entry (role="menuitem") inside Content:
-// an <a> when Href is set, otherwise a <button>. Children are the item's
-// label/content; pair with Shortcut for a right-aligned key hint. Only
-// props[0] is used; extras ignored. Activation closes the menu unless
-// PreventClose is set (dropdown.min.js reads the data-tui-dropdown-* markers
-// emitted here).
-//
-// Side effects: assigns a random ID via utils.RandomID when ItemProps.ID is
-// empty — unlike the other sub-parts, the id attribute is always rendered.
-//
-// @side-effects
+// Item renders a menu entry (role="menuitem"): an <a> when Href is set,
+// otherwise a <button>. Activating it closes the menu unless PreventClose is
+// set. Unlike the other parts, it always renders an id (random if unset).
 func Item(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -612,7 +549,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 322, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 259, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -630,7 +567,7 @@ func Item(props ...ItemProps) templ.Component {
 				var templ_7745c5c3_Var17 templ.SafeURL
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(p.Href)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 324, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 261, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -649,7 +586,7 @@ func Item(props ...ItemProps) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.Target)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 327, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 264, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -718,7 +655,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 348, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 285, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -774,11 +711,7 @@ func Item(props ...ItemProps) templ.Component {
 	})
 }
 
-// Separator draws a horizontal rule (role="separator") between menu sections
-// inside Content. Only props[0] is used; zero value fine. Returns a
-// templ.Component rendering an empty <div>; takes no children.
-//
-// @pure
+// Separator draws a horizontal rule between menu sections.
 func Separator(props ...SeparatorProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -821,7 +754,7 @@ func Separator(props ...SeparatorProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 382, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 315, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -861,12 +794,8 @@ func Separator(props ...SeparatorProps) templ.Component {
 	})
 }
 
-// Shortcut renders a right-aligned (ml-auto), dimmed keyboard-hint span
-// intended as the last child of an Item; it is purely visual and binds no
-// key handler. Only props[0] is used; zero value fine. Returns a
-// templ.Component with children as the hint text (e.g. "⌘K").
-//
-// @pure
+// Shortcut renders a right-aligned keyboard hint (e.g. "⌘K") as the last
+// child of an Item. It is visual only and binds no key handler.
 func Shortcut(props ...ShortcutProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -909,7 +838,7 @@ func Shortcut(props ...ShortcutProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 403, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 332, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -957,19 +886,9 @@ func Shortcut(props ...ShortcutProps) templ.Component {
 	})
 }
 
-// Sub establishes a nested submenu inside Content, playing the same
-// ID-broker role for its children that Dropdown plays at the top level.
-// Required nesting: Sub > { SubTrigger, SubContent }. It renders a relative
-// <div data-tui-dropdown-submenu> wrapper. Only props[0] is used; extras
-// ignored. Returns a templ.Component with children as the submenu parts.
-//
-// Side effects: generates a random ID via utils.RandomID when SubProps.ID is
-// empty and stores it in ctx under a separate sub-content key (so a Sub does
-// not clobber its parent Dropdown's content ID).
-//
-// @temporal-coupling: SubTrigger and SubContent read this ctx value; outside
-// a Sub they fall back to utils.PairedID ("wf-dropdown-sub-N").
-// @side-effects
+// Sub is a nested submenu inside Content: Sub > { SubTrigger, SubContent }.
+// Like Dropdown, it links its two children through the render context, under
+// a separate key so it does not replace the parent's content ID.
 func Sub(props ...SubProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1017,7 +936,7 @@ func Sub(props ...SubProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 439, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 358, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -1065,15 +984,8 @@ func Sub(props ...SubProps) templ.Component {
 	})
 }
 
-// SubTrigger renders the hover-activated row that opens the sibling
-// SubContent: a popover.Trigger (TriggerTypeHover) wrapping a styled
-// <button> with children as the label plus a fixed right-chevron SVG. Only
-// props[0] is used; extras ignored. Returns a templ.Component. Note that
-// unlike Trigger, Class/Attributes go on the inner button, not the popover
-// wrapper.
-//
-// @temporal-coupling: resolves its target ID from ctx set by the enclosing
-// Sub; falls back to utils.PairedID outside one.
+// SubTrigger renders the hover-activated row, with a chevron, that opens
+// SubContent. Unlike Trigger, Class and Attributes go on the inner button.
 func SubTrigger(props ...SubTriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1175,16 +1087,9 @@ func SubTrigger(props ...SubTriggerProps) templ.Component {
 	})
 }
 
-// SubContent renders the submenu fly-out panel as a popover.Content placed
-// right-start of its SubTrigger, with hover open/close delays (100ms in,
-// 200ms out) and a slight negative offset so it overlaps the parent menu.
-// Not marked Exclusive, so opening it does not close the parent dropdown.
-// Children are the submenu's Items/Groups/etc. Only props[0] is used; extras
-// ignored. Returns a templ.Component.
-//
-// @temporal-coupling: resolves its DOM ID from ctx set by the enclosing Sub
-// (SubContentProps.ID is not applied to the element); falls back to
-// utils.PairedID with SubTrigger's prefix.
+// SubContent renders the submenu fly-out to the right of SubTrigger. It is not
+// exclusive, so opening it keeps the parent menu open. Its DOM ID comes from
+// the enclosing Sub; SubContentProps.ID is not applied.
 func SubContent(props ...SubContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1238,7 +1143,7 @@ func SubContent(props ...SubContentProps) templ.Component {
 		templ_7745c5c3_Err = popover.Content(popover.ContentProps{
 			ID:            subContentID,
 			Placement:     popover.PlacementRightStart,
-			Offset:        -4,  // Adjust as needed
+			Offset:        -4,  // overlap the parent menu slightly
 			HoverDelay:    100, // ms
 			HoverOutDelay: 200, // ms
 			Class: utils.TwMerge(
@@ -1254,14 +1159,8 @@ func SubContent(props ...SubContentProps) templ.Component {
 	})
 }
 
-// Script emits the <script defer> tag loading dropdown.min.js, which
-// closes the menu when an Item is clicked (skipping submenu triggers and
-// PreventClose items) on top of the popover JS's open/close machinery.
-// Include it once per page (typically in the layout) whenever any
-// Dropdown is rendered; the URL carries a cache-busting query via
-// utils.ScriptURL and the tag gets the CSP nonce from ctx.
-//
-// @boundary
+// Script loads dropdown.min.js, which closes the menu when an Item is clicked.
+// Include it once per page that renders a Dropdown, alongside the popover script.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1290,7 +1189,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 548, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 447, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {
@@ -1303,7 +1202,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/dropdown.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 548, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 447, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {

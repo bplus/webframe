@@ -17,23 +17,11 @@
 //		// ... re-render with Props{Rows: rows} on a validation failure
 //	}
 //
-// First paint without JavaScript is complete: every Row is a server-rendered
-// row whose inputs already carry the names and values, so a plain submit
-// sends them. Alpine (x-data on the root, inline in this component) then
-// takes over: its init() reads the rows from the rendered markup (each
-// [data-row] element's key and value inputs), removes them and re-renders
-// the same rows from its own state, so the server markup is the single
-// source of the initial state. Add row appends under the last row (nothing
-// above it moves) and focuses the new key input; removing a row collapses
-// the list; MaxRows disables Add row at the cap. Without JavaScript the Add
-// row and remove buttons do nothing. Disabled disables every input and
-// button, so a disabled editor submits nothing (as disabled inputs do).
-//
-// Phone width (390px): each row stacks key over value with the remove button
-// at the row's end (grid-cols-1), inside a light frame so consecutive rows
-// read as rows; from sm up the frame goes and a row is one line, key | value
-// | remove (sm:grid-cols-[1fr_1fr_auto]). Add row focuses the new key input,
-// which opens the keyboard on it.
+// The rows are server-rendered, so a plain submit works without JavaScript
+// (the Add row and remove buttons need Alpine). Alpine's init() reads the
+// rows from that markup and re-renders them from its own state. A disabled
+// editor submits nothing, as disabled inputs do. On phones each row stacks
+// key over value; from sm up a row is one line.
 package keyvalueeditor
 
 import (
@@ -58,8 +46,7 @@ type Row struct {
 // submit; everything else is optional with the defaults noted per field.
 type Props struct {
 	// ID is the root's id; the key input of row i is ID+"-key-"+i, the
-	// value input ID+"-value-"+i, the Add row button ID+"-add". Defaults
-	// to utils.RandomID(); set it for stable markup.
+	// value input ID+"-value-"+i. Random when empty.
 	ID         string
 	Class      string
 	Attributes templ.Attributes // spread on the root
@@ -126,11 +113,9 @@ func (p Props) maxAttr() string { return fmt.Sprint(p.MaxRows) }
 // from sm up.
 const rowClass = "grid grid-cols-1 items-center gap-2 rounded-md border border-border p-2 sm:grid-cols-[1fr_1fr_auto] sm:border-0 sm:p-0"
 
-// Parse reads the editor's fields from a parsed form: it zips
-// form[name+".key"] and form[name+".value"] in order into rows and drops
-// every row whose key is blank (after trimming). A row with a key but no
-// matching value (a malformed submit) gets Value "". Keys are returned
-// trimmed; values are returned as typed.
+// Parse zips form[name+".key"] and form[name+".value"] into rows, dropping
+// rows whose trimmed key is blank. Keys are trimmed; values are kept as
+// typed.
 func Parse(form url.Values, name string) []Row {
 	keys := form[name+".key"]
 	values := form[name+".value"]
@@ -150,12 +135,9 @@ func Parse(form url.Values, name string) []Row {
 }
 
 // alpineData is the x-data of the root. init() seeds the state from the
-// server-rendered markup: data-max/data-disabled on the root and one
-// [data-row] element per row, whose [data-key] and [data-value] inputs
-// hold the pair; the elements are removed so the x-for renders the same
-// rows from state in the same tick (no paint in between). Each row gets a
-// stable id for :key so removing one re-renders only that one. add()
-// appends an empty row and focuses its key input on the next tick.
+// server-rendered [data-row] elements and removes them, so the x-for
+// renders the same rows in the same tick with no paint in between. Each
+// row gets a stable id for :key.
 const alpineData = `{
 	rows: [], next: 0, max: 0, disabled: false,
 	init() {

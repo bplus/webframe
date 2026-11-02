@@ -14,28 +14,24 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// Ratio names a preset width:height proportion mapped to a Tailwind
-// aspect-* class. The zero value (and any unrecognized value) behaves
+// Ratio names a preset width:height proportion. The zero value behaves
 // like RatioAuto.
 type Ratio string
 
 const (
-	// RatioAuto lets content determine the height (aspect-auto); also
-	// the effective behavior for the zero value.
+	// RatioAuto applies no ratio.
 	RatioAuto Ratio = "auto"
-	// RatioSquare locks the box to 1:1 (aspect-square).
+	// RatioSquare is 1:1.
 	RatioSquare Ratio = "square"
-	// RatioVideo locks the box to 16:9 (aspect-video).
+	// RatioVideo is 16:9.
 	RatioVideo Ratio = "video"
-	// RatioPortrait locks the box to 3:4 (aspect-[3/4]).
+	// RatioPortrait is 3:4.
 	RatioPortrait Ratio = "portrait"
-	// RatioWide locks the box to 2:1 (aspect-[2/1]).
+	// RatioWide is 2:1.
 	RatioWide Ratio = "wide"
 )
 
-// Props configures an AspectRatio box. All fields are optional; the
-// zero value renders a full-width auto-height box. Class is merged via
-// utils.TwMerge and Attributes are spread onto the outer <div>.
+// Props configures AspectRatio.
 type Props struct {
 	ID         string
 	Class      string
@@ -43,20 +39,10 @@ type Props struct {
 	Ratio      Ratio
 }
 
-// AspectRatio constrains its children to a fixed width:height
-// proportion — useful for media (images, video embeds, map tiles) that
-// should hold its shape before and after loading. Call with no
-// arguments for a full-width aspect-auto box; only the first Props is
-// used and extras are silently ignored. Returns a templ.Component
-// rendering an outer relative <div> sized by the ratio, with children
-// placed in an absolutely positioned inset-0 inner <div>.
-//
-// @pure
-// @ai-context Children are absolutely positioned to fill the box, so
-// they must size themselves to 100% (e.g. w-full h-full object-cover on
-// an img) — intrinsic child size does not influence the box, and with
-// RatioAuto the box height collapses to 0 since nothing in normal flow
-// establishes a height.
+// AspectRatio constrains its children to a fixed proportion, for media
+// that should hold its shape while loading. Children are absolutely
+// positioned to fill the box and should size themselves to 100%. With
+// RatioAuto the box has zero height, since nothing in flow gives it one.
 func AspectRatio(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -104,7 +90,7 @@ func AspectRatio(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/aspectratio/aspectratio.templ`, Line: 57, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/aspectratio/aspectratio.templ`, Line: 43, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

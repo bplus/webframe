@@ -8,38 +8,16 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Shell renders the app chrome that goes inside Document's <body>: the
-// navigation (a topbar, or a sidebar when Layout is LayoutSidebar), the
-// right-side controls (palette trigger, live dot, Right, user menu, theme
-// toggle), and
-// <main class="wf-content"> holding the #wf-flash slot (empty, or
-// Props.Flash) followed by the children (the page body).
+// Shell renders the app chrome inside Document's <body>: a topbar (or a
+// sidebar with LayoutSidebar), the right-side controls, and
+// <main class="wf-content"> holding the #wf-flash slot and the children.
 //
-// Topbar: home link, the first MaxVisible (default 4) items inline, the
-// rest in a <details class="wf-nav-more"> "More" disclosure. Under 768px
-// only the first two items stay inline; items 3..MaxVisible are hidden
-// inline and their phone-only copies in the More list are shown instead
-// (CSS shows exactly one copy of each item at any width). With
-// ThemeToggle, a second toggle is the last entry of the More list and
-// the More disclosure always renders (phone-only when nothing overflows);
-// under 768px CSS hides the topbar-right toggle and shows this one.
-// theme-toggle.js binds every [data-theme-toggle], so both stay in sync.
-//
-// Sidebar: <aside class="wf-sidebar"> with Nav (untitled) then Groups,
-// wrapped in <details class="wf-sidebar-toggle"> whose summary appears
-// only under 768px. Two layers keep it open from 768px up: Alpine sets
-// [open] from a live matchMedia('(min-width: 768px)') listener (the same
-// pattern as layout.ThreeColumn), and CSS forces the panel visible via
-// ::details-content for no-JS browsers that support it.
-//
-// The active item (see isActive) gets class wf-nav-link--active (or
-// wf-sidebar-link--active) and aria-current="page".
-//
-// The polled elements (a NavItem.Badge span, the LiveDot) carry
-// data-wf-swallow-errors, so htmx-errors.js never swaps an error body
-// (a plain 500, an error page) into them; the next poll repairs them.
-//
-// @boundary LiveBadge and LiveDot poll their HxGet URLs via htmx
+// The topbar shows the first MaxVisible items (default 4) and puts the rest
+// under a "More" disclosure; on phones only two stay inline. The sidebar
+// collapses behind a "Menu" disclosure under 768px. The active item gets
+// aria-current="page". Polled elements (NavItem.Badge, LiveDot) carry
+// data-wf-swallow-errors, so a failed poll never swaps an error page into
+// them.
 templ Shell(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -174,8 +152,7 @@ templ navLink(item NavItem, path, base, extra string) {
 }
 
 // rightControls is the control group shared by the topbar's right side and
-// the sidebar footer: the palette trigger (when Props.Palette is set), the
-// live dot, Right, the user menu, the theme toggle.
+// the sidebar footer.
 templ rightControls(p Props) {
 	if p.Palette != nil {
 		@commandpalette.Trigger(*p.Palette)

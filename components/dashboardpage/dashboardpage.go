@@ -4,12 +4,9 @@
 // Respond; it writes no markup and makes no layout decision beyond each
 // item's column span.
 //
-// The header is a pageheader.Props, not dashboardheader.Props as the spec
-// row (§6.3) first said: pageheader is the page layer's header (the h1 that
-// detailpage, listpage and formpage also render, with breadcrumbs, back
-// link, status badge and actions), so a dashboard page's title bar reads
-// like every other page's. dashboardheader stays as the standalone
-// dashboard's header for apps that render a dashboard outside the page
+// The header is a pageheader.Props, the same header detailpage, listpage
+// and formpage render, so a dashboard's title bar reads like every other
+// page's. dashboardheader remains for dashboards rendered outside the page
 // layer.
 package dashboardpage
 
@@ -97,11 +94,9 @@ func (s Section) sectionProps() layout.SectionProps {
 	}
 }
 
-// Props declares a dashboard page. Header is the pageheader. Tiles come
-// first on the grid, in order, then Sections, in order; both are optional
-// and the grid is omitted when both are empty. Gap is the grid gap in
-// pixels (dashboardgrid's default, 16, when 0). Class is merged onto the
-// root with utils.TwMerge; Attributes spread last on the root element.
+// Props declares a dashboard page. Tiles come first on the grid, in order,
+// then Sections; the grid is omitted when both are empty. Gap is the grid
+// gap in pixels (dashboardgrid's default, 16, when 0).
 type Props struct {
 	ID         string
 	Class      string
@@ -115,18 +110,16 @@ type Props struct {
 
 func (p Props) hasGrid() bool { return len(p.Tiles) > 0 || len(p.Sections) > 0 }
 
-// gridProps is the dashboardgrid: Flush, because the page's own gutter
-// (the shell's content padding) already insets it; the grid's 32px page
-// margin would double it.
+// gridProps sets Flush because the shell's content padding already insets
+// the page; the grid's own 32px margin would double it.
 func (p Props) gridProps() dashboardgrid.Props {
 	return dashboardgrid.Props{Flush: true, Gap: p.Gap}
 }
 
-// Respond writes the dashboard page for r: the full document (shell and
-// all) for a normal or boosted request, the bare page body for a plain
-// htmx request, per appshell's Render rule. The App comes from the request
-// context, so the handler chain must include (*appshell.App).Middleware;
-// otherwise Respond returns the error from appshell.Must without writing.
+// Respond writes the dashboard page for r via appshell's Render: the full
+// document for a normal or boosted request, the bare body for a plain htmx
+// request. The handler chain must include (*appshell.App).Middleware;
+// otherwise Respond returns an error without writing.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

@@ -10,13 +10,9 @@
 // of minutes). The handler calls Parse(kind, r.FormValue(name), loc) with the
 // user's location; an empty value parses to the zero time without error.
 //
-// Phone width (390px): the input is full width (the input component is
-// w-full) and a tap opens the platform's native picker, the wheel sheet on
-// iOS and the material dialog on Android, so nothing custom has to fit the
-// screen. The font size stays at 16px below md so iOS Safari does not zoom
-// the page when the control is focused. The picker icon follows the
-// control's color-scheme, which the component sets from the theme attribute
-// (light by default, dark under [data-theme="dark"]).
+// On a phone the input is full width and a tap opens the platform's native
+// picker. The font size stays at 16px below md so iOS Safari does not zoom
+// the page on focus.
 package datetimepicker
 
 import (
@@ -45,10 +41,8 @@ const (
 	KindTime Kind = "time"
 )
 
-// Props configures DateTimePicker. Name is the submitted field; everything
-// else is optional. Class merges after the input's built-in classes;
-// Attributes spread onto the <input> (after min/max/step/required, so a
-// caller's attribute wins on conflict).
+// Props configures DateTimePicker. Name is the submitted field. Attributes
+// win over the generated min/max/step/required on conflict.
 type Props struct {
 	// ID is the input's id. When empty, ControlID derives one from Name;
 	// with neither, the input component generates a random id.
@@ -90,9 +84,8 @@ func (p Props) kind() Kind {
 }
 
 // ControlID is the id of the rendered <input>: ID when set, otherwise
-// "datetimepicker-"+Name when Name is set, otherwise "" (the input component
-// then generates a random id, so supply ID or Name whenever a label or a
-// test needs a stable one).
+// "datetimepicker-"+Name, otherwise "" (the input component then generates
+// a random id, so set ID or Name when a label needs a stable one).
 func (p Props) ControlID() string {
 	if p.ID != "" {
 		return p.ID
@@ -103,7 +96,6 @@ func (p Props) ControlID() string {
 	return ""
 }
 
-// inputType maps the Kind onto the input component's Type.
 func (p Props) inputType() input.Type {
 	switch p.kind() {
 	case KindDateTime:
@@ -209,12 +201,9 @@ func parseLayouts(kind Kind) []string {
 }
 
 // Parse reads a submitted value back into a time.Time in loc (nil means
-// time.UTC). It accepts every form the native control can submit for kind,
-// including optional seconds and fractional seconds. An empty or blank s
-// returns the zero time and no error, so an optional field needs no special
-// case; check IsZero. KindTime values land on January 1 of year 0 in loc,
-// as time.Parse does. Any other input returns an error naming the kind and
-// the value.
+// time.UTC), accepting optional seconds and fractional seconds. A blank s
+// returns the zero time and no error, so optional fields need no special
+// case. KindTime values land on January 1 of year 0, as with time.Parse.
 func Parse(kind Kind, s string, loc *time.Location) (time.Time, error) {
 	kind = kindOrDate(kind)
 	if loc == nil {

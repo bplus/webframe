@@ -29,21 +29,10 @@ func rootClass(f Field) string {
 	return utils.TwMerge("wf-field flex flex-col gap-1", utils.If(f.Width == WidthFull, "md:col-span-2"))
 }
 
-// FormField renders one field: label, control, optional help line, and
-// a Feedback wrapper (id f.FeedbackID()) holding the error or opt-in
-// success text. With neither set, nothing below the control is visible
-// and no space is reserved. TypeHidden renders only the hidden input.
-// TypeCheckbox and TypeToggle put the label inline after the control on
-// one row. TypeTags, TypeRating, the date and time types and TypeFile
-// render the tagsinput, rating, datetimepicker and filedrop widgets with
-// the same label, help, error and required wiring on the control that
-// receives focus (the tags text input, the rating fieldset, the native
-// date input, the hidden file input). With Validate set the control
-// carries the htmx wiring that swaps the Feedback wrapper (see
-// Field.Validate and RespondFeedback).
-// Phone width: label, control and messages stack in one column; the
-// Fieldset grid decides whether two fields share a row; each widget's
-// own phone behavior is in its package doc.
+// FormField renders one field: label, control, optional help line, and a
+// Feedback slot for the error or opt-in success text. TypeHidden renders
+// only the hidden input; TypeCheckbox and TypeToggle put the label inline
+// after the control.
 func FormField(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -96,7 +85,7 @@ func FormField(f Field) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 43, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 32, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -238,7 +227,7 @@ func FormField(f Field) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(f.Help)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 76, Col: 13}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 65, Col: 13}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -303,7 +292,7 @@ func fieldLabel(f Field, forID string) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(f.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 89, Col: 12}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 78, Col: 12}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -405,12 +394,9 @@ func textareaControl(f Field) templ.Component {
 	})
 }
 
-// selectControl: selectbox.Trigger spreads Attributes on its hidden
-// input, which is what carries the value on submit and what a Validate
-// hx-trigger="change" fires on, so name/required/hx-* go there. The
-// announced state (aria-describedby, aria-invalid, aria-required) goes
-// on the visible button through ButtonAttributes, because screen readers
-// focus the button and ignore the hidden input.
+// selectControl puts name, required and hx-* on the hidden input that
+// submits the value, and the aria state on the visible button, which is
+// what screen readers focus.
 func selectControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -505,7 +491,7 @@ func selectControl(f Field) templ.Component {
 						var templ_7745c5c3_Var17 string
 						templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 143, Col: 16}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 129, Col: 16}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 						if templ_7745c5c3_Err != nil {
@@ -581,11 +567,8 @@ func checkboxControl(f Field) templ.Component {
 	})
 }
 
-// toggleControl renders toggle.Toggle with the label text as its
-// children: the Toggle root is itself a <label> wrapping the switch, so
-// a second form.Label would double-label the control. ID and Attributes
-// land on the <input role="switch">, which is what submits and what a
-// Validate hx-trigger="change" fires on.
+// toggleControl passes the label text as the Toggle's children: the Toggle
+// root is itself a <label>, so a form.Label would double-label it.
 func toggleControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -627,7 +610,7 @@ func toggleControl(f Field) templ.Component {
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(f.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 178, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 161, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
@@ -692,7 +675,7 @@ func radioControl(f Field) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(f.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 189, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 172, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -710,7 +693,7 @@ func radioControl(f Field) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(f.ControlID() + "-label")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 192, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 175, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -728,7 +711,7 @@ func radioControl(f Field) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(f.describedBy())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 194, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 177, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -757,7 +740,7 @@ func radioControl(f Field) templ.Component {
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 207, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 190, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -776,13 +759,6 @@ func radioControl(f Field) templ.Component {
 	})
 }
 
-// tagsControl renders tagsinput with f.ControlID() as the text input's
-// id (the label's target and the focused control), the comma-split Value
-// as chips, the Options' labels as suggestions and MaxTags as the cap.
-// HasError puts aria-invalid on the text input; the attributes add
-// aria-describedby (merged by the widget with its own hint id),
-// aria-required and the Validate wiring, never `required` (the text input
-// is not what submits).
 func tagsControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -822,10 +798,6 @@ func tagsControl(f Field) templ.Component {
 	})
 }
 
-// ratingControl renders rating in input mode: the fieldset is
-// f.ControlID() and carries aria-labelledby (the form.Label above it),
-// aria-describedby, aria-invalid and aria-required; Required puts
-// `required` on the radio group through the widget.
 func ratingControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -863,10 +835,6 @@ func ratingControl(f Field) templ.Component {
 	})
 }
 
-// dateControl renders datetimepicker for TypeDate, TypeDateTime and
-// TypeTime with Value echoed verbatim (ValueString) and MinValue/MaxValue
-// as min/max; aria-invalid lands on the <input>, which the input
-// component styles as an error.
 func dateControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -906,9 +874,8 @@ func dateControl(f Field) templ.Component {
 	})
 }
 
-// fileProps builds the filedrop Props for f: the root is f.ControlID()
-// and the hidden <input type="file"> is fileProps(f).ControlID()
-// (f.ControlID()+"-input"), which the label and the aria wiring target.
+// fileProps builds the filedrop Props for f. The label targets the hidden
+// file input, fileProps(f).ControlID(), not f.ControlID().
 func fileProps(f Field) filedrop.Props {
 	return filedrop.Props{
 		ID:         f.ControlID(),
@@ -922,8 +889,6 @@ func fileProps(f Field) filedrop.Props {
 	}
 }
 
-// fileControl renders filedrop; aria-invalid on the hidden input turns
-// the zone's border destructive (has-aria-invalid).
 func fileControl(f Field) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -981,7 +946,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(f.ControlID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 256, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -994,7 +959,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 256, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -1007,7 +972,7 @@ func hiddenControl(f Field) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(f.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 291, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 256, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -1021,18 +986,10 @@ func hiddenControl(f Field) templ.Component {
 	})
 }
 
-// Feedback is the per-field message slot and the hx-swap target for
-// single-field validation. errMsg renders as a red message with
-// role="alert" (a freshly swapped-in alert node is what screen readers
-// announce); otherwise a non-empty success renders as a muted line;
-// otherwise the wrapper is empty and hidden by `empty:hidden`,
-// reserving no space.
-//
-// The HTMX swap MUST be hx-swap="outerHTML" targeting "#"+id
-// (Field.FeedbackID()): innerHTML would nest a second wrapper inside the
-// first, duplicate the id, and defeat `empty:hidden`. For TypeSelect the
-// Field Attributes land on a hidden input that never blurs, so validate
-// it with hx-trigger="change".
+// Feedback is the per-field message slot and the swap target for
+// single-field validation. errMsg renders as an error with role="alert";
+// otherwise a non-empty success renders as a muted line; otherwise the
+// slot is empty and takes no space. Swap it with hx-swap="outerHTML".
 func Feedback(id, errMsg, success string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1061,7 +1018,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 307, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 264, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -1087,7 +1044,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 				var templ_7745c5c3_Var38 string
 				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 313, Col: 12}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 270, Col: 12}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 				if templ_7745c5c3_Err != nil {
@@ -1110,7 +1067,7 @@ func Feedback(id, errMsg, success string) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(success)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 316, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 273, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -1170,7 +1127,7 @@ func Fieldset(p FieldsetProps) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 327, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 284, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {
@@ -1214,7 +1171,7 @@ func Fieldset(p FieldsetProps) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(p.Legend)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 333, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formfield/formfield.templ`, Line: 290, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {

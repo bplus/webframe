@@ -11,10 +11,8 @@ import (
 	"github.com/bplus/webframe/components/filterbar"
 )
 
-// TestFilterBar_NoID_OmitsIDAttribute locks the contract that a bar rendered
-// without an explicit ID emits no id attribute on the root <div>. The removed
-// utils.RandomID fallback was computed but never rendered, so the emitted
-// markup must be unchanged by that cleanup: no explicit ID, no id attribute.
+// TestFilterBar_NoID_OmitsIDAttribute: a bar rendered without an explicit ID
+// emits no id attribute on the root <div>.
 func TestFilterBar_NoID_OmitsIDAttribute(t *testing.T) {
 	var buf bytes.Buffer
 	comp := filterbar.FilterBar()
@@ -65,9 +63,8 @@ func TestFilterBar_ExplicitID(t *testing.T) {
 	}
 }
 
-// richProps is a representative existing-caller configuration: every control
-// type, a reset button, no Hidden, no Value. Used to show the batch-2
-// additions leave such callers' markup untouched.
+// richProps uses every control type and a reset button, but no Hidden and no
+// Value, to show those options leave other callers' markup untouched.
 func richProps() filterbar.Props {
 	return filterbar.Props{
 		ID:        "bar",

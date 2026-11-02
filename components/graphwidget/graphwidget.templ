@@ -9,30 +9,18 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// NodeColorEntry maps one node type to a CSS color for GraphWidget's
-// NodeColorMap. Entries are JSON-encoded (encoding/json) into an object
-// emitted as a data attribute, so any Type or Color string is safe. These
-// colors are consumed by the client-side graph script, not inline styles, and
-// are NOT passed through utils.SanitizeColor.
+// NodeColorEntry maps one node type to a CSS color. Entries are
+// JSON-encoded into a data attribute for the client script, so any string
+// is safe in the markup; unlike the SVG charts, colors are not passed
+// through utils.SanitizeColor.
 type NodeColorEntry struct {
 	Type  string
 	Color string
 }
 
-// Props configures GraphWidget; pass it as the single optional argument. All
-// behavior is declared through data-tui-graph-* attributes read by
-// static/js/graphwidget.min.js — the Go side renders no graph itself. The zero
-// value renders a container that fills its parent (Width/Height <= 0 become
-// "100%"); DataURL is effectively required, since it is the endpoint the
-// client script fetches the initial graph JSON from. An empty NodeColorMap
-// emits "{}" and the client falls back to its built-in palette.
-//
-// An empty DataURL is not a documented no-op, it is a stuck spinner: the
-// client script's fetch branch is gated on a truthy dataURL
-// (static/js/graphwidget.min.js:150), so an empty attribute skips the fetch
-// entirely with no error and the loading placeholder is left showing
-// indefinitely. The only supported way to populate a graph without a
-// DataURL is the imperative window.tui.graph.setData(id, data) API.
+// Props configures GraphWidget. DataURL is effectively required: with it
+// empty the client never fetches and the loading spinner stays up, unless
+// the page fills the graph itself with window.tui.graph.setData(id, data).
 type Props struct {
 	ID              string
 	Class           string
@@ -50,10 +38,8 @@ type Props struct {
 	NodeClickURL    string // URL pattern with "{id}" placeholder
 }
 
-// colorMapJSON encodes entries as one JSON object, keys in entry order (so
-// the markup is deterministic and, as with JSON.parse, a repeated Type's
-// last Color wins). Each key and value goes through encoding/json, which
-// cannot fail for a string.
+// colorMapJSON encodes entries as one JSON object, keys in entry order so
+// the markup is deterministic. Marshalling a string cannot fail.
 func colorMapJSON(entries []NodeColorEntry) string {
 	var b strings.Builder
 	b.WriteByte('{')
@@ -78,46 +64,15 @@ func dimensionStr(v int) string {
 	return fmt.Sprintf("%dpx", v)
 }
 
-// GraphWidget renders the server-side mount point for an interactive 3D
-// force-directed graph: a container <div> carrying data-tui-graph-*
-// configuration attributes plus a loading placeholder, which the client
-// script (3d-force-graph + graphwidget.min.js) replaces with a live canvas
-// after fetching graph JSON from DataURL. The placeholder is
-// spinner.Spinner at SizeLg (32px) centered over the container with a
-// "Loading graph..." caption under it; the spinner's sr-only label
-// ("Loading graph") is the announcement, so the caption is aria-hidden.
+// GraphWidget renders the mount point for an interactive 3D force-directed
+// graph: a container with data-tui-graph-* attributes and a loading
+// spinner, which graphwidget.min.js (see Script) replaces with a canvas
+// after fetching graph JSON from DataURL. Without Script on the page it
+// stays on the spinner. An empty ID gets a random one per render.
 //
-// Accepts zero or one Props: called with no arguments it uses the zero value,
-// and any Props beyond the first are ignored. When Props.ID is empty a fresh
-// random id is generated on every render, so output is not byte-stable across
-// renders. This component emits only static HTML — nothing becomes
-// interactive until Script() is also included on the page.
-//
-// Returns a templ.Component that renders the container div with its loading
-// placeholder.
-//
-// @side-effects calls utils.RandomID() when Props.ID is empty (non-idempotent
-// output)
-// @temporal-coupling Script() must be emitted on the same page (typically in
-// the layout) or the widget stays on its loading spinner forever
-// @boundary HTTP — the client script fetches DataURL, and optionally
-// ExpandURL / NodeClickURL, at runtime; none are validated server-side
-// @ai-context unlike the SVG chart components, colors here bypass
-// utils.SanitizeColor — NodeColorMap travels through a JSON data attribute to
-// the client script.
-//
-// Client-side failure behavior (verified against static/js/graphwidget.min.js,
-// which is unminified/readable despite the extension):
-//   - DataURL fetch fails, or its body isn't valid JSON: both cases hit the
-//     same catch handler, which replaces the loading placeholder with a
-//     "Failed to load graph" message. This degrades visibly; it does not
-//     spin forever.
-//   - HTTP error statuses are not checked: a 4xx/5xx response with valid JSON
-//     is treated as successful graph data and hides the loading placeholder.
-//   - ExpandURL fetch (neighbor expansion on node click) fails: only
-//     console.error is called — no UI feedback, the click silently does
-//     nothing further. Unlike the initial load, this failure is invisible
-//     to the end user.
+// Client-side failures: a failed DataURL fetch or invalid JSON replaces the
+// spinner with "Failed to load graph", but HTTP error statuses are not
+// checked. A failed ExpandURL fetch is only logged to the console.
 templ GraphWidget(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -167,17 +122,8 @@ templ GraphWidget(props ...Props) {
 	</div>
 }
 
-// Script emits the two <script> tags (3d-force-graph.min.js and
-// graphwidget.min.js) that initialize every GraphWidget on the page. Include
-// it once per page that uses GraphWidget, typically in the layout. Both tags
-// are deferred, carry the templ CSP nonce from ctx, and use utils.ScriptURL
-// for cache-busting (?v= fixed at process start).
-//
-// Returns a templ.Component that renders the script tags.
-//
-// @side-effects emits <script> tags; reads the CSP nonce from ctx via
-// templ.GetNonce
-// @temporal-coupling pairs with GraphWidget — widgets render inert without it
+// Script loads 3d-force-graph.min.js and graphwidget.min.js, which
+// initialize every GraphWidget on the page. Include it once per page.
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/3d-force-graph.min.js") }></script>
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/graphwidget.min.js") }></script>

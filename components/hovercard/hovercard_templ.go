@@ -21,13 +21,8 @@ type MetaRow struct {
 	Value string
 }
 
-// Props configures a hover card shown on trigger hover.
-//
-// Invariant: ID must be non-empty and unique on the page — it is passed
-// straight through as both popover.TriggerProps.For and
-// popover.ContentProps.ID, and that match is the only thing binding the
-// trigger to the card. Empty Title, Description, and LinkText fall back to
-// placeholder text at render time; the other fields are optional.
+// Props configures Hover. ID is required and must be unique on the page:
+// it is the only thing binding the trigger to the card.
 type Props struct {
 	ID          string            // unique ID for popover binding
 	Title       string            // main heading
@@ -40,43 +35,17 @@ type Props struct {
 	Placement   popover.Placement // card placement; zero value means popover.PlacementBottomStart
 }
 
-// Hover renders a rich preview card (kicker, title, description, key-value
-// meta rows, optional link and game-icon art panel) that appears when the
-// user hovers its children — use it to preview an entity without navigating.
-// It is a pre-wired composition over the popover package rather than a new
-// overlay primitive.
+// Hover renders a preview card (kicker, title, description, meta rows,
+// optional link and icon panel) shown while the user hovers its children.
+// It is a popover.Trigger plus popover.Content, so it needs popover.Script
+// on the page; the card is exclusive, closing other open popovers. Empty
+// Title, Description and LinkText render placeholder text. Link is
+// URL-sanitized.
 //
-// Takes exactly one required Props (not variadic — Props.ID must be set, see
-// Props). Returns a templ.Component emitting two sibling elements: a
-// popover.Trigger (hover type) whose slot is this component's children (the
-// hover target), and a popover.Content (placement Props.Placement, default bottom-start, arrow,
-// exclusive, 120ms hover in/out delays) holding the generated card markup. Empty
-// Title/Description/LinkText render fallbacks ("Untitled", "No
-// description.", "View details →"); empty Category/Link/IconName omit their
-// sections. Props.Link is emitted as a plain string so templ's URL sanitizer applies (unsafe schemes become about:invalid).
-//
-// Default placement is below the trigger: the trigger is full width, so a
-// sideways placement has no room on either side and the positioning library's
-// flip cannot rescue it, while bottom/top always has a side with room.
-//
-// Phone width (390px): the card never extends past the viewport. When
-// neither side has room for the whole card, flip picks the side with more
-// room, popover.min.js's size step writes that side's available height to
-// --wf-pop-max on the popover element, and the card shell is capped to it
-// with overflow-y auto so the rest scrolls inside the card. Before the
-// script positions the card the cap falls back to 70vh. The shell's 180px
-// min-height yields to the same cap (input.css .wf-hover-shell:
-// min(180px, var(--wf-pop-max) - 2px)), so a landscape phone with less than
-// 180px on the larger side still gets a card that fits and scrolls.
-//
-// Side effects: none server-side — no RandomID, no context writes;
-// deterministic markup from Props and children.
-//
-// @temporal-coupling Interactivity is entirely delegated to the popover
-// machinery: popover.Script() must be included on the page (hovercard has no
-// Script of its own), and Props.ID links the emitted trigger/content pair.
-// Because Content is Exclusive, an open hover card closes when another
-// popover opens.
+// The default placement is below the trigger: the trigger is full width,
+// so a sideways placement has no room to flip into. The card's height is
+// capped to the space popover.min.js reports and scrolls inside, so it
+// never extends past a phone viewport.
 func Hover(props Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -136,7 +105,7 @@ func Hover(props Props) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "      ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "   ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -170,7 +139,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 104, Col: 50}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 70, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -188,7 +157,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Title, "Untitled"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 106, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 72, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -201,7 +170,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Description, "No description."))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 107, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 73, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -224,7 +193,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(row.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 112, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 78, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -237,7 +206,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(row.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 113, Col: 27}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 79, Col: 27}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -261,7 +230,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var11 templ.SafeURL
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(props.Link)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 119, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 85, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -274,7 +243,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.LinkText, "View details →"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 120, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 86, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {

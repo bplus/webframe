@@ -25,22 +25,12 @@ import (
 	"github.com/bplus/webframe/components/textarea"
 )
 
-// Scripts renders the standard script bundle: confirm.js (the htmx:confirm
-// interceptor; htmx itself loads in <head>, so this is the first tag of the
-// bundle and runs before any component script), then htmx-errors.js (the
-// htmx:beforeSwap guard that refuses to swap a non-HTML error body or an
-// error body aimed at a data-wf-swallow-errors element), then splitpane.js
-// (split pane list links: the detail swap from md up), then the Script()
-// tag of tabs, popover, dropdown, dialog, selectbox, autocomplete, input,
-// checkbox, textarea, avatar, label, slideover and filterbar, followed by
-// theme-toggle.js. Document renders it at the end of <body>. It
-// deliberately omits trafficstream and graphwidget; pages using those add
-// their own Script(). The first-party scripts each guard against a second
-// run (window.wf.confirm, window.wf.errors, window.wf.splitpane,
-// window.wf.theme, window.wf.autocomplete), since
-// htmx re-executes <script src> tags found in swapped content.
-//
-// @boundary
+// Scripts renders the standard script bundle that Document puts at the
+// end of <body>: confirm.js first (so it runs before any component
+// script), htmx-errors.js (refuses to swap non-HTML error bodies),
+// splitpane.js, then each common component's Script and theme-toggle.js.
+// trafficstream and graphwidget are not included; pages using them add
+// their own Script.
 func Scripts() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -69,7 +59,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 37, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 27, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -82,7 +72,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/confirm.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 37, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 27, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -95,7 +85,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 38, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 28, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -108,7 +98,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/htmx-errors.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 38, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 28, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -121,7 +111,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 39, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 29, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -134,7 +124,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/splitpane.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 39, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 29, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -203,7 +193,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 53, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 43, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -216,7 +206,7 @@ func Scripts() templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/theme-toggle.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 53, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/scripts.templ`, Line: 43, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {

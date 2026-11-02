@@ -3,13 +3,10 @@ package formfield
 import "net/http"
 
 // RespondFeedback writes the Feedback slot for f with errMsg: the whole
-// body of a single-field validation handler (the hx-post target that
-// Field.Validate wires). An empty errMsg renders the empty slot, so a
-// valid field shows nothing and reserves no space; a message renders
-// with role="alert" so it is announced when swapped in. The response is
-// text/html with status 200 either way — htmx swaps the Feedback
-// wrapper in place (hx-swap="outerHTML"), and a non-2xx status would
-// make it skip the swap and leave a stale message.
+// body of the handler behind Field.Validate. An empty errMsg renders the
+// empty slot; a message renders with role="alert". The status is always
+// 200, since htmx skips the swap on a non-2xx status and would leave a
+// stale message.
 //
 // Typical handler:
 //

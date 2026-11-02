@@ -7,37 +7,14 @@ import (
 	"github.com/bplus/webframe/components/input"
 )
 
-// Palette renders one closed dialog.Dialog (id Props.ID, default
-// DefaultID) holding a search input (role="combobox") over a
-// <ul role="listbox"> of the server-rendered Items grouped by Group. Each
-// item is an <a role="option" href> with its icon, label and right-aligned
-// Shortcut hint; the label and Keywords sit on the row as data-label /
-// data-keywords, which is what the filter reads. Alpine (one x-data on the
-// dialog root, see paletteData) filters case-insensitively on label plus
-// keywords, hides groups left empty, shows Empty when nothing matches,
-// tracks the active row (ArrowUp/ArrowDown wrap, Home/End), follows the
-// active item's href on Enter (the anchor's own click) and closes on Escape
-// through window.tui.dialog.close. The shortcut (Props.Shortcut, "mod+k":
-// Cmd+K on a Mac, Ctrl+K elsewhere) is one document keydown listener the
-// first palette's x-init registers, guarded on window.wf.palette; it opens
-// through window.tui.dialog.open(id) and focuses the input, and toggles
-// the palette closed when it is already open.
+// Palette renders a closed dialog holding a search input over the Items,
+// grouped by Group. Typing filters the list, arrow keys and Home/End move the
+// active row, Enter follows its link and Escape closes. Closed, it takes no
+// space on the page. Every close path clears the query and returns focus to
+// the element that had it when the palette opened.
 //
-// Closed, the dialog is a bare div whose backdrop and panel are
-// display:none (dialog's data-tui-dialog-hidden), so it has no height and
-// nothing on the page moves when it mounts. Every close path (Escape, the
-// backdrop, close()) clears the query and returns focus to the element
-// that had it when the palette opened.
-//
-// Phone (below sm): the panel is a top sheet spanning the width (fixed
-// inset-x-0 top-0, rounded at the bottom, max-h-[60dvh], padded for the
-// status bar safe area); the list scrolls inside it and the input is
-// focused as the palette opens (synchronously in the trigger's click
-// handler, so the keyboard opens under the sheet). Desktop: dialog's
-// centered panel at max-w-lg; the list is at most 60vh tall and scrolls.
-//
-// @temporal-coupling dialog.Script() (dialog.min.js) and Alpine must be on
-// the page or the palette never opens; appshell.Document provides both.
+// Alpine and dialog.Script (dialog.min.js) must be on the page or the
+// palette never opens; appshell.Document provides both.
 templ Palette(p Props) {
 	{{ p = p.withDefaults() }}
 	{{ groups := groupItems(p.Items) }}
@@ -129,15 +106,9 @@ templ Palette(p Props) {
 	}
 }
 
-// Trigger renders the button that opens the palette described by p: a
-// small ghost button.Button with icon.Search, the word "Search" and a
-// <kbd> hint (Hint(p.Shortcut), "⌘K" by default), both shown from md up;
-// below md it is the icon alone (aria-label "Search"). Its click calls
-// window.wf.palette.open with the palette's id read from the button's own
-// data-wf-palette-trigger attribute, which opens the dialog and focuses
-// the input in the same gesture, so a phone keyboard opens too. appshell
-// renders it in the topbar's right controls and the sidebar footer when
-// App.Palette is set.
+// Trigger renders a small ghost button that opens the palette. From md up it
+// shows "Search" and the shortcut hint; below md, just the icon. Opening and
+// focusing the input happen in the same click, so a phone keyboard opens too.
 templ Trigger(p Props) {
 	{{ p = p.withDefaults() }}
 	@button.Button(button.Props{

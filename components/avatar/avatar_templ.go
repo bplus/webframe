@@ -14,10 +14,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// Props configures the Avatar container. All fields are optional; the
-// zero value yields a 40x40px circular container with default styling.
-// Class is merged into the base classes via utils.TwMerge, so Tailwind
-// conflicts resolve in favor of caller-supplied classes.
+// Props configures Avatar. The zero value is a 40px circle.
 type Props struct {
 	ID         string
 	Class      string
@@ -46,10 +43,8 @@ func sizeClass(s Size) string {
 	}
 }
 
-// ImageProps configures the Image sub-component. Src is the image URL,
-// URL-sanitized so an unsafe scheme such as javascript: renders as about:invalid
-// (the src attribute is omitted entirely when empty); Alt is always
-// emitted, even when empty, for accessibility.
+// ImageProps configures Image. Src is URL-sanitized (an unsafe scheme such
+// as javascript: renders as about:invalid). Alt is always emitted.
 type ImageProps struct {
 	ID         string
 	Class      string
@@ -58,29 +53,17 @@ type ImageProps struct {
 	Src        string
 }
 
-// FallbackProps configures the Fallback sub-component. All fields are
-// optional; content shown in the fallback (e.g. initials) is passed as
-// children of Fallback, not via these props.
+// FallbackProps configures Fallback.
 type FallbackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// Avatar renders the circular container for a user/entity image with
-// graceful fallback support; use it when you want an image that degrades
-// to initials or an icon when the image is missing or fails to load.
-// Call with no arguments for defaults; only the first Props is used and
-// any extras are silently ignored. Returns a templ.Component rendering a
-// <div data-tui-avatar> (h-10 w-10, rounded-full, overflow-hidden) whose
-// children slot should contain Image and/or Fallback.
-//
-// @pure
-// @ai-context Composition contract: Avatar > [Image, Fallback]. The
-// template itself contains no fallback logic — the show/hide switching
-// between Image and Fallback is done client-side by avatar.min.js
-// (loaded via Script), which matches the data-tui-avatar-* attributes.
-// Without Script on the page, both children render and remain visible.
+// Avatar renders a circular container for an image that falls back to
+// initials or an icon. Children are an Image and/or a Fallback. The swap
+// between them happens client-side in avatar.min.js (see Script); without
+// it, both children stay visible.
 func Avatar(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -128,7 +111,7 @@ func Avatar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 82, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 65, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -176,18 +159,8 @@ func Avatar(props ...Props) templ.Component {
 	})
 }
 
-// Image renders the picture inside an Avatar; place it as a child of
-// Avatar alongside an optional Fallback. Zero-value ImageProps renders
-// an <img> with no src and an empty alt; only the first ImageProps is
-// used, extras are ignored. Returns a templ.Component rendering a
-// self-closing <img data-tui-avatar-image> filling the avatar
-// (aspect-square, full width/height); it takes no children.
-//
-// @pure
-// @ai-context avatar.min.js hides this element and reveals the sibling
-// Fallback when the image errors (and does the reverse on load), keyed
-// off the data-tui-avatar-image attribute — so the attribute, not the
-// class list, is the contract.
+// Image renders the picture inside an Avatar. avatar.min.js finds it by
+// the data-tui-avatar-image attribute and hides it if loading fails.
 func Image(props ...ImageProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -234,7 +207,7 @@ func Image(props ...ImageProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 117, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 90, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -253,7 +226,7 @@ func Image(props ...ImageProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templ.URL(p.Src))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 120, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 93, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -271,7 +244,7 @@ func Image(props ...ImageProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Alt)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 122, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 95, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -306,18 +279,9 @@ func Image(props ...ImageProps) templ.Component {
 	})
 }
 
-// Fallback renders the stand-in shown when the Avatar's Image is absent
-// or fails to load — typically initials or an icon passed as children.
-// Zero-value FallbackProps gives the default muted circle; only the
-// first FallbackProps is used, extras are ignored. Returns a
-// templ.Component rendering a centered <span data-tui-avatar-fallback>
-// with a children slot.
-//
-// @pure
-// @ai-context Server-side this always renders visible; avatar.min.js
-// (via Script) sets display:none once a sibling Image loads
-// successfully, so a brief flash of the fallback before image load is
-// expected behavior.
+// Fallback renders the stand-in (typically initials or an icon, passed as
+// children) shown when the Image is absent or fails to load. It renders
+// visible and is hidden once the Image loads, so it can flash briefly.
 func Fallback(props ...FallbackProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -364,7 +328,7 @@ func Fallback(props ...FallbackProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 153, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 117, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -412,18 +376,8 @@ func Fallback(props ...FallbackProps) templ.Component {
 	})
 }
 
-// Script emits the <script> tag that loads avatar.min.js, which drives
-// the Image/Fallback swap (hide fallback on image load, hide image and
-// show fallback on error). Include it once per page that uses Avatar
-// with a Fallback. Returns a templ.Component rendering a deferred
-// script tag whose URL is cache-busted via utils.ScriptURL and whose
-// nonce is read from the request context via templ.GetNonce.
-//
-// @side-effects emits a script tag that attaches global capture-phase
-// load/error listeners on document when executed in the browser
-// @idempotent including it more than once re-emits the tag but the JS
-// wiring is safe to run repeatedly
-// @boundary bridges server-rendered markup to client-side JS behavior
+// Script loads avatar.min.js, which swaps Image and Fallback on load and
+// error. Include it once per page that uses Avatar with a Fallback.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -452,7 +406,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 180, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 134, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -465,7 +419,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/avatar.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 180, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/avatar/avatar.templ`, Line: 134, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {

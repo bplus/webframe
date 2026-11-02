@@ -9,14 +9,10 @@ import (
 // from values, keyed by FilterConfig.ID: a TypeSelect or TypeToggle option
 // is Selected when values[f.ID] contains its Value, and a TypeSearch filter
 // gets Value set to the first non-empty values[f.ID] entry. values is the
-// whole truth: options not named in it come back deselected even if the
-// input marked them. Toggle values may arrive either as repeated entries or
-// comma-joined in one entry (the form filterbar.min.js submits); both are
-// understood.
-//
-// values is typically listquery.Spec.Filters (plus "q" for the search) or a
-// url.Values, which is assignable to map[string][]string. The input slice
-// and its Options are never modified; the result shares nothing with them.
+// whole truth: options not named in it come back deselected. Toggle values
+// may be repeated entries or comma-joined in one entry (as filterbar.min.js
+// submits them). values is typically a url.Values or listquery.Spec.Filters.
+// The input is never modified.
 func WithSelected(filters []FilterConfig, values map[string][]string) []FilterConfig {
 	if filters == nil {
 		return nil
@@ -80,11 +76,10 @@ func splitComma(vals []string) []string {
 
 // HiddenID is the id FilterBar gives the hidden input named name in the bar
 // whose Props.ID is barID: barID+"-hidden-"+name, with every character of
-// name outside [A-Za-z0-9_-] replaced by "-" ("items.sort" →
-// "bar-hidden-items-sort"). The id has to work in a CSS selector because
-// htmx resolves an hx-swap-oob target as querySelectorAll("#"+id), where a
-// "." would read as a class. HiddenOOB applies the same rule, so the two
-// always agree. "" when barID is "".
+// name outside [A-Za-z0-9_-] replaced by "-" ("items.sort" becomes
+// "bar-hidden-items-sort"), because htmx resolves an hx-swap-oob target as a
+// CSS selector, where "." would read as a class. It returns "" when barID is
+// "".
 func HiddenID(barID, name string) string {
 	if barID == "" {
 		return ""

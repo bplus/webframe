@@ -6,10 +6,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Fit controls how the picture fills its box when Width/Height (or a
-// caller class) fix the box to a shape the file does not match. The zero
-// value keeps the whole picture visible (object-contain behaviour);
-// FitCover crops to fill the box.
+// Fit controls how the picture fills a box whose shape it does not match.
+// The zero value keeps the whole picture visible; FitCover crops to fill.
 type Fit string
 
 const (
@@ -17,19 +15,11 @@ const (
 	FitCover   Fit = "cover"
 )
 
-// Props configures an Image. Only Src and Alt are normally set.
-//
-//   - Src is the image URL. It is URL-sanitized: a javascript: or other
-//     unsafe scheme renders as about:invalid. An empty Src omits the
-//     attribute entirely (src="" would make the browser fetch the page).
-//   - Alt is always emitted, even when empty: alt="" marks the picture as
-//     decorative for screen readers, a missing alt makes them read the URL.
-//   - Width/Height are the intrinsic pixel size, emitted as width/height
-//     attributes so the browser reserves the box before the file arrives
-//     and nothing on the page moves. 0 omits the attribute.
-//   - Eager turns off loading="lazy" for above-the-fold images.
-//   - Fit applies object-fit when Width/Height fix the box.
-//   - Rounded adds rounded-md.
+// Props configures Image. Src is URL-sanitized (an unsafe scheme such as
+// javascript: renders as about:invalid) and omitted when empty. Alt is
+// always emitted; empty marks the picture decorative. Width and Height are
+// the intrinsic pixel size, so the browser reserves the box before the file
+// arrives. Eager turns off loading="lazy" for above-the-fold images.
 type Props struct {
 	ID         string
 	Class      string
@@ -43,21 +33,10 @@ type Props struct {
 	Rounded    bool
 }
 
-// Image is the component every picture in an app goes through, so sizing,
-// loading and fit are webframe's decisions rather than attributes in a
-// page body (the ui lint forbids a raw <img>). Only the first Props is
-// used. Renders a self-closing <img> with loading="lazy" and
-// decoding="async" by default; width/height are emitted only when > 0.
-//
-// Phone width: the base class is max-w-full, so a picture wider than its
-// column shrinks to the column; with the zero Fit it keeps its aspect
-// ratio (h-auto). With FitCover the height attribute governs the box and
-// the picture is cropped to fill it.
-//
-// Compose: figure.Figure is the captioned wrapper, aspectratio.AspectRatio
-// the fixed-ratio frame (give the Image Class "h-full w-full" inside it).
-//
-// @pure
+// Image renders an <img> (wflint forbids a raw one in pages), lazy-loaded
+// and async-decoded by default, shrinking to its column's width. For a
+// caption wrap it in figure.Figure; for a fixed ratio put it in
+// aspectratio.AspectRatio with Class "h-full w-full".
 templ Image(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -87,7 +66,7 @@ templ Image(props ...Props) {
 }
 
 // fitClass: the zero Fit keeps the natural aspect ratio (h-auto, so the
-// width/height attributes only reserve the box); FitCover crops.
+// width/height attributes only reserve the box).
 func fitClass(f Fit) string {
 	if f == FitCover {
 		return "object-cover"

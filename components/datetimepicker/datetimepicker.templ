@@ -5,19 +5,13 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// schemeClass sets the control's color-scheme so the browser draws the
-// native picker indicator for the current theme: light by default and dark
-// under [data-theme="dark"] (the theme switches on that attribute, not on
-// prefers-color-scheme, so the input component's dark: utilities do not
-// follow it).
+// schemeClass sets color-scheme so the native picker icon follows the
+// theme. The theme switches on [data-theme=dark], not prefers-color-scheme,
+// so the input component's dark: utilities do not reach it.
 const schemeClass = "scheme-light [[data-theme=dark]_&]:scheme-dark"
 
-// DateTimePicker renders the native control for p.Kind through input.Input:
-// <input type="date|datetime-local|time"> with the value, min, max, step,
-// required and disabled attributes, full width, styled to the theme. Only
-// the first Props value is used. No script: the picker is the browser's.
-//
-// Phone width (390px): full width; a tap opens the platform picker.
+// DateTimePicker renders the native date, datetime-local or time input for
+// p.Kind. It needs no script.
 templ DateTimePicker(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

@@ -15,12 +15,8 @@ templ Page(p Props) {
 	@Body(p)
 }
 
-// Body renders exactly the <form> element (id p.ID, default "form"), so it
-// is the swap region for an HxPost submit: the error banner (only when
-// Errors is non-empty), one layout.Section (h3) per Section holding a
-// formfield.Fieldset of the resolved fields and then the section's Content
-// when set (the fieldset is skipped for a section with Content and no
-// Fields), then the submit row.
+// Body renders just the <form> element, the swap region for an HxPost
+// submit: the error banner, one section per Section, then the submit row.
 templ Body(p Props) {
 	@form.Form(p.formProps()) {
 		<div class="flex flex-col gap-8">
@@ -41,12 +37,9 @@ templ Body(p Props) {
 }
 
 // ErrorBanner renders the error summary of a form page, or nothing when
-// errors is empty: an error banner.Banner (role="alert") titled "Please
-// fix the N errors below." whose details list every error, field errors
-// first in the order of fields (as "Label: message", linking to the
-// field's control), then errors whose key names no field, by key. Body
-// renders it at the top of the form; settingspage renders the same
-// banner, so a settings page and a form page report errors identically.
+// errors is empty. It lists field errors in field order, each linking to
+// its control, then errors whose key names no field, by key. settingspage
+// renders the same banner.
 templ ErrorBanner(fields []formfield.Field, errors map[string]string) {
 	if len(errors) > 0 {
 		@banner.Banner(banner.Props{
@@ -74,7 +67,7 @@ templ errorDetails(items []errorItem) {
 }
 
 // submitRow is the right-aligned action row: Cancel (if any) then the
-// submit button. Not sticky; a sticky bar is settingspage's job.
+// submit button.
 templ submitRow(p Props) {
 	@layout.Inline(layout.InlineProps{Justify: layout.JustifyEnd, Gap: layout.GapS}) {
 		if p.Cancel != nil {

@@ -5,17 +5,9 @@
 
 // block with a title, body, optional details (e.g. a list of field errors),
 
-// actions and a dismiss button. It is the page-level error summary for form
+// actions and a dismiss button. Use it for a form page's error summary and
 
-// pages and the inline notice for anything that is not a one-shot flash
-
-// (the server flash, banner.Flash, lands in batch 3).
-
-//
-
-// Phone width (390px): the banner is a full-width block; the icon column
-
-// stays, title/body/details stack, and the actions row wraps under them.
+// for any notice that is not a one-shot flash (see package flash).
 
 package banner
 
@@ -34,19 +26,14 @@ import (
 type Variant string
 
 const (
-	// VariantInfo is the neutral informational notice (zero value).
-	VariantInfo Variant = ""
-	// VariantSuccess confirms a completed state. Use sparingly: pages do not
-	// show success messages unless the user asked for one.
+	VariantInfo    Variant = ""
 	VariantSuccess Variant = "success"
-	// VariantWarning flags something that needs attention but did not fail.
 	VariantWarning Variant = "warning"
-	// VariantError reports a failure; it renders with role="alert".
+	// VariantError renders with role="alert"; the others use role="status".
 	VariantError Variant = "error"
 )
 
-// Props configures a Banner. All fields are optional; a banner with no
-// Title, Body and Details renders nothing at all.
+// Props configures Banner.
 type Props struct {
 	ID         string
 	Class      string
@@ -57,8 +44,8 @@ type Props struct {
 	Title, Body string
 	// Details renders after the body, e.g. a <ul> of field errors.
 	Details templ.Component
-	// Dismissible adds a close button; the banner hides client-side via
-	// Alpine (x-data/x-show inside the component) and is not remembered.
+	// Dismissible adds a close button that hides the banner with Alpine.
+	// The dismissal is not remembered across page loads.
 	Dismissible bool
 	// Actions render as a button row under the text.
 	Actions []action.Action
@@ -71,8 +58,7 @@ func (p Props) hasContent() bool {
 }
 
 // Role returns the ARIA live-region role for v: alert for VariantError,
-// status otherwise. toast reuses it so a toast and a banner of the same
-// variant are announced the same way.
+// status otherwise. Package toast uses it too.
 func Role(v Variant) string {
 	if v == VariantError {
 		return "alert"
@@ -81,9 +67,8 @@ func Role(v Variant) string {
 }
 
 // Tone returns the color classes for v: a left border, a soft tint and a
-// text color from one token. Error uses the existing destructive token; the
-// others use the success/warning/info tokens. toast reuses it so every
-// notice in an app is colored from the same mapping.
+// text color from one token (destructive for VariantError). Package toast
+// uses it too.
 func Tone(v Variant) string {
 	switch v {
 	case VariantError:
@@ -97,10 +82,8 @@ func Tone(v Variant) string {
 	}
 }
 
-// role returns the ARIA live-region role: alert for errors, status otherwise.
 func (p Props) role() string { return Role(p.Variant) }
 
-// tone returns the color classes for the variant.
 func (p Props) tone() string { return Tone(p.Variant) }
 
 func (p Props) rootClass() string {
@@ -160,9 +143,8 @@ func variantIcon(v Variant) templ.Component {
 }
 
 // Banner renders an inline notice. It renders nothing when Title, Body and
-// Details are all empty (so a feedback slot stays silent on success, and
-// nothing on the page moves). Error banners carry role="alert"; every other
-// variant carries role="status". Only the first Props value is used.
+// Details are all empty, so a feedback slot can stay in the page and only
+// show up when there is something to say.
 func Banner(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -206,7 +188,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 124, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 110, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -237,7 +219,7 @@ func Banner(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.role())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 127, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 113, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -277,7 +259,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 137, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 123, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -296,7 +278,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Body)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 140, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 126, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

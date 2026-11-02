@@ -52,36 +52,26 @@ const (
 	TypePassword Type = "password"
 	TypeNumber   Type = "number"
 	// TypeDate, TypeDateTime and TypeTime render datetimepicker (the
-	// browser's native picker). Value, MinValue and MaxValue are in the
-	// control's wire format: "2006-01-02", "2006-01-02T15:04", "15:04".
+	// browser's native picker).
 	TypeDate     Type = "date"
 	TypeDateTime Type = "datetime"
 	TypeTime     Type = "time"
 	// TypeFile renders filedrop: a drop zone around a hidden file input.
-	// Accept, Multiple and Preview configure it; the form must be
-	// multipart. Value is ignored (a file input cannot be refilled).
+	// The form must be multipart.
 	TypeFile     Type = "file"
 	TypeTextarea Type = "textarea"
 	TypeSelect   Type = "select"
 	TypeCheckbox Type = "checkbox"
 	TypeRadio    Type = "radio"
 	TypeHidden   Type = "hidden"
-	// TypeToggle renders toggle.Toggle (a switch); Value != "" means
-	// checked, and the switch submits "on" when checked. The label text
-	// sits inline after the switch, inside the Toggle's own <label>.
+	// TypeToggle renders toggle.Toggle (a switch), with the label text
+	// inline after it.
 	TypeToggle Type = "toggle"
-	// TypeTags renders tagsinput: Value is the current tags joined with
-	// commas (what the widget submits), Options' labels are offered as
-	// suggestions, Placeholder goes on the text input, MaxTags caps the
-	// count (0 means no cap). Required is a label marker plus
-	// aria-required: the text input is not the submitting control, so
-	// `required` on it would block a form whose tags are complete; enforce
-	// on the server, as the cap too (the widget stops the user, not a
-	// handcrafted request).
+	// TypeTags renders tagsinput. Required only marks the label and sets
+	// aria-required (`required` on the text input would block a form whose
+	// tags are complete), so enforce it, and MaxTags, on the server.
 	TypeTags Type = "tags"
-	// TypeRating renders rating in input mode: Value is the chosen star
-	// as an integer string, Max the star count (DefaultRatingMax when
-	// zero). The field label labels the fieldset (aria-labelledby).
+	// TypeRating renders rating in input mode.
 	TypeRating Type = "rating"
 )
 
@@ -111,17 +101,13 @@ type Field struct {
 	Options     []Option // Select and Radio
 	Help        string   // muted line under the control
 	Placeholder string
-	// Value is the control's value as a string. Checkbox/Toggle: checked
-	// when Value != ""; Radio/Select: the selected option value; Tags: the
-	// tags joined with commas; Rating: the chosen star ("3"); Date,
-	// DateTime, Time: the native wire format; File: ignored.
+	// Value is the control's value as a string; see the package doc for
+	// what it means per Type.
 	Value string
 	// Max is the star count of a TypeRating field; DefaultRatingMax (5)
 	// when zero or negative. Other types ignore it.
 	Max int
-	// MaxTags caps a TypeTags field (tagsinput.Props.MaxTags): at the cap
-	// the text input is read-only and the widget shows "n/max". 0 means no
-	// cap. Other types ignore it.
+	// MaxTags caps a TypeTags field; 0 means no cap. Other types ignore it.
 	MaxTags int
 	// MinValue and MaxValue bound a TypeDate, TypeDateTime or TypeTime
 	// field (the min/max attributes) in the control's wire format. Other
@@ -133,29 +119,21 @@ type Field struct {
 	Multiple bool
 	// Preview shows image thumbnails in a TypeFile field's file list.
 	Preview bool
-	// Required marks the label with * and puts `required` on the control,
-	// which the browser enforces when the field sits inside form.Form (or
-	// any <form>). For TypeSelect the control that submits is a hidden
-	// input the browser never validates, so there Validate or a
-	// server-side Error is the enforcement; aria-required on the select's
-	// button still announces the requirement.
+	// Required marks the label with * and puts `required` on the control.
+	// For TypeSelect the submitting control is a hidden input the browser
+	// never validates, so enforce it with Validate or a server-side Error.
 	Required bool
 	Disabled bool
 	Error    string // red line under help; also sets HasError on the control
 	Success  string // muted line, rendered only when non-empty
 	Width    Width  // inside Fieldset: WidthFull spans both columns on desktop
-	// Validate is a URL. When set, the control gets hx-post={Validate},
-	// hx-trigger="blur changed" (TypeSelect, TypeCheckbox, TypeRadio,
-	// TypeToggle: "change"), hx-target="#"+FeedbackID() and
-	// hx-swap="outerHTML" and hx-params={Name}, so even inside a form.Form
-	// (where htmx would otherwise post every field) only this control's
-	// name=value is sent; the handler reads r.FormValue(f.Name) and answers
-	// with RespondFeedback. Caller Attributes still win on conflict.
+	// Validate is a URL. When set, the control posts just its own
+	// name=value there on blur (on change for selects, checkboxes, radios
+	// and other non-text controls) and the response replaces the Feedback
+	// slot; the handler answers with RespondFeedback.
 	Validate string
 	// Attributes are spread on the control (for TypeSelect: on the hidden
-	// input that carries the value; aria-* for the select go on the button
-	// automatically). They are merged after Validate's hx-* defaults, so a
-	// caller's hx-trigger overrides the default.
+	// input that carries the value). They override Validate's hx-* defaults.
 	Attributes templ.Attributes
 }
 
@@ -167,13 +145,9 @@ func (f Field) ControlID() string {
 	return "field-" + f.Name
 }
 
-// FeedbackID is the id of the field's Feedback wrapper, the target to
-// swap when re-validating a single field. The swap MUST be
-// hx-swap="outerHTML" targeting "#"+FeedbackID(): innerHTML nests the
-// wrapper, duplicates the id and defeats `empty:hidden`. Setting
-// Validate emits exactly that wiring; hand-written Attributes must
-// match it. For TypeSelect the Attributes land on a hidden input that
-// never blurs, so use hx-trigger="change" there.
+// FeedbackID is the id of the field's Feedback wrapper. Hand-written
+// validation wiring must swap it with hx-swap="outerHTML": innerHTML nests
+// the wrapper and duplicates the id.
 func (f Field) FeedbackID() string {
 	return f.ControlID() + "-feedback"
 }
@@ -276,10 +250,8 @@ func (f Field) describedBy() string {
 	return f.FeedbackID()
 }
 
-// validateTrigger is the hx-trigger Validate uses for a Type: "change"
-// for the controls that never blur meaningfully (the select's hidden
-// input, checkboxes, radios, the switch, the rating's radios, the file
-// input, the tags text input which commits a tag on blur anyway), "blur
+// validateTrigger is the hx-trigger Validate uses: "change" for controls
+// that never blur meaningfully (or, for tags, commit on blur anyway), "blur
 // changed" otherwise.
 func validateTrigger(t Type) string {
 	switch t {
@@ -357,13 +329,10 @@ func (f Field) toggleAttrs() templ.Attributes {
 }
 
 // widgetAttrs returns the attributes for a control a widget package
-// renders (tagsinput, rating, datetimepicker, filedrop): controlAttrs
-// without the `required` attribute, which those widgets emit themselves
-// from their Required prop (or, for tags, must not carry at all), plus
-// aria-invalid="true" when invalid is set and Error is non-empty, and
-// aria-required="true" when announceRequired and Required. invalid is
-// false for a widget whose own HasError prop already writes aria-invalid
-// (tagsinput's text input), so the attribute is never written twice.
+// renders: controlAttrs minus `required` (the widgets emit it from their
+// own Required prop, or for tags must not carry it), plus aria-invalid when
+// invalid and aria-required when announceRequired. Pass invalid=false when
+// the widget's own HasError already writes aria-invalid.
 func (f Field) widgetAttrs(invalid, announceRequired bool) templ.Attributes {
 	out := f.controlAttrs(true)
 	delete(out, "required")

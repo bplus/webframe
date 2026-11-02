@@ -15,10 +15,10 @@ import (
 	"github.com/bplus/webframe/components/slideover"
 )
 
-// The overlay ladder (batch 3, kept by batch 4's static test): a slideover
-// backdrop at 55 under its panel at 60, a dialog (backdrop and content) at
-// 65 so a confirm dialog opened from inside a sheet is on top of it, and
-// the toast container at 70 so a toast is never covered by any of them.
+// The overlay ladder: a slideover backdrop at 55 under its panel at 60, a
+// dialog (backdrop and content) at 65 so a confirm dialog opened from inside
+// a sheet is on top of it, and the toast container at 70 so a toast is never
+// covered by any of them.
 // The slideover and dialog values are Tailwind z-[N] classes in the
 // rendered markup; the toast value is a z-index rule on
 // .wf-toast-container in static/css/input.css.

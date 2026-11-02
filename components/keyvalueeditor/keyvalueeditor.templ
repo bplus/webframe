@@ -7,12 +7,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// KeyValueEditor renders the editor: a root <div> (id p.ID, Alpine state
-// seeded from the rows it contains, see alpineData), the rows (one
-// [data-row] grid per Row with a key input named {Name}.key, a value input
-// named {Name}.value and a remove button), the x-for template that takes
-// over the rows under Alpine, and the Add row ghost button. Only the first
-// Props value is used.
+// KeyValueEditor renders the rows, the Alpine x-for template that takes
+// them over in the browser, and the Add row button.
 templ KeyValueEditor(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

@@ -155,8 +155,8 @@ func TestFooterActions(t *testing.T) {
 	noFooter := render(t, Props{Items: one()})
 	wantNone(t, noFooter, "z-10", "pt-0")
 
-	footer := render(t, Props{Items: []Card{{Title: "A", Footer: templ.Raw(`<span data-f="1">by Ada</span>`)}}})
-	wantAll(t, footer, `data-f="1"`, "by Ada", "z-10")
+	footer := render(t, Props{Items: []Card{{Title: "A", Footer: templ.Raw(`<span data-f="1">by Acme</span>`)}}})
+	wantAll(t, footer, `data-f="1"`, "by Acme", "z-10")
 }
 
 func TestDense(t *testing.T) {

@@ -51,12 +51,8 @@ func Page(p Props) templ.Component {
 	})
 }
 
-// Body renders exactly the <form> element (id p.ID, default "form"), so it
-// is the swap region for an HxPost submit: the error banner (only when
-// Errors is non-empty), one layout.Section (h3) per Section holding a
-// formfield.Fieldset of the resolved fields and then the section's Content
-// when set (the fieldset is skipped for a section with Content and no
-// Fields), then the submit row.
+// Body renders just the <form> element, the swap region for an HxPost
+// submit: the error banner, one section per Section, then the submit row.
 func Body(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -153,12 +149,9 @@ func Body(p Props) templ.Component {
 }
 
 // ErrorBanner renders the error summary of a form page, or nothing when
-// errors is empty: an error banner.Banner (role="alert") titled "Please
-// fix the N errors below." whose details list every error, field errors
-// first in the order of fields (as "Label: message", linking to the
-// field's control), then errors whose key names no field, by key. Body
-// renders it at the top of the form; settingspage renders the same
-// banner, so a settings page and a form page report errors identically.
+// errors is empty. It lists field errors in field order, each linking to
+// its control, then errors whose key names no field, by key. settingspage
+// renders the same banner.
 func ErrorBanner(fields []formfield.Field, errors map[string]string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -234,7 +227,7 @@ func errorDetails(items []errorItem) templ.Component {
 				var templ_7745c5c3_Var7 templ.SafeURL
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 67, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 60, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -247,7 +240,7 @@ func errorDetails(items []errorItem) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 67, Col: 94}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 60, Col: 94}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -260,7 +253,7 @@ func errorDetails(items []errorItem) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(it.Message)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 67, Col: 110}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 60, Col: 110}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -274,7 +267,7 @@ func errorDetails(items []errorItem) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(it.Message)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 69, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/formpage/formpage.templ`, Line: 62, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -295,7 +288,7 @@ func errorDetails(items []errorItem) templ.Component {
 }
 
 // submitRow is the right-aligned action row: Cancel (if any) then the
-// submit button. Not sticky; a sticky bar is settingspage's job.
+// submit button.
 func submitRow(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

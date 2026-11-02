@@ -4,10 +4,6 @@
 // Create and edit are the same page: the caller declares the fields once
 // and hands over the current Values (and, after a failed POST, the
 // Errors) by field name.
-//
-// Phone width (390px): the header, banner, sections and submit row stack
-// in one column; each Fieldset's grid is one column below md, so every
-// field takes the full width; the submit row wraps if the labels are long.
 package formpage
 
 import (
@@ -29,12 +25,10 @@ import (
 type Section struct {
 	Title, Description string
 	Fields             []formfield.Field
-	// Content, when non-nil, renders inside the section after the fieldset
-	// and inside the <form>, so a widget that is not a formfield.Field (a
-	// keyvalueeditor, a prose note, a codeblock) is posted by the form's
-	// submit button with the fields and is re-rendered by an error swap of
-	// the form; the handler reads it from r.Form like any field. A section
-	// with Content and no Fields renders no fieldset, only the Content.
+	// Content, when non-nil, renders after the fieldset, inside the <form>,
+	// so a widget that is not a formfield.Field (a keyvalueeditor, a note)
+	// is submitted with the fields. A section with Content and no Fields
+	// renders only the Content.
 	Content templ.Component
 }
 
@@ -48,39 +42,33 @@ type Props struct {
 	Action string
 	// Method is "post" when empty.
 	Method string
-	// HxPost submits over htmx: the form gets hx-post=Action,
-	// hx-target="#"+ID and hx-swap="outerHTML", so an error re-render
-	// (Respond on a plain htmx request targeting the form) swaps the
-	// whole form in place. Action and Method are still emitted, so the
-	// form works without JS.
+	// HxPost submits over htmx and swaps the whole form in place on an
+	// error re-render. Action and Method are still emitted, so the form
+	// works without JS.
 	HxPost   bool
 	Sections []Section
-	// Values override Field.Value by Name. A key that is present wins
-	// even when its value is "" (that is how an unchecked checkbox or
-	// toggle, which submits nothing, comes back unchecked); an absent key
-	// leaves Field.Value alone. Keys naming no field are ignored.
+	// Values override Field.Value by Name. A present key wins even when
+	// its value is "" (that is how an unchecked checkbox comes back
+	// unchecked); an absent key leaves Field.Value alone.
 	Values map[string]string
-	// Errors set Field.Error by Name and drive the summary banner, which
-	// renders only when len(Errors) > 0. A key naming no field is still
-	// counted and listed (as a form-level error, without a link).
+	// Errors set Field.Error by Name and drive the summary banner. A key
+	// naming no field is listed as a form-level error.
 	Errors map[string]string
 	// Validate is the default blur-validation URL (formfield.Field.Validate)
 	// for every field that has none of its own; "" wires nothing.
 	Validate string
 	// Hidden renders as hidden inputs at the top of the form (form.Form).
 	Hidden map[string]string
-	// Submit is the submit button; the zero value is Label "Save" with
-	// VariantPrimary. Href and Hx* on it are ignored: it always renders
-	// as <button type="submit">.
+	// Submit is the submit button; the zero value is a primary "Save".
+	// Href and Hx* on it are ignored.
 	Submit action.Action
 	// Cancel, when set, renders before Submit (secondary unless given a
 	// Variant) and is usually a plain link back to the list.
 	Cancel *action.Action
 	// Multipart emits enctype="multipart/form-data"; required for a
-	// TypeFile field. The handler of a multipart form must call
-	// r.ParseMultipartForm before reading any value: a prior r.ParseForm
-	// parses only the URL query and leaves the body unread, so r.FormValue
-	// then returns "" for every field in the body.
+	// TypeFile field. Its handler must call r.ParseMultipartForm before
+	// reading values: after a plain r.ParseForm, r.FormValue returns "" for
+	// every field in the body.
 	Multipart bool
 }
 
@@ -92,14 +80,9 @@ func (p Props) id() string {
 	return p.ID
 }
 
-// ResolveField returns f with values, errors and the default validate URL
-// applied, the way a form page prepares a declared field for rendering: a
-// key of values that is present sets Value (even when "", which is how an
-// unchecked checkbox or toggle comes back unchecked), a key of errors
-// sets Error, and validate fills Validate only when the field has none of
-// its own. f is a copy; the caller's declaration is never mutated. Other
-// form-shaped pages (settingspage) use it so every page resolves fields
-// the same way.
+// ResolveField returns a copy of f with values, errors and the default
+// validate URL applied, as described on Props.Values, Props.Errors and
+// Props.Validate. Other form-shaped pages (settingspage) use it too.
 func ResolveField(f formfield.Field, values, errors map[string]string, validate string) formfield.Field {
 	if v, ok := values[f.Name]; ok {
 		f.Value = v
@@ -217,13 +200,9 @@ func bannerTitle(n int) string {
 	return "Please fix the " + strconv.Itoa(n) + " errors below."
 }
 
-// Submit returns a with the submit-button defaults applied: Label falls
-// back to defaultLabel, Variant to VariantPrimary, Submit is set so
-// action.Button renders <button type="submit">, and Href and the Hx*
-// fields are cleared because the submit button never navigates or issues
-// its own request (the form carries hx-post). This is the one rule for a
-// form page's submit button; settingspage uses it with its own default
-// label.
+// Submit returns a as a submit button: Label defaults to defaultLabel,
+// Variant to primary, and Href and the Hx* fields are cleared because the
+// form, not the button, issues the request. settingspage uses it too.
 func Submit(a action.Action, defaultLabel string) action.Action {
 	if a.Label == "" {
 		a.Label = defaultLabel
@@ -242,21 +221,15 @@ func (p Props) submit() action.Action {
 	return Submit(p.Submit, "Save")
 }
 
-// Respond writes the form page for r through the appshell App installed by
-// (*App).Middleware, as a page type's handler does: the whole document for
-// a normal request (plain GET/POST, boosted navigation, history restore),
-// the bare page body (header plus form) for a plain htmx request with any
-// other target, and the <form> alone (Body) for a plain htmx request whose
-// HX-Target is the form's id, which is what an HxPost submit sends, so the
-// error re-render swaps the form in place.
+// Respond writes the form page through the appshell App installed by
+// (*App).Middleware: the whole document for a normal request, the page body
+// for an htmx request, and the <form> alone (Body) for an htmx request
+// whose HX-Target is the form, which is what an HxPost submit sends.
 //
-// Respond never redirects. The POST handler decides: on validation errors
-// it sets p.Values from the submitted form and p.Errors, then calls Respond,
-// which answers 422 Unprocessable Entity (appshell.Document configures htmx
-// to swap error responses, so the form re-renders in place with a truthful
-// status); on success it redirects to the saved record (303 See Other, or
-// for an htmx submit an HX-Redirect header with an empty 200 body); a
-// flash.Success set before the redirect shows once on the next page.
+// Respond never redirects. On validation errors the POST handler sets
+// p.Values and p.Errors and calls Respond, which answers 422 (appshell
+// configures htmx to swap error responses). On success the handler
+// redirects itself, typically with a flash.Success.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

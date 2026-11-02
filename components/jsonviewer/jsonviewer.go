@@ -9,12 +9,9 @@
 // pair, so expanding and collapsing needs no JavaScript; Alpine is used only
 // by the optional copy-path buttons (through copybutton).
 //
-// Phone width (390px): the tree is the same markup at every width. The root
-// scrolls horizontally (overflow-x-auto) if a line is wider than the
-// viewport, long string values break anywhere (break-all) so a URL or a hash
-// does not force that scroll, and the per-level indent (1rem) stops growing
-// after six levels, so a node eight or more levels deep keeps the same
-// left edge as a sixth-level node and still fits.
+// On narrow screens long strings break anywhere and the indent stops
+// growing after six levels, so deep trees still fit; the frame scrolls
+// horizontally only when a single line cannot.
 package jsonviewer
 
 import (

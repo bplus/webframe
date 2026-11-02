@@ -44,7 +44,7 @@ func TestBadge_NewVariants(t *testing.T) {
 	}
 }
 
-// The four pre-existing variants must render exactly as before.
+// The default, secondary, destructive and outline variants keep their exact classes.
 func TestBadge_ExistingVariantsUnchanged(t *testing.T) {
 	cases := []struct {
 		variant Variant

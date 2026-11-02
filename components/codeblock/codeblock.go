@@ -5,12 +5,8 @@
 //
 // It has no syntax highlighter: Language is a label on the header and a
 // "language-<name>" class on the <code> element, nothing more. The text is
-// HTML-escaped; it never runs.
-//
-// Phone (390px): the block never widens the page. The <pre> is
-// overflow-x-auto and min-w-0, so a long line scrolls inside the block
-// (or wraps when Wrap is set); the header row wraps its label and copy
-// button onto two lines when they do not fit.
+// HTML-escaped. Long lines scroll inside the block (or wrap, with Wrap),
+// so it never widens the page.
 package codeblock
 
 import (
@@ -26,17 +22,13 @@ import (
 type Height string
 
 const (
-	// HeightNone leaves the block uncapped (zero value).
 	HeightNone Height = ""
-	// HeightSm caps the <pre> at 240px.
-	HeightSm Height = "sm"
-	// HeightMd caps the <pre> at 400px.
-	HeightMd Height = "md"
-	// HeightLg caps the <pre> at 600px.
-	HeightLg Height = "lg"
+	HeightSm   Height = "sm" // 240px
+	HeightMd   Height = "md" // 400px
+	HeightLg   Height = "lg" // 600px
 )
 
-// Props configures one CodeBlock.
+// Props configures CodeBlock.
 type Props struct {
 	ID         string
 	Class      string
@@ -54,8 +46,7 @@ type Props struct {
 	LineNumbers bool
 	// Copy adds a copybutton in the header that copies Code.
 	Copy bool
-	// Wrap soft-wraps long lines (whitespace-pre-wrap, break-words) instead
-	// of scrolling them horizontally inside the <pre>.
+	// Wrap soft-wraps long lines instead of scrolling them horizontally.
 	Wrap bool
 	// MaxHeight caps the <pre>, which then scrolls vertically.
 	MaxHeight Height
@@ -63,38 +54,28 @@ type Props struct {
 	Caption string
 }
 
-// hasHeader reports whether the header row (language label, copy button)
-// renders at all.
 func (p Props) hasHeader() bool {
 	return p.Language != "" || p.Copy
 }
 
-// lines splits Code for line numbering, dropping one trailing newline.
-// Windows line ends are normalized first, so a CRLF file numbers one line
-// per line and no "\r" reaches the output.
+// lines splits text() for line numbering.
 func (p Props) lines() []string {
 	return strings.Split(p.text(), "\n")
 }
 
 // text is Code with "\r\n" normalized to "\n" and one trailing newline
-// dropped, for the un-numbered rendering, so both modes show the same
-// lines.
+// dropped.
 func (p Props) text() string {
 	return strings.TrimSuffix(strings.ReplaceAll(p.Code, "\r\n", "\n"), "\n")
 }
 
-// digitsStyle is the figure's style attribute when LineNumbers is set: the
-// --wf-code-digits custom property holding the digit count of the last
-// line number, which the .wf-code gutter rule in input.css turns into its
-// width (so a 1000-line block gets a 4-digit gutter and a 9-line block a
-// 1-digit one). It is a SafeCSS because the value is an integer this
-// package computed, never caller input.
+// digitsStyle sets --wf-code-digits to the digit count of the last line
+// number; the .wf-code rules in input.css size the gutter from it. SafeCSS is
+// sound because the value is computed here, never caller input.
 func (p Props) digitsStyle() templ.SafeCSS {
 	return templ.SafeCSS("--wf-code-digits:" + strconv.Itoa(len(strconv.Itoa(len(p.lines())))) + ";")
 }
 
-// codeClass is the "language-<name>" class on <code>, empty without a
-// Language.
 func (p Props) codeClass() string {
 	if p.Language == "" {
 		return ""

@@ -15,37 +15,14 @@ import (
 	"github.com/bplus/webframe/components/input"
 )
 
-// Palette renders one closed dialog.Dialog (id Props.ID, default
-// DefaultID) holding a search input (role="combobox") over a
-// <ul role="listbox"> of the server-rendered Items grouped by Group. Each
-// item is an <a role="option" href> with its icon, label and right-aligned
-// Shortcut hint; the label and Keywords sit on the row as data-label /
-// data-keywords, which is what the filter reads. Alpine (one x-data on the
-// dialog root, see paletteData) filters case-insensitively on label plus
-// keywords, hides groups left empty, shows Empty when nothing matches,
-// tracks the active row (ArrowUp/ArrowDown wrap, Home/End), follows the
-// active item's href on Enter (the anchor's own click) and closes on Escape
-// through window.tui.dialog.close. The shortcut (Props.Shortcut, "mod+k":
-// Cmd+K on a Mac, Ctrl+K elsewhere) is one document keydown listener the
-// first palette's x-init registers, guarded on window.wf.palette; it opens
-// through window.tui.dialog.open(id) and focuses the input, and toggles
-// the palette closed when it is already open.
+// Palette renders a closed dialog holding a search input over the Items,
+// grouped by Group. Typing filters the list, arrow keys and Home/End move the
+// active row, Enter follows its link and Escape closes. Closed, it takes no
+// space on the page. Every close path clears the query and returns focus to
+// the element that had it when the palette opened.
 //
-// Closed, the dialog is a bare div whose backdrop and panel are
-// display:none (dialog's data-tui-dialog-hidden), so it has no height and
-// nothing on the page moves when it mounts. Every close path (Escape, the
-// backdrop, close()) clears the query and returns focus to the element
-// that had it when the palette opened.
-//
-// Phone (below sm): the panel is a top sheet spanning the width (fixed
-// inset-x-0 top-0, rounded at the bottom, max-h-[60dvh], padded for the
-// status bar safe area); the list scrolls inside it and the input is
-// focused as the palette opens (synchronously in the trigger's click
-// handler, so the keyboard opens under the sheet). Desktop: dialog's
-// centered panel at max-w-lg; the list is at most 60vh tall and scrolls.
-//
-// @temporal-coupling dialog.Script() (dialog.min.js) and Alpine must be on
-// the page or the palette never opens; appshell.Document provides both.
+// Alpine and dialog.Script (dialog.min.js) must be on the page or the
+// palette never opens; appshell.Document provides both.
 func Palette(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -132,7 +109,7 @@ func Palette(p Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(listID(p.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 80, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 57, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -155,7 +132,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var5 string
 						templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(groupID(p.ID, gi))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 92, Col: 42}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 69, Col: 42}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 						if templ_7745c5c3_Err != nil {
@@ -178,7 +155,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var6 string
 						templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(groupID(p.ID, gi))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 97, Col: 34}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 74, Col: 34}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 						if templ_7745c5c3_Err != nil {
@@ -191,7 +168,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(g.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 97, Col: 151}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 74, Col: 151}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -214,7 +191,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 101, Col: 66}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 78, Col: 66}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -227,7 +204,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var9 string
 						templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(it.Keywords)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 101, Col: 96}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 78, Col: 96}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 						if templ_7745c5c3_Err != nil {
@@ -240,7 +217,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var10 string
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(optionID(p.ID, n))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 103, Col: 32}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 80, Col: 32}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -253,7 +230,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var11 templ.SafeURL
 						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 107, Col: 24}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 84, Col: 24}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {
@@ -284,7 +261,7 @@ func Palette(p Props) templ.Component {
 						var templ_7745c5c3_Var12 string
 						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 115, Col: 58}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 92, Col: 58}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 						if templ_7745c5c3_Err != nil {
@@ -302,7 +279,7 @@ func Palette(p Props) templ.Component {
 							var templ_7745c5c3_Var13 string
 							templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(it.Shortcut)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 117, Col: 132}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 94, Col: 132}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 							if templ_7745c5c3_Err != nil {
@@ -331,7 +308,7 @@ func Palette(p Props) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.Empty)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 127, Col: 127}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 104, Col: 127}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -366,15 +343,9 @@ func Palette(p Props) templ.Component {
 	})
 }
 
-// Trigger renders the button that opens the palette described by p: a
-// small ghost button.Button with icon.Search, the word "Search" and a
-// <kbd> hint (Hint(p.Shortcut), "⌘K" by default), both shown from md up;
-// below md it is the icon alone (aria-label "Search"). Its click calls
-// window.wf.palette.open with the palette's id read from the button's own
-// data-wf-palette-trigger attribute, which opens the dialog and focuses
-// the input in the same gesture, so a phone keyboard opens too. appshell
-// renders it in the topbar's right controls and the sidebar footer when
-// App.Palette is set.
+// Trigger renders a small ghost button that opens the palette. From md up it
+// shows "Search" and the shortcut hint; below md, just the icon. Opening and
+// focusing the input happen in the same click, so a phone keyboard opens too.
 func Trigger(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -420,7 +391,7 @@ func Trigger(p Props) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(Hint(p.Shortcut))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 159, Col: 133}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 130, Col: 133}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {

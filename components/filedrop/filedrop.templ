@@ -5,10 +5,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// zoneClass is the dashed drop target. It highlights while a drag is over
-// it (data-over, set by Alpine), shows a focus ring when the hidden input
-// has keyboard focus (has-focus-visible) and the destructive border when
-// the input carries aria-invalid="true" (field wiring).
+// zoneClass styles the drop target: highlighted during a drag, ringed when
+// the hidden input has keyboard focus, and red when the input carries
+// aria-invalid.
 func (p Props) zoneClass() string {
 	return utils.TwMerge(
 		"relative flex w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-input bg-transparent px-4 py-6 text-center transition-colors",
@@ -19,17 +18,10 @@ func (p Props) zoneClass() string {
 	)
 }
 
-// FileDrop renders the drop zone, the hidden file input, the refusal
-// message slot and the file list, all under one Alpine root. The <label>
-// is the zone and wraps the <input class="sr-only" type="file">, so
-// clicking, tapping or dropping anywhere on it reaches the input; the list
-// and the message are hidden until there is something to show (x-cloak
-// until Alpine starts, x-show after), so the page does not move until the
-// user acts. Only the first Props value is used. Requires Alpine (loaded
-// by appshell).
-//
-// Phone width (390px): full-width zone, tap opens the native picker; the
-// list stacks one file per row.
+// FileDrop renders the drop zone, the refusal message and the file list
+// under one Alpine root (Alpine is loaded by appshell). The list and the
+// message stay hidden until there is something to show, so the page does
+// not shift before the user acts.
 templ FileDrop(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

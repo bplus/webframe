@@ -2,10 +2,8 @@ package action
 
 import "github.com/bplus/webframe/components/button"
 
-// Button renders one Action as an <a> (plain link) or a <button>
-// (anything with Hx* attributes, Submit, or no Href), with optional
-// Icon before the Label. Submit gives the button type="submit"; Form
-// and FullWidth pass through to button.Props.
+// Button renders an Action as an <a> when it is a plain link (see
+// IsLink), otherwise as a <button>, with Icon before the Label.
 templ Button(a Action) {
 	@button.Button(a.buttonProps()) {
 		if a.Icon != nil {
@@ -15,7 +13,7 @@ templ Button(a Action) {
 	}
 }
 
-// Group renders actions as an inline row with a gap-2 gap, in order.
+// Group renders actions as a wrapping inline row.
 templ Group(actions []Action) {
 	<div class="flex flex-wrap items-center gap-2">
 		for _, a := range actions {
