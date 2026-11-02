@@ -29,7 +29,6 @@ import (
 	"github.com/bplus/webframe/components/filedrop"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
-	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/image"
@@ -98,7 +97,6 @@ templ Showcase() {
 				<a href="#cards">Cards</a>
 				<a href="#separator">Separator</a>
 				<a href="#aspectratio">Aspect Ratio</a>
-				<a href="#gameicon">Game Icon</a>
 				<a href="#avatar">Avatar</a>
 			}
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
@@ -155,7 +153,6 @@ templ Showcase() {
 				<a href="#splitpane">Split pane</a>
 				<a href="#dashboardpage">Dashboard page</a>
 				<a href="#settingspage">Settings page</a>
-				<a href="#streampage">Stream page</a>
 				<a href="#errorpage">Error pages</a>
 				<a href="#methodnotallowed">405 page</a>
 				<a href="#authpage">Auth pages</a>
@@ -198,7 +195,6 @@ templ buildingBlocksGroup() {
 		@cardsSection()
 		@separatorSection()
 		@aspectratioSection()
-		@gameiconSection()
 		@avatarSection()
 	}
 }
@@ -266,7 +262,6 @@ templ pageLayerGroup() {
 		@splitpaneSection()
 		@dashboardpageSection()
 		@settingspageSection()
-		@streampageSection()
 		@errorpageSection()
 		@methodnotallowedSection()
 		@authpageSection()
@@ -366,14 +361,11 @@ templ iconsSection() {
 // Figure
 // ═══════════════════════════════════════
 templ figureSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "figure", Title: "Figure", Description: "One piece of media with a caption under it: the icon-and-caption scaffold the Icons and Game Icon sections no longer spell out by hand."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Any media, one caption", Subtitle: "An icon, a game icon and a swatch, each captioned the same way; a figure is only as wide as its content, so a row of them wraps."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "figure", Title: "Figure", Description: "One piece of media with a caption under it: the icon-and-caption scaffold the Icons section no longer spells out by hand."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Any media, one caption", Subtitle: "An icon and a swatch, each captioned the same way; a figure is only as wide as its content, so a row of them wraps."}) {
 			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
 				@figure.Figure(figure.Props{Caption: "Lucide icon"}) {
 					@icon.Settings()
-				}
-				@figure.Figure(figure.Props{Caption: "Game icon"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
 				}
 				@figure.Figure(figure.Props{Caption: "Swatch"}) {
 					@swatch.Swatch(swatch.Props{Color: "var(--color-primary)", Label: "primary"})
@@ -1238,7 +1230,7 @@ templ popoverSection() {
 // Hover Card
 // ═══════════════════════════════════════
 templ hovercardSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and optional icon. Built on popover + gameicon."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "hovercard", Title: "Hover Card", Description: "Rich popover on hover — shows title, metadata, description, and an optional icon slot. Built on popover."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@hovercard.Hover(hovercard.Props{
 				ID:          "hc-product",
@@ -1250,8 +1242,8 @@ templ hovercardSection() {
 					{Label: "Weight", Value: "6 lb"},
 					{Label: "Properties", Value: "Heavy, Two-Handed"},
 				},
-				IconName: "broadsword",
-				Link:     "#hovercard",
+				Icon: icon.Flame(),
+				Link: "#hovercard",
 			}) {
 				@card.Card() {
 					@card.Content() {
@@ -1392,48 +1384,6 @@ templ aspectratioSection() {
 					}
 				}
 			}
-		}
-	}
-}
-
-// ═══════════════════════════════════════
-// Game Icon
-// ═══════════════════════════════════════
-templ gameiconSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "gameicon", Title: "Game Icon (SVG Sprite)", Description: "SVG sprite wrapper — references icons by name from /static/icons/game-icons.svg. Source: game-icons.net (CC BY 3.0). Swap the sprite file for your own icon set."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Six icons and three tones", Subtitle: "Each sprite reference sits in a figure.Figure captioned with its name; the last three show the primary, accent and foreground tones."}) {
-			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL}) {
-				@figure.Figure(figure.Props{Caption: "broadsword"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "armor-vest"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "armor-vest", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "gem-pendant"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "gem-pendant", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "ring"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "ring", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "cloak-dagger"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "cloak-dagger", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "shield"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg})
-				}
-				@figure.Figure(figure.Props{Caption: "swords-emblem (primary)"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "swords-emblem", Size: gameicon.SizeLg, Tone: gameicon.TonePrimary})
-				}
-				@figure.Figure(figure.Props{Caption: "bottled-bolt (accent)"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "bottled-bolt", Size: gameicon.SizeLg, Tone: gameicon.ToneAccent})
-				}
-				@figure.Figure(figure.Props{Caption: "shield (foreground)"}) {
-					@gameicon.GameIcon(gameicon.Props{Name: "shield", Size: gameicon.SizeLg, Tone: gameicon.ToneForeground})
-				}
-			}
-		}
-		@panel.Panel(panel.Props{Variant: panel.VariantMuted}) {
-			<code>{ `@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})` }</code>
 		}
 	}
 }
@@ -2275,15 +2225,9 @@ templ settingspageSection() {
 	}
 }
 
-templ streampageSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "streampage", Title: "Stream page", Description: "The Traffic page is one streampage declaration: header, the live panel and its script; at 390px the panel's search and selects stack and its table scrolls sideways inside the panel, not the page."}) {
-		<p><a href="/traffic">Traffic</a>: the stream opens its connection as soon as the page loads and the panel's own controls filter it.</p>
-	}
-}
-
 templ methodnotallowedSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "methodnotallowed", Title: "405 page", Description: "Submit the form: it POSTs to /traffic, which only answers GET, and the styled 405 page renders in the shell with an Allow header naming what the address accepts."}) {
-		@form.Form(form.Props{ID: "post-get-only", Action: "/traffic"}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "methodnotallowed", Title: "405 page", Description: "Submit the form: it POSTs to /, the showcase, which only answers GET, and the styled 405 page renders in the shell with an Allow header naming what the address accepts."}) {
+		@form.Form(form.Props{ID: "post-get-only", Action: "/"}) {
 			@button.Button(button.Props{Type: button.TypeSubmit, Variant: button.VariantOutline}) {
 				POST to a GET-only address
 			}

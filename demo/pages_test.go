@@ -360,35 +360,13 @@ func TestPages_BrowseItem(t *testing.T) {
 	wantAll(t, rec.Body.String(), "Page not found", "wf-shell--sidebar", `>404<`)
 }
 
-func TestPages_TrafficOnStreampage(t *testing.T) {
-	h := pagesHandler(t)
-	rec := do(h, "GET", "/traffic", nil, nil)
-	if rec.Code != 200 {
-		t.Fatalf("GET /traffic = %d", rec.Code)
-	}
-	body := rec.Body.String()
-	wantAll(t, body,
-		"<!doctype", "wf-topbar", "Traffic — Webframe</title>", `id="traffic"`, "<h1", "Traffic Stream",
-		"A live operator surface", `/api/traffic/stream`, "trace-demo-001", "POST /v1/messages", "Completed upstream round-trip",
-		"anthropic", "proxy.forward_end", "/static/js/trafficstream.min.js",
-	)
-	wantNone(t, body, "wf-sidebar")
-	if n := strings.Count(body, "/static/js/trafficstream.min.js"); n != 1 {
-		t.Errorf("trafficstream script loaded %d times, want 1", n)
-	}
-	// The stream props are the page's: 560px tall.
-	if !strings.Contains(body, "560") {
-		t.Error("stream height 560 not in the page")
-	}
-}
-
 func TestPages_MethodNotAllowed(t *testing.T) {
 	h := pagesHandler(t)
 	// A GET-only page asked with POST: the styled 405 in the shell with the
 	// Allow header the mux would have sent.
-	rec := do(h, "POST", "/traffic", url.Values{}, nil)
+	rec := do(h, "POST", "/", url.Values{}, nil)
 	if rec.Code != http.StatusMethodNotAllowed {
-		t.Fatalf("POST /traffic = %d, want 405", rec.Code)
+		t.Fatalf("POST / = %d, want 405", rec.Code)
 	}
 	if allow := rec.Header().Get("Allow"); allow != "GET, HEAD" {
 		t.Errorf("Allow = %q, want \"GET, HEAD\"", allow)
@@ -419,14 +397,14 @@ func TestPages_MethodNotAllowed(t *testing.T) {
 		t.Errorf("POST /no-such-page = %d Allow %q, want 404 and none", rec.Code, rec.Header().Get("Allow"))
 	}
 	wantAll(t, rec.Body.String(), "Page not found", "wf-topbar")
-	for _, path := range []string{"/", "/items", "/dashboard", "/browse", "/settings", "/traffic"} {
+	for _, path := range []string{"/", "/items", "/dashboard", "/browse", "/settings"} {
 		if rec := do(h, "GET", path, nil, nil); rec.Code != 200 {
 			t.Errorf("GET %s = %d", path, rec.Code)
 		}
 	}
 	// The one method GET patterns also answer: HEAD.
-	if rec := do(h, "HEAD", "/traffic", nil, nil); rec.Code != 200 {
-		t.Errorf("HEAD /traffic = %d", rec.Code)
+	if rec := do(h, "HEAD", "/", nil, nil); rec.Code != 200 {
+		t.Errorf("HEAD / = %d", rec.Code)
 	}
 }
 
@@ -451,7 +429,7 @@ func TestPages_ShowcaseSections(t *testing.T) {
 	body := do(h, "GET", "/", nil, nil).Body.String()
 	wantAll(t, body,
 		// Contents links.
-		`href="#cardgrid"`, `href="#timeline"`, `href="#splitpane"`, `href="#dashboardpage"`, `href="#settingspage"`, `href="#streampage"`, `href="#methodnotallowed"`, `href="#errorswap"`,
+		`href="#cardgrid"`, `href="#timeline"`, `href="#splitpane"`, `href="#dashboardpage"`, `href="#settingspage"`, `href="#methodnotallowed"`, `href="#errorswap"`,
 		// Card grid: a live grid of four cards, one card with a footer action that posts.
 		`id="cardgrid"`, `id="showcase-cards"`, "xl:grid-cols-4", "lg:grid-cols-3", "Circlet of Borrowed Thought and Other Long Names", "Bottled Bolt", ">Remixable<", `href="/items/1/edit"`,
 		// Timeline: two day groups, UTC, every tone.
@@ -460,9 +438,8 @@ func TestPages_ShowcaseSections(t *testing.T) {
 		`id="splitpane"`, `href="/browse"`, `href="/browse/3"`,
 		`id="dashboardpage"`, `href="/dashboard"`,
 		`id="settingspage"`, `href="/settings"`,
-		`id="streampage"`, `href="/traffic"`,
 		// The 405 form: a tiny form that POSTs to a GET-only address.
-		`id="methodnotallowed"`, `id="post-get-only"`, `action="/traffic"`, `method="post"`, "POST to a GET-only address",
+		`id="methodnotallowed"`, `id="post-get-only"`, `action="/"`, `method="post"`, "POST to a GET-only address",
 		// The error-swap guard: a button whose hx-get hits the plain 500, a target that must not change.
 		`id="errorswap"`, `hx-get="/api/boom"`, `hx-target="#boom-result"`, `<span id="boom-result">Nothing here has changed.</span>`, "must not change",
 	)
@@ -480,7 +457,4 @@ func TestPages_ShowcaseSections(t *testing.T) {
 	if n := strings.Count(body, "/static/js/htmx-errors.js"); n != 1 {
 		t.Errorf("htmx-errors.js loaded %d times, want 1", n)
 	}
-	// The old hand-written traffic page is gone: the topbar's Traffic entry
-	// now opens the streampage route, which the tests above cover.
-	wantAll(t, body, `href="/traffic"`)
 }

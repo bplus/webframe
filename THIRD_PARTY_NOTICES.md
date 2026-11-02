@@ -7,9 +7,8 @@ was read from the upstream project's own LICENSE file at the version shipped
 `static/js/` was matched to its upstream file.
 
 Go module dependencies (`go.mod`) are not vendored and are not listed here.
-First-party scripts in `static/js/` (`filterbar.min.js`, `graphwidget.min.js`,
-`trafficstream.min.js` and the unminified `.js` files) are webframe's own code
-under its MIT license.
+First-party scripts in `static/js/` (`filterbar.min.js`, `graphwidget.min.js`
+and the unminified `.js` files) are webframe's own code under its MIT license.
 
 ## Summary
 
@@ -23,7 +22,6 @@ under its MIT license.
 | 3d-force-graph (plus the libraries bundled into it, next table) | `static/js/3d-force-graph.min.js` | https://github.com/vasturiano/3d-force-graph | 1.73.4 | MIT | Copyright (c) 2017 Vasco Asturiano |
 | Lucide icons (SVG path data) | `components/icon/icon_data.go`, `components/icon/icon_defs.go` | https://github.com/lucide-icons/lucide | 0.544.0 | ISC; portions derived from Feather are MIT | Lucide Contributors 2025; Copyright (c) 2013-2023 Cole Bemis (Feather portions) |
 | Tailwind CSS (generated base styles) | `static/css/output.css` | https://github.com/tailwindlabs/tailwindcss | 4.3.3 | MIT | Copyright (c) Tailwind Labs, Inc. |
-| Game Icons | `static/icons/game-icons.svg` (used by `components/gameicon`) | https://game-icons.net | not versioned | CC BY 3.0, per the sprite's header | Authors: Lorc, Delapouite, Skoll, Willdabeast, Carl Olsen (https://game-icons.net/about.html), per the sprite's header |
 | Inter | `static/css/fonts/inter-latin.woff2` | https://github.com/rsms/inter | not recorded | SIL Open Font License 1.1 | Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter) |
 | JetBrains Mono | `static/css/fonts/jetbrains-mono-latin.woff2` | https://github.com/JetBrains/JetBrainsMono | not recorded | SIL Open Font License 1.1 | Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono) |
 
@@ -228,10 +226,3 @@ License, Version 2.0." Full text: https://www.apache.org/licenses/LICENSE-2.0
 Applies to the Inter and JetBrains Mono fonts. The full license text ships
 next to each font: `static/css/fonts/LICENSE-Inter.txt` and
 `static/css/fonts/LICENSE-JetBrainsMono.txt`.
-
-### Creative Commons Attribution 3.0 (CC BY 3.0)
-
-`static/icons/game-icons.svg` contains icons from https://game-icons.net by
-Lorc, Delapouite, Skoll, Willdabeast and Carl Olsen, used under CC BY 3.0
-(https://creativecommons.org/licenses/by/3.0/). The icons are combined into a
-single SVG sprite of `<symbol>` elements.

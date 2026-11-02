@@ -53,7 +53,6 @@ Each page type is one `Props` declaration and one `Respond(w, r, title, p)` call
 | `settingspage` | grouped fields with an always-visible save bar |
 | `dashboardpage` | `stattile` tiles and sections on a 12-column `dashboardgrid` |
 | `splitpane` | list beside detail from md up, one or the other on a phone |
-| `streampage` | a live `trafficstream` feed |
 | `authpage`, `errorpage` | sign-in / signed-out / forbidden cards; 403/404/405/500 pages |
 
 Building blocks: `action`, `pageheader`, `breadcrumbs`, `layout` (`Stack`, `Inline`, `Section`, `TwoColumn`, ...), `panel`, `form.Form`, `formfield`, `toolbar`, `datatable`, `pagination`, `descriptionlist`, `stattile`, `banner`, `toast`, `flash`, `confirmdialog`, `skeleton`, `spinner`, `cardgrid`, `timeline`, `image`, `figure`, `toggle`, `autocomplete`, `commandpalette`. Content widgets: `prose` (the only sanctioned `templ.Raw`, for trusted HTML), `codeblock`, `logviewer`, `jsonviewer`, `diffview`. Form widgets, also reachable through `formfield.Field.Type`: `tagsinput`, `keyvalueeditor`, `rating`, `datetimepicker`, `filedrop`. Each package's doc comment is the reference for its props.
