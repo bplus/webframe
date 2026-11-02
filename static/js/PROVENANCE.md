@@ -51,7 +51,6 @@ Written in this repository; covered by webframe's own license.
 |---|---|---|---|
 | `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`. Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), not minifier output; only the outer `(()=>{(function(){"use strict";` wrapper copies the templUI file shape. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
 | `graphwidget.min.js` | webframe | MIT (webframe) | Added in `eaccae72` as the glue script for the vendored 3d-force-graph. |
-| `trafficstream.min.js` | webframe | MIT (webframe) | Added in `46d1bab` ("Add traffic stream demo component"). |
 | `theme-toggle.js` | webframe | MIT (webframe) | Unminified; refers to this repository's own commit `cb57069`. |
 | `autocomplete.js` | webframe | MIT (webframe) | Unminified; written with `components/autocomplete`. |
 | `confirm.js` | webframe | MIT (webframe) | Unminified; written with `components/confirmdialog`. |
@@ -77,9 +76,6 @@ upgrade.
   control named `<name>`), then `collectParams(bar)`, then edits the page URL:
   it deletes every parameter named by a bar control or toggle and every name
   in `data-tui-filterbar-drop`, then sets the non-empty values.
-- `trafficstream.min.js`: the connection dot uses theme tokens
-  (`bg-warning`, `bg-success`, `bg-muted-foreground`). `input.css` keeps them
-  alive with `@source inline(...)`, since Tailwind does not scan JS.
 - `confirm.js`, `htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`,
   `splitpane.js`: each guards against a second run through `window.wf.<name>`
   (htmx re-executes `<script src>` tags in swapped content). The templUI

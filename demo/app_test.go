@@ -10,11 +10,10 @@ import (
 	"github.com/bplus/webframe/assets"
 )
 
-func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
+func TestShowcaseRendersThroughShell(t *testing.T) {
 	mux := http.NewServeMux()
 	assets.Mount(mux)
 	mux.HandleFunc("GET /{$}", HandleShowcase)
-	mux.HandleFunc("GET /traffic", HandleTraffic)
 	RegisterItemRoutes(mux)
 	srv := httptest.NewServer(App.Middleware(mux))
 	defer srv.Close()
@@ -32,7 +31,7 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 		return resp.StatusCode, string(b)
 	}
 
-	for _, path := range []string{"/", "/traffic"} {
+	for _, path := range []string{"/"} {
 		code, body := get(path)
 		if code != 200 {
 			t.Errorf("GET %s = %d, want 200", path, code)

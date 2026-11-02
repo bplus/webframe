@@ -21,9 +21,6 @@
    scanned, so they are listed here. Remove once those pages move to appshell. */
 @source inline("divide-border divide-y font-extrabold grid-cols-2 grid-cols-3 items-end items-stretch lg:grid-cols-5 list-disc list-inside max-w-3xl max-w-5xl max-w-xl mb-10 mb-8 ml-2 mt-6 mt-8 my-6 py-10 py-6 py-8 sm:grid-cols-3 sm:grid-cols-5 sm:grid-cols-6 sm:px-10 space-y-1 space-y-3 space-y-5 space-y-6 space-y-8 text-3xl text-6xl text-red-600 text-xl underline w-40 w-56");
 
-/* ── Classes written only by first-party JS (static/js/trafficstream.min.js swaps the connection dot) ── source(none) never scans JS */
-@source inline("bg-success bg-warning bg-muted-foreground");
-
 @theme {
   /* ── Primary: Slate Blue ── */
   --color-primary-50:  #f0f4ff;
@@ -812,6 +809,11 @@
   width: 100px;
   height: 100px;
   color: var(--color-muted-foreground);
+}
+
+.wf-hover-icon > svg {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 900px) {

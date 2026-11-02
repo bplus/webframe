@@ -65,3 +65,23 @@ func TestHover_CardIsScrollableCapped(t *testing.T) {
 		t.Errorf("want max-height bound to --wf-pop-max with a 70vh fallback, got:\n%s", out)
 	}
 }
+
+// TestHover_IconSlot: a supplied Icon component renders inside the art
+// panel and turns on the two-column layout; without one there is no panel.
+func TestHover_IconSlot(t *testing.T) {
+	art := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<svg id="art"></svg>`))
+		return err
+	})
+	out := render(t, Props{ID: "x", Title: "T", Icon: art})
+	if !strings.Contains(out, `<div class="wf-hover-art"><div class="wf-hover-icon"><svg id="art"></svg></div></div>`) {
+		t.Errorf("want the icon inside the art panel, got:\n%s", out)
+	}
+	if !strings.Contains(out, "wf-hover-shell--with-art") {
+		t.Errorf("want the with-art layout when Icon is set, got:\n%s", out)
+	}
+	out = render(t, Props{ID: "x", Title: "T"})
+	if strings.Contains(out, "wf-hover-art") {
+		t.Errorf("want no art panel without an Icon, got:\n%s", out)
+	}
+}

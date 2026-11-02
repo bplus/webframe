@@ -27,7 +27,6 @@ var App = &appshell.App{
 	Nav: []appshell.NavItem{
 		{Label: "Showcase", Href: "/"},
 		{Label: "Items", Href: "/items", Match: "/items"},
-		{Label: "Traffic", Href: "/traffic"},
 		{Label: "Forms", Href: "/#forms"},
 		{Label: "Content", Href: "/#content"},
 		{Label: "Interactive", Href: "/#interactive"},
@@ -82,7 +81,7 @@ var SidebarApp = &appshell.App{
 }
 
 // Routes mounts every demo route on mux: the embedded static files, the
-// showcase and traffic pages, the Items app, the dashboard, settings,
+// showcase page, the Items app, the dashboard, settings,
 // browse and logs pages, the auth and error pages and the htmx endpoints. There is no
 // catch-all: a path no pattern claims, and a claimed path asked with the
 // wrong method, are left to the mux, and errorpage.Handler (which Handler
@@ -94,7 +93,6 @@ func Routes(mux *http.ServeMux) {
 
 	// Pages.
 	mux.HandleFunc("GET /{$}", HandleShowcase)
-	mux.HandleFunc("GET /traffic", HandleTraffic)
 
 	// The Items app (list, detail, create/edit form) on the sidebar shell:
 	// GET /items, /items/new, /items/{id}, /items/{id}/edit,
@@ -116,7 +114,6 @@ func Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /errors/{code}", HandleErrorPage)
 
 	// htmx demo endpoints.
-	mux.HandleFunc("GET /api/traffic/stream", HandleTrafficStream)
 	mux.HandleFunc("POST /api/click", HandleClick)
 	mux.HandleFunc("GET /api/search", HandleSearch)
 	mux.HandleFunc("POST /api/validate", HandleValidate)

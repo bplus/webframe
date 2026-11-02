@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strings"
 
-	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/popover"
 )
 
@@ -29,7 +28,7 @@ type Props struct {
 	Category    string            // small kicker text above title (e.g. "Product", "User", "Article")
 	Description string            // body text
 	Meta        []MetaRow         // key-value metadata rows
-	IconName    string            // game-icon sprite name (optional — omit for no icon panel)
+	Icon        templ.Component   // optional art beside the copy (e.g. a components/icon icon); nil means no icon panel
 	Link        string            // optional link URL at bottom
 	LinkText    string            // link label (default: "View details →")
 	Placement   popover.Placement // card placement; zero value means popover.PlacementBottomStart
@@ -109,7 +108,7 @@ func Hover(props Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 = []any{"wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "")}
+			var templ_7745c5c3_Var4 = []any{"wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.Icon != nil)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -139,7 +138,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 70, Col: 50}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 69, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -157,7 +156,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Title, "Untitled"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 72, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 71, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -170,7 +169,7 @@ func Hover(props Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.Description, "No description."))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 73, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 72, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -193,7 +192,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(row.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 78, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 77, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -206,7 +205,7 @@ func Hover(props Props) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(row.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 79, Col: 27}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 78, Col: 27}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -230,7 +229,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var11 templ.SafeURL
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(props.Link)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 85, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 84, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -243,7 +242,7 @@ func Hover(props Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(safe(props.LinkText, "View details →"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 86, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/hovercard/hovercard.templ`, Line: 85, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -258,16 +257,16 @@ func Hover(props Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if strings.TrimSpace(props.IconName) != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"wf-hover-art\">")
+			if props.Icon != nil {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"wf-hover-art\"><div class=\"wf-hover-icon\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = gameicon.GameIcon(gameicon.Props{Name: props.IconName, Class: "wf-hover-icon"}).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = props.Icon.Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

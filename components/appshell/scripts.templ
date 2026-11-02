@@ -21,8 +21,7 @@ import (
 // end of <body>: confirm.js first (so it runs before any component
 // script), htmx-errors.js (refuses to swap non-HTML error bodies),
 // splitpane.js, then each common component's Script and theme-toggle.js.
-// trafficstream and graphwidget are not included; pages using them add
-// their own Script.
+// graphwidget is not included; pages using it add its Script.
 templ Scripts() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/confirm.js") }></script>
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/htmx-errors.js") }></script>

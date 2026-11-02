@@ -54,7 +54,6 @@ import (
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/formpage"
-	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/graphwidget"
 	"github.com/bplus/webframe/components/hovercard"
 	"github.com/bplus/webframe/components/icon"
@@ -88,7 +87,6 @@ import (
 	"github.com/bplus/webframe/components/splitpane"
 	"github.com/bplus/webframe/components/statcomparison"
 	"github.com/bplus/webframe/components/stattile"
-	"github.com/bplus/webframe/components/streampage"
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
@@ -98,7 +96,6 @@ import (
 	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/components/toggle"
 	"github.com/bplus/webframe/components/toolbar"
-	"github.com/bplus/webframe/components/trafficstream"
 )
 
 // bannedSubstrings are markers of template-generation artifacts leaking into
@@ -176,7 +173,6 @@ var componentCases = []componentCase{
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
 	{name: "formfield", constructor: func() templ.Component { return formfield.FormField(formfield.Field{Name: "x"}) }},
 	{name: "formpage", constructor: func() templ.Component { return formpage.Page(formpage.Props{}) }},
-	{name: "gameicon", constructor: func() templ.Component { return gameicon.GameIcon(gameicon.Props{}) }},
 	{name: "graphwidget", constructor: func() templ.Component { return graphwidget.GraphWidget() }},
 	{name: "hovercard", constructor: func() templ.Component { return hovercard.Hover(hovercard.Props{}) }},
 	// icon.Icon(name) is a factory, not a Props-taking constructor; icon_defs.go
@@ -216,7 +212,6 @@ var componentCases = []componentCase{
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
 	{name: "stattile", constructor: func() templ.Component { return stattile.StatTile() }},
-	{name: "streampage", constructor: func() templ.Component { return streampage.Page(streampage.Props{}) }},
 	{name: "swatch", constructor: func() templ.Component { return swatch.Swatch() }},
 	{name: "table", constructor: func() templ.Component { return table.Table() }},
 	// tabs.Content() exercises the empty-Value rendering path covered by the
@@ -233,7 +228,6 @@ var componentCases = []componentCase{
 	},
 	{name: "toggle", constructor: func() templ.Component { return toggle.Toggle() }},
 	{name: "toolbar", constructor: func() templ.Component { return toolbar.Toolbar() }},
-	{name: "trafficstream", constructor: func() templ.Component { return trafficstream.TrafficStream() }},
 }
 
 // TestComponentCasesCoverAllPackages ensures every directory under

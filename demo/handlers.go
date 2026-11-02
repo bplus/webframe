@@ -16,10 +16,7 @@ import (
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
-	"github.com/bplus/webframe/components/pageheader"
-	"github.com/bplus/webframe/components/streampage"
 	"github.com/bplus/webframe/components/toast"
-	"github.com/bplus/webframe/components/trafficstream"
 	"github.com/bplus/webframe/demo/pages"
 )
 
@@ -29,90 +26,6 @@ import (
 func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 	if err := App.Render(w, r, "Showcase", pages.Showcase()); err != nil {
 		log.Printf("demo: render showcase: %v", err)
-	}
-}
-
-// HandleTraffic renders the live traffic stream demo page (GET /traffic)
-// through streampage: the page header, the trafficstream panel pointed at
-// HandleTrafficStream and the panel's script, declared in trafficProps. The
-// page itself then opens an SSE connection for its live data.
-func HandleTraffic(w http.ResponseWriter, r *http.Request) {
-	if err := streampage.Respond(w, r, "Traffic", trafficProps()); err != nil {
-		log.Printf("demo: render traffic: %v", err)
-	}
-}
-
-// trafficProps declares the traffic page as streampage.Props: StreamURL
-// /api/traffic/stream, a 560px table, the demo provider and event options,
-// and two seed rows sharing a trace id.
-func trafficProps() streampage.Props {
-	return streampage.Props{
-		ID: "traffic",
-		Header: pageheader.Props{
-			Title:    "Traffic Stream",
-			Subtitle: "A live operator surface for watching request and response activity, filtering by provider and event type, and pausing the feed without losing context.",
-		},
-		Stream: trafficstream.Props{
-			StreamURL:       "/api/traffic/stream",
-			Height:          560,
-			ProviderOptions: []string{"anthropic", "openai", "gemini", "local"},
-			EventOptions:    []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"},
-			InitialRows: []trafficstream.Row{{
-				Time:      "12:00:01",
-				Provider:  "anthropic",
-				Direction: "request",
-				Event:     "request.received",
-				Status:    "",
-				TraceID:   "trace-demo-001",
-				Summary:   "POST /v1/messages",
-			}, {
-				Time:      "12:00:02",
-				Provider:  "anthropic",
-				Direction: "response",
-				Event:     "proxy.forward_end",
-				Status:    "200",
-				TraceID:   "trace-demo-001",
-				Summary:   "Completed upstream round-trip",
-			}},
-		},
-	}
-}
-
-// HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one
-// synthetic JSON event — provider/type/direction/status cycled from fixed
-// lists by loop index, so the stream is deterministic, not random — then
-// flushes. It blocks until the client disconnects (r.Context() canceled);
-// there is no other exit. Responds 500 if the ResponseWriter does not
-// implement http.Flusher, since SSE is impossible without flushing.
-func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	providers := []string{"anthropic", "openai", "gemini", "local"}
-	events := []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"}
-	directions := []string{"request", "response", "event", "local"}
-	statuses := []string{"", "200", "202", "500"}
-	// 1.2s: slow enough to read each event as it appears, fast enough that
-	// the stream still feels live rather than static.
-	ticker := time.NewTicker(1200 * time.Millisecond)
-	defer ticker.Stop()
-	for i := 0; ; i++ {
-		select {
-		case <-r.Context().Done():
-			return
-		case ts := <-ticker.C:
-			provider := providers[i%len(providers)]
-			eventType := events[i%len(events)]
-			direction := directions[i%len(directions)]
-			status := statuses[i%len(statuses)]
-			fmt.Fprintf(w, "data: {\"ts\":\"%s\",\"provider\":\"%s\",\"direction\":\"%s\",\"type\":\"%s\",\"status\":\"%s\",\"trace_id\":\"trace-demo-%03d\",\"summary\":\"%s %s\"}\n\n", ts.UTC().Format(time.RFC3339Nano), provider, direction, eventType, status, i+1, strings.ToUpper(direction), provider)
-			flusher.Flush()
-		}
 	}
 }
 

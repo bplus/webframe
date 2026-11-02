@@ -3,7 +3,6 @@ package hovercard
 import (
 	"strings"
 
-	"github.com/bplus/webframe/components/gameicon"
 	"github.com/bplus/webframe/components/popover"
 )
 
@@ -21,7 +20,7 @@ type Props struct {
 	Category    string            // small kicker text above title (e.g. "Product", "User", "Article")
 	Description string            // body text
 	Meta        []MetaRow         // key-value metadata rows
-	IconName    string            // game-icon sprite name (optional — omit for no icon panel)
+	Icon        templ.Component   // optional art beside the copy (e.g. a components/icon icon); nil means no icon panel
 	Link        string            // optional link URL at bottom
 	LinkText    string            // link label (default: "View details →")
 	Placement   popover.Placement // card placement; zero value means popover.PlacementBottomStart
@@ -62,7 +61,7 @@ templ Hover(props Props) {
 		// --wf-pop-max; the shell is capped to that (minus the 1px borders)
 		// and scrolls inside. 70vh applies before the script has run.
 		<div
-			class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.IconName != "") }
+			class={ "wf-hover-shell", templ.KV("wf-hover-shell--with-art", props.Icon != nil) }
 			style="max-height:calc(min(var(--wf-pop-max, 70vh), 100vh - 20px) - 2px);overflow-y:auto"
 		>
 			<div class="wf-hover-copy">
@@ -87,9 +86,11 @@ templ Hover(props Props) {
 					</a>
 				}
 			</div>
-			if strings.TrimSpace(props.IconName) != "" {
+			if props.Icon != nil {
 				<div class="wf-hover-art">
-					@gameicon.GameIcon(gameicon.Props{Name: props.IconName, Class: "wf-hover-icon"})
+					<div class="wf-hover-icon">
+						@props.Icon
+					</div>
 				</div>
 			}
 		</div>
