@@ -36,10 +36,13 @@ func TestPages_Dashboard(t *testing.T) {
 		`id="recent-changes"`, "Recent changes", `id="recent-changes-timeline"`, "<ol", "<time datetime=", "Blade of the Fallen Star updated", "Published weapon · 2d ago", "In Starfall Pack", "bg-success",
 		`id="newest-items"`, "Newest items", `id="newest-items-grid"`, "sm:grid-cols-2", `src="/static/img/placeholder-wide.svg"`, `href="/items/1/edit"`, "Updated 2d ago", "Not in a pack",
 	)
-	// Six slots: four tiles and two sections.
-	if n := strings.Count(body, "wf-dashslot"); n != 6 {
-		t.Errorf("wf-dashslot appears %d times, want 6", n)
+	// Seven slots: four tiles and three sections.
+	if n := strings.Count(body, "wf-dashslot"); n != 7 {
+		t.Errorf("wf-dashslot appears %d times, want 7", n)
 	}
+	// The Packs section is composed in plain Go: a badge per pack inside an
+	// Inline row.
+	inOrder(t, body, `id="pack-counts"`, `id="pack-counts-list"`, "Starfall Pack · 4 items", "Netherese Relics · 4 items")
 	// Four cards, the newest items in order; the timeline holds eight events.
 	inOrder(t, body, `id="card-item-1"`, `id="card-item-2"`, `id="card-item-3"`, `id="card-item-4"`)
 	// Two columns at most in the 8-column section.

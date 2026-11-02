@@ -45,6 +45,62 @@
 >
 > Replace this block with that explanation and example.
 
+## Using webframe from templ or from plain Go
+
+An app can be written in templ (`.templ` files run through `templ generate`)
+or in plain Go with no `.templ` files at all. Both are supported. Every
+component is a Go function that returns a `templ.Component`, and every page
+type is a `Props` value passed to a `Respond` function, so most code looks
+the same either way.
+
+The one place the two differ is a container: a component such as `card.Card`
+or `badge.Badge` that shows content you put inside it. In templ that content
+is the block after the call. In plain Go it is passed with
+`compose.With(parent, children...)`; `compose.Join` renders components one
+after another and `compose.Text` renders a string as escaped text.
+
+A card holding a badge that says "New", in templ:
+
+```templ
+templ Status() {
+	@card.Card() {
+		@badge.Badge() {
+			New
+		}
+	}
+}
+```
+
+The same in plain Go:
+
+```go
+func Status() templ.Component {
+	return compose.With(card.Card(),
+		compose.With(badge.Badge(), compose.Text("New")),
+	)
+}
+```
+
+Both render the same HTML, and `wflint` passes both.
+
+What works in only one style:
+
+- **Inline text markup is written directly only in templ.** `wflint` allows
+  text-level elements (`<strong>`, `<em>`, `<a>`, `<code>`, lists, `<br>`,
+  `<time>`) in a `.templ` file. Plain Go has no helper for them; use a
+  component (for example `action` for a link) or `prose` with an HTML string.
+- **Fences hold hand-written markup only in templ.** In a `.templ` file,
+  `wflint` recognizes a `custompage.CustomPage` or `customblock.CustomBlock`
+  block, lists it on every run, checks its `Reason` and allows any markup
+  inside it. In Go, `compose.With(customblock.CustomBlock(...), ...)` renders,
+  but `wflint` neither lists it nor checks its `Reason`, and markup inside it
+  (`templ.Raw`, `templ.ComponentFunc`, HTML in a string) is still rejected.
+
+Everything else works the same in both: page types and their `Respond`
+functions, `Props` (including the `Attributes` map), `Props` fields that take
+a `templ.Component`, and the `Script()` helpers, which are ordinary
+components.
+
 ## 3. The address bar is the state (`listquery`)
 
 > **TODO(maintainer): read.**
