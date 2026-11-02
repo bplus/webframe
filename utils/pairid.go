@@ -15,7 +15,7 @@ import (
 // that normally shares an id through its parent's context (a dropdown's
 // Trigger and Content) uses it as the fallback when rendered without that
 // parent, so the first orphaned Trigger links to the first orphaned Content,
-// the second to the second, and two orphaned pairs on one page no longer
+// the second to the second, and two orphaned pairs on one page never
 // share an id.
 //
 // "Render" is templ's per-render state (the value templ.InitializeContext
