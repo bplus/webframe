@@ -15,7 +15,8 @@ Requirements:
 
 - Go
 - `templ`
-- Node/npm for Tailwind CSS
+- Node/npm for the Tailwind CSS CLI and Playwright (pinned in `tools/package.json`;
+  `make css` runs `npm ci --prefix tools` on first use)
 
 Common commands:
 
@@ -29,7 +30,7 @@ make ui-check   # Playwright measurement of /items and / at phone and desktop wi
 ```
 
 The demo app runs on `http://localhost:3333`. `make ui-check` loads it in
-Playwright's own Chromium (one-time `npx playwright install chromium`) at 390
+Playwright's own Chromium (one-time `npx --prefix tools playwright install chromium`) at 390
 and 1280 px, writes screenshots to `tools/shots/` (git-ignored) and fails on
 horizontal overflow or console errors; see `tools/README.md`. It is not part
 of `make check` because it needs the dev server.
@@ -42,8 +43,8 @@ Run `make check` before pushing. It composes four sub-targets, in order:
 - `check-test` — `go test ./...`
 - `check-ui` — `go run ./cmd/wflint ./demo`, the UI lint (see Page layer)
 
-The Tailwind CLI version is pinned via `@tailwindcss/cli` in `package.json`/
-`package-lock.json` (currently 4.3.3) so `npx @tailwindcss/cli` produces a
+The Tailwind CLI version is pinned via `@tailwindcss/cli` in `tools/package.json`/
+`tools/package-lock.json` (currently 4.3.3) so `tools/node_modules/.bin/tailwindcss` produces a
 byte-stable `output.css` instead of floating to whatever is latest.
 
 ## Page layer

@@ -1,0 +1,15 @@
+{
+  "name": "webframe-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Build and check tooling for webframe: the Tailwind CSS CLI and Playwright for ui-check.",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.2.0"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}

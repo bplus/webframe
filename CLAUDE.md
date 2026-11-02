@@ -11,7 +11,7 @@ Webframe is a Go module (`github.com/bplus/webframe`) — a component library fo
 ```bash
 make build          # templ generate → tailwind compile → go build ./cmd/demo
 make generate       # templ generate (produces *_templ.go from *.templ)
-make css            # npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css
+make css            # tools/node_modules/.bin/tailwindcss -i static/css/input.css -o static/css/output.css (npm ci --prefix tools on first use)
 make dev            # go run ./cmd/demo (serves on :3333)
 make check          # check-generate → check-vet → check-test → check-ui
 make check-generate # templ generate → css rebuild → drift check on *_templ.go and output.css
@@ -19,7 +19,7 @@ make check-vet      # go vet ./...
 make check-test     # go test ./...
 make check-ui       # go run ./cmd/wflint ./demo (UI lint: app code may only compose components)
 make ui-check       # Playwright: load /items and / at 390 and 1280, fail on horizontal overflow or console errors; needs `make dev` running, not part of check
-npx playwright install chromium   # one-time, before the first ui-check (Playwright's own Chromium, ~170 MB)
+npx --prefix tools playwright install chromium   # one-time, before the first ui-check (Playwright's own Chromium, ~170 MB)
 go test ./...       # run all tests
 go test ./components/copybutton/...  # single package
 ```

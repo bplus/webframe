@@ -9,8 +9,8 @@ with no desktop Chrome; Playwright's Chromium gives a true 390px viewport
 ## One-time setup
 
 ```bash
-npm install                       # installs the pinned playwright devDependency
-npx playwright install chromium   # ~170 MB into ~/Library/Caches/ms-playwright
+npm ci --prefix tools                       # from the repo root: Tailwind CLI + pinned playwright (tools/package.json)
+npx --prefix tools playwright install chromium   # ~170 MB into ~/Library/Caches/ms-playwright
 ```
 
 ## Running
