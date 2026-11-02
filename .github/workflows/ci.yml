@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # templ is a require (not a tool directive) in go.mod; install that exact version.
+      - name: Install templ
+        run: |
+          set -euo pipefail
+          version="$(go list -m -f '{{.Version}}' github.com/a-h/templ)"
+          go install "github.com/a-h/templ/cmd/templ@${version}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # package.json / package-lock.json live in tools/ (moved there from the repo
+      # root). Put its node_modules/.bin on PATH so the Makefile's
+      # `npx @tailwindcss/cli` uses the locked version instead of downloading one.
+      - name: Install Tailwind CLI
+        working-directory: tools
+        run: |
+          set -euo pipefail
+          npm ci
+          echo "${PWD}/node_modules/.bin" >> "${GITHUB_PATH}"
+
+      - name: Generated code and CSS are up to date
+        run: make check-generate
+
+      - name: Vet
+        run: make check-vet
+
+      # Same as `make check-test`, plus -race.
+      - name: Test (race)
+        run: go test -race ./...
+
+      - name: wflint
+        run: make check-ui
