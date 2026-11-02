@@ -566,7 +566,7 @@ func row(p Props, r Row, actions bool) templ.Component {
 				templ_7745c5c3_Err = table.Cell(table.CellProps{
 					Class: utils.TwMerge(
 						cellPad(p.Dense),
-						alignClass(col.Align),
+						alignClass(cellAlign(col, c)),
 						utils.If(col.Hidden, "hidden md:table-cell"),
 						utils.If(col.Shrink, "w-px whitespace-nowrap"),
 						utils.If(col.Mono || c.Mono, "font-mono tabular-nums text-xs"),

@@ -27,12 +27,14 @@ import (
 	"github.com/bplus/webframe/listquery"
 )
 
-// Align is a column's horizontal text alignment.
+// Align is a horizontal text alignment. On a Column the zero value is
+// left; on a Cell it means "use the column's".
 type Align string
 
 const (
-	// AlignLeft is the default.
-	AlignLeft Align = ""
+	// AlignLeft is explicit left alignment, for a cell in a right or
+	// center column.
+	AlignLeft Align = "left"
 	// AlignRight suits numbers and dates.
 	AlignRight Align = "right"
 	// AlignCenter suits short status glyphs.
@@ -74,10 +76,15 @@ type Column struct {
 // Cell is one table cell. Precedence: Component, then Badge (wrapping
 // Text), then Text. Href on a cell makes its content a link; the first
 // cell of a Row with Href is linked to the row's Href automatically.
+//
+// Align overrides the column's alignment for this cell only; the zero value
+// inherits it. Width (Shrink) and phone visibility (Hidden) belong to the
+// whole column, so they are set on Column only.
 type Cell struct {
 	Text, Href string
 	Mono       bool
 	Muted      bool
+	Align      Align
 	// Badge renders Text inside a badge.Badge with these props.
 	Badge *badge.Props
 	// Component replaces the cell content entirely.
@@ -210,8 +217,18 @@ func cellAt(r Row, i int) Cell {
 	return Cell{}
 }
 
+// cellAlign is the alignment a cell renders with: its own, else the column's.
+func cellAlign(col Column, c Cell) Align {
+	if c.Align != "" {
+		return c.Align
+	}
+	return col.Align
+}
+
 func alignClass(a Align) string {
 	switch a {
+	case AlignLeft:
+		return "text-left"
 	case AlignRight:
 		return "text-right"
 	case AlignCenter:

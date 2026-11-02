@@ -38,6 +38,7 @@ import (
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/logviewer"
+	"github.com/bplus/webframe/components/nodepill"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
@@ -1841,7 +1842,31 @@ templ datatableSection() {
 				Empty:   emptystateProps(),
 			})
 		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Pill cells and a per-cell alignment", Flush: true, Subtitle: "The first column holds nodepill components, whose dot color comes from a badge variant and whose long titles wrap inside the cell instead of clipping; one Score cell sets its own Align to center while the rest inherit the column's right alignment."}) {
+			@datatable.DataTable(datatable.Props{
+				ID:      "demo-table-pills",
+				Caption: "Example references",
+				Columns: []datatable.Column{{Key: "ref", Label: "Reference"}, {Key: "owner", Label: "Owner", Hidden: true}, {Key: "score", Label: "Score", Shrink: true, Align: datatable.AlignRight}},
+				Rows:    pillRows,
+			})
+		}
 	}
+}
+
+// pillRow builds one row of the nodepill table: the pill, an owner and a score.
+func pillRow(id, title string, v badge.Variant, owner string, score datatable.Cell) datatable.Row {
+	return datatable.Row{ID: id, Cells: []datatable.Cell{
+		{Component: nodepill.NodePill(nodepill.Props{Title: title, Variant: v, Href: "#datatable"})},
+		{Text: owner, Muted: true},
+		score,
+	}}
+}
+
+var pillRows = []datatable.Row{
+	pillRow("1", "Retry policy for the nightly export job when the upstream storage bucket throttles requests", badge.VariantInfo, "Ada", datatable.Cell{Text: "92", Mono: true}),
+	pillRow("2", "internal/adapters/storage/bucket_client_retry_backoff_configuration.go", badge.VariantSuccess, "Sam", datatable.Cell{Text: "78", Mono: true}),
+	pillRow("3", "Login fails after token rotation", badge.VariantDestructive, "Kai", datatable.Cell{Text: "Not scored", Muted: true, Align: datatable.AlignCenter}),
+	pillRow("4", "Decision: keep one theme token set", badge.VariantWarning, "Ada", datatable.Cell{Text: "64", Mono: true}),
 }
 
 // emptystateProps is the empty table's message and its Clear filters action.

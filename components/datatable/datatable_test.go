@@ -3,6 +3,7 @@ package datatable
 import (
 	"bytes"
 	"context"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -350,4 +351,53 @@ func TestDataTable_RowActionsMenuDestructiveConfirm(t *testing.T) {
 	out := render(t, Props{Columns: itemColumns, Rows: rows, Base: "/items"})
 	menu := out[strings.Index(out, `aria-label="Row actions"`):]
 	wantAll(t, menu, `role="menuitem"`, `hx-delete="/items/1"`, `hx-confirm="Sure?"`, `data-wf-confirm-title="Delete Alpha"`, `data-wf-confirm-label="Delete"`, `data-wf-confirm-destructive="true"`)
+}
+
+// tdClasses returns the class set of the <td> whose content starts with text.
+func tdClasses(t *testing.T, out, text string) map[string]bool {
+	t.Helper()
+	j := strings.Index(out, ">"+text+"<")
+	if j < 0 {
+		t.Fatalf("no cell %q in:\n%s", text, out)
+	}
+	td := out[strings.LastIndex(out[:j], "<td"):j]
+	m := regexp.MustCompile(`class="([^"]*)"`).FindStringSubmatch(td)
+	if m == nil {
+		t.Fatalf("td for %q has no class: %s", text, td)
+	}
+	set := map[string]bool{}
+	for _, f := range strings.Fields(m[1]) {
+		set[f] = true
+	}
+	return set
+}
+
+// TestDataTable_CellAlignOverridesColumn checks a cell's Align wins over its
+// column's, in both directions, and a zero Align inherits the column's.
+func TestDataTable_CellAlignOverridesColumn(t *testing.T) {
+	cols := []Column{{Key: "a", Label: "A"}, {Key: "n", Label: "N", Align: AlignRight}}
+	out := render(t, Props{Columns: cols, Rows: []Row{
+		{ID: "1", Cells: []Cell{{Text: "inheritLeft"}, {Text: "inheritRight"}}},
+		{ID: "2", Cells: []Cell{{Text: "toCenter", Align: AlignCenter}, {Text: "toLeft", Align: AlignLeft}}},
+	}})
+	cases := []struct {
+		text, want string
+		not        []string
+	}{
+		{"inheritLeft", "", []string{"text-right", "text-center", "text-left"}},
+		{"inheritRight", "text-right", []string{"text-center", "text-left"}},
+		{"toCenter", "text-center", []string{"text-right", "text-left"}},
+		{"toLeft", "text-left", []string{"text-right", "text-center"}},
+	}
+	for _, c := range cases {
+		got := tdClasses(t, out, c.text)
+		if c.want != "" && !got[c.want] {
+			t.Errorf("%s: want %s, got %v", c.text, c.want, got)
+		}
+		for _, n := range c.not {
+			if got[n] {
+				t.Errorf("%s: unexpected %s in %v", c.text, n, got)
+			}
+		}
+	}
 }
