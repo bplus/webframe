@@ -66,3 +66,17 @@ never to quiet a real one.
 
 Exit code 2 for a usage error. `make ui-check` is not part of `make check`
 because it needs the dev server running.
+
+## graph-check
+
+`graph-check.mjs` loads a page holding graphwidgets three times. First as is:
+every widget must contain a `<canvas>` of non-zero size, be marked
+`data-tui-graph-ready`, show no error box, and the page must log no console
+errors. Then with `3d-force-graph.min.js` blocked, and then with the graph JSON
+answering HTTP 500: each widget must show its error box and a console error
+must be logged. Exit 1 on any failure, 2 for a usage error.
+
+```bash
+make graph-check   # needs `make dev`; checks /graph against /api/graph
+node tools/graph-check.mjs --url http://localhost:3333/graph --data /api/graph
+```

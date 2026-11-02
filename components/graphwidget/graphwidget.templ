@@ -30,7 +30,6 @@ type Props struct {
 	Height          int              // px, 0 = fill container
 	BackgroundColor string           // default "transparent"
 	NodeColorMap    []NodeColorEntry // type->color; built-in palette if empty
-	ShowLabels      bool
 	EnableExpand    bool
 	ExpandURL       string // prefix for neighbor expansion endpoint
 	ControlType     string // "trackball" (default), "orbit", "fly"
@@ -65,14 +64,18 @@ func dimensionStr(v int) string {
 }
 
 // GraphWidget renders the mount point for an interactive 3D force-directed
-// graph: a container with data-tui-graph-* attributes and a loading
-// spinner, which graphwidget.min.js (see Script) replaces with a canvas
-// after fetching graph JSON from DataURL. Without Script on the page it
-// stays on the spinner. An empty ID gets a random one per render.
+// graph: a container with data-tui-graph-* attributes, an empty canvas
+// mount, a loading spinner and a hidden error box. graphwidget.min.js (see
+// Script) draws the graph into the mount and hides the spinner once graph
+// JSON from DataURL arrives. Without Script on the page it stays on the
+// spinner. An empty ID gets a random one per render. Node names show on
+// hover; there are no always-on text labels.
 //
-// Client-side failures: a failed DataURL fetch or invalid JSON replaces the
-// spinner with "Failed to load graph", but HTTP error statuses are not
-// checked. A failed ExpandURL fetch is only logged to the console.
+// Client-side failures are shown in the error box and logged with
+// console.error: the 3d-force-graph library missing, the graph failing to
+// construct (for example no WebGL), a DataURL fetch that fails or answers a
+// non-2xx status, and a body that is not JSON with a nodes array. A failed
+// ExpandURL fetch is only logged.
 templ GraphWidget(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -90,9 +93,6 @@ templ GraphWidget(props ...Props) {
 			data-tui-graph-bg={ p.BackgroundColor }
 		}
 		data-tui-graph-color-map={ colorMapJSON(p.NodeColorMap) }
-		if p.ShowLabels {
-			data-tui-graph-labels="true"
-		}
 		if p.EnableExpand {
 			data-tui-graph-expand="true"
 		}
@@ -112,13 +112,14 @@ templ GraphWidget(props ...Props) {
 		style={ fmt.Sprintf("width:%s;height:%s", dimensionStr(p.Width), dimensionStr(p.Height)) }
 		{ p.Attributes... }
 	>
-		<!-- Loading placeholder -->
+		<div data-tui-graph-mount class="absolute inset-0"></div>
 		<div data-tui-graph-loading class="absolute inset-0 flex items-center justify-center text-muted-foreground">
 			<div class="flex flex-col items-center gap-2">
 				@spinner.Spinner(spinner.Props{Size: spinner.SizeLg, Label: "Loading graph"})
 				<span class="text-xs" aria-hidden="true">Loading graph...</span>
 			</div>
 		</div>
+		<div data-tui-graph-error role="alert" hidden class="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-destructive bg-card"></div>
 	</div>
 }
 

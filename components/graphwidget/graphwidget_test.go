@@ -47,8 +47,8 @@ func TestLoadingStateUsesSpinner(t *testing.T) {
 }
 
 func TestContainerAttributes(t *testing.T) {
-	out := render(t, Props{ID: "g2", DataURL: "/d", Width: 300, Height: 200, ShowLabels: true})
-	for _, want := range []string{`id="g2"`, `data-tui-graph-data-url="/d"`, `data-tui-graph-labels="true"`, "width:300px;height:200px", `data-tui-graph-color-map="{}"`} {
+	out := render(t, Props{ID: "g2", DataURL: "/d", Width: 300, Height: 200})
+	for _, want := range []string{`id="g2"`, `data-tui-graph-data-url="/d"`, "width:300px;height:200px", `data-tui-graph-color-map="{}"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
@@ -79,5 +79,40 @@ func TestColorMapJSON_Escapes(t *testing.T) {
 	}
 	if got := colorMapJSON(nil); got != "{}" {
 		t.Errorf("colorMapJSON(nil) = %s, want {}", got)
+	}
+}
+
+// TestScriptHooks: graphwidget.min.js draws into data-tui-graph-mount (the
+// library empties its element, so the spinner and error box must be
+// siblings, not children) and reports failures in data-tui-graph-error,
+// which starts hidden and is an alert.
+func TestScriptHooks(t *testing.T) {
+	out := render(t, Props{ID: "g3", DataURL: "/d"})
+	mount := strings.Index(out, `<div data-tui-graph-mount class="absolute inset-0"></div>`)
+	loading := strings.Index(out, "data-tui-graph-loading")
+	errBox := strings.Index(out, `<div data-tui-graph-error role="alert" hidden`)
+	if mount < 0 || loading < 0 || errBox < 0 {
+		t.Fatalf("mount/loading/error hooks missing:\n%s", out)
+	}
+	if !(mount < loading && loading < errBox) {
+		t.Errorf("want mount, then loading, then error box in that order:\n%s", out)
+	}
+}
+
+// TestScriptLoadsLibraryThenGlue: the library tag comes first (both are
+// defer, so they run in document order) and nothing else is loaded.
+func TestScriptLoadsLibraryThenGlue(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Script().Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	out := buf.String()
+	lib := strings.Index(out, "/static/js/3d-force-graph.min.js")
+	glue := strings.Index(out, "/static/js/graphwidget.min.js")
+	if lib < 0 || glue < 0 || lib > glue {
+		t.Errorf("want 3d-force-graph.min.js before graphwidget.min.js:\n%s", out)
+	}
+	if n := strings.Count(out, "<script"); n != 2 {
+		t.Errorf("Script renders %d script tags, want 2:\n%s", n, out)
 	}
 }

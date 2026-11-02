@@ -1,0 +1,31 @@
+package pages
+
+import (
+	"github.com/bplus/webframe/components/graphwidget"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+)
+
+// Graph is the graph page body (GET /graph): two graphwidgets fed from
+// /api/graph, the second with its own colors and orbit controls, and
+// graphwidget.Script once. tools/graph-check.mjs loads this page.
+templ Graph() {
+	@layout.Stack(layout.StackProps{Gap: layout.GapL}) {
+		@pageheader.PageHeader(pageheader.Props{
+			Title:    "Graph",
+			Subtitle: "A 3D force-directed graph loaded from JSON. Drag to rotate, scroll to zoom, hover a node for its name.",
+		})
+		@graphwidget.GraphWidget(graphwidget.Props{ID: "graph-plain", DataURL: "/api/graph", Height: 360})
+		@graphwidget.GraphWidget(graphwidget.Props{
+			ID:          "graph-orbit",
+			DataURL:     "/api/graph",
+			Height:      360,
+			ControlType: "orbit",
+			NodeColorMap: []graphwidget.NodeColorEntry{
+				{Type: "service", Color: "#0ea5e9"},
+				{Type: "incident", Color: "#dc2626"},
+			},
+		})
+		@graphwidget.Script()
+	}
+}

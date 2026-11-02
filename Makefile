@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -48,3 +48,9 @@ ui-check: tools/node_modules/.bin/tailwindcss
 	node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png --ignore-console missing-avatar.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png --ignore-console missing-avatar.png
+
+# graphwidget in a real browser: a non-empty <canvas> in every widget on
+# /graph with no console errors, and a visible error box when the library or
+# the graph JSON is missing. Needs `make dev` running, like ui-check.
+graph-check: tools/node_modules/.bin/tailwindcss
+	node tools/graph-check.mjs --url http://localhost:3333/graph --data /api/graph
