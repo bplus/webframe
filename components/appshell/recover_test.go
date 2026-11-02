@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 )
 
 // captureLog routes the standard logger into a buffer for the test.
@@ -411,7 +412,14 @@ func TestMiddleware_HijackReachable(t *testing.T) {
 		_ = rw.Flush()
 		panic("after hijack") // logged; nothing may be written onto the hijacked connection
 	}))
-	srv := httptest.NewServer(h)
+	// The client can read "raw" before the server goroutine has logged the
+	// panic, so wait for Middleware to return before reading the log buffer
+	// (the channel close orders the write before the read).
+	done := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer close(done)
+		h.ServeHTTP(w, r)
+	}))
 	defer srv.Close()
 	res, err := http.Get(srv.URL)
 	if err != nil {
@@ -421,6 +429,11 @@ func TestMiddleware_HijackReachable(t *testing.T) {
 	body, _ := io.ReadAll(res.Body)
 	if res.StatusCode != 200 || string(body) != "raw" {
 		t.Errorf("%d %q, want the hijacked raw response", res.StatusCode, body)
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("handler did not return")
 	}
 	if got := logs.String(); !strings.Contains(got, "(request ") || strings.Contains(got, "render default 500") || strings.Contains(got, "hijacked") {
 		t.Errorf("want the panic logged and no 500 attempted on the hijacked connection, got:\n%s", got)
