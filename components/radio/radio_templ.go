@@ -14,14 +14,11 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// Props configures Radio. The zero value renders an enabled,
-// unchecked radio with no name or value — set Name to group radios so
-// the browser enforces single selection, and Value to make the
-// submitted form data meaningful. Class merges after the built-in
-// classes via utils.TwMerge; Attributes spread onto the <input>.
+// Props configures Radio. Set Name to group radios and Value for the
+// submitted data. Class merges after the built-in classes; Attributes
+// spread onto the <input>.
 type Props struct {
-	// ID is not auto-generated — supply one and mirror it in
-	// label.Props.For to make the label clickable.
+	// ID is not generated; set it and the label's For to link them.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -36,18 +33,9 @@ type Props struct {
 	Checked  bool
 }
 
-// Radio renders a single native <input type="radio"> restyled with
-// appearance-none plus a ::before inner dot; there is no wrapper
-// element and no children slot. Mutual exclusion is plain HTML: give
-// every radio in a set the same Name and a distinct Value.
-//
-// Accepts zero or one Props (elements past the first are ignored).
-// Returns a templ.Component rooted at the <input> element; no
-// scripts, Alpine wiring, or id generation.
-//
-// @pure
-// @invariant label association requires a caller-supplied ID equal to
-// label.Props.For — nothing here generates one.
+// Radio renders a single restyled <input type="radio">, with no wrapper
+// and no children. Give every radio in a set the same Name and a distinct
+// Value.
 func Radio(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -104,7 +92,7 @@ func Radio(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 49, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 37, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -123,7 +111,7 @@ func Radio(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 52, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 40, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -142,7 +130,7 @@ func Radio(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 55, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 43, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -161,7 +149,7 @@ func Radio(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 58, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/radio/radio.templ`, Line: 46, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {

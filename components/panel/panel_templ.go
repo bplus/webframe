@@ -203,8 +203,8 @@ func headerRow(p Props) templ.Component {
 	})
 }
 
-// Panel renders a titled region whose title is a heading at Level. A panel with no title, subtitle or
-// actions renders no header row.
+// Panel renders a titled region whose title is a heading at Level. A panel
+// with no title, subtitle or actions renders no header row.
 func Panel(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

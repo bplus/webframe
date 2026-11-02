@@ -4,13 +4,9 @@
 // something is in flight when there is no known final shape to hold with a
 // skeleton (a button that is working, a request indicator in a toolbar).
 //
-// Set Indicator to tie it to htmx: the root gains the htmx-indicator class
-// and the existing CSS rule fades it in while the enclosing hx-request is
-// pending and out again after. Without Indicator the spinner is always
-// visible and the caller shows or removes it.
-//
-// Phone: nothing special. The spinner is sized by Size alone and sits
-// inline with the text around it.
+// Set Indicator to tie it to htmx: the root gains the htmx-indicator class,
+// so it shows only while the enclosing request is pending. Without
+// Indicator the spinner is always visible.
 package spinner
 
 import "github.com/bplus/webframe/utils"
@@ -67,10 +63,8 @@ templ ring(size Size) {
 	</svg>
 }
 
-// Spinner renders the indicator: an inline-flex span with role="status"
-// holding the spinning ring and an sr-only Label. Accepts zero or one
-// Props; extras are ignored. With no Props it is a 20px muted ring labelled
-// "Loading".
+// Spinner renders the indicator: a role="status" span holding the spinning
+// ring and a screen-reader-only Label.
 templ Spinner(props ...Props) {
 	{{
 		var p Props
@@ -91,11 +85,8 @@ templ Spinner(props ...Props) {
 	</span>
 }
 
-// Inline renders a SizeSm spinner with label as visible text beside it, for
-// a control that is working ("Saving…" next to a disabled button, a row
-// that is being deleted). The label is the status text itself, so there is
-// no separate sr-only copy. The root is the same role="status" span as
-// Spinner's, in text-sm.
+// Inline renders a SizeSm spinner with label as visible status text beside
+// it, such as "Saving…" next to a disabled button.
 templ Inline(label string) {
 	<span role="status" class="inline-flex items-center gap-2 text-sm text-muted-foreground">
 		@ring(SizeSm)

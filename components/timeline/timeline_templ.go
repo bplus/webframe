@@ -398,21 +398,11 @@ func item(p Props, it Item, last bool) templ.Component {
 	})
 }
 
-// Timeline renders Props.Items as vertical dated events on a left rail. The
-// root is an <ol> of day groups (one <li> each, holding a heading row and an
-// inner <ol> of items), or a single flat group when NoGroups is set. Items
-// are sorted newest first (OldestFirst flips it) and grouped in
-// Props.Location or, when nil, each item's own location. Day headings are
-// <time datetime="YYYY-MM-DD"> with a readable date; each item shows HH:MM
-// in a <time datetime=RFC3339>, a dot toned by Variant (or Icon in its
-// place), the title as a link when Href is set, and Body and Meta muted.
-// Empty Items render emptystate.EmptyState(Props.Empty) in a <div> that
-// carries the same id, class and attributes. Only the first Props is used.
-//
-// Phone width (390px): see the package comment; the layout is the same,
-// the time moves above the title, and text wraps in the content column.
-//
-// @pure
+// Timeline renders Props.Items as vertical dated events on a left rail: an
+// <ol> of day groups, each a heading and an inner <ol> of items, or a
+// single flat group when NoGroups is set. Empty Items render
+// emptystate.EmptyState(Props.Empty) in a <div> carrying the same id, class
+// and attributes.
 func Timeline(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -457,7 +447,7 @@ func Timeline(props ...Props) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 98, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 88, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -519,7 +509,7 @@ func Timeline(props ...Props) templ.Component {
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 108, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/timeline/timeline.templ`, Line: 98, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
@@ -590,15 +580,9 @@ func Timeline(props ...Props) templ.Component {
 	})
 }
 
-// The tone class strings live here with the markup that uses them.
-// Tone returns the background class for the dot of variant v, from the
-// tokens the badge of the same variant uses: destructive, success, warning
-// and info are solid dots in their token; secondary is a muted dot; outline
-// is a hollow dot (border only); the default is the primary dot. toast and
-// banner have their own Tone for text and tint; this one is for a filled
-// dot and shares the same mapping.
-//
-// @pure
+// Tone returns the background class for the dot of variant v, using the
+// tokens the badge of the same variant uses. outline is a hollow dot; the
+// default is the primary dot.
 func Tone(v badge.Variant) string {
 	switch v {
 	case badge.VariantDestructive:

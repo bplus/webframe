@@ -13,15 +13,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Page renders the whole list page body (no shell): the page header, then,
-// inside a layout.TwoColumn when Aside is set, the intro line, the filter
-// bar, the toolbar and Results. See the package doc for the wiring and the
-// phone collapse. The root is <div id={ID}>; Class and Attributes land on
-// it.
-//
-// Base "" resolves to the request path stored by appshell.Middleware for
-// the filter bar's GET; datatable and pagination resolve it the same way
-// themselves.
+// Page renders the whole list page body without the shell: the page
+// header, then (inside a layout.TwoColumn when Aside is set) the intro
+// line, the filter bar, the toolbar and Results. See the package doc.
 templ Page(p Props) {
 	{{ base := p.base(appshell.PathFromContext(ctx)) }}
 	<div
@@ -70,12 +64,9 @@ templ bulkForm(p Props) {
 	}
 }
 
-// Results renders the swap region: <div id={ResultsID()}> holding the
-// datatable and the pagination, and nothing else (no header, no filter
-// bar, no out-of-band elements, so it can sit inside Page), so sort,
-// filter and page requests can replace it in place. The pagination
-// summary line is always present and the table header stays when there
-// are no rows, so only the rows change the region's height.
+// Results renders the swap region: <div id={ResultsID()}> holding only the
+// datatable and the pagination, so sort, filter and page requests can
+// replace it in place.
 templ Results(p Props) {
 	{{ base := p.base(appshell.PathFromContext(ctx)) }}
 	<div id={ p.ResultsID() } class="space-y-3">
@@ -84,16 +75,11 @@ templ Results(p Props) {
 	</div>
 }
 
-// resultsPart is what a results-only response carries (Respond for a
-// request targeting the results, RespondResults for a mutation): Results,
-// then the out-of-band updates htmx applies elsewhere on the page before
-// swapping the region: the filter bar's hidden sort/dir/per inputs (so a
-// sort chosen from a table header is what the next filter change sends),
-// with the Sort select in the hidden sort input's place when the bar has
-// one (so the select shows the served sort), and the intro line (so its
-// counts follow a delete or publish). Each replaces an element of the
-// same id and shape, so nothing on the page moves. Never rendered inside
-// Page, where the originals already are.
+// resultsPart is what a results-only response carries: Results, then
+// out-of-band copies of the filter bar's hidden sort/dir/per inputs (or the
+// Sort select) and the intro line, so a header sort carries into the next
+// filter change and the intro's counts follow a delete. It is never
+// rendered inside Page.
 templ resultsPart(p Props) {
 	@Results(p)
 	if p.hasFilterBar() {

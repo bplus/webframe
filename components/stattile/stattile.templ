@@ -115,26 +115,13 @@ templ body(p Props) {
 }
 
 // StatTile renders one dashboard stat as a card: an uppercase kicker label,
-// a large mono tabular value with an optional delta beside it and a
-// sparkline (or metricring) to its right, then a sub line and a caption. It
-// is the facelifted form of an earlier app's stat tile.
+// a large value with an optional delta beside it and a sparkline (or
+// metricring) to its right, then a sub line and a caption. Href makes the
+// whole tile a link.
 //
-// Accepts zero or one Props: called with no arguments it renders an empty
-// card with an empty value line; any Props beyond the first are ignored.
-// Href makes the whole tile an <a> (plain href; templ sanitizes it) with a
-// hover border in the primary color; otherwise the root is a <div>.
-// VariantDanger swaps the border for border-destructive, VariantMuted swaps
-// the surface for bg-muted. The sparkline and ring take the primary color.
-//
-// The tile has no outer margin or width: place it in layout.Inline with Wrap
-// or in dashboardgrid, which own the spacing. At phone width (390px) the tile
-// fills whatever column it is given; the value row keeps the graphic at a
-// fixed 110x30 (or 56px ring) and lets the value and delta wrap beneath each
-// other, so nothing overflows horizontally.
-//
-// @pure
-// @ai-context delta colors and arrows come from statcomparison.ToneClass and
-// statcomparison.Arrow (one shared mapping, nothing copied here).
+// The tile has no outer margin or width; place it in layout.Inline with
+// Wrap or in dashboardgrid. On narrow columns the value and delta wrap
+// while the graphic keeps its fixed size.
 templ StatTile(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

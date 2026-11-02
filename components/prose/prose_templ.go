@@ -8,15 +8,9 @@ package prose
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// Prose renders <div class="wf-prose ..."> holding either p.HTML verbatim
-// (the one permitted templ.Raw in the library: the caller vouches for the
-// markup, see the HTML type) or p.Text escaped as paragraphs, one <p> per
-// blank-line-separated block with <br> between the lines inside it. With
-// both set, HTML wins. Element typography comes from the .wf-prose rules in
-// the stylesheet, so the content needs no classes.
-//
-// Phone width (390px): the measure cap yields to the viewport; <pre> and
-// <table> scroll inside their own box; long words wrap.
+// Prose renders a .wf-prose block holding either p.HTML verbatim or p.Text
+// escaped as paragraphs. With both set, HTML wins. Typography comes from the
+// stylesheet, so the content needs no classes.
 func Prose(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -55,7 +49,7 @@ func Prose(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/prose/prose.templ`, Line: 15, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/prose/prose.templ`, Line: 9, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

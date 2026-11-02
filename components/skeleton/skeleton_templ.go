@@ -9,41 +9,19 @@
 
 //
 
-// The one rule every skeleton follows is height equivalence: a skeleton is
+// Every skeleton is the same height as the component it replaces: Table
 
-// the same height as the component it replaces. Table(rows, cols) is the
+// matches a non-dense datatable, Tile a stattile, Card a panel with a title
 
-// height of a non-dense datatable with that many rows (same table.Head
+// and three-line body, and Lines a text-sm paragraph. Pick the one whose
 
-// h-10 header, same table.Cell p-3 padding, a bar the height of one text-sm
-
-// line in each cell), Tile() is the height of a stattile with a label, a
-
-// value with a delta and one sub line, Card() is a panel with a title and a
-
-// three-line body, and Lines(n) is n h-4 bars at a space-y-1 gap. A skeleton
-
-// is a placeholder for a known shape, never a generic shimmer: pick the one
-
-// whose real counterpart will be swapped in.
+// real counterpart will be swapped in.
 
 //
 
-// Every root carries aria-busy="true" so assistive tech knows the region is
+// Every root carries aria-busy="true", the bars are aria-hidden, and one
 
-// loading, the bars are aria-hidden (they carry no information), and one
-
-// sr-only "Loading…" text names the state. Colors come from the theme's
-
-// bg-muted token only; the pulse is Tailwind's animate-pulse.
-
-//
-
-// Phone: nothing special. A skeleton is as wide as its parent; the table
-
-// skeleton uses the same max-md:px-2 cell padding as datatable so it stays
-
-// height-equal at 390px too.
+// screen-reader-only "Loading…" text names the state.
 
 package skeleton
 
@@ -69,11 +47,8 @@ type Props struct {
 // from it. It is aria-hidden because it carries no information.
 const bar = "rounded bg-muted animate-pulse"
 
-// tablePad mirrors datatable's non-dense headPad/cellPad: table.Head's
-// h-10 px-3 and table.Cell's p-3, with the horizontal padding dropping to
-// px-2 below md. datatable's helpers are unexported, so the class is
-// replicated here; keep the two in step if datatable's phone padding
-// changes.
+// tablePad mirrors datatable's non-dense cell padding; keep the two in
+// step.
 const tablePad = "max-md:px-2"
 
 // loading is the one sr-only text every skeleton root contains.
@@ -113,13 +88,9 @@ func first(props []Props) Props {
 	return Props{}
 }
 
-// Lines renders n rounded h-4 bars stacked at a space-y-1 gap, the last one
-// two thirds wide so the block reads as a paragraph. n below 1 renders one
-// bar. Height: n*20px - 4px, the pitch of a text-sm paragraph (20px lines),
-// so it stands in for one at the same height. Prefer Card, Table or Tile
-// when the real shape is one of those.
-//
-// Accepts zero or one Props; extras are ignored.
+// Lines renders n bars at the line pitch of a text-sm paragraph, the last
+// one shorter. n below 1 renders one bar. Prefer Card, Table or Tile when
+// the real shape is one of those.
 func Lines(n int, props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -162,7 +133,7 @@ func Lines(n int, props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 77, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 59, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -234,13 +205,8 @@ func Lines(n int, props ...Props) templ.Component {
 	})
 }
 
-// Card renders a panel-shaped block: the same rounded border and bg-card
-// surface as panel, a header row at panel's px-4 py-3 holding a title bar
-// the height of panel's h3 (16px, leading-none), then a p-4 body with three
-// Lines. Height equals a panel.Panel with a Title and three h-4 lines of
-// body (40px header + 96px body).
-//
-// Accepts zero or one Props; extras are ignored.
+// Card renders a panel-shaped block the height of a panel.Panel with a
+// Title and three lines of body.
 func Card(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -280,7 +246,7 @@ func Card(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 101, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 78, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -416,16 +382,9 @@ func Card(props ...Props) templ.Component {
 	})
 }
 
-// Table renders a table.Table with cols header cells and rows body rows of
-// bars, at the same paddings as a non-dense datatable: table.Head's h-10
-// header and table.Cell's p-3 cells holding an h-5 bar (one text-sm line),
-// so each body row is 44px plus its border, exactly a datatable row. rows
-// or cols below 1 render as 1. Rows do not highlight on hover. The sr-only
-// "Loading…" text is the table's caption (a span is not valid between a
-// <table> and its sections).
-//
-// Accepts zero or one Props; extras are ignored. ID, Class and Attributes
-// land on table.Table's wrapper div, as for any table.
+// Table renders a table.Table of bars with cols columns and rows body rows,
+// each row the height of a non-dense datatable row. rows or cols below 1
+// render as 1. The "Loading…" text is the table's caption.
 func Table(rows, cols int, props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -646,14 +605,8 @@ func Table(rows, cols int, props ...Props) templ.Component {
 	})
 }
 
-// Tile renders the stattile shape at stattile's surface and padding
-// (rounded-lg border bg-card p-4 min-h-24): a label bar (h-4, mb-1.5, the
-// 11px kicker's line), a value row with a 28px bar (the font-mono
-// text-[28px] leading-none value) and a shorter h-4 delta bar beside it,
-// then an h-4 sub bar at mt-1.5. Height equals a stattile.StatTile with
-// Label, Value, Delta and Sub set and no Spark or Ring (104px).
-//
-// Accepts zero or one Props; extras are ignored.
+// Tile renders the shape of a stattile.StatTile with Label, Value, Delta
+// and Sub set and no Spark or Ring.
 func Tile(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -693,7 +646,7 @@ func Tile(props ...Props) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 180, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 144, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {

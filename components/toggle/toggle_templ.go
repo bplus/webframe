@@ -20,17 +20,12 @@ const (
 	SizeS Size = "s"
 )
 
-// Props configures Toggle. The zero value renders an enabled, unchecked
-// switch that submits "on" when checked (the HTML default value is
-// written out explicitly when Value is empty). Class merges after the
-// root <label>'s built-in classes via utils.TwMerge; ID and Attributes
-// go on the <input> (the control), not the <label>, so aria-*, hx-*
-// and data-* attributes land on the element they describe — the same
-// split checkbox.Props uses.
+// Props configures Toggle. The zero value is an enabled, unchecked switch
+// that submits "on" when checked. Class merges onto the root <label>; ID
+// and Attributes go on the <input>, as with checkbox.Props.
 type Props struct {
-	// ID is the <input>'s id; supply one to target the control from an
-	// external label (label.Props.For) or aria-labelledby. Not
-	// auto-generated.
+	// ID is the <input>'s id, for an external label or aria-labelledby.
+	// It is not generated.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -45,22 +40,10 @@ type Props struct {
 	Size Size
 }
 
-// Toggle renders a CSS-only switch: a native <input type="checkbox"
-// role="switch"> that is visually hidden (sr-only) but focusable and
-// clickable, followed by a track <span> styled through peer-* variants
-// (checked moves the thumb and fills the track with the primary color,
-// focus-visible draws the ring, disabled dims it). The root is an
-// inline-flex <label>, so clicking anywhere on the switch or its text
-// toggles it; children are optional inline text rendered after the
-// switch. No script is needed — there is no Script() in this package.
-//
-// Accepts zero or one Props (elements past the first are ignored).
-// Phone width: the switch is a fixed-size inline element and its text
-// wraps; nothing collapses.
-//
-// @pure no id generation or randomness; markup is deterministic.
-// @invariant external label association requires a caller-supplied ID
-// equal to label.Props.For — nothing here generates one.
+// Toggle renders a CSS-only switch: a visually hidden <input
+// type="checkbox" role="switch"> followed by a styled track. The root is a
+// <label>, so clicking the switch or its text (the optional children)
+// toggles it. No script is needed.
 func Toggle(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -128,7 +111,7 @@ func Toggle(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 68, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 51, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -147,7 +130,7 @@ func Toggle(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 71, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 54, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -166,7 +149,7 @@ func Toggle(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 74, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 57, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -190,7 +173,7 @@ func Toggle(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 79, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toggle/toggle.templ`, Line: 62, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

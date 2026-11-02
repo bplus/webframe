@@ -21,15 +21,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Page renders the whole list page body (no shell): the page header, then,
-// inside a layout.TwoColumn when Aside is set, the intro line, the filter
-// bar, the toolbar and Results. See the package doc for the wiring and the
-// phone collapse. The root is <div id={ID}>; Class and Attributes land on
-// it.
-//
-// Base "" resolves to the request path stored by appshell.Middleware for
-// the filter bar's GET; datatable and pagination resolve it the same way
-// themselves.
+// Page renders the whole list page body without the shell: the page
+// header, then (inside a layout.TwoColumn when Aside is set) the intro
+// line, the filter bar, the toolbar and Results. See the package doc.
 func Page(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -64,7 +58,7 @@ func Page(p Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.id())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 28, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 22, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -175,7 +169,7 @@ func body(p Props, base string) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.introID())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 47, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 41, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -201,7 +195,7 @@ func body(p Props, base string) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Intro)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 47, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 41, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -307,12 +301,9 @@ func bulkForm(p Props) templ.Component {
 	})
 }
 
-// Results renders the swap region: <div id={ResultsID()}> holding the
-// datatable and the pagination, and nothing else (no header, no filter
-// bar, no out-of-band elements, so it can sit inside Page), so sort,
-// filter and page requests can replace it in place. The pagination
-// summary line is always present and the table header stays when there
-// are no rows, so only the rows change the region's height.
+// Results renders the swap region: <div id={ResultsID()}> holding only the
+// datatable and the pagination, so sort, filter and page requests can
+// replace it in place.
 func Results(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -342,7 +333,7 @@ func Results(p Props) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.ResultsID())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 81, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 72, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -368,16 +359,11 @@ func Results(p Props) templ.Component {
 	})
 }
 
-// resultsPart is what a results-only response carries (Respond for a
-// request targeting the results, RespondResults for a mutation): Results,
-// then the out-of-band updates htmx applies elsewhere on the page before
-// swapping the region: the filter bar's hidden sort/dir/per inputs (so a
-// sort chosen from a table header is what the next filter change sends),
-// with the Sort select in the hidden sort input's place when the bar has
-// one (so the select shows the served sort), and the intro line (so its
-// counts follow a delete or publish). Each replaces an element of the
-// same id and shape, so nothing on the page moves. Never rendered inside
-// Page, where the originals already are.
+// resultsPart is what a results-only response carries: Results, then
+// out-of-band copies of the filter bar's hidden sort/dir/per inputs (or the
+// Sort select) and the intro line, so a header sort carries into the next
+// filter change and the intro's counts follow a delete. It is never
+// rendered inside Page.
 func resultsPart(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -422,7 +408,7 @@ func resultsPart(p Props) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.introID())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 103, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 89, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -448,7 +434,7 @@ func resultsPart(p Props) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.Intro)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 103, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/listpage/listpage.templ`, Line: 89, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {

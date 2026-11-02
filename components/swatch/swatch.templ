@@ -15,8 +15,6 @@ type Props struct {
 
 // Swatch renders a small color square followed by an optional label.
 // Only the first Props is used.
-//
-// @pure
 templ Swatch(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

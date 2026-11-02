@@ -8,18 +8,13 @@ import (
 	"github.com/bplus/webframe/components/appshell"
 )
 
-// Send appends the toast to the response for an htmx request: it renders
-// OOB(p) to w, which htmx swaps into #toast-container out of band. For a
-// request that is not from htmx (appshell.IsHX is false) it writes nothing
-// and returns nil: such a handler ends in a redirect or a full page, where
-// a toast fragment has nowhere to land; it should set a one-shot flash
-// (package flash) instead.
+// Send appends OOB(p) to the response for an htmx request. For a non-htmx
+// request it writes nothing and returns nil; use a flash (package flash)
+// there instead.
 //
-// Send never sets the status code: the handler's main response does, and
-// Send is normally called after that response's body. It sets Content-Type
-// to HTML only when nothing has set one yet (a handler whose only output
-// is the toast; for an error status use Respond, which also tells htmx to
-// swap nothing). A render error is returned, not written.
+// Send never sets the status code and is normally called after the main
+// response body. It sets Content-Type only when none is set yet. For a
+// toast-only error response use Respond.
 func Send(w http.ResponseWriter, r *http.Request, p Props) error {
 	if !appshell.IsHX(r) {
 		return nil
@@ -30,15 +25,11 @@ func Send(w http.ResponseWriter, r *http.Request, p Props) error {
 	return OOB(p).Render(r.Context(), w)
 }
 
-// Respond makes the toast the whole response: the action failed (or had
-// nothing to show) and nothing on the page changes except the toast. It
-// sets HX-Reswap: none, so htmx leaves the request's target untouched
-// (appshell.Document configures htmx to swap error statuses too, and
-// without this header a toast-only 409 would replace the target with an
-// empty body), sets Content-Type, writes status (0 → 200) and renders
-// OOB(p). For a request that is not from htmx it writes status and the
-// title and body as plain text; such a handler normally prefers a flash
-// and a redirect.
+// Respond makes the toast the whole response, leaving the page unchanged
+// except for the toast. It sets HX-Reswap: none, so htmx does not replace
+// the request's target even on an error status, writes status (0 means
+// 200) and renders OOB(p). For a non-htmx request it writes the title and
+// body as plain text.
 func Respond(w http.ResponseWriter, r *http.Request, status int, p Props) error {
 	if status == 0 {
 		status = http.StatusOK

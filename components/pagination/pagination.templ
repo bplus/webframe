@@ -24,25 +24,10 @@ const (
 
 // Pagination renders the range summary and the page controls for one list.
 //
-// The summary line ("1–25 of 140 items", "0 items") is ALWAYS rendered, even
-// for zero rows or a single page, so the row below a table never appears or
-// disappears between requests. Previous and Next render as links, or as
-// <span aria-disabled="true"> at the first and last page, so the row keeps
-// its width. The numbered page list (window: at most seven entries, 0 as an
-// ellipsis) is hidden below md and the current page is
-// <span aria-current="page">. Every link comes from
-// listquery.Spec.URL(base, listquery.WithPage(n)), so sort, search, filters
-// and a non-default page size carry along, escaped; page 1 is omitted
-// (Previous from page 2 links to the bare base). With HxTarget set, links
-// also carry hx-get, hx-target and hx-push-url="true".
-//
-// Phone width: the nav wraps, summary above, Previous/Next below; the
-// numbered list is hidden (hidden md:flex).
-//
-// Only the first Props is used; a zero Props renders "0" with both steps
-// disabled.
-//
-// @pure
+// The summary line ("1–25 of 140 items") is always rendered, and Previous
+// and Next become disabled spans at the ends, so the row never changes size
+// between requests. The numbered page list is hidden below md. Every link
+// keeps the Spec's other parameters (sort, search, filters, page size).
 templ Pagination(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

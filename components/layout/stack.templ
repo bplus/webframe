@@ -48,8 +48,6 @@ func wrapClass(w bool) string {
 // children along the column when the Stack has room to spare (see
 // StackProps). On phones it renders unchanged: a column is already the
 // narrow-width layout.
-//
-// @pure
 templ Stack(props ...StackProps) {
 	{{ var p StackProps }}
 	if len(props) > 0 {
@@ -69,8 +67,6 @@ templ Stack(props ...StackProps) {
 // Inline lays children out horizontally with a uniform gap, centered
 // vertically by default. Below md (phone width) the row always wraps;
 // Wrap makes it wrap at every width.
-//
-// @pure
 templ Inline(props ...InlineProps) {
 	{{ var p InlineProps }}
 	if len(props) > 0 {

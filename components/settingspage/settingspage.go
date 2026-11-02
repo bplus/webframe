@@ -1,34 +1,19 @@
 // Package settingspage renders a settings screen: a page header, then one
-// <form> holding an error summary banner (errors only) and one h2 section
-// per Group of fields, then optional After content (a section that is not
-// a group of fields, such as a "Danger zone" with its own actions), and
-// last a save bar that stays stuck to the bottom of the viewport while the
-// page is longer than the screen. The save bar is always rendered (it
-// never appears on the first edit) and holds Cancel (ghost) and Submit
-// ("Save changes", primary), right-aligned. It is the page's last child,
-// not the form's: the submit button carries form=<form id>, so it submits
-// the form from outside it, and an htmx error re-render that swaps the
-// form leaves the bar (and After) where they are. Like formpage, the
-// caller declares the fields once and hands over the current Values (and,
-// after a failed POST, the Errors) by field name; the field resolution,
-// the banner and the submit button are formpage's own
-// (formpage.ResolveField, formpage.ErrorBanner, formpage.Submit), so a
-// settings page and a form page behave identically on a round trip.
+// <form> holding an error summary banner and one h2 section per Group of
+// fields, then optional After content (such as a "Danger zone"), and last a
+// save bar stuck to the bottom of the viewport with Cancel and Submit.
 //
-// Phone width (390px): the header, banner, sections and After stack in
-// one column and each Fieldset's grid is one column below md, so every
-// field takes the full width. The save bar spans the width of the content
-// column and its two buttons stay on one row (a third would wrap); its
-// bottom padding adds the device's safe-area inset, so on a phone with a
-// home indicator the buttons sit above it. The bar is the last child of
-// the page root, so once the page is scrolled to the end it sits in flow
-// below the last field (or below After) and covers nothing. The page root
-// carries the wf-settings class; the stylesheet gives every focusable
-// control under it a scroll-margin-bottom, so a control the browser
-// scrolls into view on Tab lands clear of the bar. While the on-screen
-// keyboard is open, mobile browsers pin bottom-stuck elements to the
-// layout viewport, which may be behind the keyboard until the field loses
-// focus; the bar is reachable again as soon as the keyboard closes.
+// The save bar is the page's last child, not the form's: its submit button
+// carries form=<form id>, so an htmx error re-render that swaps the form
+// leaves the bar and After in place. Field resolution, the banner and the
+// submit button are formpage's own, so a settings page and a form page
+// behave identically on a round trip.
+//
+// On a phone everything stacks in one column and the save bar's bottom
+// padding includes the safe-area inset. The page root carries the
+// wf-settings class, under which focusable controls get a
+// scroll-margin-bottom so a control scrolled into view lands clear of the
+// bar.
 package settingspage
 
 import (
@@ -51,12 +36,9 @@ import (
 type Group struct {
 	ID, Title, Description string
 	Fields                 []formfield.Field
-	// Content, when non-nil, renders inside the section after the fieldset
-	// and inside the <form>, so a widget that is not a formfield.Field (a
-	// keyvalueeditor, a prose note, a codeblock) is posted by the save bar's
-	// button with the fields and is re-rendered by an error swap of the
-	// form; the handler reads it from r.Form like any field. A group with
-	// Content and no Fields renders no fieldset, only the Content.
+	// Content, when non-nil, renders inside the section after the fieldset,
+	// inside the <form>, so a widget that is not a formfield.Field is posted
+	// with the fields. A group with no Fields renders only the Content.
 	Content templ.Component
 }
 
@@ -71,23 +53,18 @@ type Props struct {
 	Attributes templ.Attributes
 
 	Header pageheader.Props
-	// After, when set, renders after the form and before the save bar:
-	// content that belongs on the settings page but is not a group of
-	// fields, such as a layout.Section titled "Danger zone" holding a
-	// destructive action with its own request. It is outside the form, so
-	// a submit never posts it and an htmx error re-render (which swaps
-	// the form alone) never redraws it; the save bar stays stuck to the
-	// viewport bottom while it scrolls past.
+	// After, when set, renders after the form and before the save bar, for
+	// content that is not a group of fields, such as a "Danger zone"
+	// section with its own actions. It is outside the form, so a submit
+	// never posts it and an error re-render never redraws it.
 	After templ.Component
 	// Action is the submit URL (plain; templ sanitizes it).
 	Action string
 	// Method is "post" when empty.
 	Method string
-	// HxPost submits over htmx: the form gets hx-post=Action,
-	// hx-target="#"+ID and hx-swap="outerHTML", so an error re-render
-	// (Respond on a plain htmx request targeting the form) swaps the
-	// whole form in place (the save bar lives outside it). Action and Method are
-	// still emitted, so the form works without JS.
+	// HxPost submits over htmx, swapping the whole form in place on an
+	// error re-render. Action and Method are still emitted, so the form
+	// works without JS.
 	HxPost bool
 	Groups []Group
 	// Values override Field.Value by Name, exactly as formpage.Props.Values
@@ -99,25 +76,20 @@ type Props struct {
 	// counted and listed (as a form-level error, without a link).
 	Errors map[string]string
 	// Submit is the submit button; the zero value is Label "Save changes"
-	// with VariantPrimary. Href and Hx* on it are ignored: it always
-	// renders as <button type="submit" form=ID>, since the save bar sits
-	// outside the form (Form on it is overwritten with the form's id).
+	// with VariantPrimary. It always renders as <button type="submit"
+	// form=ID>; Href, Hx* and Form on it are ignored.
 	Submit action.Action
-	// Cancel, when set, renders before Submit in the save bar as a ghost
-	// button unless given another Variant (the zero Variant is the
-	// secondary style, so ghost is the default here, not secondary). It
-	// is usually a plain link back to where the user came from.
+	// Cancel, when set, renders before Submit in the save bar, as a ghost
+	// button unless given a Variant. It is usually a link back.
 	Cancel *action.Action
 	// Hidden renders as hidden inputs at the top of the form (form.Form).
 	Hidden map[string]string
 	// Validate is the default blur-validation URL (formfield.Field.Validate)
 	// for every field that has none of its own; "" wires nothing.
 	Validate string
-	// Multipart emits enctype="multipart/form-data"; required for a
-	// TypeFile field. The handler of a multipart form must call
-	// r.ParseMultipartForm before reading any value: a prior r.ParseForm
-	// parses only the URL query and leaves the body unread, so r.FormValue
-	// then returns "" for every field in the body.
+	// Multipart emits enctype="multipart/form-data", required for a
+	// TypeFile field. Its handler must call r.ParseMultipartForm before
+	// reading values; r.ParseForm leaves a multipart body unread.
 	Multipart bool
 }
 
@@ -183,11 +155,8 @@ func (p Props) formProps() form.Props {
 	return fp
 }
 
-// submit returns the Submit action with the defaults applied ("Save
-// changes", primary), marked Submit, and bound to the form by id: the
-// button renders in the save bar outside the <form>, and the form
-// attribute is what makes a button submit a form it is not inside (htmx
-// honors it too, so an HxPost form still submits over htmx).
+// submit returns the Submit action with its defaults, bound to the form by
+// id because the button renders outside the <form>.
 func (p Props) submit() action.Action {
 	a := formpage.Submit(p.Submit, "Save changes")
 	a.Form = p.id()
@@ -207,30 +176,18 @@ func (p Props) cancel() (action.Action, bool) {
 	return a, true
 }
 
-// saveBarClass is the sticky save bar: stuck to the bottom of the viewport
-// above the page content (z-20, under dialogs and sheets), separated by a
-// top border, on a translucent blurred page background so the fields
-// scrolling under it stay faintly visible, with the safe-area inset added
-// to its bottom padding.
+// saveBarClass is the sticky save bar, above page content but under
+// dialogs and sheets, with the safe-area inset added to its bottom padding.
 const saveBarClass = "wf-settings-bar sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
 
 // Respond writes the settings page for r through the appshell App installed
-// by (*App).Middleware, as formpage.Respond does: the whole document for a
-// normal request (plain GET/POST, boosted navigation, history restore),
-// the bare page (header, form, After, save bar) for a plain htmx request
-// with any other target, and the <form> alone (Body) for a plain htmx
-// request whose HX-Target is the form's id, which is what an HxPost
-// submit sends, so the error re-render swaps the form in place and leaves
-// After and the save bar untouched.
+// by (*App).Middleware, as formpage.Respond does. An htmx request targeting
+// the form's id (an HxPost submit) gets the <form> alone, so an error
+// re-render leaves After and the save bar untouched.
 //
-// Respond never redirects. The POST handler decides: on validation errors
-// it sets p.Values from the submitted form and p.Errors, then calls Respond,
-// which answers 422 Unprocessable Entity (appshell.Document configures htmx
-// to swap error responses, so the form re-renders in place with every
-// submitted value kept and a truthful status); on success it redirects
-// (303 See Other, or for an htmx submit an HX-Redirect header with an
-// empty 200 body); a flash.Success set before the redirect shows once on
-// the next page.
+// Respond never redirects. On validation errors the POST handler sets
+// p.Values and p.Errors and calls Respond, which answers 422 Unprocessable
+// Entity; on success the handler redirects itself.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

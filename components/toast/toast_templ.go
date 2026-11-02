@@ -41,17 +41,11 @@
 
 //
 
-// Phone width (390px): .wf-toast-container stays at the top and spans the
+// On a phone the toast stack sits at the top of the screen, full width
 
-// width minus 16px gutters; each toast stretches to that width. The stack
+// minus gutters, above slide-over panels, so it never covers a sheet's
 
-// sits above a slideover panel and backdrop (z-index 70 over 60/55), so a
-
-// toast fired while a bottom sheet is open is still seen, and being at the
-
-// top it never covers the sheet's buttons, a submit button or the field
-
-// above an on-screen keyboard.
+// buttons or the field above an on-screen keyboard.
 
 package toast
 
@@ -139,18 +133,14 @@ func (p Props) initExpr() string {
 	return fmt.Sprintf("setTimeout(() => show = false, %d)", p.timeoutMS())
 }
 
-// removeDelayMS is how long after show=false the toast element is removed
-// from the DOM: longer than x-transition's default leave (75ms), so the
-// fade finishes first, and a plain timer, so a toast whose transition
-// never runs (reduced motion, a transition override) is removed all the
-// same.
+// removeDelayMS is how long after show=false the toast element is removed:
+// longer than x-transition's default leave, and a plain timer so the toast
+// is removed even when no transition runs.
 const removeDelayMS = 300
 
 // effectExpr is the Alpine x-effect expression that removes the toast
-// element once show is false. x-effect re-runs when show changes; it is a
-// no-op while show is true, so the element is removed exactly once, after
-// the leave transition x-show ran. Without it a dismissed toast would stay
-// in #toast-container as display:none for the life of the page.
+// element once show is false, so dismissed toasts do not accumulate in
+// #toast-container.
 func effectExpr() string {
 	return fmt.Sprintf("if (!show) setTimeout(() => $el.remove(), %d)", removeDelayMS)
 }
@@ -220,16 +210,11 @@ func kindIcon(k Kind) templ.Component {
 	})
 }
 
-// Toast renders one toast. Error toasts carry role="alert"; every other
-// kind carries role="status". Alpine on the root owns its lifetime: the
-// dismiss button and (unless Sticky) a timer set show=false, x-transition
-// fades it, x-show then removes it from the flow so the stack collapses,
-// and an x-effect removes the element from the DOM removeDelayMS later
-// (also when no transition ran), so a long-lived page does not collect
-// dead toasts. Rendered on its own it appears wherever it is placed (the
-// showcase renders it inline); OOB and Send add the out-of-band swap that
-// sends it to #toast-container. It renders nothing when Title and Body are
-// both empty.
+// Toast renders one toast: role="alert" for errors, role="status"
+// otherwise. The dismiss button and (unless Sticky) a timer hide it, and it
+// is then removed from the DOM. Rendered on its own it appears where it is
+// placed; OOB and Send route it to #toast-container. It renders nothing
+// when Title and Body are both empty.
 func Toast(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -269,7 +254,7 @@ func Toast(p Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 169, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 157, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -300,7 +285,7 @@ func Toast(p Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(banner.Role(p.variant()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 172, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 160, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -313,7 +298,7 @@ func Toast(p Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(effectExpr())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 176, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 164, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -331,7 +316,7 @@ func Toast(p Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.initExpr())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 178, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 166, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -388,7 +373,7 @@ func Toast(p Props) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 186, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 174, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -407,7 +392,7 @@ func Toast(p Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Body)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 189, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 177, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -437,13 +422,10 @@ func Toast(p Props) templ.Component {
 
 // OOB renders Toast inside a wrapper carrying
 // hx-swap-oob="beforeend:#toast-container", so htmx appends it to the
-// container the Document rendered instead of swapping it into the
-// request's target. The wrapper is needed: for an out-of-band swap style
-// other than outerHTML htmx inserts the element's content, not the element
-// (measured 2026-10-31: with the attribute on the toast root only the
-// inner block arrived, without role, auto-dismiss or the dismiss handler).
-// Send and Respond write it; use OOB directly when the toast is one of
-// several components in a response body. Renders nothing when Toast does.
+// toast container instead of the request's target. The wrapper is needed
+// because for this swap style htmx inserts the element's content, not the
+// element itself. Use OOB directly when the toast is one of several
+// components in a response body.
 func OOB(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

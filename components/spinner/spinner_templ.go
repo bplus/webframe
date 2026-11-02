@@ -13,19 +13,11 @@
 
 //
 
-// Set Indicator to tie it to htmx: the root gains the htmx-indicator class
+// Set Indicator to tie it to htmx: the root gains the htmx-indicator class,
 
-// and the existing CSS rule fades it in while the enclosing hx-request is
+// so it shows only while the enclosing request is pending. Without
 
-// pending and out again after. Without Indicator the spinner is always
-
-// visible and the caller shows or removes it.
-
-//
-
-// Phone: nothing special. The spinner is sized by Size alone and sits
-
-// inline with the text around it.
+// Indicator the spinner is always visible.
 
 package spinner
 
@@ -128,10 +120,8 @@ func ring(size Size) templ.Component {
 	})
 }
 
-// Spinner renders the indicator: an inline-flex span with role="status"
-// holding the spinning ring and an sr-only Label. Accepts zero or one
-// Props; extras are ignored. With no Props it is a 20px muted ring labelled
-// "Loading".
+// Spinner renders the indicator: a role="status" span holding the spinning
+// ring and a screen-reader-only Label.
 func Spinner(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -174,7 +164,7 @@ func Spinner(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 83, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 77, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -221,7 +211,7 @@ func Spinner(props ...Props) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.label())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 90, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 84, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -235,11 +225,8 @@ func Spinner(props ...Props) templ.Component {
 	})
 }
 
-// Inline renders a SizeSm spinner with label as visible text beside it, for
-// a control that is working ("Saving…" next to a disabled button, a row
-// that is being deleted). The label is the status text itself, so there is
-// no separate sr-only copy. The root is the same role="status" span as
-// Spinner's, in text-sm.
+// Inline renders a SizeSm spinner with label as visible status text beside
+// it, such as "Saving…" next to a disabled button.
 func Inline(label string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -276,7 +263,7 @@ func Inline(label string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 102, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/spinner/spinner.templ`, Line: 93, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {

@@ -41,23 +41,11 @@ type Props struct {
 	Decoration  Decoration
 }
 
-// Separator renders a visual divider between regions, optionally with a
-// small text label centered on the line (pass the label as children;
-// note the padded label chip is emitted even when children are empty,
-// leaving a small gap at the line's center — px-2 wide horizontally,
-// py-2 tall vertically). Call with no
-// arguments for
-// a solid horizontal rule; only the first Props is used and extras are
-// silently ignored. Returns a templ.Component rendering a
-// <div role="separator" aria-orientation="..."> containing the rule
-// (aria-hidden) and a children slot on a bg-background chip that masks
-// the line behind the label.
-//
-// @pure
-// @ai-context The children label chip uses bg-background to cover the
-// rule, so on a non-default background (e.g. inside bg-card) the chip
-// color will not match its surroundings unless overridden. Vertical
-// orientation needs an explicit height from the parent (root is h-full).
+// Separator renders a divider between regions, optionally with a label
+// (the children) centered on the line. The label sits on a bg-background
+// chip that masks the line, so on another surface (such as bg-card)
+// override its color. The chip is emitted even with no children, leaving a
+// small gap at the center.
 templ Separator(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

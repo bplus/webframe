@@ -10,35 +10,17 @@ type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	// For is the id of the control this label describes (HTML for
-	// attribute). Inputs that auto-generate ids (input, textarea) must
-	// be given an explicit matching ID for this pairing to hold.
+	// For is the id of the control this label describes. Controls that
+	// generate random ids (input, textarea) need an explicit matching ID.
 	For string
-	// Error, when non-empty, switches the label text to the
-	// destructive color. Only its presence is used — the string itself
-	// is never rendered (pair with form.Message for the text).
+	// Error, when non-empty, switches the label text to the destructive
+	// color. The string itself is not rendered; use form.Message for it.
 	Error string
 }
 
-// Label renders a <label> with children as its content, linked to a
-// form control through Props.For so clicking the text focuses or
-// toggles that control. A non-empty Error recolors the text
-// destructive without rendering the message itself.
-//
-// The hardcoded data-tui-label-disabled-style attribute carries the
-// classes ("opacity-50 cursor-not-allowed") that /static/js/
-// label.min.js applies to the label whenever the referenced control is
-// disabled — include Script() to activate that dimming.
-//
-// Accepts zero or one Props (elements past the first are ignored).
-// Returns a templ.Component rooted at the <label> element.
-//
-// @pure
-// @invariant For must equal the target control's rendered id;
-// components that auto-generate ids (input.Input, textarea.Textarea)
-// need an explicit Props.ID for the association to survive.
-// @temporal-coupling disabled-state dimming is inert unless Script()
-// is included on the page.
+// Label renders a <label> linked to a form control through Props.For.
+// When Script is on the page, the label dims while its control is
+// disabled.
 templ Label(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -65,14 +47,8 @@ templ Label(props ...Props) {
 	</label>
 }
 
-// Script emits the deferred <script> tag that watches labeled
-// controls and applies the label's disabled-style classes when the
-// control is disabled. CSP-nonced via templ.GetNonce, cache-busted via
-// utils.ScriptURL; include once per page, placement flexible.
-//
-// @idempotent same output for a given render context (the ?v= version
-// is fixed at startup; only the CSP nonce from templ.GetNonce varies
-// per request).
+// Script emits the deferred script tag that dims a label while its control
+// is disabled. Include it once per page.
 templ Script() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ utils.ScriptURL("/static/js/label.min.js") }></script>
 }

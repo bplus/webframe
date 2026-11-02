@@ -283,26 +283,13 @@ func body(p Props) templ.Component {
 }
 
 // StatTile renders one dashboard stat as a card: an uppercase kicker label,
-// a large mono tabular value with an optional delta beside it and a
-// sparkline (or metricring) to its right, then a sub line and a caption. It
-// is the facelifted form of an earlier app's stat tile.
+// a large value with an optional delta beside it and a sparkline (or
+// metricring) to its right, then a sub line and a caption. Href makes the
+// whole tile a link.
 //
-// Accepts zero or one Props: called with no arguments it renders an empty
-// card with an empty value line; any Props beyond the first are ignored.
-// Href makes the whole tile an <a> (plain href; templ sanitizes it) with a
-// hover border in the primary color; otherwise the root is a <div>.
-// VariantDanger swaps the border for border-destructive, VariantMuted swaps
-// the surface for bg-muted. The sparkline and ring take the primary color.
-//
-// The tile has no outer margin or width: place it in layout.Inline with Wrap
-// or in dashboardgrid, which own the spacing. At phone width (390px) the tile
-// fills whatever column it is given; the value row keeps the graphic at a
-// fixed 110x30 (or 56px ring) and lets the value and delta wrap beneath each
-// other, so nothing overflows horizontally.
-//
-// @pure
-// @ai-context delta colors and arrows come from statcomparison.ToneClass and
-// statcomparison.Arrow (one shared mapping, nothing copied here).
+// The tile has no outer margin or width; place it in layout.Inline with
+// Wrap or in dashboardgrid. On narrow columns the value and delta wrap
+// while the graphic keeps its fixed size.
 func StatTile(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -341,7 +328,7 @@ func StatTile(props ...Props) templ.Component {
 			var templ_7745c5c3_Var12 templ.SafeURL
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs(p.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 145, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 132, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -359,7 +346,7 @@ func StatTile(props ...Props) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 147, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 134, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -421,7 +408,7 @@ func StatTile(props ...Props) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 157, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/stattile/stattile.templ`, Line: 144, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {

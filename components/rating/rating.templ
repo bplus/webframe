@@ -8,16 +8,9 @@ import (
 )
 
 // Rating renders stars. With ReadOnly it is a <span role="img"
-// aria-label="3 of 5"> holding Max star icons, the first Value lit in the
-// warning color and the rest faded; the icons are decorative and the label
-// carries the meaning. Otherwise it is a <fieldset> with the Label as its
-// legend and Max radios named Name (values 1..Max, visually hidden) each
-// followed by a star <label>; the checked radio and every star before it are
-// lit, hovering previews a value, arrow keys move the selection, and the form
-// submits Name=<n>. Only the first Props value is used. No script.
-//
-// Phone width (390px): every star is a tap target of the Size's box (44px
-// at SizeLg); the row wraps when Max stars do not fit.
+// aria-label="3 of 5"> of star icons. Otherwise it is a <fieldset> of
+// visually hidden radios named Name, each followed by a star <label>, so
+// the form submits Name=<n>. No script.
 templ Rating(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

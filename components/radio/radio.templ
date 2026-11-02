@@ -4,14 +4,11 @@ package radio
 
 import "github.com/bplus/webframe/utils"
 
-// Props configures Radio. The zero value renders an enabled,
-// unchecked radio with no name or value — set Name to group radios so
-// the browser enforces single selection, and Value to make the
-// submitted form data meaningful. Class merges after the built-in
-// classes via utils.TwMerge; Attributes spread onto the <input>.
+// Props configures Radio. Set Name to group radios and Value for the
+// submitted data. Class merges after the built-in classes; Attributes
+// spread onto the <input>.
 type Props struct {
-	// ID is not auto-generated — supply one and mirror it in
-	// label.Props.For to make the label clickable.
+	// ID is not generated; set it and the label's For to link them.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -26,18 +23,9 @@ type Props struct {
 	Checked  bool
 }
 
-// Radio renders a single native <input type="radio"> restyled with
-// appearance-none plus a ::before inner dot; there is no wrapper
-// element and no children slot. Mutual exclusion is plain HTML: give
-// every radio in a set the same Name and a distinct Value.
-//
-// Accepts zero or one Props (elements past the first are ignored).
-// Returns a templ.Component rooted at the <input> element; no
-// scripts, Alpine wiring, or id generation.
-//
-// @pure
-// @invariant label association requires a caller-supplied ID equal to
-// label.Props.For — nothing here generates one.
+// Radio renders a single restyled <input type="radio">, with no wrapper
+// and no children. Give every radio in a set the same Name and a distinct
+// Value.
 templ Radio(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

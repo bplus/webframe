@@ -213,7 +213,7 @@ func TestTimeline_IconReplacesDot(t *testing.T) {
 
 func TestTimeline_LinkBodyMeta(t *testing.T) {
 	out := render(t, Props{Items: []Item{{
-		At: time.Now(), Title: "Deployed", Href: "/deploys/9", Body: "Build 42 went live.", Meta: "by ada",
+		At: time.Now(), Title: "Deployed", Href: "/deploys/9", Body: "Build 42 went live.", Meta: "by alice",
 	}}})
 	if !strings.Contains(out, `<a href="/deploys/9"`) || !strings.Contains(out, ">Deployed</a>") {
 		t.Errorf("title not a link: %s", out)
@@ -221,7 +221,7 @@ func TestTimeline_LinkBodyMeta(t *testing.T) {
 	if got := strings.Count(out, "<a "); got != 1 {
 		t.Errorf("want exactly one link, got %d: %s", got, out)
 	}
-	for _, want := range []string{"Build 42 went live.", "by ada", "text-muted-foreground"} {
+	for _, want := range []string{"Build 42 went live.", "by alice", "text-muted-foreground"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q: %s", want, out)
 		}

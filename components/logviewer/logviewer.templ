@@ -8,14 +8,7 @@ import (
 
 // LogViewer renders the toolbar (filter box when Filter, Follow switch when
 // Src, Download when set) over a fixed-height role="log" box. Lines render
-// oldest first, one <div class="wf-log-line"> each, toned by Level, with an
-// optional <time>. With Src the lines container carries hx-get, hx-trigger
-// "every Ns" and hx-swap "beforeend"; the handler answers with Fragment.
-// Alpine state on the root owns follow, filter and MaxLines; see the
-// package doc for what moves and what does not.
-//
-// Phone (390px): the toolbar wraps, the box keeps its Height tier, long
-// lines wrap or scroll inside the box per Wrap; the page never widens.
+// oldest first, toned by Level, each with an optional <time>.
 templ LogViewer(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
