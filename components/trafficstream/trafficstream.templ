@@ -117,9 +117,8 @@ func emptyDescription(v string) string {
 // which is unminified/readable despite the extension): the native EventSource
 // reconnects on its own browser-controlled schedule after a drop — there is
 // no manual retry loop here. source.onerror sets the connection badge to
-// amber "Reconnecting", but there is no onopen handler, so the badge stays
-// on "Reconnecting" even after the browser silently reconnects and events
-// resume flowing — a real display bug, not just an undocumented state. Rows
+// amber "Reconnecting", and source.onopen restores it when the browser
+// reconnects (green "Live", or amber "Paused" if paused meanwhile). Rows
 // rendered before the drop are untouched and survive. The Pause button
 // (data-tui-trafficstream-toggle) sets the badge to amber "Paused" and back
 // to green "Live" on resume, and stops appending incoming rows to the DOM
