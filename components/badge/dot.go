@@ -2,7 +2,7 @@ package badge
 
 // DotClass returns the classes for a small status dot of variant v, using the
 // same color tokens as the badge of that variant. VariantOutline is a hollow
-// dot; the zero value is the primary dot. timeline and nodepill draw their
+// dot; the zero value is the primary dot. timeline and dotlabel draw their
 // dots with it, so a dot of one variant looks the same everywhere.
 func DotClass(v Variant) string {
 	switch v {

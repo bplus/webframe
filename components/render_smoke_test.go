@@ -67,7 +67,7 @@ import (
 	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/logviewer"
 	"github.com/bplus/webframe/components/metricring"
-	"github.com/bplus/webframe/components/nodepill"
+	"github.com/bplus/webframe/components/dotlabel"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
@@ -189,7 +189,7 @@ var componentCases = []componentCase{
 	{name: "listpage", constructor: func() templ.Component { return listpage.Page(listpage.Props{}) }},
 	{name: "logviewer", constructor: func() templ.Component { return logviewer.LogViewer() }},
 	{name: "metricring", constructor: func() templ.Component { return metricring.MetricRing() }},
-	{name: "nodepill", constructor: func() templ.Component { return nodepill.NodePill() }},
+	{name: "dotlabel", constructor: func() templ.Component { return dotlabel.DotLabel() }},
 	{name: "pageheader", constructor: func() templ.Component { return pageheader.PageHeader() }},
 	{name: "pagination", constructor: func() templ.Component { return pagination.Pagination() }},
 	{name: "panel", constructor: func() templ.Component { return panel.Panel() }},

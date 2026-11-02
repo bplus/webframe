@@ -31,6 +31,7 @@ import (
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/diffview"
+	"github.com/bplus/webframe/components/dotlabel"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/figure"
@@ -46,7 +47,6 @@ import (
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/logviewer"
-	"github.com/bplus/webframe/components/nodepill"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
 	"github.com/bplus/webframe/components/panel"
@@ -12269,7 +12269,7 @@ func datatableSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Pill cells and a per-cell alignment", Flush: true, Subtitle: "The first column holds nodepill components, whose dot color comes from a badge variant and whose long titles wrap inside the cell instead of clipping; one Score cell sets its own Align to center while the rest inherit the column's right alignment."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var508), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Pill cells and a per-cell alignment", Flush: true, Subtitle: "The first column holds dotlabel components, whose dot color comes from a badge variant and whose long titles wrap inside the cell instead of clipping; one Score cell sets its own Align to center while the rest inherit the column's right alignment."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var508), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -12283,10 +12283,10 @@ func datatableSection() templ.Component {
 	})
 }
 
-// pillRow builds one row of the nodepill table: the pill, an owner and a score.
+// pillRow builds one row of the dotlabel table: the pill, an owner and a score.
 func pillRow(id, title string, v badge.Variant, owner string, score datatable.Cell) datatable.Row {
 	return datatable.Row{ID: id, Cells: []datatable.Cell{
-		{Component: nodepill.NodePill(nodepill.Props{Title: title, Variant: v, Href: "#datatable"})},
+		{Component: dotlabel.DotLabel(dotlabel.Props{Title: title, Variant: v, Href: "#datatable"})},
 		{Text: owner, Muted: true},
 		score,
 	}}

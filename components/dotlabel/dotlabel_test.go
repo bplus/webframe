@@ -1,4 +1,4 @@
-package nodepill
+package dotlabel
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 func render(t *testing.T, p Props) string {
 	t.Helper()
 	var buf bytes.Buffer
-	if err := NodePill(p).Render(context.Background(), &buf); err != nil {
+	if err := DotLabel(p).Render(context.Background(), &buf); err != nil {
 		t.Fatal(err)
 	}
 	return buf.String()
@@ -71,7 +71,7 @@ var allVariants = []badge.Variant{"", badge.VariantDefault, badge.VariantSeconda
 func TestVariantPicksTheTimelineDot(t *testing.T) {
 	for _, v := range allVariants {
 		t.Run(string(v), func(t *testing.T) {
-			got := find(t, render(t, Props{Title: "x", Variant: v}), "data-nodepill-dot").classes()
+			got := find(t, render(t, Props{Title: "x", Variant: v}), "data-dotlabel-dot").classes()
 			for _, c := range strings.Fields(badge.DotClass(v)) {
 				if !got[c] {
 					t.Errorf("dot for %q lacks %q: %v", v, c, got)
@@ -86,7 +86,7 @@ func TestVariantPicksTheTimelineDot(t *testing.T) {
 func TestVariantsAreDistinct(t *testing.T) {
 	seen := map[string]badge.Variant{}
 	for _, v := range allVariants[1:] {
-		c := find(t, render(t, Props{Title: "x", Variant: v}), "data-nodepill-dot").attrs["class"]
+		c := find(t, render(t, Props{Title: "x", Variant: v}), "data-dotlabel-dot").attrs["class"]
 		if prev, dup := seen[c]; dup {
 			t.Errorf("variants %q and %q render the same dot %q", prev, v, c)
 		}
@@ -103,7 +103,7 @@ func TestTitleWrapsByDefault(t *testing.T) {
 	if !strings.Contains(out, ">"+long+"</span>") {
 		t.Errorf("the full title is not rendered: %s", out)
 	}
-	title := find(t, out, "data-nodepill-title")
+	title := find(t, out, "data-dotlabel-title")
 	tc := title.classes()
 	if !tc["wrap-anywhere"] || tc["truncate"] {
 		t.Errorf("default title should wrap, not truncate: %v", tc)
@@ -123,7 +123,7 @@ func TestTitleWrapsByDefault(t *testing.T) {
 func TestTruncateKeepsOneLine(t *testing.T) {
 	long := strings.Repeat("word ", 30)
 	out := render(t, Props{Title: long, Truncate: true})
-	title := find(t, out, "data-nodepill-title")
+	title := find(t, out, "data-dotlabel-title")
 	tc := title.classes()
 	if !tc["truncate"] || tc["wrap-anywhere"] {
 		t.Errorf("truncated title classes = %v", tc)
@@ -142,14 +142,14 @@ func TestHrefMakesALink(t *testing.T) {
 	if root.name != "a" || root.attrs["href"] != "/nodes/1" || !root.classes()["cursor-pointer"] {
 		t.Errorf("want an <a> root with the href and hover affordance: %s", out)
 	}
-	find(t, out, "data-nodepill-dot")
-	find(t, out, "data-nodepill-title")
+	find(t, out, "data-dotlabel-dot")
+	find(t, out, "data-dotlabel-title")
 	if plain := render(t, Props{Title: "n"}); strings.Contains(plain, "cursor-pointer") {
 		t.Errorf("non-link pill has the link affordance: %s", plain)
 	}
 }
 
-func TestNodePillHrefIsSanitized(t *testing.T) {
+func TestDotLabelHrefIsSanitized(t *testing.T) {
 	if out := render(t, Props{Title: "n", Href: "javascript:alert(1)"}); !strings.Contains(out, "about:invalid") || strings.Contains(out, "javascript:") {
 		t.Errorf("unsafe href not sanitized: %s", out)
 	}
