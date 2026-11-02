@@ -475,3 +475,38 @@ func TestMiddleware_ReadFromPassthrough(t *testing.T) {
 		t.Errorf("fallback: body %q, code %d", plain.Body.String(), plain.Code)
 	}
 }
+
+// TestMiddleware_RequestIDRejectsUnsafeHeader: an X-Request-Id longer than
+// 64 bytes or with a byte outside [A-Za-z0-9._-] (a newline that would forge
+// a log line, a space, a quote) is replaced by a generated id; a safe one up
+// to 64 bytes is kept verbatim.
+func TestMiddleware_RequestIDRejectsUnsafeHeader(t *testing.T) {
+	var got string
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = RequestID(r.Context())
+	}))
+	serve := func(header string) string {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Request-Id", header)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+		return got
+	}
+	hex16 := regexp.MustCompile(`^[0-9a-f]{16}$`)
+	for _, bad := range []string{
+		"abc\nappshell: panic serving GET /admin (request forged): x",
+		"has space",
+		`quote"d`,
+		"tab\there",
+		"ünïcode",
+		strings.Repeat("a", 65),
+	} {
+		if id := serve(bad); id == bad || !hex16.MatchString(id) {
+			t.Errorf("header %q: id = %q, want a generated 16-hex id", bad, id)
+		}
+	}
+	for _, ok := range []string{"from-proxy", "A.b_c-9", strings.Repeat("z", 64), "550e8400-e29b-41d4-a716-446655440000"} {
+		if id := serve(ok); id != ok {
+			t.Errorf("header %q: id = %q, want it kept", ok, id)
+		}
+	}
+}
