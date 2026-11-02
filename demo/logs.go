@@ -162,9 +162,6 @@ func logsProps() logviewer.Props {
 
 // HandleLogs renders the Logs page (GET /logs) in the shell of the App in
 // the request context (SidebarApp: the route is wrapped in its Middleware).
-//
-// @boundary HTTP
-// @side-effects registers a poll cursor on Logs; writes HTML response
 func HandleLogs(w http.ResponseWriter, r *http.Request) {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
@@ -182,9 +179,6 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 // (200), or 204 No Content when there is none, so an idle page costs a
 // header exchange and nothing is appended. Without a cursor it answers the
 // whole buffer (the raw log), 204 when that is empty too.
-//
-// @boundary HTTP
-// @side-effects advances the cursor on Logs; writes HTML or an empty 204
 func HandleLogsTail(w http.ResponseWriter, r *http.Request) {
 	var lines []logviewer.Line
 	if cursor := r.URL.Query().Get("cursor"); cursor != "" {

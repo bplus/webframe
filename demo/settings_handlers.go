@@ -175,8 +175,6 @@ func submittedSettings(r *http.Request, p settingspage.Props) map[string]string 
 // validateSettings returns the errors by field name: the display name must
 // not be blank; the quiet-hours start, when given, must be a time the
 // native control writes ("22:00"). Other fields have no rules.
-//
-// @pure
 func validateSettings(vals map[string]string) map[string]string {
 	errs := make(map[string]string)
 	if strings.TrimSpace(vals["display_name"]) == "" {
@@ -190,9 +188,6 @@ func validateSettings(vals map[string]string) map[string]string {
 
 // HandleSettings renders the settings page with the stored values (GET
 // /settings).
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	if err := settingspage.Respond(w, r, "Settings", settingsProps(Settings.Values(), Settings.Env())); err != nil {
 		log.Printf("demo: render settings: %v", err)
@@ -207,9 +202,6 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 // swaps the form in place; nothing is stored); otherwise it saves both and
 // redirects to /settings (HX-Redirect for an htmx submit, else 303) with no
 // success message: the page simply shows the saved values and rows.
-//
-// @boundary HTTP
-// @side-effects mutates Settings; writes HTML or a redirect
 func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -238,9 +230,6 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 // keeps it. Over htmx the answer is a 409 whose only body is an error toast
 // (nothing on the page changes); a plain request sets an error flash and
 // returns to /settings (303), where the shell shows it once.
-//
-// @boundary HTTP
-// @side-effects writes HTML or a redirect; may set the flash cookie
 func HandleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	title := "Could not delete the account"
 	body := "The demo has one account and keeps it; nothing was changed."

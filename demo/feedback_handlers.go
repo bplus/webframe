@@ -44,9 +44,6 @@ func signInProps() authpage.Props {
 // empty password and the error "Demo: sign-in is not wired" (422; htmx is
 // configured to swap it). A real app would check the credentials, set its
 // session and redirect (303) on success.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	p := signInProps()
 	if r.Method == http.MethodPost {
@@ -64,9 +61,6 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 
 // HandleSignedOut serves the signed-out page (GET /signed-out): the
 // message and a full-width "Sign in again" link to /signin.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleSignedOut(w http.ResponseWriter, r *http.Request) {
 	p := authpage.Props{ID: "signed-out", Mode: authpage.ModeSignedOut, Action: "/signin"}
 	if err := authpage.Respond(w, r, p); err != nil {
@@ -78,9 +72,6 @@ func HandleSignedOut(w http.ResponseWriter, r *http.Request) {
 // and a full-width "Go home" link. It answers 200: the page is the demo of
 // the component, not a refused request (the 403 error page is at
 // /errors/403).
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleForbidden(w http.ResponseWriter, r *http.Request) {
 	p := authpage.Props{ID: "forbidden", Mode: authpage.ModeForbidden}
 	if err := authpage.Respond(w, r, p); err != nil {
@@ -97,9 +88,6 @@ const demoRequestID = "req_7f3a9c2e41"
 // /errors/{code}) so the showcase can link to them: 404 and 403 with their
 // default wording, 500 with the demo request id. Each answers with the
 // status it shows; any other code is itself a 404.
-//
-// @boundary HTTP
-// @side-effects writes HTML response with a non-200 status
 func HandleErrorPage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	switch code, _ := strconv.Atoi(r.PathValue("code")); code {

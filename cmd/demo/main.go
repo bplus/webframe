@@ -15,9 +15,6 @@ import (
 // middleware; the table is in demo.Routes) on the hard-coded address :3333.
 // It blocks forever; log.Fatal exits the process if the listener cannot
 // bind (e.g. port already in use).
-//
-// @boundary HTTP - listens on :3333
-// @side-effects binds a TCP port, writes startup line to stdout
 func main() {
 	addr := ":3333"
 	fmt.Printf("Webframe running at http://localhost%s\n", addr)

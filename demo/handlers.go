@@ -26,9 +26,6 @@ import (
 // HandleShowcase renders the component showcase gallery page — the demo
 // server's home page (GET /). All content comes from the compiled
 // pages.Showcase templ component; the request carries no parameters.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 	if err := App.Render(w, r, "Showcase", pages.Showcase()); err != nil {
 		log.Printf("demo: render showcase: %v", err)
@@ -39,9 +36,6 @@ func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 // through streampage: the page header, the trafficstream panel pointed at
 // HandleTrafficStream and the panel's script, declared in trafficProps. The
 // page itself then opens an SSE connection for its live data.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleTraffic(w http.ResponseWriter, r *http.Request) {
 	if err := streampage.Respond(w, r, "Traffic", trafficProps()); err != nil {
 		log.Printf("demo: render traffic: %v", err)
@@ -91,10 +85,6 @@ func trafficProps() streampage.Props {
 // flushes. It blocks until the client disconnects (r.Context() canceled);
 // there is no other exit. Responds 500 if the ResponseWriter does not
 // implement http.Flusher, since SSE is impossible without flushing.
-//
-// @boundary HTTP - Server-Sent Events stream
-// @side-effects streams to the response indefinitely; holds the connection
-// open and a running time.Ticker until client disconnect
 func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -134,9 +124,6 @@ func HandleTrafficStream(w http.ResponseWriter, r *http.Request) {
 // parsed and incremented. An unparseable value leaves n at its default and
 // still increments, so garbage input resets the counter to 2 rather than
 // erroring.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleClick(w http.ResponseWriter, r *http.Request) {
 	count := r.FormValue("count")
 	n := 1
@@ -152,9 +139,6 @@ func HandleClick(w http.ResponseWriter, r *http.Request) {
 // match on q and renders autocomplete.Results, one option per match with
 // Label = the name and Value = slug(name). An empty q returns the full list;
 // zero matches render the component's "No matches" row.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.ToLower(r.URL.Query().Get("q"))
 	names := []string{"Alpine.js", "Angular", "Astro", "Django", "Express", "FastAPI", "Flask", "Go Chi", "HTMX", "Laravel", "Next.js", "Nuxt", "Rails", "React", "Remix", "Solid", "Svelte", "Templ", "Vue"}
@@ -169,8 +153,6 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 // slug lowercases s, turns every run of non-alphanumeric characters into a
 // single "-", and trims leading and trailing "-" ("Next.js" -> "next-js").
-//
-// @pure
 func slug(s string) string {
 	var b strings.Builder
 	dash := false
@@ -189,9 +171,6 @@ func slug(s string) string {
 // HandlePicked answers the autocomplete form's submit (POST /api/picked):
 // it echoes the hidden "framework" value and the visible "q" text the form
 // sent, so the demo shows which of the two a real form would receive.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandlePicked(w http.ResponseWriter, r *http.Request) {
 	fragment(w, r, "picked", pages.PickedResult(r.FormValue("framework"), r.FormValue("q")))
 }
@@ -205,9 +184,6 @@ func HandlePicked(w http.ResponseWriter, r *http.Request) {
 // that Field: the error message, or the empty slot (which takes no space)
 // when the value is valid, always with status 200 so htmx swaps it. A
 // request naming neither field is a 400.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -261,9 +237,6 @@ var toastKinds = map[string]toast.Props{
 // nothing for a request that is not from htmx, so a plain POST gets an
 // empty 200: a toast has nowhere to land on a full page, and a handler
 // that redirects sets a flash instead (see HandleFlash).
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleToast(w http.ResponseWriter, r *http.Request) {
 	p, ok := toastKinds[r.FormValue("variant")]
 	if !ok {
@@ -278,9 +251,6 @@ func HandleToast(w http.ResponseWriter, r *http.Request) {
 // stores a one-shot warning in the flash cookie and redirects (303) to the
 // top of the showcase, where the shell renders the banner once in its
 // #wf-flash slot above the page title; a reload shows nothing.
-//
-// @boundary HTTP
-// @side-effects sets the wf_flash cookie; writes a redirect
 func HandleFlash(w http.ResponseWriter, r *http.Request) {
 	flash.Warning(w, r, "This page was reached through a redirect", "The warning rode along in a one-shot cookie; reload and it is gone.")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -295,9 +265,6 @@ var slowDelay = 1500 * time.Millisecond
 // slowDelay (or until the client goes away) and then writes a one-line
 // fragment with the time it answered, so the request indicator has
 // something to wait for.
-//
-// @boundary HTTP
-// @side-effects blocks for slowDelay; writes HTML response
 func HandleSlow(w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-r.Context().Done():
@@ -312,9 +279,6 @@ func HandleSlow(w http.ResponseWriter, r *http.Request) {
 // does when it fails without an error page. htmx-errors.js refuses to swap
 // a non-HTML error body, so the button's target on the showcase stays as it
 // was; without the guard the words would land inside the page.
-//
-// @boundary HTTP
-// @side-effects writes a plain-text 500
 func HandleBoom(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "boom: the demo's deliberate plain-text 500", http.StatusInternalServerError)
 }
@@ -325,9 +289,6 @@ func HandleBoom(w http.ResponseWriter, r *http.Request) {
 // request id, and calls App.OnPanic, which the demo sets to
 // errorpage.PanicHandler, so the answer is the styled 500 page in the
 // shell with that request id to quote.
-//
-// @boundary HTTP
-// @side-effects panics; the shell's middleware writes the 500
 func HandlePanic(w http.ResponseWriter, r *http.Request) {
 	panic("demo: the deliberate panic behind /api/panic")
 }

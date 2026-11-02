@@ -19,9 +19,6 @@ import (
 // puts its caller-supplied props.Class last — consumers can override component
 // defaults. Always use this instead of string concatenation, which would emit
 // both conflicting classes and leave the outcome to CSS order.
-//
-// @pure - delegates to tailwind-merge-go, deterministic, no state
-// @complexity O(total classes)
 func TwMerge(classes ...string) string {
 	return twmerge.Merge(classes...)
 }
@@ -32,8 +29,6 @@ func TwMerge(classes ...string) string {
 // Intended for conditional Tailwind classes inside templ expressions, where
 // a zero value ("" for strings) is a harmless no-op. The value argument is
 // evaluated eagerly regardless of condition.
-//
-// @pure
 func If[T comparable](condition bool, value T) T {
 	var empty T
 	if condition {
@@ -47,8 +42,6 @@ func If[T comparable](condition bool, value T) T {
 //
 // A ternary substitute for templ expressions. Both branches are evaluated
 // eagerly, so don't pass expensive or side-effecting expressions.
-//
-// @pure
 func IfElse[T any](condition bool, trueValue T, falseValue T) T {
 	if condition {
 		return trueValue
@@ -70,9 +63,6 @@ func IfElse[T any](condition bool, trueValue T, falseValue T) T {
 // attributes rather than replacing, and HTML parsers keep the first
 // occurrence of a duplicate attribute — so a template's own hard-coded
 // attributes always win over anything merged in this way.
-//
-// @pure - allocates a fresh map, does not mutate inputs
-// @complexity O(total keys)
 func MergeAttributes(attrs ...templ.Attributes) templ.Attributes {
 	merged := templ.Attributes{}
 	for _, attr := range attrs {
@@ -92,8 +82,6 @@ func MergeAttributes(attrs ...templ.Attributes) templ.Attributes {
 // guarantees a letter-first value that is always a valid HTML id. IDs are
 // unique per call, not stable across renders — don't use them as anchors or
 // hx-target references that must survive a re-render.
-//
-// @side-effects reads crypto/rand entropy — non-deterministic output
 func RandomID() string {
 	return fmt.Sprintf("id-%s", rand.Text())
 }
@@ -102,10 +90,8 @@ func RandomID() string {
 // Used in Script() templates to append ?v=<timestamp> to script URLs.
 // Fixed at package init and constant for the process lifetime, so every
 // restart busts browser caches while a running process stays consistent.
-//
-// @boundary wall clock, read once at package init: process start time varies
-// per instance, so multiple instances behind a load balancer stamp different
-// ?v= values, causing re-downloads across instances.
+// Multiple instances behind a load balancer stamp different ?v= values, so
+// clients re-download scripts when they switch instances.
 var ScriptVersion = fmt.Sprintf("%d", time.Now().Unix())
 
 // ScriptURL generates cache-busted script URLs.
@@ -119,10 +105,8 @@ var ScriptVersion = fmt.Sprintf("%d", time.Now().Unix())
 //	    }
 //	}
 //
-// @ai-context deliberately a mutable package-level var, not a function — it is
-// the module's only intended extension point for asset URL strategy
-// @temporal-coupling override in init() (or before the first render); swapping
-// it mid-serve is unsynchronized and would mix URL schemes across pages
+// Override it in init() or before the first render: swapping it while serving
+// is unsynchronized and would mix URL schemes across pages.
 var ScriptURL = func(path string) string {
 	return path + "?v=" + ScriptVersion
 }

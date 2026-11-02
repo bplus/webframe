@@ -46,8 +46,6 @@ var itemTypeLabels = map[string]string{
 
 // itemTypeLabel returns the display label for a type value, or the value
 // itself when it is not a known type.
-//
-// @pure
 func itemTypeLabel(t string) string {
 	if l, ok := itemTypeLabels[t]; ok {
 		return l
@@ -255,8 +253,6 @@ var itemSorters = map[string]func(a, b Item) bool{
 // one of the "type" filter values (when any), its Status one of the
 // "status" values (when any), and its Name must contain the search text
 // case-insensitively (when any).
-//
-// @pure
 func itemMatch(it Item, s listquery.Spec) bool {
 	if vals := s.Filters["type"]; len(vals) > 0 && !containsFold(vals, it.Type) {
 		return false
@@ -271,8 +267,6 @@ func itemMatch(it Item, s listquery.Spec) bool {
 }
 
 // containsFold reports whether vals holds v, compared case-insensitively.
-//
-// @pure
 func containsFold(vals []string, v string) bool {
 	for _, x := range vals {
 		if strings.EqualFold(x, v) {
@@ -285,8 +279,6 @@ func containsFold(vals []string, v string) bool {
 // relativeTime renders how long before now t was, as the sketch's short
 // labels: "now" under a minute, then "5m", "3h", "2d", "1w" (7–29 days),
 // "1mo" (30–364 days), "1y". A t after now reads "now".
-//
-// @pure
 func relativeTime(t, now time.Time) string {
 	d := now.Sub(t)
 	switch {
