@@ -100,9 +100,11 @@ const (
 //
 // The request id is the one an enclosing Middleware already stored in the
 // context (two Apps nested, or the same Middleware installed twice, share
-// one id), else the X-Request-Id header when the request carries one (a
-// proxy or load balancer in front of the app), else 8 random bytes in hex,
-// made once per request.
+// one id), else the X-Request-Id header when the request carries a safe one
+// (a proxy or load balancer in front of the app; at most 64 bytes, each in
+// [A-Za-z0-9._-], see validRequestID), else 8 random bytes in hex, made once
+// per request. An unsafe header (too long, or a newline, space or quote that
+// could forge or garble a log line) is ignored, as if absent.
 //
 // A panic in next is logged as
 //
@@ -129,7 +131,9 @@ func (a *App) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := RequestID(r.Context())
 		if id == "" {
-			id = r.Header.Get("X-Request-Id")
+			if h := r.Header.Get("X-Request-Id"); validRequestID(h) {
+				id = h
+			}
 		}
 		if id == "" {
 			id = newRequestID()
@@ -213,13 +217,34 @@ func (a *App) answerPanic(rw *recordingWriter, r *http.Request, id string, v any
 }
 
 // RequestID returns the request id Middleware stored for this request
-// (the X-Request-Id header's value, or the generated one), or "" when the
-// handler chain has no Middleware. An error page shows it and the panic
-// log line carries it, so a user can quote the id and the log can be
-// found.
+// (the X-Request-Id header's value when it is safe, or the generated one;
+// see Middleware), or "" when the handler chain has no Middleware. An error
+// page shows it and the panic log line carries it, so a user can quote the
+// id and the log can be found.
 func RequestID(ctx context.Context) string {
 	id, _ := ctx.Value(requestIDKey).(string)
 	return id
+}
+
+// maxRequestIDLen bounds an accepted X-Request-Id header (a UUID is 36).
+const maxRequestIDLen = 64
+
+// validRequestID reports whether a client-sent X-Request-Id may be used
+// as is: 1 to maxRequestIDLen bytes, each a letter, digit, '.', '_' or '-'.
+// The id is written into log lines and pages, so anything else is refused.
+func validRequestID(id string) bool {
+	if id == "" || len(id) > maxRequestIDLen {
+		return false
+	}
+	for i := 0; i < len(id); i++ {
+		c := id[i]
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '.', c == '_', c == '-':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // newRequestID returns 8 random bytes as 16 hex digits. crypto/rand's

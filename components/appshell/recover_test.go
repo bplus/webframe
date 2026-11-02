@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 )
 
 // captureLog routes the standard logger into a buffer for the test.
@@ -411,7 +412,14 @@ func TestMiddleware_HijackReachable(t *testing.T) {
 		_ = rw.Flush()
 		panic("after hijack") // logged; nothing may be written onto the hijacked connection
 	}))
-	srv := httptest.NewServer(h)
+	// The client can read "raw" before the server goroutine has logged the
+	// panic, so wait for Middleware to return before reading the log buffer
+	// (the channel close orders the write before the read).
+	done := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer close(done)
+		h.ServeHTTP(w, r)
+	}))
 	defer srv.Close()
 	res, err := http.Get(srv.URL)
 	if err != nil {
@@ -421,6 +429,11 @@ func TestMiddleware_HijackReachable(t *testing.T) {
 	body, _ := io.ReadAll(res.Body)
 	if res.StatusCode != 200 || string(body) != "raw" {
 		t.Errorf("%d %q, want the hijacked raw response", res.StatusCode, body)
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("handler did not return")
 	}
 	if got := logs.String(); !strings.Contains(got, "(request ") || strings.Contains(got, "render default 500") || strings.Contains(got, "hijacked") {
 		t.Errorf("want the panic logged and no 500 attempted on the hijacked connection, got:\n%s", got)
@@ -473,5 +486,40 @@ func TestMiddleware_ReadFromPassthrough(t *testing.T) {
 	h.ServeHTTP(plain, httptest.NewRequest("GET", "/", nil))
 	if plain.Body.String() != "payload" || plain.Code != 200 {
 		t.Errorf("fallback: body %q, code %d", plain.Body.String(), plain.Code)
+	}
+}
+
+// TestMiddleware_RequestIDRejectsUnsafeHeader: an X-Request-Id longer than
+// 64 bytes or with a byte outside [A-Za-z0-9._-] (a newline that would forge
+// a log line, a space, a quote) is replaced by a generated id; a safe one up
+// to 64 bytes is kept verbatim.
+func TestMiddleware_RequestIDRejectsUnsafeHeader(t *testing.T) {
+	var got string
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = RequestID(r.Context())
+	}))
+	serve := func(header string) string {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Request-Id", header)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+		return got
+	}
+	hex16 := regexp.MustCompile(`^[0-9a-f]{16}$`)
+	for _, bad := range []string{
+		"abc\nappshell: panic serving GET /admin (request forged): x",
+		"has space",
+		`quote"d`,
+		"tab\there",
+		"ünïcode",
+		strings.Repeat("a", 65),
+	} {
+		if id := serve(bad); id == bad || !hex16.MatchString(id) {
+			t.Errorf("header %q: id = %q, want a generated 16-hex id", bad, id)
+		}
+	}
+	for _, ok := range []string{"from-proxy", "A.b_c-9", strings.Repeat("z", 64), "550e8400-e29b-41d4-a716-446655440000"} {
+		if id := serve(ok); id != ok {
+			t.Errorf("header %q: id = %q, want it kept", ok, id)
+		}
 	}
 }

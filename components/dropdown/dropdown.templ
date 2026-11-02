@@ -154,8 +154,9 @@ type PortalProps struct {
 // empty, and stores it in ctx under a package-private key.
 //
 // @temporal-coupling: Trigger and Content resolve the content ID from ctx set
-// here; rendered outside a Dropdown they both fall back to the shared literal
-// "fallback-content-id", which collides across multiple orphaned dropdowns.
+// here; rendered outside a Dropdown they fall back to utils.PairedID
+// ("wf-dropdown-0", "wf-dropdown-1", …), so the n-th orphaned Trigger links
+// to the n-th orphaned Content of the same render and orphans never share an id.
 // @side-effects
 templ Dropdown(props ...Props) {
 	{{
@@ -179,7 +180,7 @@ templ Dropdown(props ...Props) {
 // templ.Component delegating all markup to popover.Trigger.
 //
 // @ai-context: must render inside Dropdown to pick up the correct content ID;
-// otherwise it targets "fallback-content-id". The open/close behavior itself
+// otherwise it targets the utils.PairedID fallback. The open/close behavior itself
 // lives in the popover component's JS, not here.
 // @temporal-coupling
 templ Trigger(props ...TriggerProps) {
@@ -190,7 +191,10 @@ templ Trigger(props ...TriggerProps) {
 		}
 		contentID, ok := ctx.Value(contentIDKey).(string)
 		if !ok {
-			contentID = "fallback-content-id"
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-dropdown", "trigger"); err != nil {
+				return err
+			}
 		}
 	}}
 	@popover.Trigger(popover.TriggerProps{
@@ -213,8 +217,8 @@ templ Trigger(props ...TriggerProps) {
 // currently not applied to the element.
 //
 // @temporal-coupling: reads the content ID from ctx set by Dropdown; outside
-// one it falls back to "fallback-content-id" (kept in sync with Trigger's
-// fallback so an orphaned pair still links up).
+// one it falls back to utils.PairedID with Trigger's prefix (so an orphaned
+// pair still links up, and a second orphaned pair gets its own id).
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -222,7 +226,12 @@ templ Content(props ...ContentProps) {
 	}
 	{{ contentID, ok := ctx.Value(contentIDKey).(string) }}
 	if !ok {
-		{{ contentID = "fallback-content-id" }} // Must match fallback in Trigger
+		{{
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-dropdown", "content"); err != nil { // prefix must match Trigger's
+				return err
+			}
+		}}
 	}
 	{{
 		placement := p.Placement
@@ -411,7 +420,7 @@ templ Shortcut(props ...ShortcutProps) {
 // not clobber its parent Dropdown's content ID).
 //
 // @temporal-coupling: SubTrigger and SubContent read this ctx value; outside
-// a Sub they fall back to "fallback-subcontent-id".
+// a Sub they fall back to utils.PairedID ("wf-dropdown-sub-N").
 // @side-effects
 templ Sub(props ...SubProps) {
 	{{
@@ -445,7 +454,7 @@ templ Sub(props ...SubProps) {
 // wrapper.
 //
 // @temporal-coupling: resolves its target ID from ctx set by the enclosing
-// Sub; falls back to "fallback-subcontent-id" outside one.
+// Sub; falls back to utils.PairedID outside one.
 templ SubTrigger(props ...SubTriggerProps) {
 	{{
 		var p SubTriggerProps
@@ -454,7 +463,10 @@ templ SubTrigger(props ...SubTriggerProps) {
 		}
 		subContentID, ok := ctx.Value(subContentIDKey).(string)
 		if !ok {
-			subContentID = "fallback-subcontent-id"
+			var err error
+			if subContentID, err = utils.PairedID(ctx, "wf-dropdown-sub", "trigger"); err != nil {
+				return err
+			}
 		}
 	}}
 	@popover.Trigger(popover.TriggerProps{
@@ -493,7 +505,7 @@ templ SubTrigger(props ...SubTriggerProps) {
 //
 // @temporal-coupling: resolves its DOM ID from ctx set by the enclosing Sub
 // (SubContentProps.ID is not applied to the element); falls back to
-// "fallback-subcontent-id", matching SubTrigger.
+// utils.PairedID with SubTrigger's prefix.
 templ SubContent(props ...SubContentProps) {
 	{{
 		var p SubContentProps
@@ -502,7 +514,10 @@ templ SubContent(props ...SubContentProps) {
 		}
 		subContentID, ok := ctx.Value(subContentIDKey).(string)
 		if !ok {
-			subContentID = "fallback-subcontent-id"
+			var err error
+			if subContentID, err = utils.PairedID(ctx, "wf-dropdown-sub", "content"); err != nil {
+				return err
+			}
 		}
 	}}
 	@popover.Content(popover.ContentProps{

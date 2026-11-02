@@ -3,6 +3,7 @@ package graphwidget
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -51,5 +52,32 @@ func TestContainerAttributes(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
+	}
+}
+
+// TestColorMapJSON_Escapes: a quote or backslash in a type or color must
+// still yield valid JSON that decodes back to the same entries.
+func TestColorMapJSON_Escapes(t *testing.T) {
+	entries := []NodeColorEntry{
+		{Type: `say "hi"`, Color: `#fff`},
+		{Type: `back\slash`, Color: `rgb(1,2,3)"`},
+		{Type: "plain", Color: "red"},
+	}
+	got := colorMapJSON(entries)
+	var m map[string]string
+	if err := json.Unmarshal([]byte(got), &m); err != nil {
+		t.Fatalf("colorMapJSON = %s: invalid JSON: %v", got, err)
+	}
+	for _, e := range entries {
+		if m[e.Type] != e.Color {
+			t.Errorf("decoded[%q] = %q, want %q", e.Type, m[e.Type], e.Color)
+		}
+	}
+	// Order is the entry order (deterministic markup).
+	if want := `{"say \"hi\"":"#fff","back\\slash":"rgb(1,2,3)\"","plain":"red"}`; got != want {
+		t.Errorf("colorMapJSON = %s, want %s", got, want)
+	}
+	if got := colorMapJSON(nil); got != "{}" {
+		t.Errorf("colorMapJSON(nil) = %s, want {}", got)
 	}
 }

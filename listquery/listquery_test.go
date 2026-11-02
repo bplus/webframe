@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -15,6 +16,7 @@ import (
 func expect(want Spec, o Options) Spec {
 	want.defaultSort = o.DefaultSort
 	want.defaultDir = o.DefaultDir
+	want.filterKeys = slices.Clone(o.FilterKeys)
 	if want.defaultDir != Asc && want.defaultDir != Desc {
 		want.defaultDir = Asc
 	}
@@ -672,5 +674,42 @@ func TestIsDefaultOrder(t *testing.T) {
 	// A zero Dir counts as ascending.
 	if !ParseValues(values(t, ""), Options{DefaultSort: "name"}).IsDefaultOrder("name", "") {
 		t.Error("zero dir should match an ascending default")
+	}
+}
+
+// TestURL_MergesBase: the base is parsed, not concatenated. A fragment stays
+// a fragment after the query; parameters the Spec owns (its fixed names and
+// filter keys, under its prefix) are replaced, never duplicated, and dropped
+// when the Spec omits them; everything else in the base is kept.
+func TestURL_MergesBase(t *testing.T) {
+	cases := []struct {
+		name string
+		spec Spec
+		base string
+		want string
+	}{
+		{"fragment", Spec{Page: 2}, "/items#results", "/items?page=2#results"},
+		{"fragment with query", Spec{Page: 2}, "/items?tab=all#results", "/items?tab=all&page=2#results"},
+		{"owned param replaced", Spec{Page: 2}, "/items?page=3", "/items?page=2"},
+		{"owned param dropped at its zero value", Spec{}, "/items?page=3&tab=all", "/items?tab=all"},
+		{"only owned params dropped", Spec{}, "/items?page=3#top", "/items#top"},
+		{"search replaced", Spec{Search: "new"}, "/items?q=old&tab=all", "/items?tab=all&q=new"},
+		{"unrelated kept verbatim", Spec{Page: 2}, "/items?tab=a%20b&x", "/items?tab=a%20b&x&page=2"},
+		{"other prefix kept", ParseValues(nil, Options{Prefix: "a"}), "/items?b.page=3&page=4&a.page=5", "/items?b.page=3&page=4"},
+		{"nothing to do", Spec{}, "/items?tab=all#x", "/items?tab=all#x"},
+	}
+	for _, tc := range cases {
+		if got := tc.spec.URL(tc.base); got != tc.want {
+			t.Errorf("%s: URL(%q) = %q, want %q", tc.name, tc.base, got, tc.want)
+		}
+	}
+	// Filter keys from Options are owned even when the Spec has no value for
+	// them, so clearing filters clears them from the base too.
+	s := ParseValues(values(t, "status=draft&owner=me"), itemOpts)
+	if got := s.URL("/items?status=draft&owner=me&tab=all", WithoutFilters()); got != "/items?tab=all" {
+		t.Errorf("WithoutFilters over a base carrying filters = %q, want /items?tab=all", got)
+	}
+	if got := s.URL("/items?status=old", WithFilter("status", "published")); got != "/items?owner=me&status=published" {
+		t.Errorf("WithFilter over a base carrying the filter = %q", got)
 	}
 }
