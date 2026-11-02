@@ -16,6 +16,7 @@ make dev            # go run ./cmd/demo, serves on :3333
 make check          # check-generate, check-vet, check-test, check-ui (run before every commit)
 make check-ui       # go run ./cmd/wflint ./demo: app code may only compose components
 make ui-check       # Playwright overflow/console check at 390 and 1280; needs `make dev`, not part of check
+make graph-check    # Playwright: graphwidget renders a canvas on /graph and shows its error box on failure; needs `make dev`
 npx --prefix tools playwright install chromium   # one-time, before the first ui-check
 go test ./components/copybutton/...               # a single package
 ```

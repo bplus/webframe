@@ -80,6 +80,13 @@ upgrade.
 - `trafficstream.min.js`: the connection dot uses theme tokens
   (`bg-warning`, `bg-success`, `bg-muted-foreground`). `input.css` keeps them
   alive with `@source inline(...)`, since Tailwind does not scan JS.
+- `graphwidget.min.js`: builds each graph with
+  `ForceGraph3D({ controlType })(mount)`, the factory form 3d-force-graph 1.73
+  documents (`new ForceGraph3D(el)` is the 1.74+ form and attaches nothing on
+  1.73). A missing library, a construction error, no canvas after
+  construction, a non-2xx or non-JSON DataURL answer and data without a
+  `nodes` array each show the widget's error box and log `console.error`.
+  `make graph-check` covers this in a browser.
 - `confirm.js`, `htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`,
   `splitpane.js`: each guards against a second run through `window.wf.<name>`
   (htmx re-executes `<script src>` tags in swapped content). The templUI
