@@ -14,10 +14,12 @@ means byte-for-byte equal to the upstream file at that version.
 
 `3d-force-graph.min.js` is a UMD bundle that also contains its dependencies,
 with no license banners of their own: three.js r168 (MIT, Copyright © 2010-2024
-three.js authors), three-forcegraph, three-render-objects, kapsule,
-accessor-fn, d3-force-3d, d3-array, d3-scale, d3-scale-chromatic,
-data-bind-mapper, ngraph.forcelayout, ngraph.graph and tinycolor2 (MIT or
-ISC; see each package's npm page).
+three.js authors), three-forcegraph 1.41.14, three-render-objects 1.29.5,
+kapsule, accessor-fn, data-joint, d3-force-3d, the d3 packages, the ngraph
+packages, tinycolor2, tween.js, polished and others. Licenses are MIT, ISC,
+BSD-3-Clause (the ngraph packages) and Apache-2.0 (ColorBrewer schemes in
+d3-scale-chromatic). The full resolved list with versions and copyright lines
+is in `THIRD_PARTY_NOTICES.md`.
 
 ## templUI component scripts
 
