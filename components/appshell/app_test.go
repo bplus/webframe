@@ -275,3 +275,311 @@ func TestShellProps_Right(t *testing.T) {
 		t.Errorf("Right not rendered inside the topbar right group:\n%s", got)
 	}
 }
+
+// serveBare runs (*App).RenderBare through Middleware for one request shape
+// and returns the recorder.
+func serveBare(t *testing.T, a *App, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := a.RenderBare(w, r, "Sign in", pageBody("bare page")); err != nil {
+			t.Errorf("render: %v", err)
+		}
+	}))
+	req := httptest.NewRequest("GET", "/signin", nil)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+func checkRenderHeaders(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	if ct := rec.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
+		t.Errorf("Content-Type = %q", ct)
+	}
+	if v := rec.Header().Get("Vary"); v != varyHeaders {
+		t.Errorf("Vary = %q", v)
+	}
+}
+
+func TestRenderBare_FullDocumentWithoutShell(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"plain":           nil,
+		"boosted":         {"HX-Request": "true", "HX-Boosted": "true"},
+		"history-restore": {"HX-Request": "true", "HX-History-Restore-Request": "true"},
+	} {
+		rec := serveBare(t, testApp(), headers)
+		checkRenderHeaders(t, rec)
+		got := rec.Body.String()
+		if !strings.Contains(strings.ToLower(got), "<!doctype html>") {
+			t.Errorf("%s: missing doctype in:\n%s", name, got)
+		}
+		for _, want := range []string{"<title>Sign in — Demo</title>", "bare page", "output.css", "confirm.js", `id="wf-confirm"`} {
+			if !strings.Contains(got, want) {
+				t.Errorf("%s: missing %q in:\n%s", name, want, got)
+			}
+		}
+		for _, bad := range []string{"wf-topbar", "wf-shell", `id="wf-flash"`, "<nav", "<main"} {
+			if strings.Contains(got, bad) {
+				t.Errorf("%s: unexpected %q (shell leaked into bare render) in:\n%s", name, bad, got)
+			}
+		}
+	}
+}
+
+func TestRenderBare_HXRequestBodyOnly(t *testing.T) {
+	rec := serveBare(t, testApp(), map[string]string{"HX-Request": "true"})
+	checkRenderHeaders(t, rec)
+	if got := rec.Body.String(); got != "<p>bare page</p>" {
+		t.Errorf("body = %q, want the body only", got)
+	}
+}
+
+func TestRenderBare_AppHead(t *testing.T) {
+	a := testApp()
+	a.Head = pageBody("extra head")
+	got := serveBare(t, a, nil).Body.String()
+	i := strings.Index(got, "extra head")
+	j := strings.Index(got, "</head>")
+	if i < 0 || j < 0 || i > j {
+		t.Errorf("App.Head not rendered inside <head>:\n%s", got)
+	}
+}
+
+func TestRenderBare_PackageFuncNoApp(t *testing.T) {
+	// No Middleware: the handler has no App in its context.
+	serveNoApp := func(headers map[string]string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest("GET", "/boom", nil)
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		rec := httptest.NewRecorder()
+		if _, ok := FromContext(req.Context()); ok {
+			t.Fatal("test precondition: no App expected in context")
+		}
+		if err := RenderBare(rec, req, "Acme", "Something broke", pageBody("error body")); err != nil {
+			t.Fatalf("render: %v", err)
+		}
+		return rec
+	}
+	rec := serveNoApp(nil)
+	checkRenderHeaders(t, rec)
+	got := rec.Body.String()
+	if !strings.Contains(strings.ToLower(got), "<!doctype html>") {
+		t.Errorf("missing doctype in:\n%s", got)
+	}
+	for _, want := range []string{"<title>Something broke — Acme</title>", "error body", "wf-theme", "data-theme", "output.css"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	for _, bad := range []string{"wf-topbar", "wf-shell", `id="wf-flash"`} {
+		if strings.Contains(got, bad) {
+			t.Errorf("unexpected %q in:\n%s", bad, got)
+		}
+	}
+
+	rec = serveNoApp(map[string]string{"HX-Request": "true"})
+	checkRenderHeaders(t, rec)
+	if got := rec.Body.String(); got != "<p>error body</p>" {
+		t.Errorf("hx body = %q, want the body only", got)
+	}
+
+	// An empty title is the name alone.
+	rec = httptest.NewRecorder()
+	if err := RenderBare(rec, httptest.NewRequest("GET", "/", nil), "Acme", "", pageBody("x")); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if got := rec.Body.String(); !strings.Contains(got, "<title>Acme</title>") {
+		t.Errorf("missing name-only title in:\n%s", got)
+	}
+}
+
+func TestRender_EmptyTitleIsAppNameAlone(t *testing.T) {
+	a := testApp()
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := a.Render(w, r, "", pageBody("home")); err != nil {
+			t.Errorf("render: %v", err)
+		}
+	}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	got := rec.Body.String()
+	if !strings.Contains(got, "<title>Demo</title>") {
+		t.Errorf("missing app-only title in:\n%s", got)
+	}
+	if strings.Contains(got, "<title> — Demo</title>") || strings.Contains(got, "<title>— Demo</title>") {
+		t.Errorf("dangling separator in title:\n%s", got)
+	}
+}
+
+func TestRender_StatusWrittenByHandlerWins(t *testing.T) {
+	a := testApp()
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := a.Render(w, r, "", pageBody("broken")); err != nil {
+			t.Errorf("render: %v", err)
+		}
+	}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/boom", nil))
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want 500 written by the handler to stand", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "broken") {
+		t.Errorf("missing body in:\n%s", rec.Body.String())
+	}
+}
+
+// flashCounter is an App.Flash that counts its calls and renders a marker.
+func flashCounter(calls *int) func(http.ResponseWriter, *http.Request) templ.Component {
+	return func(w http.ResponseWriter, r *http.Request) templ.Component {
+		*calls++
+		http.SetCookie(w, &http.Cookie{Name: "wf_flash", Value: "", MaxAge: -1, Path: "/"})
+		return pageBody("flash-banner")
+	}
+}
+
+// flashInsideSlot reports whether the flash marker sits inside #wf-flash
+// and before the page body.
+func flashInsideSlot(got string) bool {
+	slot := strings.Index(got, `<div id="wf-flash">`)
+	marker := strings.Index(got, "flash-banner")
+	body := strings.Index(got, "hello page")
+	if slot < 0 || marker < 0 || body < 0 {
+		return false
+	}
+	close := slot + strings.Index(got[slot:], "</div>")
+	return slot < marker && marker < close && close < body
+}
+
+func TestFlash_CalledOncePerFullRender(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"plain":           nil,
+		"boosted":         {"HX-Request": "true", "HX-Boosted": "true"},
+		"history-restore": {"HX-Request": "true", "HX-History-Restore-Request": "true"},
+	} {
+		calls := 0
+		a := testApp()
+		a.Flash = flashCounter(&calls)
+		got := serveHeaders(t, a, headers)
+		if calls != 1 {
+			t.Errorf("%s: Flash called %d times, want 1", name, calls)
+		}
+		if !flashInsideSlot(got) {
+			t.Errorf("%s: flash not rendered inside #wf-flash above the body:\n%s", name, got)
+		}
+	}
+}
+
+func TestFlash_SetsCookieBeforeBody(t *testing.T) {
+	calls := 0
+	a := testApp()
+	a.Flash = flashCounter(&calls)
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := a.Render(w, r, "Movies", pageBody("hello page")); err != nil {
+			t.Errorf("render: %v", err)
+		}
+	}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/movies", nil))
+	// Result() uses the header snapshot taken at the first write; a cookie
+	// set after that point would be missing here.
+	if sc := rec.Result().Header.Get("Set-Cookie"); !strings.Contains(sc, "wf_flash=") {
+		t.Errorf("Set-Cookie written by Flash did not make it into the response headers: %q", sc)
+	}
+}
+
+// TestFlash_BodyOnlyRenderSendsOOB: a plain htmx body render consumes the
+// flash too and appends it out of band into #wf-flash, after the body, so
+// a flash set by an htmx action shows on the current page.
+func TestFlash_BodyOnlyRenderSendsOOB(t *testing.T) {
+	calls := 0
+	a := testApp()
+	a.Flash = flashCounter(&calls)
+	got := serve(t, a, true)
+	if calls != 1 {
+		t.Errorf("Flash called %d times for a plain htmx body render, want 1", calls)
+	}
+	oob := strings.Index(got, `<div id="wf-flash" hx-swap-oob="true">`)
+	body := strings.Index(got, "hello page")
+	marker := strings.Index(got, "flash-banner")
+	if oob < 0 || marker < oob || body < 0 || oob < body {
+		t.Errorf("want body, then the oob #wf-flash holding the flash:\n%s", got)
+	}
+	if strings.Contains(got, "wf-shell") {
+		t.Errorf("shell leaked into body-only render:\n%s", got)
+	}
+	// No flash: no oob slot at all.
+	a = testApp()
+	a.Flash = func(http.ResponseWriter, *http.Request) templ.Component { return nil }
+	if got := serve(t, a, true); strings.Contains(got, "wf-flash") {
+		t.Errorf("empty flash added an oob slot:\n%s", got)
+	}
+}
+
+func TestFlash_PartRenderSendsOOB(t *testing.T) {
+	for name, headers := range map[string]map[string]string{
+		"targeted-part": {"HX-Request": "true", "HX-Target": "list-results"},
+		"other-target":  {"HX-Request": "true", "HX-Target": "something-else"},
+	} {
+		calls := 0
+		a := testApp()
+		a.Flash = flashCounter(&calls)
+		got := serveParts(t, a, headers)
+		if calls != 1 {
+			t.Errorf("%s: Flash called %d times, want 1", name, calls)
+		}
+		if !strings.Contains(got, `<div id="wf-flash" hx-swap-oob="true">`) || !strings.Contains(got, "flash-banner") {
+			t.Errorf("%s: flash oob missing from part render:\n%s", name, got)
+		}
+	}
+	calls := 0
+	a := testApp()
+	a.Flash = flashCounter(&calls)
+	got := serveParts(t, a, map[string]string{"HX-Request": "true", "HX-Boosted": "true", "HX-Target": "list-results"})
+	if calls != 1 {
+		t.Errorf("boosted RenderParts: Flash called %d times, want 1", calls)
+	}
+	if !strings.Contains(got, "flash-banner") {
+		t.Errorf("boosted RenderParts: flash missing from the document:\n%s", got)
+	}
+}
+
+func TestFlash_NotCalledByRenderBare(t *testing.T) {
+	calls := 0
+	a := testApp()
+	a.Flash = flashCounter(&calls)
+	got := serveBare(t, a, nil).Body.String()
+	if calls != 0 {
+		t.Errorf("Flash called %d times by RenderBare, want 0", calls)
+	}
+	if strings.Contains(got, "flash-banner") {
+		t.Errorf("flash leaked into bare render:\n%s", got)
+	}
+}
+
+func TestFlash_NilRendersEmptySlot(t *testing.T) {
+	a := testApp()
+	if a.Flash != nil {
+		t.Fatal("test precondition: Flash nil")
+	}
+	got := serve(t, a, false)
+	if !strings.Contains(got, `<div id="wf-flash"></div>`) {
+		t.Errorf("missing empty #wf-flash slot in:\n%s", got)
+	}
+	if strings.Count(got, `id="wf-flash"`) != 1 {
+		t.Errorf("want exactly one #wf-flash, got %d", strings.Count(got, `id="wf-flash"`))
+	}
+}
+
+func TestFlash_NilResultRendersEmptySlot(t *testing.T) {
+	a := testApp()
+	a.Flash = func(http.ResponseWriter, *http.Request) templ.Component { return nil }
+	got := serve(t, a, false)
+	if !strings.Contains(got, `<div id="wf-flash"></div>`) {
+		t.Errorf("missing empty #wf-flash slot in:\n%s", got)
+	}
+}

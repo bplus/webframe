@@ -22,23 +22,50 @@ const (
 	VariantDestructive Variant = "destructive"
 	// VariantGhost has no fill until hovered.
 	VariantGhost Variant = "ghost"
+	// VariantOutline is a bordered button on the page background
+	// (authpage's provider buttons).
+	VariantOutline Variant = "outline"
 )
 
-// Confirm describes a confirmation prompt shown before an Action runs.
-// For now only Message is used (emitted as hx-confirm).
+// Confirm describes the confirmation shown before an Action runs. Message
+// is emitted as hx-confirm: with confirm.js and the confirmdialog host on
+// the page (appshell.Document renders both) that opens the styled dialog,
+// without them the browser's native box runs. Title, ConfirmLabel and
+// CancelLabel ride along as data-wf-confirm-* attributes for the dialog;
+// empty fields fall back to confirmdialog's defaults ("Are you sure?",
+// "Confirm", "Cancel").
 type Confirm struct {
-	Title, Message, ConfirmLabel string
+	Title, Message, ConfirmLabel, CancelLabel string
 }
 
 // Action describes one button or link. A plain Href renders an
 // anchor; any Hx* field renders a button with the matching hx-*
-// attributes (Href is then ignored).
+// attributes (Href is then ignored); Submit renders a form submit
+// button.
 type Action struct {
 	ID    string
 	Label string
 	Href  string
 
 	HxGet, HxPost, HxDelete, HxTarget, HxSwap string
+
+	// Submit renders <button type="submit"> (button.TypeSubmit): the one
+	// button in a form that must submit it natively. Href and every Hx*
+	// field must be empty with Submit: Submit wins over Href (an <a> cannot
+	// submit a form, so no anchor is rendered), and Submit with an Hx*
+	// request is a programming error (the attributes are emitted as given
+	// and the button both submits and requests; prefer Submit alone and
+	// let the form carry hx-post). Renderers that put an action in a menu
+	// (MenuAttrs) ignore Submit.
+	Submit bool
+	// Form is the form attribute of the rendered <button>: the id of the
+	// form it submits or belongs to, so a button can be declared outside
+	// its form without Attributes. Ignored for a plain link (anchors have
+	// no form attribute; button.Props.Form is ignored in <a> mode too).
+	Form string
+	// FullWidth renders the button or link w-full (button.Props.FullWidth)
+	// so it spans its container, as authpage's buttons do.
+	FullWidth bool
 
 	Variant  Variant
 	Size     button.Size
@@ -49,10 +76,10 @@ type Action struct {
 	Attributes templ.Attributes
 }
 
-// IsLink reports whether the action is plain navigation: Href set and
-// no Hx* request attribute set.
+// IsLink reports whether the action is plain navigation: Href set, no
+// Hx* request attribute set and not Submit.
 func (a Action) IsLink() bool {
-	return a.Href != "" && a.HxGet == "" && a.HxPost == "" && a.HxDelete == ""
+	return a.Href != "" && !a.Submit && a.HxGet == "" && a.HxPost == "" && a.HxDelete == ""
 }
 
 func buttonVariant(v Variant) button.Variant {
@@ -63,13 +90,24 @@ func buttonVariant(v Variant) button.Variant {
 		return button.VariantDestructive
 	case VariantGhost:
 		return button.VariantGhost
+	case VariantOutline:
+		return button.VariantOutline
 	default:
 		return button.VariantSecondary
 	}
 }
 
-// attrs builds the hx-* attributes merged with caller Attributes.
-func (a Action) attrs() templ.Attributes {
+// MenuAttrs returns the attributes a dropdown item needs to carry an
+// action that is not a plain link: hx-get, hx-post, hx-delete, hx-target
+// and hx-swap for the non-empty Hx* fields, then ConfirmAttributes (so a
+// menu item opens the same styled confirm dialog, with the same title,
+// labels and destructive button, as an inline Button), then a.Attributes
+// last so the caller's attributes win. The dropdown item is itself the
+// <button>, so action.Button cannot be nested inside it (a button inside a
+// button is invalid HTML); appshell's user menu, toolbar's and datatable's
+// phone "⋯" menus use it. Button uses the same attributes. Submit, Form
+// and FullWidth are not part of it: a menu item is never a form control.
+func MenuAttrs(a Action) templ.Attributes {
 	hx := templ.Attributes{}
 	if a.HxGet != "" {
 		hx["hx-get"] = a.HxGet
@@ -86,10 +124,36 @@ func (a Action) attrs() templ.Attributes {
 	if a.HxSwap != "" {
 		hx["hx-swap"] = a.HxSwap
 	}
-	if a.Confirm != nil {
-		hx["hx-confirm"] = a.Confirm.Message
+	return utils.MergeAttributes(hx, a.ConfirmAttributes(), a.Attributes)
+}
+
+// ConfirmAttributes returns the attributes that route the action through
+// the confirm dialog, or an empty map when Confirm is nil: hx-confirm with
+// the Message (kept as both the trigger and the native fallback), then
+// data-wf-confirm-title, data-wf-confirm-label and data-wf-confirm-cancel
+// for the non-empty Title, ConfirmLabel and CancelLabel, and
+// data-wf-confirm-destructive="true" when the Variant is destructive so the
+// dialog shows its destructive confirm button. Button and MenuAttrs use it,
+// so every place an action renders agrees.
+func (a Action) ConfirmAttributes() templ.Attributes {
+	attrs := templ.Attributes{}
+	if a.Confirm == nil {
+		return attrs
 	}
-	return utils.MergeAttributes(hx, a.Attributes)
+	attrs["hx-confirm"] = a.Confirm.Message
+	if a.Confirm.Title != "" {
+		attrs["data-wf-confirm-title"] = a.Confirm.Title
+	}
+	if a.Confirm.ConfirmLabel != "" {
+		attrs["data-wf-confirm-label"] = a.Confirm.ConfirmLabel
+	}
+	if a.Confirm.CancelLabel != "" {
+		attrs["data-wf-confirm-cancel"] = a.Confirm.CancelLabel
+	}
+	if a.Variant == VariantDestructive {
+		attrs["data-wf-confirm-destructive"] = "true"
+	}
+	return attrs
 }
 
 func (a Action) buttonProps() button.Props {
@@ -97,8 +161,13 @@ func (a Action) buttonProps() button.Props {
 		ID:         a.ID,
 		Variant:    buttonVariant(a.Variant),
 		Size:       a.Size,
+		FullWidth:  a.FullWidth,
+		Form:       a.Form,
 		Disabled:   a.Disabled,
-		Attributes: a.attrs(),
+		Attributes: MenuAttrs(a),
+	}
+	if a.Submit {
+		p.Type = button.TypeSubmit
 	}
 	if a.IsLink() {
 		p.Href = a.Href

@@ -220,3 +220,44 @@ func TestShell_EmptyEveryDefaults30s(t *testing.T) {
 		t.Errorf("explicit Every lost in:\n%s", got)
 	}
 }
+
+func TestShell_FlashRendersInsideSlot(t *testing.T) {
+	got := renderShell(t, Props{AppName: "A", Flash: templ.Raw(`<div class="wf-banner">saved?</div>`)}, templ.Raw("<p>body-here</p>"))
+	slot := strings.Index(got, `<div id="wf-flash">`)
+	banner := strings.Index(got, "wf-banner")
+	child := strings.Index(got, "<p>body-here</p>")
+	if slot < 0 || banner < 0 || child < 0 {
+		t.Fatalf("missing slot/banner/child in:\n%s", got)
+	}
+	close := slot + strings.Index(got[slot:], "</div>")
+	if !(slot < banner && banner < close && close < child) {
+		t.Errorf("want wf-flash < banner < </div> < child; got %d %d %d %d", slot, banner, close, child)
+	}
+	if strings.Count(got, `id="wf-flash"`) != 1 {
+		t.Errorf("want exactly one #wf-flash in:\n%s", got)
+	}
+}
+
+func TestShell_NilFlashKeepsEmptySlot(t *testing.T) {
+	for _, layout := range []Layout{LayoutTopbar, LayoutSidebar} {
+		got := renderShell(t, Props{AppName: "A", Layout: layout}, nil)
+		if !strings.Contains(got, `<div id="wf-flash"></div>`) {
+			t.Errorf("layout %v: missing empty #wf-flash in:\n%s", layout, got)
+		}
+	}
+}
+
+func TestShell_UserMenuDestructiveConfirm(t *testing.T) {
+	got := renderShell(t, Props{
+		AppName: "A",
+		User: &User{Name: "Ada", Menu: []action.Action{
+			{Label: "Delete account", HxDelete: "/account", Variant: action.VariantDestructive,
+				Confirm: &action.Confirm{Title: "Delete account", Message: "Really?", ConfirmLabel: "Delete"}},
+		}},
+	}, nil)
+	for _, want := range []string{`role="menuitem"`, `hx-delete="/account"`, `hx-confirm="Really?"`, `data-wf-confirm-title="Delete account"`, `data-wf-confirm-label="Delete"`, `data-wf-confirm-destructive="true"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("user menu item missing %q in:\n%s", want, got)
+		}
+	}
+}

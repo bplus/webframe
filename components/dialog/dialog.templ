@@ -239,7 +239,11 @@ templ Content(props ...ContentProps) {
 	<!-- Overlay -->
 	<div
 		class={ utils.TwMerge(
-				"fixed inset-0 z-50 bg-black/50",
+				// A scrim darkens in both themes (a shadow, not a surface
+				// color); bg-foreground/40 lightened the page in dark mode.
+				// Overlay ladder: slideover 55/60 < dialog 65 < toast 70, so a
+				// confirm dialog opened from inside a sheet is on top of it.
+				"fixed inset-0 z-[65] bg-black/50",
 				"transition-opacity duration-300",
 				"data-[tui-dialog-open=false]:opacity-0",
 				"data-[tui-dialog-open=true]:opacity-100",
@@ -261,7 +265,7 @@ templ Content(props ...ContentProps) {
 		class={
 			utils.TwMerge(
 				// Base positioning
-				"fixed z-50 left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]",
+				"fixed z-[65] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]",
 				// Style
 				"bg-background rounded-lg border shadow-lg",
 				// Layout

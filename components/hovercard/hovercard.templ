@@ -57,8 +57,9 @@ type Props struct {
 // --wf-pop-max on the popover element, and the card shell is capped to it
 // with overflow-y auto so the rest scrolls inside the card. Before the
 // script positions the card the cap falls back to 70vh. The shell's 180px
-// min-height still wins when less than that is available (not reachable at
-// 390x844 with the default top/bottom placement).
+// min-height yields to the same cap (input.css .wf-hover-shell:
+// min(180px, var(--wf-pop-max) - 2px)), so a landscape phone with less than
+// 180px on the larger side still gets a card that fits and scrolls.
 //
 // Side effects: none server-side — no RandomID, no context writes;
 // deterministic markup from Props and children.

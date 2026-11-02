@@ -7,7 +7,6 @@ import (
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/layout"
-	"github.com/bplus/webframe/components/panel"
 )
 
 // The fragments below are the htmx responses of the demo's interaction
@@ -44,18 +43,8 @@ templ PickedResult(value, text string) {
 	}
 }
 
-// Toast is the out-of-band toast: htmx appends the Stack's content to
-// #toast-container, and Alpine removes the panel after 4 seconds (long
-// enough to read, short enough that toasts don't pile up).
-templ Toast(variant badge.Variant, label, msg string) {
-	@layout.Stack(layout.StackProps{Attributes: templ.Attributes{"hx-swap-oob": "beforeend:#toast-container"}}) {
-		@panel.Panel(panel.Props{Attributes: templ.Attributes{"x-data": "", "x-init": "setTimeout(() => $el.remove(), 4000)"}}) {
-			@layout.Inline(layout.InlineProps{Gap: layout.GapS}) {
-				@badge.Badge(badge.Props{Variant: variant}) {
-					{ label }
-				}
-				<span>{ msg }</span>
-			}
-		}
-	}
+// SlowResult is the spinner demo's reply (GET /api/slow): the clock time
+// the server answered, as one small line, so each click visibly changes it.
+templ SlowResult(at string) {
+	<small>Answered at { at }</small>
 }

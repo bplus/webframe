@@ -1,0 +1,104 @@
+// Package spinner renders an indeterminate progress indicator: an inline
+// SVG ring drawn in currentColor and spun with Tailwind's animate-spin, in
+// a role="status" root with an sr-only label. It tells the user that
+// something is in flight when there is no known final shape to hold with a
+// skeleton (a button that is working, a request indicator in a toolbar).
+//
+// Set Indicator to tie it to htmx: the root gains the htmx-indicator class
+// and the existing CSS rule fades it in while the enclosing hx-request is
+// pending and out again after. Without Indicator the spinner is always
+// visible and the caller shows or removes it.
+//
+// Phone: nothing special. The spinner is sized by Size alone and sits
+// inline with the text around it.
+package spinner
+
+import "github.com/bplus/webframe/utils"
+
+// Size is the ring's box: 16px, 20px (default) or 32px.
+type Size string
+
+const (
+	SizeSm Size = "sm" // h-4 w-4 (16px)
+	SizeMd Size = ""   // h-5 w-5 (20px)
+	SizeLg Size = "lg" // h-8 w-8 (32px)
+)
+
+// Props configures a Spinner. Label is the sr-only text, "Loading" by
+// default. Indicator adds the htmx-indicator class so the spinner shows
+// only while an htmx request is pending on an ancestor (or on itself).
+// Color is the parent's currentColor; the root sets text-muted-foreground,
+// which Class can override.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Size      Size
+	Label     string
+	Indicator bool
+}
+
+func sizeClass(s Size) string {
+	switch s {
+	case SizeSm:
+		return "h-4 w-4"
+	case SizeLg:
+		return "h-8 w-8"
+	default:
+		return "h-5 w-5"
+	}
+}
+
+func (p Props) label() string {
+	if p.Label == "" {
+		return "Loading"
+	}
+	return p.Label
+}
+
+// ring is the SVG itself: a quarter arc over a faint full circle, both in
+// currentColor, so the spinner takes whatever text color surrounds it. It
+// is aria-hidden; the root's role and label speak for it.
+templ ring(size Size) {
+	<svg class={ utils.TwMerge("animate-spin shrink-0", sizeClass(size)) } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+		<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+	</svg>
+}
+
+// Spinner renders the indicator: an inline-flex span with role="status"
+// holding the spinning ring and an sr-only Label. Accepts zero or one
+// Props; extras are ignored. With no Props it is a 20px muted ring labelled
+// "Loading".
+templ Spinner(props ...Props) {
+	{{
+		var p Props
+		if len(props) > 0 {
+			p = props[0]
+		}
+	}}
+	<span
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		role="status"
+		class={ utils.TwMerge("inline-flex items-center text-muted-foreground", utils.If(p.Indicator, "htmx-indicator"), p.Class) }
+		{ p.Attributes... }
+	>
+		@ring(p.Size)
+		<span class="sr-only">{ p.label() }</span>
+	</span>
+}
+
+// Inline renders a SizeSm spinner with label as visible text beside it, for
+// a control that is working ("Saving…" next to a disabled button, a row
+// that is being deleted). The label is the status text itself, so there is
+// no separate sr-only copy. The root is the same role="status" span as
+// Spinner's, in text-sm.
+templ Inline(label string) {
+	<span role="status" class="inline-flex items-center gap-2 text-sm text-muted-foreground">
+		@ring(SizeSm)
+		<span>{ label }</span>
+	</span>
+}

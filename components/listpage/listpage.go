@@ -7,30 +7,54 @@
 //
 // Composition order of Page: pageheader → [layout.TwoColumn when Aside is
 // set, holding everything below] → Intro <p> → filterbar (only when
-// Filters or Search is set) → toolbar (only when Toolbar, Create or
-// Selection+BulkActions is set) → Results. Results is the swap region:
-// <div id=ResultsID()> datatable + pagination </div>, never a header, so a
-// swap never duplicates the title.
+// Filters or Search is set, or a Column is Sortable) → toolbar (only when
+// Toolbar, Create or Selection+BulkActions is set) → Results. Results is
+// the swap region: <div id=ResultsID()> datatable + pagination </div>,
+// never a header, so a swap never duplicates the title.
 //
 // Query wiring: every control name goes through Spec.Param, so a prefixed
 // Spec ("items" → items.status, items.q, items.sort) stays namespaced.
 // Filter controls are named by their FilterConfig.ID (the bare filter key
 // listed in listquery.Options.FilterKeys); the search box is "q". The
-// filter bar (id ID+"-filterbar") carries sort, dir and per as hidden
-// inputs (never page) so a filter change keeps the sort and lands on page
-// 1; "Clear filters" keeps them too. Selected state comes from
-// Spec.Filters and Spec.Search.
+// filter bar (id ID+"-filterbar") carries sort, dir and per (never page)
+// so a filter change keeps the sort and lands on page 1; "Clear filters"
+// keeps them too. dir and per are hidden inputs; sort is a hidden input
+// unless a Column is Sortable, when it is the Sort select described
+// below. Selected state comes from Spec.Filters and Spec.Search.
+//
+// Sort select (phone): a sortable column marked Hidden loses its header,
+// the sort link, below md, so when any Column is Sortable the bar's last
+// control is a <select> named Spec.Param("sort"), labelled "Sort", with
+// two options per sortable column, "{Label} ↑" and "{Label} ↓", both
+// value=Key; the ↓ option carries data-tui-filterbar-set-dir="desc" and ↑
+// "asc" (under the Spec's prefix), which filterbar.min.js writes into the
+// bar's hidden dir input before every update, so choosing an option
+// issues the same sort=Key&dir=… request a header click does. The option
+// matching Spec.Sort and Spec.Dir is selected; when none does (the sort
+// is a column that is not Sortable, or the Spec has no sort) a leading
+// "Default order" option (value "", dir "") is. The select has the id the
+// hidden sort input had, filterbar.HiddenID(ID+"-filterbar", Spec.Param
+// ("sort")), carries filterbar's state marker so "Clear filters" leaves
+// it alone, and is the element the out-of-band update after a header
+// click replaces, so the headers and the select never disagree. It
+// renders only below md (its wrapper is md:hidden; the headers do its job
+// on md and up) but is read by the bar's script at every width, so sort
+// rides along with filter changes there as before. A list with sortable
+// columns and no Filters or Search still gets the bar, holding only the
+// select and no "Clear filters" button, and the whole bar is md:hidden
+// then.
 //
 // The URL is the list state. Every results-only response (Respond for a
 // request targeting the results region, RespondResults for a mutation)
 // carries, after the results, out-of-band copies of the bar's hidden
-// inputs and of the intro line (hx-swap-oob, matched by id), so a sort
-// chosen from a table header is what the next filter change sends and the
-// intro's counts follow a delete. The bar's URL rewrite drops its own
-// parameters and page (filterbar.Props.Drop) before writing the current
-// values, so a cleared filter leaves the address bar too. The empty
-// state's "Clear filters" drives the bar's own reset (window.tui.filterbar
-// .reset) so the controls clear along with the results.
+// inputs (and of the Sort select in the hidden sort input's place) and of
+// the intro line (hx-swap-oob, matched by id), so a sort chosen from a
+// table header is what the next filter change sends and the intro's
+// counts follow a delete. The bar's URL rewrite drops its own parameters
+// and page (filterbar.Props.Drop) before writing the current values, so a
+// cleared filter leaves the address bar too. The empty state's "Clear
+// filters" drives the bar's own reset (window.tui.filterbar.reset) so the
+// controls clear along with the results.
 //
 // Bulk actions: when Selection and BulkActions are set, a form.Form with id
 // ID+"-bulk" holds one button per action in the toolbar's middle slot (right
@@ -42,7 +66,10 @@
 // is a link. Bulk buttons are htmx-driven (type="button"): there is no
 // native submit fallback.
 //
-// Phone collapse (below md, 768px): the filter bar wraps; the toolbar
+// Phone collapse (below md, 768px): the filter bar wraps and shows the
+// Sort select after the filters (so a Hidden sortable column can still be
+// sorted; the select and the visible headers' sort state agree after any
+// change, since every results response updates the select); the toolbar
 // collapses each side past its first action into a "⋯" menu (toolbar's
 // default Overflow) and the bulk buttons wrap onto their own row; the
 // datatable drops Hidden columns, keeps the selection column and folds
@@ -74,6 +101,16 @@ const (
 	defaultID = "list"
 	// searchKey is the search control's bare name; Spec.Param prefixes it.
 	searchKey = "q"
+	// sortKey and dirKey are the sort state's bare names (the Sort select
+	// and the hidden input it sets); Spec.Param prefixes them.
+	sortKey = "sort"
+	dirKey  = "dir"
+	// setPrefix is the filterbar.min.js option attribute that writes a
+	// value into a named control when the option is selected.
+	setPrefix = "data-tui-filterbar-set-"
+	// defaultOrderLabel is the Sort select's option when no sortable column
+	// is the current sort.
+	defaultOrderLabel = "Default order"
 	// introClass styles the intro <p> in Page and its out-of-band copy
 	// alike, so the replacement does not move anything.
 	introClass = "text-sm text-muted-foreground"
@@ -136,6 +173,10 @@ type Props struct {
 	BulkActions []action.Action
 	// Dense tightens the table's cell padding.
 	Dense bool
+	// StickyHeader and MaxHeight pass through to datatable: a pinned thead,
+	// and a capped scroll box for the rows (see datatable.Props).
+	StickyHeader bool
+	MaxHeight    datatable.Height
 	// Base is the URL every sort, page and filter request is built on
 	// ("/items"). "" uses the request path stored by appshell.Middleware.
 	Base string
@@ -174,8 +215,93 @@ func (p Props) filterbarID() string { return p.id() + "-filterbar" }
 // introID is the intro <p>'s id, the target of its out-of-band copy.
 func (p Props) introID() string { return p.id() + "-intro" }
 
+// hasFilterControls reports whether the bar holds a filter or search
+// control: what "Clear filters" clears, and what makes the bar worth
+// showing on md and up.
+func (p Props) hasFilterControls() bool { return len(p.Filters) > 0 || p.Search != "" }
+
+// sortableColumns returns the Columns with Sortable set and a Key, in
+// order: the Sort select's choices.
+func (p Props) sortableColumns() []datatable.Column {
+	var cols []datatable.Column
+	for _, c := range p.Columns {
+		if c.Sortable && c.Key != "" {
+			cols = append(cols, c)
+		}
+	}
+	return cols
+}
+
+// hasSortControl reports whether the bar holds the Sort select: when any
+// column is sortable (see the package doc).
+func (p Props) hasSortControl() bool { return len(p.sortableColumns()) > 0 }
+
 // hasFilterBar reports whether anything would render in the filter bar.
-func (p Props) hasFilterBar() bool { return len(p.Filters) > 0 || p.Search != "" }
+func (p Props) hasFilterBar() bool { return p.hasFilterControls() || p.hasSortControl() }
+
+// sortConfig builds the Sort select (see the package doc): named
+// Spec.Param("sort"), two options per sortable column whose
+// data-tui-filterbar-set-<dir param> attribute sets the hidden dir input
+// (the option for the Spec's default order carries value "" and dir "", so
+// choosing it, or changing a filter while in it, submits no sort at all),
+// the option matching Spec.Sort and Spec.Dir selected, and a leading
+// "Default order" option (value "", dir "") when none matches, so the
+// select never claims a sort the page is not in. A zero Spec.Dir counts
+// as ascending, as listquery sorts it. PhoneOnly: the headers sort on md
+// and up.
+func (p Props) sortConfig() filterbar.FilterConfig {
+	cols := p.sortableColumns()
+	setDir := setPrefix + p.Spec.Param(dirKey)
+	dir := p.Spec.Dir
+	if dir != listquery.Desc {
+		dir = listquery.Asc
+	}
+	opts := make([]filterbar.FilterOption, 0, 2*len(cols)+1)
+	matched := false
+	for _, c := range cols {
+		for _, d := range []listquery.Dir{listquery.Asc, listquery.Desc} {
+			sel := p.Spec.Sort == c.Key && dir == d
+			matched = matched || sel
+			// The default order submits nothing (value "" and dir ""), so
+			// a filter change made in the default order leaves the URL as
+			// clean as listquery's own links do.
+			value, setTo := c.Key, string(d)
+			if p.Spec.IsDefaultOrder(c.Key, d) {
+				value, setTo = "", ""
+			}
+			opts = append(opts, filterbar.FilterOption{
+				Label:      c.Label + " " + utils.IfElse(d == listquery.Asc, "↑", "↓"),
+				Value:      value,
+				Selected:   sel,
+				Attributes: templ.Attributes{setDir: setTo},
+			})
+		}
+	}
+	if !matched {
+		opts = append([]filterbar.FilterOption{{
+			Label:      defaultOrderLabel,
+			Value:      "",
+			Selected:   true,
+			Attributes: templ.Attributes{setDir: ""},
+		}}, opts...)
+	}
+	return filterbar.FilterConfig{
+		ID:        p.Spec.Param(sortKey),
+		Label:     "Sort",
+		Type:      filterbar.TypeSelect,
+		Options:   opts,
+		PhoneOnly: true,
+	}
+}
+
+// sortControls is sortConfig as the slice filterbar.HiddenOOB takes: one
+// config when the bar has the Sort select, nil otherwise.
+func (p Props) sortControls() []filterbar.FilterConfig {
+	if !p.hasSortControl() {
+		return nil
+	}
+	return []filterbar.FilterConfig{p.sortConfig()}
+}
 
 // hasBulk reports whether the bulk form renders.
 func (p Props) hasBulk() bool { return p.Selection && len(p.BulkActions) > 0 }
@@ -220,7 +346,9 @@ func (p Props) filterConfigs() []filterbar.FilterConfig {
 	for i := range configs {
 		configs[i].ID = p.Spec.Param(configs[i].ID)
 	}
-	return configs
+	// The Sort select comes after WithSelected: its two options per column
+	// share a value, so it marks its own selection from Spec.Sort and Dir.
+	return append(configs, p.sortControls()...)
 }
 
 // hiddenInputs is the list state that rides along with every filter
@@ -232,6 +360,10 @@ func (p Props) filterConfigs() []filterbar.FilterConfig {
 // input by id, which needs an element to replace even when the page
 // loaded with no sort at all. page, q and filters are never included: a
 // filter change lands on page 1 and the controls carry q and the filters.
+// When the bar has the Sort select (a Sortable column), the sort key is
+// still present so filterbar promotes the select in the hidden input's
+// place (filterbar.Props.Hidden); the map value for sort is then ignored
+// and the select's own selected option carries the sort.
 func (p Props) hiddenInputs() map[string]string {
 	vals := p.Spec.Values()
 	out := make(map[string]string, 3)
@@ -245,16 +377,19 @@ func (p Props) hiddenInputs() map[string]string {
 // filterbarProps assembles the filter bar for the resolved base path: the
 // bar's id (so its hidden inputs have ids), the controls, the hidden list
 // state, and page as the parameter the bar's URL rewrite drops (a filter
-// change lands on page 1).
+// change lands on page 1). "Clear filters" renders only when there is a
+// filter or search control to clear; a bar holding only the Sort select
+// is md:hidden as a whole (the headers sort on md and up).
 func (p Props) filterbarProps(base string) filterbar.Props {
 	return filterbar.Props{
 		ID:        p.filterbarID(),
+		Class:     utils.If(!p.hasFilterControls(), "md:hidden"),
 		Filters:   p.filterConfigs(),
 		HxGet:     base,
 		HxTarget:  p.resultsTarget(),
 		Hidden:    p.hiddenInputs(),
 		Drop:      []string{p.Spec.Param("page")},
-		ShowReset: true,
+		ShowReset: p.hasFilterControls(),
 	}
 }
 
@@ -286,15 +421,17 @@ func (p Props) bulkAction(a action.Action) action.Action {
 // q, no filters; sort and page size kept); and the zero value (datatable
 // renders "Nothing here yet") when not.
 //
-// With a filter bar on the page the link's click (Alpine, x-on:click
+// With filter controls on the page the link's click (Alpine, x-on:click
 // .prevent) calls window.tui.filterbar.reset on the bar, which clears the
-// bar's controls, keeps its hidden inputs, re-requests the results region
-// over htmx and rewrites the URL: the bar then shows what the results
-// show. The href stays as the no-JS fallback. The link carries no hx-get
-// then, since the reset issues the request and a second one from the link
-// would fetch the same results twice. Without a filter bar (filters came
-// from the URL alone) the link is a plain htmx link like the sort and page
-// links: hx-get to the same URL, targeting the results with hx-push-url.
+// bar's controls, keeps its hidden inputs and the Sort select, re-requests
+// the results region over htmx and rewrites the URL: the bar then shows
+// what the results show. The href stays as the no-JS fallback. The link
+// carries no hx-get then, since the reset issues the request and a second
+// one from the link would fetch the same results twice. Without filter
+// controls (filters came from the URL alone; a bar holding only the Sort
+// select owns none of them, so its reset could not clear them from the
+// URL) the link is a plain htmx link like the sort and page links: hx-get
+// to the same URL, targeting the results with hx-push-url.
 func (p Props) empty(base string) emptystate.Props {
 	e := p.Empty
 	if e.Title != "" || e.Description != "" || e.Icon != "" || e.Action != nil {
@@ -309,7 +446,7 @@ func (p Props) empty(base string) emptystate.Props {
 	// A plain-link action with Attributes renders <a href …>; an Hx* field
 	// would make action.Button drop the href and render a <button>.
 	e.Action = &action.Action{Label: "Clear filters", Href: clear}
-	if p.hasFilterBar() {
+	if p.hasFilterControls() {
 		// x-data makes the link an Alpine root, so the handler is live on
 		// the first page load too (Alpine starts from [x-data] elements;
 		// swapped-in content is initialized by the shell's afterSwap hook).
@@ -342,6 +479,8 @@ func (p Props) tableProps(base string) datatable.Props {
 		SelectionName: "ids",
 		SelectionForm: p.bulkFormID(),
 		Dense:         p.Dense,
+		StickyHeader:  p.StickyHeader,
+		MaxHeight:     p.MaxHeight,
 		Empty:         p.empty(base),
 	}
 }

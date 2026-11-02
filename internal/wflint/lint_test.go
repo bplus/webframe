@@ -320,8 +320,8 @@ func TestLint_GoFiles(t *testing.T) {
 // it (a closing tag, a quoted attribute, or an adjacent tag), is reported at
 // the literal, in .go files and in the Go sections of .templ files; comments,
 // rune literals, allowed elements and look-alikes are not. A bare mention of
-// a tag ("<div>" on htmlstring.go:13) and an upper-case look-alike ("<H2>" on
-// htmlstring.templ.txt:14) are not markup and are no longer reported.
+// a tag (okMention = "<div>" on htmlstring.go:13) and an upper-case look-alike
+// ("<H2>" on htmlstring.templ.txt:14) are not markup and are not reported.
 func TestLint_HTMLFromGoString(t *testing.T) {
 	for file, wantLines := range map[string][]int{
 		"testdata/htmlstring.templ.txt": {3, 6, 12},

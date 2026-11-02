@@ -17,15 +17,18 @@ import (
 	"github.com/bplus/webframe/components/textarea"
 )
 
-// Scripts renders the standard script bundle: the Script() tag of tabs,
-// popover, dropdown, dialog, selectbox, autocomplete, input, checkbox,
-// textarea, avatar, label, slideover and filterbar, followed by
+// Scripts renders the standard script bundle: confirm.js (the htmx:confirm
+// interceptor; htmx itself loads in <head>, so this is the first tag of the
+// bundle and runs before any component script), then the Script() tag of
+// tabs, popover, dropdown, dialog, selectbox, autocomplete, input,
+// checkbox, textarea, avatar, label, slideover and filterbar, followed by
 // theme-toggle.js. Document
 // renders it at the end of <body>. It deliberately omits trafficstream and
 // graphwidget; pages using those add their own Script().
 //
 // @boundary
 templ Scripts() {
+	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/confirm.js") }></script>
 	@tabs.Script()
 	@popover.Script()
 	@dropdown.Script()

@@ -97,6 +97,10 @@ type Props struct {
 	ThemeToggle bool
 	LiveDot     *LiveDot
 	Width       Width
+	// Flash, when non-nil, renders inside the #wf-flash slot at the top
+	// of <main>, above the page body; it is the only thing that slot ever
+	// holds. (*App).RenderParts fills it from App.Flash.
+	Flash templ.Component
 }
 
 // phoneVisible is how many topbar items stay inline under 768px; the
@@ -166,30 +170,6 @@ func navLinkAttrs(item NavItem, path string) templ.Attributes {
 		return templ.Attributes{"aria-current": "page"}
 	}
 	return templ.Attributes{}
-}
-
-// menuItemAttrs builds the hx-* attributes for a non-link user-menu
-// action, merged with its own Attributes. The dropdown item itself is
-// the <button>, so action.Button is not nested inside it.
-func menuItemAttrs(a action.Action) templ.Attributes {
-	attrs := templ.Attributes{}
-	set := func(k, v string) {
-		if v != "" {
-			attrs[k] = v
-		}
-	}
-	set("hx-get", a.HxGet)
-	set("hx-post", a.HxPost)
-	set("hx-delete", a.HxDelete)
-	set("hx-target", a.HxTarget)
-	set("hx-swap", a.HxSwap)
-	if a.Confirm != nil {
-		set("hx-confirm", a.Confirm.Message)
-	}
-	for k, v := range a.Attributes {
-		attrs[k] = v
-	}
-	return attrs
 }
 
 func initials(name string) string {

@@ -61,3 +61,57 @@ func TestDocument_RendersChildren(t *testing.T) {
 		t.Errorf("children not inside body:\n%s", got)
 	}
 }
+
+func TestDocument_ConfirmHostOnceAfterToastContainer(t *testing.T) {
+	got := renderDoc(t, DocProps{AppName: "A"}, templ.Raw("<p>hi</p>"))
+	const host = `id="wf-confirm"`
+	if n := strings.Count(got, host); n != 1 {
+		t.Fatalf("want exactly one #wf-confirm, got %d in:\n%s", n, got)
+	}
+	// The host is confirmdialog.Host: a closed dialog.Dialog instance named
+	// wf-confirm (what confirm.js opens), not an empty div.
+	for _, want := range []string{`data-dialog-instance="wf-confirm"`, `data-wf-confirm-part="cancel"`, `data-tui-dialog-hidden="true"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("confirm host missing %q in:\n%s", want, got)
+		}
+	}
+	toast := strings.Index(got, `id="toast-container"`)
+	confirm := strings.Index(got, host)
+	scripts := strings.Index(got, "confirm.js")
+	child := strings.Index(got, "<p>hi</p>")
+	end := strings.Index(got, "</body>")
+	if !(child < toast && toast < confirm && confirm < scripts && scripts < end) {
+		t.Errorf("want children < toast-container < wf-confirm < scripts < </body>; got %d %d %d %d %d", child, toast, confirm, scripts, end)
+	}
+}
+
+func TestDocument_ConfirmScriptFirstInBundleAfterHTMX(t *testing.T) {
+	got := renderDoc(t, DocProps{AppName: "A"}, nil)
+	htmx := strings.Index(got, "htmx.min.js")
+	confirm := strings.Index(got, "/static/js/confirm.js")
+	tabs := strings.Index(got, "tabs.min.js")
+	if htmx < 0 || confirm < 0 || tabs < 0 {
+		t.Fatalf("missing htmx/confirm/tabs script in:\n%s", got)
+	}
+	if !(htmx < confirm && confirm < tabs) {
+		t.Errorf("want htmx < confirm.js < component scripts; got %d %d %d", htmx, confirm, tabs)
+	}
+}
+
+// TestDocument_HTMXConfigSwapsErrors: the htmx-config meta precedes the
+// htmx script and tells htmx to swap 4xx/5xx responses, so a 422 form
+// re-render, a 409 carrying only a toast and a 404 error page all reach
+// the page.
+func TestDocument_HTMXConfigSwapsErrors(t *testing.T) {
+	got := renderDoc(t, DocProps{Title: "T", AppName: "A"}, nil)
+	meta := strings.Index(got, `<meta name="htmx-config"`)
+	script := strings.Index(got, "htmx.min.js")
+	if meta < 0 || script < 0 || meta > script {
+		t.Fatalf("htmx-config meta missing or after the htmx script (meta=%d script=%d)", meta, script)
+	}
+	for _, want := range []string{`[45]..`, `swap`, `error`, `204`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("htmx-config lacks %q:\n%s", want, got[meta:meta+300])
+		}
+	}
+}

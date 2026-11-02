@@ -109,7 +109,7 @@ func TestItems_ListSortsAndFilters(t *testing.T) {
 		"All types", "Search items", "Published", "Draft",
 		"Build mod", "+ Create item", "Publish selected",
 		"1–3 of 3 items", `id="items-results"`,
-		`hx-delete="/items/2"`, `hx-confirm="Delete this item?"`, `href="/items/2/edit"`,
+		`hx-delete="/items/2"`, `hx-confirm="This cannot be undone."`, `data-wf-confirm-destructive="true"`, `href="/items/2/edit"`,
 	)
 	// The default list is newest first with every row.
 	body = do(h, "GET", "/items", nil, nil).Body.String()
@@ -139,9 +139,14 @@ func TestItems_ResultsSwap(t *testing.T) {
 		t.Errorf("results swap does not start with the results div:\n%s", body[:min(200, len(body))])
 	}
 	wantAll(t, body, `id="items-results"`, "Blade of the Fallen Star", "1–14 of 14 items",
-		// After the results, out of band: the bar's hidden inputs with the
-		// served sort (so the next filter change keeps it) and the intro.
-		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		// After the results, out of band: the bar's hidden inputs and its
+		// Sort select (the phone sort control, in the hidden sort input's
+		// place since the columns are sortable) with the served sort, so the
+		// next filter change keeps it and the select shows it, and the intro.
+		`<input type="hidden" id="items-filterbar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<select id="items-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">Name ↑</option>`,
+		`<option value="" data-tui-filterbar-set-dir="">Updated ↓</option>`,
 		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">14 items · 11 published · 3 drafts</p>`)
 	wantNone(t, body, "<h1", "<html", "wf-topbar", "wf-sidebar", "Search items", "data-tui-filterbar-hx-get")
 	// Any other htmx target gets the page body without the shell.
@@ -157,8 +162,8 @@ func TestItems_CreateErrors(t *testing.T) {
 	h := itemsHandler(t)
 	form := url.Values{"name": {"ab"}, "status": {"draft"}, "notes": {"keep me"}}
 	rec := do(h, "POST", "/items", form, hx("item-form"))
-	if rec.Code != 200 {
-		t.Fatalf("POST /items with errors = %d, want 200 (htmx does not swap 4xx)", rec.Code)
+	if rec.Code != 422 {
+		t.Fatalf("POST /items with errors = %d, want 422 (Document's htmx config swaps error responses)", rec.Code)
 	}
 	body := rec.Body.String()
 	if !strings.HasPrefix(strings.TrimSpace(body), "<form") {
@@ -269,35 +274,38 @@ func TestItems_Delete(t *testing.T) {
 	h := itemsHandler(t)
 	headers := hx("items-results")
 	headers["HX-Current-URL"] = "http://localhost:3333/items?sort=name&dir=asc"
-	rec := do(h, "DELETE", "/items/1", nil, headers)
+	// Item 2 (Cloak of Whispers, a draft); item 1 is the protected one
+	// whose refused delete feedback_test.go covers.
+	rec := do(h, "DELETE", "/items/2", nil, headers)
 	if rec.Code != 200 {
-		t.Fatalf("DELETE /items/1 = %d", rec.Code)
+		t.Fatalf("DELETE /items/2 = %d", rec.Code)
 	}
 	body := rec.Body.String()
 	wantAll(t, body, `id="items-results"`, "1–13 of 13 items", `aria-sort="ascending"`)
-	wantNone(t, body, "Blade of the Fallen Star", "<h1", "<html")
-	inOrder(t, body, "Amulet of Still Water", "Ashen Dagger", "Boots of Quiet Steps")
-	if _, ok := Items.Get("1"); ok {
-		t.Error("item 1 still in the store")
+	wantNone(t, body, "Cloak of Whispers", "<h1", "<html")
+	inOrder(t, body, "Amulet of Still Water", "Ashen Dagger", "Blade of the Fallen Star", "Boots of Quiet Steps")
+	if _, ok := Items.Get("2"); ok {
+		t.Error("item 2 still in the store")
 	}
 	// The response itself carries the live intro and the bar's hidden
 	// state out of band, and the address bar follows the served state.
 	inOrder(t, body, `id="items-results"`,
-		`<input type="hidden" id="items-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
-		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">13 items · 10 published · 3 drafts</p>`)
+		`<select id="items-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">Name ↑</option>`,
+		`<p id="items-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">13 items · 11 published · 2 drafts</p>`)
 	if got := rec.Header().Get("HX-Replace-Url"); got != "/items?dir=asc&sort=name" {
 		t.Errorf("HX-Replace-Url = %q", got)
 	}
 	// And the next full render agrees.
-	wantAll(t, do(h, "GET", "/items", nil, nil).Body.String(), "13 items · 10 published · 3 drafts")
+	wantAll(t, do(h, "GET", "/items", nil, nil).Body.String(), "13 items · 11 published · 2 drafts")
 
 	// From the detail page (htmx, no results target): redirect to the list.
-	rec = do(h, "DELETE", "/items/2", nil, hx(""))
+	rec = do(h, "DELETE", "/items/3", nil, hx(""))
 	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/items" || rec.Body.Len() != 0 {
 		t.Errorf("detail delete = %d HX-Redirect %q body %q", rec.Code, rec.Header().Get("HX-Redirect"), rec.Body.String())
 	}
 	// Plain request: 303.
-	if rec = do(h, "DELETE", "/items/3", nil, nil); rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items" {
+	if rec = do(h, "DELETE", "/items/4", nil, nil); rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items" {
 		t.Errorf("plain delete = %d Location %q", rec.Code, rec.Header().Get("Location"))
 	}
 	if rec = do(h, "DELETE", "/items/999", nil, hx("items-results")); rec.Code != 404 {
@@ -345,7 +353,7 @@ func TestItems_DetailAndHistory(t *testing.T) {
 	wantAll(t, body,
 		"<!doctype", "wf-shell--sidebar", "Blade of the Fallen Star — Webframe</title>",
 		"← Items", `href="/items"`, "Published",
-		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="Delete this item?"`,
+		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="This cannot be undone."`, `data-wf-confirm-destructive="true"`,
 		"<dt", "Type", "Weapon", "Starfall Pack", "Updated", "2d ago", `>1<`,
 		"Notes", "Seeded from the 2026-10-21 dashboard sketch.",
 		"History", `hx-get="/items/1/history"`, `hx-trigger="click once"`, `hx-target="#history-panel"`,
@@ -375,6 +383,11 @@ func TestItems_DetailAndHistory(t *testing.T) {
 		if rec := do(h, "GET", path, nil, nil); rec.Code != 404 {
 			t.Errorf("GET %s = %d, want 404", path, rec.Code)
 		}
+	}
+	// The two pages answer with the error page in the sidebar shell; the
+	// history fragment stays a bare 404 (a tab panel, not a page).
+	for _, path := range []string{"/items/999", "/items/999/edit"} {
+		wantAll(t, do(h, "GET", path, nil, nil).Body.String(), "Page not found", "wf-shell--sidebar", `>404<`)
 	}
 	// The create form.
 	body = do(h, "GET", "/items/new", nil, nil).Body.String()

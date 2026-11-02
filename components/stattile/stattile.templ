@@ -79,36 +79,11 @@ func surfaceClass(p Props) string {
 	return utils.TwMerge("block rounded-lg border p-4 min-h-24 text-foreground", border, bg, link, p.Class)
 }
 
-// deltaColor mirrors statcomparison's direction colors exactly (that helper
-// is unexported, so the mapping is replicated here, not shared).
-func deltaColor(d statcomparison.Direction) string {
-	switch d {
-	case statcomparison.DirectionUp:
-		return "text-success"
-	case statcomparison.DirectionDown:
-		return "text-destructive"
-	default:
-		return "text-muted-foreground"
-	}
-}
-
-// deltaRow replicates statcomparison's arrow SVGs (16x16 stroked paths in
-// currentColor) so a tile's delta reads identically to a StatComparison's.
+// deltaRow is the delta beside the value: statcomparison's shared Arrow and
+// ToneClass, so a tile's delta reads identically to a StatComparison's.
 templ deltaRow(d Delta) {
-	<span class={ utils.TwMerge("inline-flex items-center gap-0.5 text-sm font-medium", deltaColor(d.Direction)) }>
-		if d.Direction == statcomparison.DirectionUp {
-			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-				<path d="M8 3v10M8 3l4 4M8 3L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-			</svg>
-		} else if d.Direction == statcomparison.DirectionDown {
-			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-				<path d="M8 13V3M8 13l4-4M8 13L4 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-			</svg>
-		} else {
-			<svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-				<path d="M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-			</svg>
-		}
+	<span class={ utils.TwMerge("inline-flex items-center gap-0.5 text-sm font-medium", statcomparison.ToneClass(d.Direction)) }>
+		@statcomparison.Arrow(d.Direction)
 		<span>{ d.Value }</span>
 	</span>
 }
@@ -158,8 +133,8 @@ templ body(p Props) {
 // other, so nothing overflows horizontally.
 //
 // @pure
-// @ai-context delta colors and arrows are copied from statcomparison, whose
-// helper is unexported; keep the two in step if either changes.
+// @ai-context delta colors and arrows come from statcomparison.ToneClass and
+// statcomparison.Arrow (one shared mapping, nothing copied here).
 templ StatTile(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

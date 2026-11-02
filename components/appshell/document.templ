@@ -1,11 +1,14 @@
 package appshell
 
-import "github.com/bplus/webframe/assets"
+import (
+	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/confirmdialog"
+)
 
 // DocProps configures Document.
 type DocProps struct {
 	// Title is the page title; the document title is "{Title} — {AppName}",
-	// or just AppName when Title is empty.
+	// just AppName when Title is empty, just Title when AppName is empty.
 	Title   string
 	AppName string
 	// Lang is the <html lang> value; defaults to "en" when empty.
@@ -14,9 +17,21 @@ type DocProps struct {
 	Head templ.Component
 }
 
+// htmxConfig makes htmx swap 4xx and 5xx responses like 2xx ones (htmx 2
+// leaves the target untouched on an error status by default). The server
+// decides what an error looks like: a 422 form re-render with the errors
+// under the fields, a 409 whose only body is a toast, a 404 error page, so
+// the status code can be truthful and the user still sees the answer. 204
+// still swaps nothing; the error status still fires htmx:responseError
+// for apps that listen.
+const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
+
 func docTitle(p DocProps) string {
-	if p.Title == "" {
+	switch {
+	case p.Title == "":
 		return p.AppName
+	case p.AppName == "":
+		return p.Title
 	}
 	return p.Title + " — " + p.AppName
 }
@@ -32,8 +47,11 @@ func docLang(p DocProps) string {
 // (charset, viewport, title, stylesheet, flash-free theme init reading
 // localStorage "wf-theme" and defaulting to light, blocking htmx, deferred
 // alpine, optional p.Head), then <body class="wf-theme antialiased"> holding
-// the children, the #toast-container, the Scripts bundle, and an inline
-// htmx:afterSwap listener that calls Alpine.initTree on swapped-in content.
+// the children, the #toast-container, the page's one confirm dialog
+// (confirmdialog.Host, id "wf-confirm", closed and zero-height until
+// confirm.js opens it for an hx-confirm request), the Scripts bundle, and an
+// inline htmx:afterSwap listener that calls Alpine.initTree on swapped-in
+// content.
 //
 // @side-effects inline scripts set data-theme on <html> and re-init Alpine
 // after HTMX swaps
@@ -43,7 +61,7 @@ templ Document(p DocProps) {
 	<html lang={ docLang(p) }>
 		<head>
 			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 			<title>{ docTitle(p) }</title>
 			<link rel="stylesheet" href={ assets.URL("/static/css/output.css") }/>
 			<script>
@@ -58,6 +76,7 @@ templ Document(p DocProps) {
 			<!-- htmx loads blocking so it can fire htmx:afterSwap before any swap
 			     occurs; alpine is deferred since it only needs to be ready before
 			     user interaction. -->
+			<meta name="htmx-config" content={ htmxConfig }/>
 			<script src="/static/js/htmx.min.js"></script>
 			<script defer src="/static/js/alpine.min.js"></script>
 			if p.Head != nil {
@@ -67,6 +86,7 @@ templ Document(p DocProps) {
 		<body class="wf-theme antialiased">
 			{ children... }
 			<div id="toast-container" class="wf-toast-container"></div>
+			@confirmdialog.Host()
 			@Scripts()
 			<script>
 				document.addEventListener('htmx:afterSwap', function(e) {

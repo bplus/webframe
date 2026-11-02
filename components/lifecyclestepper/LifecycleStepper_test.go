@@ -59,14 +59,14 @@ func TestRender_BothSizes_AllStates(t *testing.T) {
 }
 
 // Done state renders the exact check-mark SVG path from the design
-// spec, in white, on a #1B7F4B circle.
+// spec, in the success foreground, on a --color-success circle.
 func TestRender_DoneState_ChecksSVGPath(t *testing.T) {
 	html := renderCompact(t, []Step{{Label: "Submitted", State: StateDone}})
 	if !strings.Contains(html, "M2.5 6.5L5 9L9.5 3.5") {
 		t.Errorf("expected done check path in output; html:\n%s", html)
 	}
-	if !strings.Contains(html, "#1B7F4B") {
-		t.Errorf("expected done circle color #1B7F4B in output; html:\n%s", html)
+	if !strings.Contains(html, "background-color:var(--color-success);border:none") {
+		t.Errorf("expected done circle color var(--color-success) in output; html:\n%s", html)
 	}
 }
 
@@ -77,10 +77,10 @@ func TestRender_SkippedState_DashedBorder(t *testing.T) {
 		{Label: "Submitted", State: StateDone},
 		{Label: "Reflect", State: StateSkipped},
 	})
-	if !strings.Contains(html, "1.5px dashed #C9C8C2") {
-		t.Errorf("expected skipped node to have a dashed #C9C8C2 border; html:\n%s", html)
+	if !strings.Contains(html, "1.5px dashed var(--color-border)") {
+		t.Errorf("expected skipped node to have a dashed --color-border border; html:\n%s", html)
 	}
-	if strings.Contains(html, "1.5px solid #C9C8C2") {
+	if strings.Contains(html, "1.5px solid var(--color-border)") {
 		t.Errorf("skipped node must not also render a solid border; html:\n%s", html)
 	}
 }
@@ -93,8 +93,8 @@ func TestRender_FutureState_SolidBorderAndIndex(t *testing.T) {
 		{Label: "Started", State: StateActive},
 		{Label: "Deploy", State: StateFuture},
 	})
-	if !strings.Contains(html, "1.5px solid #C9C8C2") {
-		t.Errorf("expected future node to have a solid #C9C8C2 border; html:\n%s", html)
+	if !strings.Contains(html, "1.5px solid var(--color-border)") {
+		t.Errorf("expected future node to have a solid --color-border border; html:\n%s", html)
 	}
 	// Deploy is the 3rd step (1-based index 3).
 	if !strings.Contains(html, ">3</span>") {
@@ -149,7 +149,7 @@ func TestRender_Title_RendersHoverAttribute(t *testing.T) {
 	}
 }
 
-// The connector rule: only a done->done pair is green (#1B7F4B); a
+// The connector rule: only a done->done pair is green (--color-success); a
 // done->skipped pair (or any pair with a non-done neighbor) must
 // render the grey off-color, never green — a fully-green bar can only
 // mean every stage actually ran.
@@ -158,7 +158,7 @@ func TestRender_ConnectorColor_DoneDoneGreen(t *testing.T) {
 		{Label: "Submitted", State: StateDone},
 		{Label: "Started", State: StateDone},
 	})
-	if !strings.Contains(html, "background-color:#1B7F4B;display:block;flex-shrink:0") {
+	if !strings.Contains(html, "background-color:var(--color-success);display:block;flex-shrink:0") {
 		t.Errorf("expected a green connector between two done nodes; html:\n%s", html)
 	}
 }
@@ -168,7 +168,7 @@ func TestRender_ConnectorColor_DoneSkippedGrey(t *testing.T) {
 		{Label: "Submitted", State: StateDone},
 		{Label: "Reflect", State: StateSkipped},
 	})
-	if strings.Contains(html, "background-color:#1B7F4B;display:block;flex-shrink:0") {
+	if strings.Contains(html, "background-color:var(--color-success);display:block;flex-shrink:0") {
 		t.Errorf("connector adjacent to a skipped node must not be green; html:\n%s", html)
 	}
 	// Grey connector uses the --color-border theme token (#DBDAD5 in

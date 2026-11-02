@@ -35,23 +35,23 @@ type Props struct {
 func (p Props) dotColor() string {
 	switch p.NodeType {
 	case "concept":
-		return "bg-blue-500"
+		return "bg-info"
 	case "tool":
-		return "bg-green-500"
+		return "bg-success"
 	case "decision":
-		return "bg-amber-500"
+		return "bg-warning"
 	case "error":
-		return "bg-red-500"
+		return "bg-destructive"
 	case "service":
-		return "bg-purple-500"
+		return "bg-primary"
 	case "person":
-		return "bg-cyan-500"
+		return "bg-info/60"
 	case "incident":
-		return "bg-orange-500"
+		return "bg-destructive/60"
 	case "code_path":
-		return "bg-emerald-500"
+		return "bg-success/60"
 	case "reference":
-		return "bg-slate-500"
+		return "bg-muted-foreground"
 	default:
 		return "bg-muted-foreground"
 	}

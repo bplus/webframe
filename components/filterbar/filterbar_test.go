@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/a-h/templ"
+
 	"github.com/bplus/webframe/components/filterbar"
 )
 
@@ -294,5 +296,125 @@ func TestWithSelected_NilValues(t *testing.T) {
 	}
 	if !in[0].Options[1].Selected {
 		t.Fatalf("input slice mutated")
+	}
+}
+
+// TestFilterBar_OptionAttributes: FilterOption.Attributes spread onto the
+// <option>, after selected; options without them render as before.
+func TestFilterBar_OptionAttributes(t *testing.T) {
+	html := render(t, filterbar.Props{Filters: []filterbar.FilterConfig{{
+		ID: "sort", Type: filterbar.TypeSelect,
+		Options: []filterbar.FilterOption{
+			{Label: "Name ↑", Value: "name", Attributes: templ.Attributes{"data-tui-filterbar-set-dir": "asc"}},
+			{Label: "Name ↓", Value: "name", Selected: true, Attributes: templ.Attributes{"data-tui-filterbar-set-dir": "desc"}},
+			{Label: "Plain", Value: "plain"},
+		},
+	}}})
+	for _, want := range []string{
+		`<option value="name" data-tui-filterbar-set-dir="asc">Name ↑</option>`,
+		`<option value="name" selected data-tui-filterbar-set-dir="desc">Name ↓</option>`,
+		`<option value="plain">Plain</option>`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in: %s", want, html)
+		}
+	}
+}
+
+// TestFilterBar_PhoneOnly: a PhoneOnly control's wrapper is md:hidden; the
+// control itself is unchanged, so the script still reads it on md and up.
+func TestFilterBar_PhoneOnly(t *testing.T) {
+	html := render(t, filterbar.Props{Filters: []filterbar.FilterConfig{
+		{ID: "sort", Label: "Sort", Type: filterbar.TypeSelect, PhoneOnly: true, Options: []filterbar.FilterOption{{Label: "A", Value: "a"}}},
+		{ID: "q", Label: "Search", Type: filterbar.TypeSearch},
+	}})
+	i := strings.Index(html, ">Sort</label>")
+	wrapper := html[strings.LastIndex(html[:i], "<div"):i]
+	if !strings.Contains(wrapper, "md:hidden") {
+		t.Errorf("PhoneOnly wrapper lacks md:hidden: %s", wrapper)
+	}
+	j := strings.Index(html, ">Search</label>")
+	other := html[strings.LastIndex(html[:j], "<div"):j]
+	if strings.Contains(other, "md:hidden") {
+		t.Errorf("non-PhoneOnly wrapper has md:hidden: %s", other)
+	}
+	if !strings.Contains(html, `<select name="sort" data-tui-filterbar-control class=`) {
+		t.Errorf("PhoneOnly must not change the control itself: %s", html)
+	}
+}
+
+// TestFilterBar_StateControl: a Hidden key naming a TypeSelect or
+// TypeSearch control renders no hidden input for it; the control takes the
+// input's id and the state marker, its label points at it, and the map
+// value is ignored. A TypeToggle key is not promoted.
+func TestFilterBar_StateControl(t *testing.T) {
+	html := render(t, filterbar.Props{
+		ID:     "bar",
+		Hidden: map[string]string{"sort": "ignored", "dir": "asc", "q": "ignored", "status": "x"},
+		Filters: []filterbar.FilterConfig{
+			{ID: "sort", Label: "Sort", Type: filterbar.TypeSelect, Options: []filterbar.FilterOption{{Label: "Name", Value: "name", Selected: true}}},
+			{ID: "q", Label: "Search", Type: filterbar.TypeSearch, Value: "blade"},
+			{ID: "status", Label: "Status", Type: filterbar.TypeToggle, Options: []filterbar.FilterOption{{Label: "Draft", Value: "draft"}}},
+		},
+	})
+	for _, want := range []string{
+		`<input type="hidden" id="bar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control>`,
+		`<input type="hidden" id="bar-hidden-status" name="status" value="x" data-tui-filterbar-control>`,
+		`<label for="bar-hidden-sort" class=`,
+		`<select id="bar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state class=`,
+		`<option value="name" selected>Name</option>`,
+		`<label for="bar-hidden-q" class=`,
+		`<input type="search" id="bar-hidden-q" name="q" data-tui-filterbar-control data-tui-filterbar-state value="blade"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in: %s", want, html)
+		}
+	}
+	for _, bad := range []string{`type="hidden" id="bar-hidden-sort"`, `type="hidden" id="bar-hidden-q"`, "ignored"} {
+		if strings.Contains(html, bad) {
+			t.Errorf("unexpected %q in: %s", bad, html)
+		}
+	}
+	if n := strings.Count(html, `type="hidden"`); n != 2 {
+		t.Errorf("%d hidden inputs, want 2 (dir, status): %s", n, html)
+	}
+	for _, name := range []string{`name="sort"`, `name="q"`} {
+		if n := strings.Count(html, name); n != 1 {
+			t.Errorf("%s appears %d times, want 1: %s", name, n, html)
+		}
+	}
+	// Without a bar id the promoted control has no id and no label for.
+	html = render(t, filterbar.Props{
+		Hidden:  map[string]string{"sort": ""},
+		Filters: []filterbar.FilterConfig{{ID: "sort", Type: filterbar.TypeSelect}},
+	})
+	if strings.Contains(html, ` id=`) || strings.Contains(html, ` for=`) {
+		t.Errorf("no id without Props.ID: %s", html)
+	}
+	if !strings.Contains(html, `<select name="sort" data-tui-filterbar-control data-tui-filterbar-state`) || strings.Contains(html, `type="hidden"`) {
+		t.Errorf("control not promoted without Props.ID: %s", html)
+	}
+}
+
+// TestHiddenOOB_Controls: a key that names one of the passed controls
+// renders that bare control (no wrapper, no label) with the input's id and
+// hx-swap-oob="true" in the input's place, in sorted key order with the
+// rest; controls whose ID is not a key are ignored.
+func TestHiddenOOB_Controls(t *testing.T) {
+	var buf bytes.Buffer
+	sort := filterbar.FilterConfig{ID: "sort", Label: "Sort", Type: filterbar.TypeSelect, PhoneOnly: true,
+		Options: []filterbar.FilterOption{{Label: "Name ↓", Value: "name", Selected: true, Attributes: templ.Attributes{"data-tui-filterbar-set-dir": "desc"}}}}
+	q := filterbar.FilterConfig{ID: "q", Type: filterbar.TypeSearch, Value: "blade"}
+	extra := filterbar.FilterConfig{ID: "type", Type: filterbar.TypeSelect}
+	err := filterbar.HiddenOOB("bar", map[string]string{"sort": "", "dir": "desc", "q": ""}, sort, q, extra).Render(context.Background(), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `<input type="hidden" id="bar-hidden-dir" name="dir" value="desc" data-tui-filterbar-control hx-swap-oob="true">` +
+		`<input type="search" id="bar-hidden-q" name="q" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true" value="blade" data-tui-filterbar-debounce="400" placeholder="" class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48">` +
+		`<select id="bar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true" class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">` +
+		`<option value="name" selected data-tui-filterbar-set-dir="desc">Name ↓</option></select>`
+	if got := buf.String(); got != want {
+		t.Errorf("HiddenOOB =\n%s\nwant\n%s", got, want)
 	}
 }

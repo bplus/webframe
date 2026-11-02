@@ -19,7 +19,6 @@ import (
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
-	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/pageheader"
@@ -189,7 +188,11 @@ func (p Props) bannerTitle() string {
 	return "Please fix the " + strconv.Itoa(n) + " errors below."
 }
 
-// submit returns the Submit action with the zero-value defaults applied.
+// submit returns the Submit action with the zero-value defaults applied
+// and marked Submit, so action.Button renders <button type="submit">. Href
+// and the Hx* fields are cleared first: the submit button never navigates
+// or issues its own request (the form carries hx-post), as Props.Submit
+// promises.
 func (p Props) submit() action.Action {
 	a := p.Submit
 	if a.Label == "" {
@@ -198,38 +201,9 @@ func (p Props) submit() action.Action {
 	if a.Variant == "" {
 		a.Variant = action.VariantPrimary
 	}
+	a.Submit = true
+	a.Href, a.HxGet, a.HxPost, a.HxDelete, a.HxTarget, a.HxSwap = "", "", "", "", "", ""
 	return a
-}
-
-// submitVariant maps an action Variant onto the button Variant, as
-// action.Button does (its mapping is unexported).
-func submitVariant(v action.Variant) button.Variant {
-	switch v {
-	case action.VariantDestructive:
-		return button.VariantDestructive
-	case action.VariantGhost:
-		return button.VariantGhost
-	case action.VariantSecondary:
-		return button.VariantSecondary
-	default:
-		return button.VariantDefault
-	}
-}
-
-// submitButtonProps renders Submit as a real submit button. action.Button
-// always emits type="button" (so a toolbar button never submits a form by
-// accident), which is exactly wrong for the one button that must, so the
-// submit row builds button.Props itself with Type submit.
-func (p Props) submitButtonProps() button.Props {
-	a := p.submit()
-	return button.Props{
-		ID:         a.ID,
-		Type:       button.TypeSubmit,
-		Variant:    submitVariant(a.Variant),
-		Size:       a.Size,
-		Disabled:   a.Disabled,
-		Attributes: a.Attributes,
-	}
 }
 
 // Respond writes the form page for r through the appshell App installed by
@@ -241,14 +215,20 @@ func (p Props) submitButtonProps() button.Props {
 // error re-render swaps the form in place.
 //
 // Respond never redirects. The POST handler decides: on validation errors
-// it sets p.Values from the submitted form and p.Errors, then calls Respond
-// (status 200, so htmx performs the swap); on success it redirects to the
-// saved record (303 See Other, or for an htmx submit an HX-Redirect header
-// with an empty 200 body) and renders no success message.
+// it sets p.Values from the submitted form and p.Errors, then calls Respond,
+// which answers 422 Unprocessable Entity (appshell.Document configures htmx
+// to swap error responses, so the form re-renders in place with a truthful
+// status); on success it redirects to the saved record (303 See Other, or
+// for an htmx submit an HX-Redirect header with an empty 200 body) and
+// renders no success message.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
 		return err
 	}
-	return app.RenderParts(w, r, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
+	status := 0
+	if len(p.Errors) > 0 {
+		status = http.StatusUnprocessableEntity
+	}
+	return app.RenderPartsStatus(w, r, status, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
 }

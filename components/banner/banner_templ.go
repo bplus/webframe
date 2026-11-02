@@ -70,18 +70,22 @@ func (p Props) hasContent() bool {
 	return p.Title != "" || p.Body != "" || p.Details != nil
 }
 
-// role returns the ARIA live-region role: alert for errors, status otherwise.
-func (p Props) role() string {
-	if p.Variant == VariantError {
+// Role returns the ARIA live-region role for v: alert for VariantError,
+// status otherwise. toast reuses it so a toast and a banner of the same
+// variant are announced the same way.
+func Role(v Variant) string {
+	if v == VariantError {
 		return "alert"
 	}
 	return "status"
 }
 
-// tone returns the color classes for the variant. Error uses the existing
-// destructive token; the others use the success/warning/info tokens.
-func (p Props) tone() string {
-	switch p.Variant {
+// Tone returns the color classes for v: a left border, a soft tint and a
+// text color from one token. Error uses the existing destructive token; the
+// others use the success/warning/info tokens. toast reuses it so every
+// notice in an app is colored from the same mapping.
+func Tone(v Variant) string {
+	switch v {
 	case VariantError:
 		return "border-destructive bg-destructive/10 text-destructive"
 	case VariantSuccess:
@@ -92,6 +96,12 @@ func (p Props) tone() string {
 		return "border-info bg-info/10 text-info"
 	}
 }
+
+// role returns the ARIA live-region role: alert for errors, status otherwise.
+func (p Props) role() string { return Role(p.Variant) }
+
+// tone returns the color classes for the variant.
+func (p Props) tone() string { return Tone(p.Variant) }
 
 func (p Props) rootClass() string {
 	return utils.TwMerge(
@@ -196,7 +206,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 114, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 124, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -227,7 +237,7 @@ func Banner(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.role())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 117, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 127, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -267,7 +277,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 127, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 137, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -286,7 +296,7 @@ func Banner(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Body)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 130, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/banner/banner.templ`, Line: 140, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

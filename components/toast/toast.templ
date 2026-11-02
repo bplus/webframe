@@ -1,0 +1,202 @@
+// Package toast renders a transient notice that floats over the page: the
+// answer to an htmx action that did not re-render the thing the user acted
+// on (a save that kept the form, a bulk action on a list). A toast has a
+// title, an optional body, a dismiss button and a timer; it is colored by
+// Kind from the same token mapping banner uses (banner.Tone, banner.Role),
+// so a toast and a banner of the same kind look and are announced alike.
+//
+// Send is for htmx responses only: it appends the toast out-of-band to the
+// #toast-container the appshell Document already renders, and writes
+// nothing at all for a non-htmx request. A handler that redirects cannot
+// carry a toast (the browser follows the redirect and the response body is
+// never swapped); it sets a one-shot flash instead (package flash), which
+// the shell renders on the next page.
+//
+// Error and Warning are the obvious path (toast.Error, toast.Warning);
+// Success exists for the rare action whose only visible result is a toast,
+// and Info for neutral notices. Pages do not show success messages unless
+// the user asked for one.
+//
+// Phone width (390px): .wf-toast-container stays at the top and spans the
+// width minus 16px gutters; each toast stretches to that width. The stack
+// sits above a slideover panel and backdrop (z-index 70 over 60/55), so a
+// toast fired while a bottom sheet is open is still seen, and being at the
+// top it never covers the sheet's buttons, a submit button or the field
+// above an on-screen keyboard.
+package toast
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/bplus/webframe/components/banner"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
+)
+
+// Kind selects the color and the ARIA role. The zero value is KindInfo.
+type Kind string
+
+const (
+	// KindInfo is the neutral notice (zero value).
+	KindInfo Kind = ""
+	// KindSuccess confirms a completed action. Opt-in: pages do not show
+	// success messages unless the user asked for one.
+	KindSuccess Kind = "success"
+	// KindWarning flags something that needs attention but did not fail.
+	KindWarning Kind = "warning"
+	// KindError reports a failure; it renders with role="alert".
+	KindError Kind = "error"
+)
+
+// DefaultTimeout is how long a toast stays when Props.Timeout is zero.
+const DefaultTimeout = 4 * time.Second
+
+// Props configures a Toast. A toast with neither Title nor Body renders
+// nothing (and Send writes nothing).
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+
+	Kind Kind
+	// Title is the bold first line; Body the plain text under it.
+	Title, Body string
+	// Timeout is how long the toast stays before it dismisses itself.
+	// Zero means DefaultTimeout (4s). Ignored when Sticky is set.
+	Timeout time.Duration
+	// Sticky keeps the toast until the user dismisses it.
+	Sticky bool
+}
+
+// hasContent reports whether there is anything to show.
+func (p Props) hasContent() bool {
+	return p.Title != "" || p.Body != ""
+}
+
+// variant maps the Kind onto banner's Variant so the color and role
+// mappings are shared, not copied.
+func (p Props) variant() banner.Variant {
+	switch p.Kind {
+	case KindError:
+		return banner.VariantError
+	case KindSuccess:
+		return banner.VariantSuccess
+	case KindWarning:
+		return banner.VariantWarning
+	default:
+		return banner.VariantInfo
+	}
+}
+
+// timeoutMS is the auto-dismiss delay in milliseconds, DefaultTimeout when
+// Timeout is zero or negative.
+func (p Props) timeoutMS() int64 {
+	if p.Timeout <= 0 {
+		return DefaultTimeout.Milliseconds()
+	}
+	return p.Timeout.Milliseconds()
+}
+
+// initExpr is the Alpine x-init expression that hides the toast after the
+// timeout. show=false runs the leave transition and then display:none, so
+// the stack collapses around it.
+func (p Props) initExpr() string {
+	return fmt.Sprintf("setTimeout(() => show = false, %d)", p.timeoutMS())
+}
+
+// rootClass is the floating card: opaque so the page does not bleed through
+// the tone's soft tint, which sits on the inner block.
+func (p Props) rootClass() string {
+	return utils.TwMerge(
+		"wf-toast overflow-hidden rounded-md bg-card shadow-lg",
+		p.Class,
+	)
+}
+
+// bodyClass carries banner's tone (left border, tint, text color).
+func (p Props) bodyClass() string {
+	return utils.TwMerge(
+		"flex items-start gap-3 border-l-4 px-4 py-3",
+		banner.Tone(p.variant()),
+	)
+}
+
+// kindIcon picks the leading icon for the kind.
+templ kindIcon(k Kind) {
+	switch k {
+		case KindError:
+			@icon.CircleAlert(icon.Props{Size: 20, Class: "shrink-0 mt-0.5"})
+		case KindSuccess:
+			@icon.CircleCheck(icon.Props{Size: 20, Class: "shrink-0 mt-0.5"})
+		case KindWarning:
+			@icon.TriangleAlert(icon.Props{Size: 20, Class: "shrink-0 mt-0.5"})
+		default:
+			@icon.Info(icon.Props{Size: 20, Class: "shrink-0 mt-0.5"})
+	}
+}
+
+// Toast renders one toast. Error toasts carry role="alert"; every other
+// kind carries role="status". Alpine on the root owns its lifetime: the
+// dismiss button and (unless Sticky) a timer set show=false, x-transition
+// fades it, and x-show then removes it from the flow so the stack
+// collapses. Rendered on its own it appears wherever it is placed (the
+// showcase renders it inline); OOB and Send add the out-of-band swap that
+// sends it to #toast-container. It renders nothing when Title and Body are
+// both empty.
+templ Toast(p Props) {
+	if p.hasContent() {
+		<div
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ p.rootClass() }
+			role={ banner.Role(p.variant()) }
+			x-data="{ show: true }"
+			x-show="show"
+			x-transition
+			if !p.Sticky {
+				x-init={ p.initExpr() }
+			}
+			{ p.Attributes... }
+		>
+			<div class={ p.bodyClass() }>
+				@kindIcon(p.Kind)
+				<div class="min-w-0 flex-1">
+					if p.Title != "" {
+						<p class="font-semibold">{ p.Title }</p>
+					}
+					if p.Body != "" {
+						<p class="text-sm text-foreground">{ p.Body }</p>
+					}
+				</div>
+				<button
+					type="button"
+					class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
+					aria-label="Dismiss"
+					x-on:click="show = false"
+				>
+					@icon.X(icon.Props{Size: 16})
+					<span class="sr-only">Dismiss</span>
+				</button>
+			</div>
+		</div>
+	}
+}
+
+// OOB renders Toast inside a wrapper carrying
+// hx-swap-oob="beforeend:#toast-container", so htmx appends it to the
+// container the Document rendered instead of swapping it into the
+// request's target. The wrapper is needed: for an out-of-band swap style
+// other than outerHTML htmx inserts the element's content, not the element
+// (measured 2026-10-31: with the attribute on the toast root only the
+// inner block arrived, without role, auto-dismiss or the dismiss handler).
+// Send and Respond write it; use OOB directly when the toast is one of
+// several components in a response body. Renders nothing when Toast does.
+templ OOB(p Props) {
+	if p.Title != "" || p.Body != "" {
+		<div hx-swap-oob="beforeend:#toast-container">
+			@Toast(p)
+		</div>
+	}
+}

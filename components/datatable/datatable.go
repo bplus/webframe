@@ -8,6 +8,15 @@
 // from inline ghost buttons (`hidden md:flex`) into one "⋯" dropdown
 // labelled "Row actions" (`md:hidden`). Both renderings are in the DOM at
 // every width; CSS picks one.
+//
+// Sticky header: StickyHeader pins the thead (sticky z-10 bg-card; top-0 inside a capped box, top offset by the shell's --wf-sticky-top when sticking to the page,
+// opaque so rows scroll under it). With MaxHeight the table's wrapper is a
+// capped scroll box and the header sticks to its top at every width.
+// Without MaxHeight the wrapper stops clipping on md and up
+// (`md:overflow-visible`) so the header sticks to the page; below md the
+// wrapper keeps its own horizontal scroll (Hidden columns are what make a
+// table fit a phone, and a table that still overflows must stay reachable),
+// so there the header sticks only within that scroll box.
 package datatable
 
 import (
@@ -31,6 +40,22 @@ const (
 	AlignRight Align = "right"
 	// AlignCenter suits short status glyphs.
 	AlignCenter Align = "center"
+)
+
+// Height is a cap on the table wrapper's height (Props.MaxHeight). The
+// wrapper is already overflow-auto, so a capped table scrolls inside it and
+// a StickyHeader sticks to the top of that scroll box.
+type Height string
+
+const (
+	// HeightNone leaves the wrapper as tall as its rows (the default).
+	HeightNone Height = ""
+	// HeightSm caps the wrapper at 240px.
+	HeightSm Height = "sm"
+	// HeightMd caps the wrapper at 400px.
+	HeightMd Height = "md"
+	// HeightLg caps the wrapper at 600px.
+	HeightLg Height = "lg"
 )
 
 // Column describes one table column. Key is the listquery sort key when
@@ -62,6 +87,17 @@ type Cell struct {
 	Component templ.Component
 }
 
+// BadgeCell is a Cell whose Text is shown inside a status badge: kind goes
+// through badge.StatusPtr to pick the variant (published → success, failed →
+// destructive, and so on; unknown words → outline) and text is what the
+// badge says. Pass badge.StatusLabel(kind) as text for the display form of
+// the status word itself.
+//
+// @pure
+func BadgeCell(text, kind string) Cell {
+	return Cell{Text: text, Badge: badge.StatusPtr(kind)}
+}
+
 // Row is one table row. ID is the selection value and the <tr> id suffix
 // (`<tableID>-row-<ID>`, or `row-<ID>` when the table has no ID). Href
 // links the first cell to it and gives the row a pointer cursor. Actions
@@ -87,12 +123,21 @@ type Row struct {
 // ("" → "ids"), the row ID as value, and SelectionForm as their form
 // attribute so the bulk form can live outside the table. HxTarget makes
 // sort links also htmx requests (hx-get to the same URL, hx-target,
-// hx-push-url="true"). StickyHeader pins the thead to the top of the
-// table's own scroll box (the wrapper is overflow-auto), so it only
-// visibly sticks when Class limits the table height (for example
-// `max-h-[70vh]`). Dense tightens cell padding to py-1.5. Empty is shown
-// in one full-width cell when there are no rows; its zero value reads
-// "Nothing here yet". Caption is a visually hidden <caption>.
+// hx-push-url="true").
+//
+// MaxHeight caps the wrapper (max-h-[240px|400px|600px] for HeightSm, Md,
+// Lg; HeightNone/"" sets no cap) and the rows scroll inside it, at every
+// width. StickyHeader makes the thead `sticky z-10 bg-card` (`top-0` in a capped box, `top-[var(--wf-sticky-top)]` page-level so the topbar shell's bar does not hide it; opaque,
+// so rows scroll under it). Where it sticks depends on MaxHeight: with a
+// cap, to the top of the wrapper's scroll box; without one, the wrapper
+// becomes `md:overflow-visible` so on md and up (768px+) the header sticks
+// to the page as the user scrolls past the table, while below md the
+// wrapper keeps `overflow-auto` for horizontal overflow and the header only
+// sticks within that box (Hidden columns are the lever that makes a phone
+// table fit without needing to scroll it). Dense tightens cell padding to
+// py-1.5. Empty is shown in one full-width cell when there are no rows; its
+// zero value reads "Nothing here yet". Caption is a visually hidden
+// <caption>.
 type Props struct {
 	ID         string
 	Class      string
@@ -110,6 +155,7 @@ type Props struct {
 	SelectionForm string
 
 	StickyHeader bool
+	MaxHeight    Height
 	Dense        bool
 	Empty        emptystate.Props
 	Caption      string
@@ -232,30 +278,4 @@ func rowAction(a action.Action) action.Action {
 		a.Size = button.SizeSm
 	}
 	return a
-}
-
-// menuItemAttrs builds the hx-* attributes for a non-link action as
-// dropdown item attributes, merged with the action's own Attributes. The
-// dropdown item is itself the <button>, so action.Button is not nested
-// inside it (a button inside a button is invalid HTML). Same shape as
-// toolbar's helper.
-func menuItemAttrs(a action.Action) templ.Attributes {
-	attrs := templ.Attributes{}
-	set := func(k, v string) {
-		if v != "" {
-			attrs[k] = v
-		}
-	}
-	set("hx-get", a.HxGet)
-	set("hx-post", a.HxPost)
-	set("hx-delete", a.HxDelete)
-	set("hx-target", a.HxTarget)
-	set("hx-swap", a.HxSwap)
-	if a.Confirm != nil {
-		set("hx-confirm", a.Confirm.Message)
-	}
-	for k, v := range a.Attributes {
-		attrs[k] = v
-	}
-	return attrs
 }

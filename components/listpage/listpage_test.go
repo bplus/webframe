@@ -186,14 +186,26 @@ func TestPage_HiddenSortRidesAlong(t *testing.T) {
 	// a results response can replace them out of band.
 	wantAll(t, out,
 		`id="list-filterbar"`,
-		`<input type="hidden" id="list-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control>`,
 		`<input type="hidden" id="list-filterbar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control>`,
 		`<input type="hidden" id="list-filterbar-hidden-per" name="per" value="10" data-tui-filterbar-control>`,
+		// NAMECOL is Sortable, so sort is the Sort select, with the hidden
+		// input's id (see TestPage_SortControl).
+		`<select id="list-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state`,
 	)
 	// page, q and filters never ride along as hidden inputs: a filter change
 	// lands on page 1 and the controls themselves carry q and the filters.
 	wantNone(t, out, `name="page"`, `type="hidden" id="list-filterbar-hidden-q"`, `type="hidden" id="list-filterbar-hidden-status"`, "hx-swap-oob")
-	// The page itself carries no oob element.
+	// The page itself carries no oob element, and no hidden sort input
+	// beside the select.
+	if strings.Count(out, `type="hidden"`) != 2 {
+		t.Errorf("want exactly two hidden inputs in:\n%s", out)
+	}
+	// Without a sortable column sort is a hidden input like the others.
+	p := itemProps(t, "sort=name&dir=asc")
+	p.Columns[0].Sortable = false
+	out = renderPage(t, p)
+	wantAll(t, out, `<input type="hidden" id="list-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control>`)
+	wantNone(t, out, `<select id="list-filterbar-hidden-sort"`, "Default order", ">Sort</label>")
 	if strings.Count(out, `type="hidden"`) != 3 {
 		t.Errorf("want exactly three hidden inputs in:\n%s", out)
 	}
@@ -224,7 +236,10 @@ func TestPage_PrefixedSpecNamesControls(t *testing.T) {
 	p.Spec = listquery.ParseValues(v, o)
 	out := renderPage(t, p)
 	wantAll(t, out,
-		`id="list-filterbar-hidden-items-sort" name="items.sort" value="name"`,
+		`<select id="list-filterbar-hidden-items-sort" name="items.sort"`,
+		// The ↑ option sets the prefixed dir parameter.
+		`<option value="name" selected data-tui-filterbar-set-items.dir="asc">NAMECOL ↑</option>`,
+		`id="list-filterbar-hidden-items-dir" name="items.dir" value="asc"`,
 		`name="items.status"`,
 		`name="items.type"`,
 		`name="items.q"`,
@@ -396,13 +411,25 @@ func TestRespond_TargetedResults(t *testing.T) {
 	wantAll(t, body, "ROWALPHA", "1–3 of 3 items", `aria-sort="ascending"`, `href="/items?dir=desc&amp;sort=name"`)
 	// After the results: the bar's hidden inputs with the served sort, out
 	// of band, so the next filter change sends sort=name, and the intro.
+	// sort is the Sort select (NAMECOL is Sortable): the bare <select>
+	// with the hidden input's id, its selected option the served sort, so
+	// a header click updates the phone control too.
 	wantOrder(t, body, `id="list-results"`, "</div>",
 		`<input type="hidden" id="list-filterbar-hidden-dir" name="dir" value="asc" data-tui-filterbar-control hx-swap-oob="true">`,
 		`<input type="hidden" id="list-filterbar-hidden-per" name="per" value="" data-tui-filterbar-control hx-swap-oob="true">`,
-		`<input type="hidden" id="list-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<select id="list-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
+		`</select>`,
 		`<p id="list-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">INTROLINE</p>`)
-	// No filter bar, header, shell or title in the response itself.
-	wantNone(t, body, "<h1", "PAGETITLE", "<html", "wf-topbar", "data-tui-filterbar-hx-get", "data-tui-filterbar-reset", "<select")
+	// No filter bar, header, shell or title in the response itself; the
+	// select comes bare, without its label wrapper, and only once.
+	wantNone(t, body, "<h1", "PAGETITLE", "<html", "wf-topbar", "data-tui-filterbar-hx-get", "data-tui-filterbar-reset", `<label`, "Default order")
+	if n := strings.Count(body, "<select"); n != 1 {
+		t.Errorf("select appears %d times, want 1", n)
+	}
+	if n := strings.Count(body, `name="sort"`); n != 1 {
+		t.Errorf("name=sort appears %d times, want 1", n)
+	}
 	if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Target") {
 		t.Errorf("Vary = %q", v)
 	}
@@ -497,7 +524,8 @@ func TestRespondResults(t *testing.T) {
 	// HX-Current-URL, not /items/1): the Name header flips to desc.
 	wantAll(t, body, `href="/items?dir=desc&amp;sort=name&amp;status=draft"`, "ROWALPHA")
 	wantOrder(t, body, `id="list-results"`,
-		`<input type="hidden" id="list-filterbar-hidden-sort" name="sort" value="name" data-tui-filterbar-control hx-swap-oob="true">`,
+		`<select id="list-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`,
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
 		`<p id="list-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">2 items left</p>`)
 	wantNone(t, body, "<h1", "PAGETITLE", "<html", "data-tui-filterbar-hx-get")
 
@@ -514,10 +542,12 @@ func TestRespondResults(t *testing.T) {
 	}
 
 	// No header at all: the request's own path is the base. No intro, no
-	// filter bar: nothing out of band.
+	// filter bar (no filters, no search, no sortable column): nothing out
+	// of band.
 	req = httptest.NewRequest("POST", "/items/publish", nil)
 	p = itemProps(t, "")
 	p.Base, p.Intro, p.Filters, p.Search = "", "", nil, ""
+	p.Columns[0].Sortable = false
 	rec = httptest.NewRecorder()
 	if err := RespondResults(rec, req, p); err != nil {
 		t.Fatalf("RespondResults: %v", err)
@@ -527,4 +557,91 @@ func TestRespondResults(t *testing.T) {
 		t.Errorf("HX-Replace-Url = %q", got)
 	}
 	wantNone(t, rec.Body.String(), "hx-swap-oob")
+}
+
+// --- Sort select (phone) -----------------------------------------------------
+
+func TestPage_SortControl(t *testing.T) {
+	p := itemProps(t, "sort=name&dir=desc")
+	p.Columns = append(p.Columns, datatable.Column{Key: "updated", Label: "UPDATEDCOL", Sortable: true, Hidden: true})
+	out := renderPage(t, p)
+	// The select takes the hidden sort input's id and name, carries the
+	// state marker (Clear filters leaves it), sits in a phone-only wrapper
+	// whose label points at it, and has two options per sortable column
+	// (never one for STATUSCOL, which is not Sortable), the ↑ one setting
+	// dir=asc and the ↓ one dir=desc; the one matching the Spec is selected.
+	wantAll(t, out,
+		`<label for="list-filterbar-hidden-sort" class="text-xs font-medium text-muted-foreground whitespace-nowrap">Sort</label>`,
+		`<select id="list-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state class=`,
+		`<option value="name" data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
+		`<option value="name" selected data-tui-filterbar-set-dir="desc">NAMECOL ↓</option>`,
+		`<option value="updated" data-tui-filterbar-set-dir="asc">UPDATEDCOL ↑</option>`,
+		// The default order (updated desc) submits nothing: value "" and
+		// dir "", so a filter change made in it keeps the URL clean.
+		`<option value="" data-tui-filterbar-set-dir="">UPDATEDCOL ↓</option>`,
+	)
+	wantNone(t, out, "STATUSCOL ↑", "Default order", `type="hidden" id="list-filterbar-hidden-sort"`,
+		`<option value="updated" data-tui-filterbar-set-dir="desc">`)
+	// The wrapper is md:hidden; the bar itself is not (it has filters).
+	i := strings.Index(out, `<label for="list-filterbar-hidden-sort"`)
+	wrapper := out[strings.LastIndex(out[:i], "<div"):i]
+	wantAll(t, wrapper, "md:hidden")
+	bar := out[strings.Index(out, `<div id="list-filterbar"`):strings.Index(out, `<input type="hidden"`)]
+	wantNone(t, bar, "md:hidden")
+	// One control named sort, and exactly one selected option in it.
+	if n := strings.Count(out, `name="sort"`); n != 1 {
+		t.Errorf("name=sort appears %d times, want 1:\n%s", n, out)
+	}
+	sel := out[strings.Index(out, "<select id=\"list-filterbar-hidden-sort\""):]
+	sel = sel[:strings.Index(sel, "</select>")]
+	if n := strings.Count(sel, " selected"); n != 1 {
+		t.Errorf("%d selected options in the sort select, want 1:\n%s", n, sel)
+	}
+	// The select comes after the filters and before Clear filters.
+	wantOrder(t, out, "Search items", "TYPEFILTER", "STATUSFILTER", ">Sort</label>", "Clear filters")
+
+	// The selection follows the Spec: the default order (updated desc) is
+	// no sortable column here, so a leading "Default order" option is
+	// selected and nothing else is; a bare sort=name is ascending.
+	out = renderPage(t, itemProps(t, ""))
+	wantAll(t, out, `<option value="" selected data-tui-filterbar-set-dir="">Default order</option><option value="name" data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`)
+	wantNone(t, out, `selected data-tui-filterbar-set-dir="asc"`, `selected data-tui-filterbar-set-dir="desc"`)
+	out = renderPage(t, itemProps(t, "sort=name"))
+	wantAll(t, out, `<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`)
+	wantNone(t, out, "Default order")
+}
+
+func TestPage_SortOnlyBar(t *testing.T) {
+	// Sortable columns but no filters and no search: the bar still renders,
+	// holding only the Sort select (no Clear filters), and is md:hidden as a
+	// whole, since the headers sort on md and up.
+	p := itemProps(t, "sort=name&dir=asc")
+	p.Filters, p.Search = nil, ""
+	out := renderPage(t, p)
+	wantAll(t, out, `<div id="list-filterbar"`, `<select id="list-filterbar-hidden-sort" name="sort"`, ">Sort</label>",
+		`<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
+		`id="list-filterbar-hidden-dir" name="dir" value="asc"`)
+	wantNone(t, out, "Clear filters", "data-tui-filterbar-reset", `name="q"`, "TYPEFILTER")
+	bar := out[strings.Index(out, `<div id="list-filterbar"`):strings.Index(out, `<input type="hidden"`)]
+	wantAll(t, bar, "md:hidden")
+	// Its results response updates the select out of band like any other.
+	var buf bytes.Buffer
+	if err := resultsPart(p).Render(context.Background(), &buf); err != nil {
+		t.Fatal(err)
+	}
+	wantAll(t, buf.String(), `<select id="list-filterbar-hidden-sort" name="sort" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true"`)
+
+	// Nothing sortable and nothing to filter: no bar at all.
+	p.Columns[0].Sortable = false
+	out = renderPage(t, p)
+	wantNone(t, out, "data-tui-filterbar", "<select")
+}
+
+func TestPage_StickyHeaderAndMaxHeightPassThrough(t *testing.T) {
+	p := itemProps(t, "")
+	p.StickyHeader, p.MaxHeight = true, datatable.HeightMd
+	out := renderPage(t, p)
+	wantAll(t, out, "sticky", "top-0", "max-h-[400px]")
+	p = itemProps(t, "")
+	wantNone(t, renderPage(t, p), "sticky", "max-h-[")
 }

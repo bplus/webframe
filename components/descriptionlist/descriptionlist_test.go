@@ -169,3 +169,25 @@ func TestDL_Empty(t *testing.T) {
 		t.Errorf("zero items should render an empty <dl>: %s", out)
 	}
 }
+
+// BadgeItem builds the badge row callers used to assemble by hand: kind
+// picks the variant through badge.StatusPtr, text is the badge's text.
+func TestDL_BadgeItem(t *testing.T) {
+	it := BadgeItem("Status", "Failed", "failed")
+	if it.Label != "Status" || it.Value != "Failed" || it.Badge == nil || it.Badge.Variant != badge.VariantDestructive {
+		t.Fatalf("BadgeItem = %+v", it)
+	}
+	if BadgeItem("S", "x", "whatever").Badge.Variant != badge.VariantOutline {
+		t.Errorf("unknown kind should fall back to outline")
+	}
+	out := render(t, Props{Items: []Item{it}})
+	for _, want := range []string{"Status", "bg-destructive"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in %s", want, out)
+		}
+	}
+	i := strings.Index(out, "bg-destructive")
+	if i < 0 || !strings.Contains(out[i:], "Failed") {
+		t.Errorf("value not inside the badge: %s", out)
+	}
+}
