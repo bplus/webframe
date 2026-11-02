@@ -1,3 +1,2 @@
-no_ci: true
 commands:
   test: go build ./... && go vet ./... && go test ./...

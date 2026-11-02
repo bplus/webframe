@@ -1,5 +1,7 @@
 # Webframe
 
+[![CI](https://github.com/bplus/webframe/actions/workflows/ci.yml/badge.svg)](https://github.com/bplus/webframe/actions/workflows/ci.yml)
+
 Webframe is a Go-first component library for building server-rendered web UIs with `templ`, Tailwind v4, HTMX, and Alpine.
 
 ## What it contains
