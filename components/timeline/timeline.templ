@@ -1,0 +1,174 @@
+package timeline
+
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/emptystate"
+)
+
+// rowClass is the two-column grid every row (day heading or item) uses: a
+// fixed 1rem gutter for the dot and rail, then the content. The fixed gutter
+// is what keeps the rail and dots aligned when a title wraps.
+const rowClass = "grid grid-cols-[1rem_minmax(0,1fr)] gap-x-3"
+
+// rail is one vertical segment of the rail inside the gutter; it stretches
+// to the row's height so consecutive rows draw one continuous line.
+templ rail() {
+	<span class="w-px flex-1 bg-border"></span>
+}
+
+// marker renders the item's dot, or its Icon in the dot's place, toned by
+// the variant.
+templ marker(it Item) {
+	if it.Icon != nil {
+		<span class={ iconClass(it.Variant) }>
+			@it.Icon
+		</span>
+	} else {
+		<span class={ dotClass(it.Variant) }></span>
+	}
+}
+
+// dayHeading renders one day's heading row. The gutter carries the rail
+// through the heading, except above the very first group.
+templ dayHeading(g Group, first bool) {
+	<div class={ rowClass }>
+		<span class="flex flex-col items-center" aria-hidden="true">
+			if !first {
+				@rail()
+			}
+		</span>
+		<time datetime={ g.dayAttr() } class="pb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{ g.dayText() }</time>
+	</div>
+}
+
+// item renders one event row: marker and rail in the gutter, then the time,
+// title, body and meta. last omits the rail below the final item of the
+// whole timeline.
+templ item(p Props, it Item, last bool) {
+	<li class={ rowClass }>
+		<span class="flex flex-col items-center" aria-hidden="true">
+			@marker(it)
+			if !last {
+				<span class="mt-1 w-px flex-1 bg-border"></span>
+			}
+		</span>
+		<div class="min-w-0 pb-6 sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-3">
+			<time datetime={ p.atAttr(it) } class="block pt-0.5 text-xs tabular-nums text-muted-foreground">{ p.atText(it) }</time>
+			<div class="min-w-0">
+				if it.Href != "" {
+					<a href={ it.Href } class="block text-sm font-medium text-foreground break-words underline-offset-4 hover:underline hover:text-primary">{ it.Title }</a>
+				} else if it.Title != "" {
+					<p class="text-sm font-medium text-foreground break-words">{ it.Title }</p>
+				}
+				if it.Body != "" {
+					<p class="mt-0.5 text-sm text-muted-foreground break-words">{ it.Body }</p>
+				}
+				if it.Meta != "" {
+					<p class="mt-1 text-xs text-muted-foreground break-words">{ it.Meta }</p>
+				}
+			</div>
+		</div>
+	</li>
+}
+
+// Timeline renders Props.Items as vertical dated events on a left rail. The
+// root is an <ol> of day groups (one <li> each, holding a heading row and an
+// inner <ol> of items), or a single flat group when NoGroups is set. Items
+// are sorted newest first (OldestFirst flips it) and grouped in
+// Props.Location or, when nil, each item's own location. Day headings are
+// <time datetime="YYYY-MM-DD"> with a readable date; each item shows HH:MM
+// in a <time datetime=RFC3339>, a dot toned by Variant (or Icon in its
+// place), the title as a link when Href is set, and Body and Meta muted.
+// Empty Items render emptystate.EmptyState(Props.Empty) in a <div> that
+// carries the same id, class and attributes. Only the first Props is used.
+//
+// Phone width (390px): see the package comment; the layout is the same,
+// the time moves above the title, and text wraps in the content column.
+//
+// @pure
+templ Timeline(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ groups := p.Groups() }}
+	if len(groups) == 0 {
+		<div
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ p.rootClass() }
+			{ p.Attributes... }
+		>
+			@emptystate.EmptyState(p.empty())
+		</div>
+	} else {
+		<ol
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={ p.rootClass() }
+			{ p.Attributes... }
+		>
+			for gi, g := range groups {
+				<li>
+					if !p.NoGroups {
+						@dayHeading(g, gi == 0)
+					}
+					<ol>
+						for ii, it := range g.Items {
+							@item(p, it, gi == len(groups)-1 && ii == len(g.Items)-1)
+						}
+					</ol>
+				</li>
+			}
+		</ol>
+	}
+}
+
+// The tone class strings live here with the markup that uses them.
+// Tone returns the background class for the dot of variant v, from the
+// tokens the badge of the same variant uses: destructive, success, warning
+// and info are solid dots in their token; secondary is a muted dot; outline
+// is a hollow dot (border only); the default is the primary dot. toast and
+// banner have their own Tone for text and tint; this one is for a filled
+// dot and shares the same mapping.
+//
+// @pure
+func Tone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "bg-destructive"
+	case badge.VariantSuccess:
+		return "bg-success"
+	case badge.VariantWarning:
+		return "bg-warning"
+	case badge.VariantInfo:
+		return "bg-info"
+	case badge.VariantSecondary:
+		return "bg-muted-foreground"
+	case badge.VariantOutline:
+		return "border-2 border-border bg-background"
+	default:
+		return "bg-primary"
+	}
+}
+
+// iconTone returns the text color class for an Item.Icon of variant v, so
+// a glyph in the gutter reads in the same token as the dot it replaces.
+func iconTone(v badge.Variant) string {
+	switch v {
+	case badge.VariantDestructive:
+		return "text-destructive"
+	case badge.VariantSuccess:
+		return "text-success"
+	case badge.VariantWarning:
+		return "text-warning"
+	case badge.VariantInfo:
+		return "text-info"
+	case badge.VariantSecondary, badge.VariantOutline:
+		return "text-muted-foreground"
+	default:
+		return "text-primary"
+	}
+}

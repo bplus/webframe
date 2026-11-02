@@ -54,7 +54,7 @@ func TestFeedback_ToastSendIsHtmxOnly(t *testing.T) {
 		wantAll(t, body, append(want, `hx-swap-oob="beforeend:#toast-container"`, "wf-toast")...)
 		wantNone(t, body, "<html", "wf-topbar")
 		if variant == "sticky" {
-			wantNone(t, body, "x-init", "setTimeout")
+			wantNone(t, body, "x-init", "show = false, ")
 		}
 	}
 	// A request that is not from htmx gets an empty 200: the toast has no

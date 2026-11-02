@@ -1,6 +1,12 @@
 @import "tailwindcss" source(none);
 
 @source "../../components/**/*.templ";
+/* Component helpers sometimes build class strings in Go (cardgrid.gridClasses,
+   timeline tones); scan those too, minus tests, so no class is silently
+   missing from output.css. */
+@source "../../components/**/*.go";
+@source not "../../components/**/*_test.go";
+@source not "../../components/icon/*.go"; /* icon name tables, not classes */
 @source "../../demo/**/*.templ";
 
 /* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */
@@ -499,6 +505,15 @@
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
   opacity: 1;
+}
+
+/* ── Bottom-stuck bars ── */
+/* A settings page (settingspage.Page, root .wf-settings) keeps a focused
+   control clear of its sticky save bar when the browser scrolls it into
+   view on Tab. The bar is the page's last child, outside the form, so the
+   rule keys on the page root rather than the form. */
+.wf-settings :where(input, select, textarea, button, [tabindex]) {
+  scroll-margin-bottom: 5rem;
 }
 
 /* ── Toast ── */

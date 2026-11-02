@@ -81,9 +81,11 @@ type Props struct {
 	// {Label: "Go home", Href: "/"}. Variant defaults to primary.
 	Submit action.Action
 	// Providers render under the form, below a divider reading "or", as
-	// full-width outline buttons ("Continue with …"), one per row. A
-	// plain Href renders a link; Hx* fields render a button. ModeSignIn
-	// only.
+	// full-width buttons ("Continue with …"), one per row. A Provider's
+	// own Variant is kept when set (a provider that is the primary way
+	// in can be VariantPrimary); an empty Variant is VariantOutline, so
+	// the usual row of alternatives stays uniform. A plain Href renders
+	// a link; Hx* fields render a button. ModeSignIn only.
 	Providers []action.Action
 	// Message is the body text above the action for ModeSignedOut
 	// (default "You have been signed out.") and ModeForbidden (default
@@ -322,10 +324,13 @@ func (p Props) submit() action.Action {
 	return a
 }
 
-// provider returns one Provider as a full-width outline action: a link
-// for a plain Href, a button carrying the hx-* attributes otherwise.
+// provider returns one Provider as a full-width action, outline unless
+// the caller set a Variant: a link for a plain Href, a button carrying the
+// hx-* attributes otherwise.
 func provider(a action.Action) action.Action {
-	a.Variant = action.VariantOutline
+	if a.Variant == "" {
+		a.Variant = action.VariantOutline
+	}
 	a.FullWidth = true
 	return a
 }

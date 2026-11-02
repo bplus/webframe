@@ -1,6 +1,52 @@
-// Package errorpage renders 404, 403 and 500 pages as one component and
-// answers a request with the right status code, with or without an
+// Package errorpage renders 404, 403, 405 and 500 pages as one component
+// and answers a request with the right status code, with or without an
 // appshell.App in the request context.
+//
+// # 405 and Go's ServeMux
+//
+// Go's http.ServeMux (1.22 and later, method patterns such as "GET /items")
+// answers a method mismatch itself: a plain-text "Method Not Allowed" with
+// an Allow header, written before any handler runs, so a handler can never
+// turn it into this page. ServeMux has no hook for it. An app that wants
+// the styled page wraps the mux and decides first: ServeMux.Handler
+// returns an empty pattern both when nothing matches the path and when
+// something matches the path but not the method, so the wrapper probes the
+// other methods to tell the two apart (and collects the Allow header the
+// mux would have sent):
+//
+//	func styledErrors(mux *http.ServeMux) http.Handler {
+//		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			if _, pattern := mux.Handler(r); pattern != "" {
+//				mux.ServeHTTP(w, r) // a real route, or the mux's own redirect
+//				return
+//			}
+//			var allowed []string
+//			probe := r.Clone(r.Context())
+//			for _, m := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"} {
+//				probe.Method = m
+//				if _, pattern := mux.Handler(probe); pattern != "" {
+//					allowed = append(allowed, m)
+//				}
+//			}
+//			if len(allowed) == 0 {
+//				_ = errorpage.NotFound(w, r)
+//				return
+//			}
+//			w.Header().Set("Allow", strings.Join(allowed, ", "))
+//			_ = errorpage.MethodNotAllowed(w, r)
+//		})
+//	}
+//
+//	http.ListenAndServe(addr, app.Middleware(styledErrors(mux)))
+//
+// The wrapper sits inside App.Middleware so the page renders in the shell.
+// It replaces any "/" catch-all route the app registered for its 404 page:
+// with a catch-all in the table every path has a pattern, mux.Handler
+// never returns an empty one, and the 405 branch never fires (a wrong
+// method on a real route would fall into the catch-all and render as a
+// 404). Register the real routes only and let the wrapper answer the rest.
+// An app that is content with the mux's plain 405 (an API path, a form
+// that is only ever posted by its own page) needs none of this.
 package errorpage
 
 import (
@@ -47,6 +93,13 @@ func NotFound(w http.ResponseWriter, r *http.Request) error {
 // Forbidden answers r with the default 403 page.
 func Forbidden(w http.ResponseWriter, r *http.Request) error {
 	return Respond(w, r, Props{Code: http.StatusForbidden})
+}
+
+// MethodNotAllowed answers r with the default 405 page ("Not allowed
+// here"). It does not set the Allow header; the caller knows the methods
+// (see the package doc for the ServeMux wrapper that collects them).
+func MethodNotAllowed(w http.ResponseWriter, r *http.Request) error {
+	return Respond(w, r, Props{Code: http.StatusMethodNotAllowed})
 }
 
 // Internal answers r with the default 500 page showing requestID (when

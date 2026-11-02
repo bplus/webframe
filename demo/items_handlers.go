@@ -565,14 +565,15 @@ func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 
 // HandleItemUpdate handles the edit form's submit (POST /items/{id}), with
 // the same error and success behavior as HandleItemCreate; the name check
-// skips the item itself.
+// skips the item itself. An unknown id is the 404 error page, like the
+// edit form's own GET.
 //
 // @boundary HTTP
 // @side-effects mutates Items; writes HTML or a redirect
 func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
-		http.NotFound(w, r)
+		notFound(w, r)
 		return
 	}
 	if err := r.ParseForm(); err != nil {

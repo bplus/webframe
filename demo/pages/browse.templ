@@ -1,0 +1,16 @@
+package pages
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/descriptionlist"
+	"github.com/bplus/webframe/components/layout"
+)
+
+// BrowseDetail is the detail region's content for one item: a section
+// titled with the item's name, an action opening its full detail page, and
+// the description list of its facts. The list column is splitpane.List.
+templ BrowseDetail(title, itemHref string, items []descriptionlist.Item) {
+	@layout.Section(layout.SectionProps{Level: 2, Title: title, Actions: []action.Action{{Label: "Open item", Href: itemHref}}}) {
+		@descriptionlist.DescriptionList(descriptionlist.Props{Items: items})
+	}
+}

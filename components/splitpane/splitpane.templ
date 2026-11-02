@@ -1,0 +1,180 @@
+package splitpane
+
+import (
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/utils"
+)
+
+// widthClass maps the list column's tier to its md-and-up width. The
+// strings live in this file so Tailwind's pinned source scan sees them.
+func widthClass(w Width) string {
+	switch w {
+	case WidthSm:
+		return "md:w-[280px]"
+	case WidthLg:
+		return "md:w-[440px]"
+	default:
+		return "md:w-[360px]"
+	}
+}
+
+// listClass is the list column: full width on a phone, hidden there when
+// the detail is showing; from md up a fixed-width, non-shrinking column
+// that sticks under the shell's sticky chrome and scrolls on its own.
+func listClass(p Props) string {
+	return utils.TwMerge(
+		"md:shrink-0 md:self-start md:sticky md:top-[var(--wf-sticky-top,0px)] md:max-h-[calc(100dvh-var(--wf-sticky-top,0px))] md:overflow-y-auto md:border-r md:border-border md:pr-6",
+		widthClass(p.ListWidth),
+		utils.If(p.Detail != nil, "hidden md:block"),
+	)
+}
+
+// detailClass is the detail region: hidden on a phone while no item is
+// selected, otherwise shown; from md up the flexible column.
+func detailClass(p Props) string {
+	return utils.TwMerge(
+		"min-w-0 flex-1",
+		utils.IfElse(p.Detail == nil, "hidden md:block", "block"),
+	)
+}
+
+// SplitPane renders the list column and the detail region. From md up they
+// are a flex row (list at its tier width, detail min-w-0 flex-1); below md
+// one of them is hidden: the detail when Detail is nil, the list when it
+// is set, in which case a ghost "Back" link (BackHref, BackLabel) precedes
+// the detail and is itself hidden from md up. The detail region has id
+// DetailID and, when Title is set, aria-label=Title. See the package doc
+// for the routes and the list links.
+//
+// @pure
+templ SplitPane(p Props) {
+	<div
+		id={ p.id() }
+		class={ utils.TwMerge("md:flex md:items-start md:gap-6", p.Class) }
+		{ p.Attributes... }
+	>
+		<div class={ listClass(p) }>
+			@listColumn(p)
+		</div>
+		<section
+			id={ p.detailID() }
+			class={ detailClass(p) }
+			if p.Title != "" {
+				aria-label={ p.Title }
+			}
+		>
+			@detailContent(p)
+		</section>
+	</div>
+}
+
+// listColumn wraps List in <div id={ID-listcol}> so a detail response can
+// carry a fresh copy of the list out of band (the selected item moves with
+// the pick on md and up, where only the detail region is swapped).
+templ listColumn(p Props) {
+	<div id={ p.listColID() }>
+		if p.List != nil {
+			@p.List
+		}
+	</div>
+}
+
+// detailPart is what a detail-only response carries: a <title> (htmx
+// applies it, so the tab and the history entry follow the pick), the
+// detail region's content, then the list column out of band (when List is
+// set) so its selected state follows. The list links keep stable ids, so
+// htmx gives focus back to the picked link after the swap.
+templ detailPart(p Props, title string) {
+	if t := appshell.PageTitle(ctx, title); t != "" {
+		<title>{ t }</title>
+	}
+	@detailContent(p)
+	if p.List != nil {
+		<div id={ p.listColID() } hx-swap-oob="true">
+			@p.List
+		</div>
+	}
+}
+
+// detailContent is the detail region's content: nothing when Detail is
+// nil; otherwise the phone back link then Detail. Respond serves it alone
+// for a list click from md up, so a swap leaves the region's innerHTML
+// identical to a full render's.
+templ detailContent(p Props) {
+	if p.Detail != nil {
+		<div class="md:hidden mb-4">
+			@action.Button(backAction(p))
+		</div>
+		@p.Detail
+	} else if p.Placeholder != nil {
+		@p.Placeholder
+	}
+}
+
+// backAction is the phone back link: a ghost link to BackHref with an
+// arrow-left icon and BackLabel ("Back" when empty).
+func backAction(p Props) action.Action {
+	return action.Action{
+		Href:    p.BackHref,
+		Label:   p.backLabel(),
+		Variant: action.VariantGhost,
+		Icon:    icon.ArrowLeft(icon.Props{Size: 16}),
+	}
+}
+
+// List renders the list column: a <nav aria-label="Items"> holding a <ul>
+// (id ID+"-list") with one link per item. Each link carries href and
+// LinkAttrs(p, href), so a click swaps the detail from md up and navigates
+// below; the Selected item has aria-current="page" and a bg-muted
+// background, the others show it on hover. The title is font-medium and
+// truncates to one line with the full text in the link's title attribute;
+// Meta sits under it in text-xs text-muted-foreground, or beside the title
+// in a badge when Badge is set. Rows are py-2.5 so they are comfortable to
+// tap. An empty items slice renders the nav with an empty <ul>, so a swap
+// of the list keeps the nav and its label.
+//
+// @pure
+templ List(p Props, items []ListItem) {
+	<nav aria-label="Items">
+		<ul id={ p.listID() } class="flex flex-col gap-0.5">
+			for i, it := range items {
+				<li>
+					<a
+						id={ p.listItemID(i) }
+						href={ templ.URL(it.Href) }
+						{ LinkAttrs(p, it.Href)... }
+						class={ listItemClass(it) }
+						title={ it.Title }
+						if it.Selected {
+							aria-current="page"
+						}
+					>
+						<span class="flex items-center justify-between gap-3">
+							<span class="min-w-0 truncate font-medium">{ it.Title }</span>
+							if it.Meta != "" && it.Badge != nil {
+								@badge.Badge(*it.Badge) {
+									{ it.Meta }
+								}
+							}
+						</span>
+						if it.Meta != "" && it.Badge == nil {
+							<span class="block truncate text-xs text-muted-foreground">{ it.Meta }</span>
+						}
+					</a>
+				</li>
+			}
+		</ul>
+	</nav>
+}
+
+// listItemClass is one list link: a block row with comfortable touch
+// height, rounded, highlighted on hover and bg-muted when Selected.
+func listItemClass(it ListItem) string {
+	return utils.TwMerge(
+		"block rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+		utils.If(it.Selected, "bg-muted"),
+	)
+}

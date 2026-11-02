@@ -8,6 +8,9 @@
 // swapped in later just works.
 (function () {
   'use strict';
+  // htmx re-runs <script src> tags in swapped content; a second copy would
+  // double every document-level listener below.
+  if (window.wf && window.wf.autocomplete) return;
 
   function rootOf(el) { return el.closest('[data-wf-autocomplete]'); }
   function inputOf(root) { return root.querySelector('[data-wf-ac-input]'); }

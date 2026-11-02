@@ -81,19 +81,31 @@ func (p Props) id() string {
 	return p.ID
 }
 
-// resolve applies Values, Errors and the default Validate to one declared
-// field, without mutating the caller's slice.
-func (p Props) resolve(f formfield.Field) formfield.Field {
-	if v, ok := p.Values[f.Name]; ok {
+// ResolveField returns f with values, errors and the default validate URL
+// applied, the way a form page prepares a declared field for rendering: a
+// key of values that is present sets Value (even when "", which is how an
+// unchecked checkbox or toggle comes back unchecked), a key of errors
+// sets Error, and validate fills Validate only when the field has none of
+// its own. f is a copy; the caller's declaration is never mutated. Other
+// form-shaped pages (settingspage) use it so every page resolves fields
+// the same way.
+func ResolveField(f formfield.Field, values, errors map[string]string, validate string) formfield.Field {
+	if v, ok := values[f.Name]; ok {
 		f.Value = v
 	}
-	if e, ok := p.Errors[f.Name]; ok {
+	if e, ok := errors[f.Name]; ok {
 		f.Error = e
 	}
 	if f.Validate == "" {
-		f.Validate = p.Validate
+		f.Validate = validate
 	}
 	return f
+}
+
+// resolve applies Values, Errors and the default Validate to one declared
+// field, without mutating the caller's slice.
+func (p Props) resolve(f formfield.Field) formfield.Field {
+	return ResolveField(f, p.Values, p.Errors, p.Validate)
 }
 
 // fields returns the resolved fields of one section.
@@ -136,6 +148,15 @@ func (p Props) formProps() form.Props {
 	return fp
 }
 
+// allFields returns every declared field in section order, unresolved.
+func (p Props) allFields() []formfield.Field {
+	var out []formfield.Field
+	for _, s := range p.Sections {
+		out = append(out, s.Fields...)
+	}
+	return out
+}
+
 // errorItem is one line of the summary banner.
 type errorItem struct {
 	Label, Message string
@@ -145,58 +166,56 @@ type errorItem struct {
 // errorItems lists the errors for the banner: field errors in declared
 // order (label from the field, falling back to its name), then errors
 // whose key names no field, sorted by key so output is deterministic.
-func (p Props) errorItems() []errorItem {
-	if len(p.Errors) == 0 {
+func errorItems(fields []formfield.Field, errors map[string]string) []errorItem {
+	if len(errors) == 0 {
 		return nil
 	}
-	seen := make(map[string]bool, len(p.Errors))
+	seen := make(map[string]bool, len(errors))
 	var items []errorItem
-	for _, s := range p.Sections {
-		for _, f := range s.Fields {
-			msg, ok := p.Errors[f.Name]
-			if !ok || seen[f.Name] {
-				continue
-			}
-			seen[f.Name] = true
-			label := f.Label
-			if label == "" {
-				label = f.Name
-			}
-			items = append(items, errorItem{Label: label, Message: msg, Href: "#" + f.ControlID()})
+	for _, f := range fields {
+		msg, ok := errors[f.Name]
+		if !ok || seen[f.Name] {
+			continue
 		}
+		seen[f.Name] = true
+		label := f.Label
+		if label == "" {
+			label = f.Name
+		}
+		items = append(items, errorItem{Label: label, Message: msg, Href: "#" + f.ControlID()})
 	}
 	var rest []string
-	for k := range p.Errors {
+	for k := range errors {
 		if !seen[k] {
 			rest = append(rest, k)
 		}
 	}
 	sort.Strings(rest)
 	for _, k := range rest {
-		items = append(items, errorItem{Message: p.Errors[k]})
+		items = append(items, errorItem{Message: errors[k]})
 	}
 	return items
 }
 
 // bannerTitle is the summary line: "Please fix the N errors below."
 // (singular for one).
-func (p Props) bannerTitle() string {
-	n := len(p.Errors)
+func bannerTitle(n int) string {
 	if n == 1 {
 		return "Please fix the 1 error below."
 	}
 	return "Please fix the " + strconv.Itoa(n) + " errors below."
 }
 
-// submit returns the Submit action with the zero-value defaults applied
-// and marked Submit, so action.Button renders <button type="submit">. Href
-// and the Hx* fields are cleared first: the submit button never navigates
-// or issues its own request (the form carries hx-post), as Props.Submit
-// promises.
-func (p Props) submit() action.Action {
-	a := p.Submit
+// Submit returns a with the submit-button defaults applied: Label falls
+// back to defaultLabel, Variant to VariantPrimary, Submit is set so
+// action.Button renders <button type="submit">, and Href and the Hx*
+// fields are cleared because the submit button never navigates or issues
+// its own request (the form carries hx-post). This is the one rule for a
+// form page's submit button; settingspage uses it with its own default
+// label.
+func Submit(a action.Action, defaultLabel string) action.Action {
 	if a.Label == "" {
-		a.Label = "Save"
+		a.Label = defaultLabel
 	}
 	if a.Variant == "" {
 		a.Variant = action.VariantPrimary
@@ -204,6 +223,12 @@ func (p Props) submit() action.Action {
 	a.Submit = true
 	a.Href, a.HxGet, a.HxPost, a.HxDelete, a.HxTarget, a.HxSwap = "", "", "", "", "", ""
 	return a
+}
+
+// submit returns the Submit action with the zero-value defaults applied
+// ("Save", primary) and marked Submit, as Props.Submit promises.
+func (p Props) submit() action.Action {
+	return Submit(p.Submit, "Save")
 }
 
 // Respond writes the form page for r through the appshell App installed by

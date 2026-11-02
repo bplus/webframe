@@ -56,7 +56,7 @@ build output, not a build step this repo performs itself.
 
 ## Local (written for webframe, not templUI, not third-party)
 
-These 5 files carry none of the templUI header markers, and their
+These 7 files carry none of the templUI header markers, and their
 introducing commits directly describe original component work rather than
 vendoring or installing something — evidence is strong enough to call these
 confirmed local, not just inferred:
@@ -68,6 +68,8 @@ confirmed local, not just inferred:
 | `theme-toggle.js` | Local | The only standalone `.js` file, and fully readable. Contains an internal comment referencing a repo commit (`cb57069`) as the source of the "light is the product default" rule, which only makes sense for code written in and referring to this repo's own history. | Part of the webframe module (see above). |
 | `autocomplete.js` | Local | Written for webframe in page-layer batch 1b (autocomplete component, paired with `components/autocomplete/autocomplete.templ`). Unminified, first-party; depends only on HTMX's `htmx:beforeRequest` / `htmx:afterSwap` events. | Part of the webframe module (see above). |
 | `confirm.js` | Local | Written for webframe in page-layer batch 3 (the `htmx:confirm` interceptor behind `action.Confirm`, paired with `components/confirmdialog/confirmdialog.templ`). Unminified, first-party; depends on HTMX's `htmx:confirm` event and the `window.tui.dialog` API of the templUI-shipped `dialog.min.js`. | Part of the webframe module (see above). |
+| `htmx-errors.js` | Local | Written for webframe in page-layer batch 4 (the `htmx:beforeSwap` error-swap guard loaded by `appshell.Scripts` right after `confirm.js`). Unminified, first-party; depends only on HTMX's `htmx:beforeSwap` event (`evt.detail.isError`, `.xhr`, `.target`, `.shouldSwap`). | Part of the webframe module (see above). |
+| `splitpane.js` | Local | Written for webframe in page-layer batch 4 (split pane list links: takes the click from the md breakpoint up and calls `htmx.ajax`; below md the anchor navigates). Unminified, first-party; depends on `window.htmx.ajax` and `matchMedia`. | Part of the webframe module (see above). |
 
 ## UNKNOWN provenance
 
@@ -188,3 +190,43 @@ and never scans JS, those three classes are kept alive by an
 `@source inline("bg-success bg-warning bg-muted-foreground")` line there;
 a future class written only by a script needs the same by-hand entry.
 Nothing else in the file changed.
+
+Batch 4 (Task A8) adds `htmx-errors.js`, first-party (webframe, not
+templUI, not third-party), listed under Local above; `appshell.Scripts`
+loads it right after `confirm.js`. Unminified, about 40 lines, no
+dependencies beyond htmx's `htmx:beforeSwap` event. When
+`evt.detail.isError` is true (the `[45]..` codes under the webframe
+`htmx-config`) it sets `evt.detail.shouldSwap = false` if the response's
+`Content-Type` header (read with `evt.detail.xhr.getResponseHeader`) is
+not `text/html` (a missing header counts as not HTML; parameters such as
+`; charset=utf-8` are allowed) **or** the swap target or one of its
+ancestors carries `data-wf-swallow-errors` (`Element.closest`); in every
+other case `shouldSwap` is left as htmx computed it, so the batch 3
+behavior (swap an HTML error body: 422 forms, 409 toast-only, 404 error
+pages) stands. htmx still fires `htmx:responseError` after a refused swap.
+The shell marks its polled elements (`NavItem.Badge` span, `LiveDot`)
+with `data-wf-swallow-errors`. The script guards against a second run
+with `window.wf.errors` (htmx re-executes `<script src>` tags found in
+swapped content).
+
+Batch 4 (Task A8) also gives `theme-toggle.js` the same re-run guard
+(`window.wf.theme`) that `confirm.js` has (`window.wf.confirm`); the rest of
+the file is unchanged.
+
+Batch 4 integration (B1) gives `autocomplete.js` the same guard: its IIFE
+returns at once when `window.wf.autocomplete` is already set (the object the
+script itself publishes at the end of its first run, with `pick` and
+`close`), so a second copy arriving in swapped content adds no second set of
+document-level listeners. Three lines; nothing else in the file changed. The
+four first-party scripts in `appshell.Scripts` (`confirm.js`,
+`htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`) are now all guarded;
+the templUI-shipped component scripts still are not (input #20, carried to
+the batch 5 inputs).
+
+Batch 4 integration adds `splitpane.js`, first-party (webframe, not templUI,
+not third-party): a delegated click listener for `a[data-wf-splitpane-link]`
+that, from the md breakpoint up, calls `htmx.ajax` with the link as source
+(so its `hx-target` and `hx-push-url` apply) and below md lets the anchor
+navigate. It replaces the filtered `hx-trigger` approach, which went dead on
+phones because htmx prevents the anchor's default before evaluating the
+filter. Guarded against re-runs with `window.wf.splitpane`.

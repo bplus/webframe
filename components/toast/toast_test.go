@@ -73,6 +73,33 @@ func TestToast_TitleBodyDismiss(t *testing.T) {
 	)
 }
 
+// TestToast_RemovesItselfAfterLeave: a dismissed or timed-out toast leaves
+// the DOM. show=false drives the x-show fade; the x-effect then removes
+// the element after removeDelayMS, a plain timer so a toast with no
+// transition is removed too. x-show stays for the fade; the effect is on
+// the root, so $el is the toast itself and the stack collapses behind it.
+func TestToast_RemovesItselfAfterLeave(t *testing.T) {
+	for name, p := range map[string]Props{
+		"timed":  Info("A", "B"),
+		"sticky": {Title: "A", Sticky: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			out := render(t, Toast(p))
+			mustContain(t, out,
+				`x-show="show"`, "x-transition",
+				`x-effect="if (!show) setTimeout(() =&gt; $el.remove(), 300)"`,
+			)
+			// The effect sits on the toast root, before the body block.
+			if strings.Index(out, "x-effect=") > strings.Index(out, "border-l-4") {
+				t.Errorf("x-effect must be on the root element:\n%s", out)
+			}
+		})
+	}
+	if removeDelayMS <= 75 {
+		t.Errorf("removeDelayMS %d must outlast x-transition's default 75ms leave", removeDelayMS)
+	}
+}
+
 func TestToast_Timeout(t *testing.T) {
 	t.Run("default 4s", func(t *testing.T) {
 		out := render(t, Toast(Info("A", "")))
@@ -85,8 +112,10 @@ func TestToast_Timeout(t *testing.T) {
 	})
 	t.Run("sticky has no timer", func(t *testing.T) {
 		out := render(t, Toast(Props{Title: "A", Sticky: true, Timeout: time.Second}))
-		mustNotContain(t, out, "x-init", "setTimeout")
-		mustContain(t, out, `aria-label="Dismiss"`)
+		// No auto-dismiss timer; the removal effect's own setTimeout
+		// (x-effect, after show=false) is not one.
+		mustNotContain(t, out, "x-init", "show = false, ")
+		mustContain(t, out, `aria-label="Dismiss"`, "x-effect=")
 	})
 }
 

@@ -228,6 +228,13 @@ func TestItems_CreateSuccessRedirects(t *testing.T) {
 	if it, _ := Items.Get("15"); it.Type != "armor" || it.Status != "published" || it.Remixable {
 		t.Errorf("updated item = %+v", it)
 	}
+	// Saving an unknown id is the 404 page in the sidebar shell, like the
+	// edit form's own GET.
+	rec = do(h, "POST", "/items/999", url.Values{"name": {"Ghost"}, "type": {"armor"}, "status": {"draft"}}, nil)
+	if rec.Code != 404 {
+		t.Errorf("POST /items/999 = %d, want 404", rec.Code)
+	}
+	wantAll(t, rec.Body.String(), "Page not found", "wf-shell--sidebar", `>404<`)
 }
 
 func TestItems_Validate(t *testing.T) {

@@ -3,6 +3,7 @@ package pages
 import (
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/aspectratio"
@@ -13,6 +14,7 @@ import (
 	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
+	"github.com/bplus/webframe/components/cardgrid"
 	"github.com/bplus/webframe/components/checkbox"
 	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/datatable"
@@ -46,6 +48,7 @@ import (
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toolbar"
 	"github.com/bplus/webframe/listquery"
 )
@@ -126,7 +129,14 @@ templ Showcase() {
 				<a href="#phonesort">Phone sort</a>
 				<a href="#descriptionlist">Description list</a>
 				<a href="#pages">Pages</a>
+				<a href="#cardgrid">Card grid</a>
+				<a href="#timeline">Timeline</a>
+				<a href="#splitpane">Split pane</a>
+				<a href="#dashboardpage">Dashboard page</a>
+				<a href="#settingspage">Settings page</a>
+				<a href="#streampage">Stream page</a>
 				<a href="#errorpage">Error pages</a>
+				<a href="#methodnotallowed">405 page</a>
 				<a href="#authpage">Auth pages</a>
 				<a href="#custom">Custom fences</a>
 			}
@@ -138,6 +148,7 @@ templ Showcase() {
 				<a href="#skeleton">Skeleton</a>
 				<a href="#spinner">Spinner</a>
 				<a href="#bottomsheet">Bottom sheet</a>
+				<a href="#errorswap">Error-swap guard</a>
 			}
 		}
 	}
@@ -212,7 +223,14 @@ templ pageLayerGroup() {
 		@phonesortSection()
 		@descriptionlistSection()
 		@pagesSection()
+		@cardgridSection()
+		@timelineSection()
+		@splitpaneSection()
+		@dashboardpageSection()
+		@settingspageSection()
+		@streampageSection()
 		@errorpageSection()
+		@methodnotallowedSection()
 		@authpageSection()
 		@customSection()
 	}
@@ -1992,6 +2010,7 @@ templ feedbackGroup() {
 		@skeletonSection()
 		@spinnerSection()
 		@bottomsheetSection()
+		@errorswapSection()
 	}
 }
 
@@ -2153,5 +2172,96 @@ templ bottomsheetSection() {
 				}
 			}
 		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Batch 4: card grid, timeline, split pane, the three page types
+// ═══════════════════════════════════════
+
+// showcaseArt is the local placeholder every showcase card shows.
+const showcaseArt = "/static/img/placeholder-wide.svg"
+
+// showcaseCards are the Card grid section's four cards: a title that wraps,
+// a status of each kind, meta facts and one footer action each.
+var showcaseCards = []cardgrid.Card{
+	{Title: "Blade of the Fallen Star", Subtitle: "Weapon", Href: "/items/1", Art: &cardgrid.Art{Src: showcaseArt}, Badges: []cardgrid.Badge{cardgrid.StatusBadge("", "published")}, Meta: []string{"Starfall Pack", "Updated 2d ago"}, Actions: []action.Action{{Label: "Edit", Href: "/items/1/edit"}}},
+	{Title: "Cloak of Whispers", Subtitle: "Armor", Href: "/items/2", Art: &cardgrid.Art{Src: showcaseArt}, Badges: []cardgrid.Badge{cardgrid.StatusBadge("", "draft")}, Meta: []string{"Not in a pack", "Updated 3d ago"}, Actions: []action.Action{{Label: "Edit", Href: "/items/2/edit"}}},
+	{Title: "Circlet of Borrowed Thought and Other Long Names", Subtitle: "Accessory", Href: "/items/9", Art: &cardgrid.Art{Src: showcaseArt}, Badges: []cardgrid.Badge{cardgrid.StatusBadge("", "published"), cardgrid.StatusBadge("Remixable", "info")}, Meta: []string{"Updated 3w ago"}, Actions: []action.Action{{Label: "Edit", Href: "/items/9/edit"}}},
+	{Title: "Bottled Bolt", Subtitle: "Consumable", Badges: []cardgrid.Badge{cardgrid.StatusBadge("", "failed")}, Meta: []string{"Build failed", "1w ago"}, Actions: []action.Action{{Label: "Retry", HxPost: "/api/toast", HxSwap: "none", Attributes: templ.Attributes{"hx-vals": variantVals("info")}}}},
+}
+
+templ cardgridSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "cardgrid", Title: "Card grid", Description: "Narrow the window: four columns at 1280px, two around 640px and one at 390px, the art keeping its 16:9 frame at every width; the whole card is the link, and the footer button still works on its own."}) {
+		@cardgrid.CardGrid(cardgrid.Props{ID: "showcase-cards", Items: showcaseCards})
+		<p>The last card has no art and no link, so its title is plain text and the card starts at the title. A grid with no items shows an empty state across the full width.</p>
+	}
+}
+
+// showcaseEvents are the Timeline section's events: two days, every dot
+// tone, a wrapping title and a body, all at fixed times so the page is
+// deterministic.
+var showcaseEvents = []timeline.Item{
+	{At: time.Date(2026, 10, 30, 9, 12, 0, 0, time.UTC), Title: "Blade of the Fallen Star published", Body: "Visible to every builder from the Starfall Pack page.", Href: "/items/1", Variant: badge.VariantSuccess, Meta: "by Morgan"},
+	{At: time.Date(2026, 10, 30, 8, 40, 0, 0, time.UTC), Title: "Build of Starfall Pack started", Variant: badge.VariantInfo},
+	{At: time.Date(2026, 10, 29, 17, 5, 0, 0, time.UTC), Title: "Cloak of Whispers saved as a draft, with a title long enough to wrap onto a second line at phone width", Body: "The rail and the dots stay aligned while this title wraps.", Href: "/items/2", Variant: badge.VariantSecondary},
+	{At: time.Date(2026, 10, 29, 11, 30, 0, 0, time.UTC), Title: "Bottled Bolt build failed", Body: "The recipe names a texture the pack does not ship.", Variant: badge.VariantDestructive, Meta: "trace-demo-014"},
+	{At: time.Date(2026, 10, 29, 9, 0, 0, 0, time.UTC), Title: "Netherese Relics marked stale", Variant: badge.VariantWarning},
+}
+
+templ timelineSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "timeline", Title: "Timeline", Description: "Dated events on a rail, newest first and grouped by day; at 390px the time moves above the title and the third item's long title wraps while the rail and dots stay in one line."}) {
+		@timeline.Timeline(timeline.Props{ID: "showcase-timeline", Items: showcaseEvents, Location: time.UTC})
+		<p>Each dot takes the tone of the badge variant the event names (success, info, secondary, destructive, warning), and a title with a link opens the item. The dashboard's <a href="/dashboard">Recent changes</a> section is the same component fed from the Items store.</p>
+	}
+}
+
+templ splitpaneSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "splitpane", Title: "Split pane", Description: "Open Browse at 1280px and click a name: only the right pane changes and the address bar follows; open it at 390px and the same click is a plain navigation to the detail, with All items leading back."}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			<p><a href="/browse">Browse</a>: the list of item names on the left and, from 768px up, a placeholder on the right until something is picked; at 390px the list alone.</p>
+			<p><a href="/browse/3">Browse, item 3</a>: the same page with Ring of Hoarded Light selected; reload it at 390px and the detail shows with the back link, so a bookmark and the browser's Back both work.</p>
+		}
+	}
+}
+
+templ dashboardpageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dashboardpage", Title: "Dashboard page", Description: "Four tiles on one row at 1280px, then Recent changes beside Newest items (4 and 8 of 12 columns); below 900px every tile and section stacks one per row with nothing wider than the screen."}) {
+		<p><a href="/dashboard">Dashboard</a>: the tiles count the Items store, the timeline lists its last eight updates and the card grid shows the four newest items; create or publish an item and come back.</p>
+	}
+}
+
+templ settingspageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "settingspage", Title: "Settings page", Description: "Clear the display name and save: the form re-renders in place with the error under the field and in the banner, every other value kept, and the save bar still at the bottom of the screen; fix it and save, and the page simply reloads with the saved values."}) {
+		<p><a href="/settings">Settings</a>: Profile and Notifications as groups of fields, a save bar that is always there (at 390px it sits above the home indicator and never covers the last field), and a Danger zone whose Delete account asks first and is then refused.</p>
+	}
+}
+
+templ streampageSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "streampage", Title: "Stream page", Description: "The Traffic page is one streampage declaration: header, the live panel and its script; at 390px the panel's search and selects stack and its table scrolls sideways inside the panel, not the page."}) {
+		<p><a href="/traffic">Traffic</a>: the stream opens its connection as soon as the page loads and the panel's own controls filter it.</p>
+	}
+}
+
+templ methodnotallowedSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "methodnotallowed", Title: "405 page", Description: "Submit the form: it POSTs to /traffic, which only answers GET, and the styled 405 page renders in the shell with an Allow header naming what the address accepts."}) {
+		@form.Form(form.Props{ID: "post-get-only", Action: "/traffic"}) {
+			@button.Button(button.Props{Type: button.TypeSubmit, Variant: button.VariantOutline}) {
+				POST to a GET-only address
+			}
+		}
+		<p>Go's ServeMux answers a wrong method itself, in plain text, before any handler runs; the demo's server wraps the mux as the errorpage package documents, asking the mux first and rendering the 405 (or the 404) page only when it has no route.</p>
+	}
+}
+
+templ errorswapSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "errorswap", Title: "Error-swap guard", Description: "Click the button: the server answers a plain-text 500 (a bare http.Error) and the sentence beside the button must not change, because an error body that is not HTML is never swapped into a target."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS, Align: layout.AlignCenter}) {
+			@button.Button(button.Props{Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-get": "/api/boom", "hx-target": "#boom-result", "hx-swap": "innerHTML"}}) {
+				Request a plain 500
+			}
+			<span id="boom-result">Nothing here has changed.</span>
+		}
+		<p>htmx is configured to swap error responses so a 422 form, a 409 toast and a 404 page reach the user; htmx-errors.js refuses the swap only when the body is not HTML or the target is marked <code>data-wf-swallow-errors</code>, as the shell's live badges are.</p>
 	}
 }

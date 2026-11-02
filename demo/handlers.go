@@ -16,7 +16,10 @@ import (
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/streampage"
 	"github.com/bplus/webframe/components/toast"
+	"github.com/bplus/webframe/components/trafficstream"
 	"github.com/bplus/webframe/demo/pages"
 )
 
@@ -32,15 +35,53 @@ func HandleShowcase(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleTraffic renders the live traffic stream demo page (GET /traffic). The
-// page itself then opens an SSE connection to HandleTrafficStream for its
-// live data.
+// HandleTraffic renders the live traffic stream demo page (GET /traffic)
+// through streampage: the page header, the trafficstream panel pointed at
+// HandleTrafficStream and the panel's script, declared in trafficProps. The
+// page itself then opens an SSE connection for its live data.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleTraffic(w http.ResponseWriter, r *http.Request) {
-	if err := App.Render(w, r, "Traffic", pages.Traffic()); err != nil {
+	if err := streampage.Respond(w, r, "Traffic", trafficProps()); err != nil {
 		log.Printf("demo: render traffic: %v", err)
+	}
+}
+
+// trafficProps declares the traffic page: the same stream the hand-written
+// page carried before batch 4 (StreamURL /api/traffic/stream, a 560px
+// table, the demo provider and event options, two seed rows sharing a
+// trace id), now as streampage.Props.
+func trafficProps() streampage.Props {
+	return streampage.Props{
+		ID: "traffic",
+		Header: pageheader.Props{
+			Title:    "Traffic Stream",
+			Subtitle: "A live operator surface for watching request and response activity, filtering by provider and event type, and pausing the feed without losing context.",
+		},
+		Stream: trafficstream.Props{
+			StreamURL:       "/api/traffic/stream",
+			Height:          560,
+			ProviderOptions: []string{"anthropic", "openai", "gemini", "local"},
+			EventOptions:    []string{"request.received", "proxy.forward_start", "proxy.forward_end", "proxy.error", "local.command"},
+			InitialRows: []trafficstream.Row{{
+				Time:      "12:00:01",
+				Provider:  "anthropic",
+				Direction: "request",
+				Event:     "request.received",
+				Status:    "",
+				TraceID:   "trace-demo-001",
+				Summary:   "POST /v1/messages",
+			}, {
+				Time:      "12:00:02",
+				Provider:  "anthropic",
+				Direction: "response",
+				Event:     "proxy.forward_end",
+				Status:    "200",
+				TraceID:   "trace-demo-001",
+				Summary:   "Completed upstream round-trip",
+			}},
+		},
 	}
 }
 
@@ -264,6 +305,18 @@ func HandleSlow(w http.ResponseWriter, r *http.Request) {
 	case <-time.After(slowDelay):
 	}
 	fragment(w, r, "slow", pages.SlowResult(time.Now().Format("15:04:05")))
+}
+
+// HandleBoom is the showcase's deliberate plain-text 500 (GET /api/boom):
+// http.Error writes "text/plain" and no markup, exactly what a Go handler
+// does when it fails without an error page. htmx-errors.js refuses to swap
+// a non-HTML error body, so the button's target on the showcase stays as it
+// was; without the guard the words would land inside the page.
+//
+// @boundary HTTP
+// @side-effects writes a plain-text 500
+func HandleBoom(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "boom: the demo's deliberate plain-text 500", http.StatusInternalServerError)
 }
 
 // fragment writes an htmx response fragment, logging a render error (the

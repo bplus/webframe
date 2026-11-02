@@ -27,6 +27,7 @@ import (
 	"github.com/bplus/webframe/components/breadcrumbs"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/card"
+	"github.com/bplus/webframe/components/cardgrid"
 	"github.com/bplus/webframe/components/checkbox"
 	"github.com/bplus/webframe/components/confirmdialog"
 	"github.com/bplus/webframe/components/copybutton"
@@ -34,6 +35,7 @@ import (
 	"github.com/bplus/webframe/components/custompage"
 	"github.com/bplus/webframe/components/dashboardgrid"
 	"github.com/bplus/webframe/components/dashboardheader"
+	"github.com/bplus/webframe/components/dashboardpage"
 	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/detailpage"
@@ -68,16 +70,20 @@ import (
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
+	"github.com/bplus/webframe/components/settingspage"
 	"github.com/bplus/webframe/components/skeleton"
 	"github.com/bplus/webframe/components/slideover"
 	"github.com/bplus/webframe/components/sparkline"
 	"github.com/bplus/webframe/components/spinner"
+	"github.com/bplus/webframe/components/splitpane"
 	"github.com/bplus/webframe/components/statcomparison"
 	"github.com/bplus/webframe/components/stattile"
+	"github.com/bplus/webframe/components/streampage"
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/components/toggle"
 	"github.com/bplus/webframe/components/toolbar"
@@ -130,6 +136,7 @@ var componentCases = []componentCase{
 	{name: "breadcrumbs", constructor: func() templ.Component { return breadcrumbs.Breadcrumbs() }},
 	{name: "button", constructor: func() templ.Component { return button.Button() }},
 	{name: "card", constructor: func() templ.Component { return card.Card() }},
+	{name: "cardgrid", constructor: func() templ.Component { return cardgrid.CardGrid(cardgrid.Props{}) }},
 	{name: "checkbox", constructor: func() templ.Component { return checkbox.Checkbox() }},
 	{name: "confirmdialog", constructor: func() templ.Component { return confirmdialog.ConfirmDialog(confirmdialog.Props{}) }},
 	{name: "copybutton", constructor: func() templ.Component { return copybutton.CopyButton() }},
@@ -137,6 +144,7 @@ var componentCases = []componentCase{
 	{name: "custompage", constructor: func() templ.Component { return custompage.CustomPage() }},
 	{name: "dashboardgrid", constructor: func() templ.Component { return dashboardgrid.Grid() }},
 	{name: "dashboardheader", constructor: func() templ.Component { return dashboardheader.Header() }},
+	{name: "dashboardpage", constructor: func() templ.Component { return dashboardpage.Page(dashboardpage.Props{}) }},
 	{name: "datatable", constructor: func() templ.Component { return datatable.DataTable() }},
 	{name: "descriptionlist", constructor: func() templ.Component { return descriptionlist.DescriptionList() }},
 	{name: "detailpage", constructor: func() templ.Component { return detailpage.Page(detailpage.Props{}) }},
@@ -182,18 +190,22 @@ var componentCases = []componentCase{
 	{name: "radio", constructor: func() templ.Component { return radio.Radio() }},
 	{name: "selectbox", constructor: func() templ.Component { return selectbox.SelectBox() }},
 	{name: "separator", constructor: func() templ.Component { return separator.Separator() }},
+	{name: "settingspage", constructor: func() templ.Component { return settingspage.Page(settingspage.Props{}) }},
 	{name: "skeleton", constructor: func() templ.Component { return skeleton.Lines(3) }},
 	{name: "slideover", constructor: func() templ.Component { return slideover.SlideOver() }},
 	{name: "spinner", constructor: func() templ.Component { return spinner.Spinner() }},
+	{name: "splitpane", constructor: func() templ.Component { return splitpane.SplitPane(splitpane.Props{}) }},
 	{name: "sparkline", constructor: func() templ.Component { return sparkline.Sparkline() }},
 	{name: "statcomparison", constructor: func() templ.Component { return statcomparison.StatComparison() }},
 	{name: "stattile", constructor: func() templ.Component { return stattile.StatTile() }},
+	{name: "streampage", constructor: func() templ.Component { return streampage.Page(streampage.Props{}) }},
 	{name: "swatch", constructor: func() templ.Component { return swatch.Swatch() }},
 	{name: "table", constructor: func() templ.Component { return table.Table() }},
 	// tabs.Content() exercises the empty-Value rendering path covered by the
 	// package-level regression test.
 	{name: "tabs", constructor: func() templ.Component { return tabs.Content() }},
 	{name: "textarea", constructor: func() templ.Component { return textarea.Textarea() }},
+	{name: "timeline", constructor: func() templ.Component { return timeline.Timeline() }},
 	{
 		name:              "toast",
 		constructor:       func() templ.Component { return toast.Toast(toast.Props{}) },

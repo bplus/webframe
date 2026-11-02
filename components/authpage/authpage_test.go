@@ -111,6 +111,38 @@ func TestSignIn_SubmitAndProvidersFullWidth(t *testing.T) {
 	}
 }
 
+// TestSignIn_ProviderVariant: a Provider's own Variant wins when set; an
+// empty one is outline.
+func TestSignIn_ProviderVariant(t *testing.T) {
+	p := signInProps()
+	p.Providers = []action.Action{
+		{Label: "Continue with Google", Href: "/auth/google", Variant: action.VariantPrimary},
+		{Label: "Continue with GitHub", Href: "/auth/github"},
+	}
+	out := render(t, AuthPage(p))
+	tag := func(href string) string {
+		t.Helper()
+		i := strings.Index(out, `href="`+href+`"`)
+		if i < 0 {
+			t.Fatalf("no link to %s:\n%s", href, out)
+		}
+		start := strings.LastIndex(out[:i], "<a")
+		return out[start : i+strings.Index(out[i:], ">")]
+	}
+	google, github := tag("/auth/google"), tag("/auth/github")
+	if !strings.Contains(google, "bg-primary") || strings.Contains(google, "bg-background") {
+		t.Errorf("primary provider should keep its variant: %s", google)
+	}
+	if !strings.Contains(github, "bg-background") || strings.Contains(github, "bg-primary") {
+		t.Errorf("provider with no variant should be outline: %s", github)
+	}
+	for _, tag := range []string{google, github} {
+		if !strings.Contains(tag, "w-full") {
+			t.Errorf("provider is not full width: %s", tag)
+		}
+	}
+}
+
 func TestSignIn_ProviderButtonWithHx(t *testing.T) {
 	p := signInProps()
 	p.Providers = []action.Action{{Label: "Magic link", HxPost: "/auth/magic", HxTarget: "#x"}}

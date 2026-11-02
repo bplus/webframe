@@ -33,6 +33,10 @@ import (
 // The active item (see isActive) gets class wf-nav-link--active (or
 // wf-sidebar-link--active) and aria-current="page".
 //
+// The polled elements (a NavItem.Badge span, the LiveDot) carry
+// data-wf-swallow-errors, so htmx-errors.js never swaps an error body
+// (a plain 500, an error page) into them; the next poll repairs them.
+//
 // @boundary LiveBadge and LiveDot poll their HxGet URLs via htmx
 templ Shell(props ...Props) {
 	{{ var p Props }}
@@ -157,14 +161,14 @@ templ navLink(item NavItem, path, base, extra string) {
 		}
 		{ item.Label }
 		if item.Badge != nil {
-			<span hx-get={ item.Badge.HxGet } hx-trigger={ "load, " + everyTrigger(item.Badge.Every) } hx-swap="innerHTML"></span>
+			<span hx-get={ item.Badge.HxGet } hx-trigger={ "load, " + everyTrigger(item.Badge.Every) } hx-swap="innerHTML" data-wf-swallow-errors></span>
 		}
 	</a>
 }
 
 templ rightControls(p Props) {
 	if p.LiveDot != nil {
-		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ everyTrigger(p.LiveDot.Every) } hx-swap="none"></div>
+		<div class="wf-live-dot" hx-get={ p.LiveDot.HxGet } hx-trigger={ everyTrigger(p.LiveDot.Every) } hx-swap="none" data-wf-swallow-errors></div>
 	}
 	if p.Right != nil {
 		@p.Right

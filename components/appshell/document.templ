@@ -1,6 +1,7 @@
 package appshell
 
 import (
+	"context"
 	"github.com/bplus/webframe/assets"
 	"github.com/bplus/webframe/components/confirmdialog"
 )
@@ -25,6 +26,18 @@ type DocProps struct {
 // still swaps nothing; the error status still fires htmx:responseError
 // for apps that listen.
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
+
+// PageTitle is the document title a page with title gets under the App in
+// ctx ("{title} — {App.Name}", the same rule Document applies), or "" when
+// no App is in ctx. A fragment response can carry it in a <title> so htmx
+// updates the tab and the history entry after a swap.
+func PageTitle(ctx context.Context, title string) string {
+	app, ok := FromContext(ctx)
+	if !ok {
+		return ""
+	}
+	return docTitle(DocProps{Title: title, AppName: app.Name})
+}
 
 func docTitle(p DocProps) string {
 	switch {

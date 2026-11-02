@@ -30,6 +30,7 @@ func TestDefaultsPerCode(t *testing.T) {
 	}{
 		{404, ">404<", "Page not found", "does not exist or has moved"},
 		{403, ">403<", "Not allowed", "You do not have access to this page."},
+		{405, ">405<", "Not allowed here", "This address does not accept that request."},
 		{500, ">500<", "Something went wrong", "tell us the request id below"},
 		{0, ">500<", "Something went wrong", "The server hit an error."},
 		{418, ">418<", "Something went wrong", "The server hit an error."},
@@ -227,6 +228,7 @@ func TestShorthands(t *testing.T) {
 	}{
 		{"NotFound", NotFound, 404, "Page not found"},
 		{"Forbidden", Forbidden, 403, "Not allowed"},
+		{"MethodNotAllowed", MethodNotAllowed, 405, "Not allowed here"},
 		{"Internal", func(w http.ResponseWriter, r *http.Request) error { return Internal(w, r, "req-9") }, 500, "req-9"},
 	}
 	for _, c := range cases {
@@ -273,5 +275,77 @@ func TestRespond_ClearsPendingFlash(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "FLASHBANNER") {
 		t.Errorf("flash banner missing from the error page")
+	}
+}
+
+// styledErrors is the package doc's ServeMux wrapper, verbatim, so the
+// documented pattern is proven against the real mux.
+func styledErrors(mux *http.ServeMux) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, pattern := mux.Handler(r); pattern != "" {
+			mux.ServeHTTP(w, r) // a real route, or the mux's own redirect
+			return
+		}
+		var allowed []string
+		probe := r.Clone(r.Context())
+		for _, m := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"} {
+			probe.Method = m
+			if _, pattern := mux.Handler(probe); pattern != "" {
+				allowed = append(allowed, m)
+			}
+		}
+		if len(allowed) == 0 {
+			_ = NotFound(w, r)
+			return
+		}
+		w.Header().Set("Allow", strings.Join(allowed, ", "))
+		_ = MethodNotAllowed(w, r)
+	})
+}
+
+// TestServeMuxWrapperRoutes405: Go's ServeMux answers a method mismatch
+// with a plain-text 405 on its own; the documented wrapper turns it into
+// the styled page (with Allow), leaves real routes alone and still gives
+// an unknown path the 404 page.
+func TestServeMuxWrapperRoutes405(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /items", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ITEMS")) })
+	mux.HandleFunc("DELETE /items", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("GONE")) })
+
+	// The bare mux: plain text, no page.
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest("POST", "/items", nil))
+	if rec.Code != 405 || strings.Contains(rec.Body.String(), "<") {
+		t.Fatalf("bare mux: %d %q", rec.Code, rec.Body.String())
+	}
+
+	app := &appshell.App{Name: "Demo", HomeHref: "/"}
+	h := app.Middleware(styledErrors(mux))
+	do := func(method, path string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(method, path, nil))
+		return rec
+	}
+
+	rec = do("POST", "/items")
+	assertHeaders(t, rec, http.StatusMethodNotAllowed)
+	if allow := rec.Result().Header.Get("Allow"); allow != "GET, HEAD, DELETE" {
+		t.Errorf("Allow = %q", allow)
+	}
+	for _, want := range []string{">405<", "Not allowed here", "This address does not accept that request.", "<title>Not allowed here — Demo</title>"} {
+		if !strings.Contains(rec.Body.String(), want) {
+			t.Errorf("missing %q in:\n%s", want, rec.Body.String())
+		}
+	}
+
+	rec = do("GET", "/items")
+	if rec.Code != 200 || rec.Body.String() != "ITEMS" {
+		t.Errorf("real route: %d %q", rec.Code, rec.Body.String())
+	}
+
+	rec = do("GET", "/nowhere")
+	assertHeaders(t, rec, http.StatusNotFound)
+	if !strings.Contains(rec.Body.String(), "Page not found") || rec.Result().Header.Get("Allow") != "" {
+		t.Errorf("unknown path: %d Allow=%q", rec.Code, rec.Result().Header.Get("Allow"))
 	}
 }
