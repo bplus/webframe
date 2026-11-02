@@ -15,10 +15,18 @@ type Override func(*Spec)
 // are omitted to keep URLs short: page 1, an empty search, empty filters, an
 // empty sort (and dir, which means nothing without a sort), and a page size
 // equal to the default ParseValues resolved from its Options (a hand-built
-// Spec has no default, so its page size is written whenever it is set). A base
-// that already carries a query is extended with "&". The receiver is never
-// modified; overrides work on a deep copy, and the prefix and default size
-// carry into every derived Spec.
+// Spec has no default, so its page size is written whenever it is set).
+//
+// The base is split at its first "#" and "?", not concatenated onto: the
+// fragment stays last, after the query. Parameters the Spec owns (sort, dir,
+// page, per, q and its filter keys, all under its prefix; the filter keys
+// are Options.FilterKeys plus any key in Filters) are removed from the base's
+// query and written from the Spec, so a base carrying ?page=3 is replaced,
+// not duplicated, and an omitted zero value removes it. Every other base
+// parameter is kept verbatim and in order, before the Spec's. A base with no
+// owned parameters and a Spec with nothing to write is returned unchanged.
+// The receiver is never modified; overrides work on a deep copy, and the
+// prefix, default size and filter keys carry into every derived Spec.
 func (s Spec) URL(base string, overrides ...Override) string {
 	d := s.clone()
 	for _, o := range overrides {
@@ -27,14 +35,63 @@ func (s Spec) URL(base string, overrides ...Override) string {
 		}
 	}
 	q := d.values()
-	if len(q) == 0 {
+
+	rest, frag, hasFrag := strings.Cut(base, "#")
+	path, rawQuery, _ := strings.Cut(rest, "?")
+	owned := d.owned(s)
+	var kept []string
+	removed := false
+	if rawQuery != "" {
+		for _, part := range strings.Split(rawQuery, "&") {
+			key, _, _ := strings.Cut(part, "=")
+			if k, err := url.QueryUnescape(key); err == nil {
+				key = k
+			}
+			if part != "" && owned[key] {
+				removed = true
+				continue
+			}
+			kept = append(kept, part)
+		}
+	}
+	if !removed && len(q) == 0 {
 		return base
 	}
-	sep := "?"
-	if strings.Contains(base, "?") {
-		sep = "&"
+	if enc := q.Encode(); enc != "" {
+		kept = append(kept, enc)
 	}
-	return base + sep + q.Encode()
+	out := path
+	if query := strings.Join(kept, "&"); query != "" {
+		out += "?" + query
+	}
+	if hasFrag {
+		out += "#" + frag
+	}
+	return out
+}
+
+// owned is the set of query parameter names d writes or clears, under its
+// prefix: the fixed names, the filter keys d was parsed with, and every key
+// in d's or orig's Filters (orig is the Spec before overrides, so a filter an
+// override deleted is still cleared from the base).
+func (d Spec) owned(orig Spec) map[string]bool {
+	m := map[string]bool{}
+	for _, name := range []string{"sort", "dir", "page", "per", "q"} {
+		m[d.Param(name)] = true
+	}
+	for _, k := range d.filterKeys {
+		if k != "" {
+			m[d.Param(k)] = true
+		}
+	}
+	for _, f := range []map[string][]string{d.Filters, orig.Filters} {
+		for k := range f {
+			if k != "" {
+				m[d.Param(k)] = true
+			}
+		}
+	}
+	return m
 }
 
 // Values returns the Spec's non-zero parameters under its prefix, the same set

@@ -20,6 +20,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -68,6 +69,10 @@ type Spec struct {
 	// are then written whenever Sort is set.
 	defaultSort string
 	defaultDir  Dir
+	// filterKeys is Options.FilterKeys as ParseValues saw it. URL treats
+	// these parameters as owned: it removes them from the base's query even
+	// when Filters has no value for them. Nil on a hand-built Spec.
+	filterKeys []string
 }
 
 // Options controls Parse. Zero values mean: no default sort, Asc, page size 25,
@@ -132,7 +137,7 @@ func ParseCurrent(r *http.Request, o Options) Spec {
 // parameters take the first value; Search is kept verbatim as text (escaping
 // is the renderer's job).
 func ParseValues(v url.Values, o Options) Spec {
-	s := Spec{prefix: o.Prefix}
+	s := Spec{prefix: o.Prefix, filterKeys: slices.Clone(o.FilterKeys)}
 	if v == nil {
 		v = url.Values{}
 	}
