@@ -326,3 +326,204 @@ func TestRespondFeedback_Valid(t *testing.T) {
 		t.Errorf("valid feedback must not alert: %s", body)
 	}
 }
+
+// requiredAttr matches the boolean `required` attribute, not aria-required
+// or a Tailwind variant.
+var requiredAttr = regexp.MustCompile(`\srequired[\s/>]`)
+
+func TestField_Tags(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "tags", Label: "Tags", Type: TypeTags, Value: "go, templ,,htmx", Help: "Comma separated",
+		Required: true, Placeholder: "Add a tag", Options: []Option{{Label: "Go"}, {Label: "Rust"}},
+	}))
+	// The chips come from the comma-split Value; the hidden field re-joins them.
+	mustContain(t, out, `data-tag="go"`, `data-tag="templ"`, `data-tag="htmx"`,
+		`<input type="hidden" name="tags" value="go,templ,htmx"`)
+	if n := strings.Count(out, "<li data-tag="); n != 3 {
+		t.Errorf("got %d chips, want 3: %s", n, out)
+	}
+	// The label targets the text input, which is f.ControlID() and carries the
+	// aria wiring merged with the widget's own hint id.
+	mustContain(t, out, `for="field-tags"`)
+	text := tag(t, out, `<input id="field-tags"[^>]*>`)
+	mustContain(t, text, `type="text"`, `placeholder="Add a tag"`,
+		`aria-describedby="field-tags-hint field-tags-help field-tags-feedback"`, `aria-required="true"`,
+		`list="field-tags-options"`)
+	// `required` must not land on the text input: it is not what submits.
+	if requiredAttr.MatchString(text) {
+		t.Errorf("required must not be on the tags text input: %s", text)
+	}
+	if strings.Contains(text, `aria-invalid="true"`) {
+		t.Errorf("unexpected aria-invalid without Error: %s", text)
+	}
+	// Options' labels are the datalist suggestions.
+	mustContain(t, out, `<datalist id="field-tags-options"><option value="Go"></option><option value="Rust"></option></datalist>`)
+	mustContain(t, out, `id="field-tags-help"`, `id="field-tags-feedback"`)
+}
+
+func TestField_TagsErrorAndEmpty(t *testing.T) {
+	out := render(t, FormField(Field{Name: "tags", Label: "Tags", Type: TypeTags, Error: "Too many"}))
+	text := tag(t, out, `<input id="field-tags"[^>]*>`)
+	if n := strings.Count(text, `aria-invalid="true"`); n != 1 {
+		t.Errorf("got %d aria-invalid on the text input, want 1: %s", n, text)
+	}
+	mustContain(t, out, "Too many", `role="alert"`, `<input type="hidden" name="tags" value=""`)
+	if strings.Contains(out, "<li data-tag=") {
+		t.Errorf("unexpected chips for an empty Value: %s", out)
+	}
+	if strings.Contains(out, "<datalist") {
+		t.Errorf("unexpected datalist without Options: %s", out)
+	}
+}
+
+func TestField_Rating(t *testing.T) {
+	out := render(t, FormField(Field{Name: "stars", Label: "Stars", Type: TypeRating, Value: "3", Max: 4, Help: "Be honest", Required: true}))
+	fs := tag(t, out, `<fieldset[^>]*>`)
+	// The fieldset is the control: it carries the id, the label link and the aria state.
+	mustContain(t, fs, `id="field-stars"`, `aria-labelledby="field-stars-label"`,
+		`aria-describedby="field-stars-help field-stars-feedback"`, `aria-required="true"`)
+	if strings.Contains(fs, `aria-invalid="true"`) || requiredAttr.MatchString(fs) {
+		t.Errorf("fieldset must not carry aria-invalid or required here: %s", fs)
+	}
+	mustContain(t, out, `id="field-stars-label"`, "Stars")
+	if n := strings.Count(out, `type="radio"`); n != 4 {
+		t.Errorf("got %d radios, want Max=4: %s", n, out)
+	}
+	if n := len(checkedAttr.FindAllString(out, -1)); n != 1 {
+		t.Errorf("got %d checked, want 1: %s", n, out)
+	}
+	mustContain(t, tag(t, out, `<input[^>]*value="3"[^>]*>`), "checked")
+	// Required reaches the radio group through the widget (first radio).
+	mustContain(t, tag(t, out, `<input[^>]*value="1"[^>]*>`), " required")
+	mustContain(t, out, `id="field-stars-help"`, `id="field-stars-feedback"`)
+}
+
+func TestField_RatingDefaultsAndError(t *testing.T) {
+	out := render(t, FormField(Field{Name: "stars", Label: "Stars", Type: TypeRating, Value: "junk", Error: "Pick one"}))
+	if n := strings.Count(out, `type="radio"`); n != DefaultRatingMax {
+		t.Errorf("got %d radios, want %d: %s", n, DefaultRatingMax, out)
+	}
+	if checkedAttr.MatchString(out) {
+		t.Errorf("a non-numeric Value must check nothing: %s", out)
+	}
+	mustContain(t, tag(t, out, `<fieldset[^>]*>`), `aria-invalid="true"`)
+	mustContain(t, out, "Pick one", `role="alert"`)
+}
+
+func TestField_DateTimeKinds(t *testing.T) {
+	cases := []struct {
+		ty    Type
+		typ   string
+		value string
+	}{
+		{TypeDate, "date", "2026-10-31"},
+		{TypeDateTime, "datetime-local", "2026-10-31T09:30"},
+		{TypeTime, "time", "09:30"},
+	}
+	for _, tc := range cases {
+		out := render(t, FormField(Field{Name: "when", Label: "When", Type: tc.ty, Value: tc.value, MinValue: "min-v", MaxValue: "max-v", Help: "Local", Required: true}))
+		in := tag(t, out, `<input[^>]*>`)
+		mustContain(t, in, `id="field-when"`, `type="`+tc.typ+`"`, `name="when"`, `value="`+tc.value+`"`,
+			`min="min-v"`, `max="max-v"`, `aria-describedby="field-when-help field-when-feedback"`, "scheme-light")
+		if n := len(requiredAttr.FindAllString(in, -1)); n != 1 {
+			t.Errorf("%s: got %d required, want 1: %s", tc.ty, n, in)
+		}
+		if strings.Contains(in, `aria-invalid="true"`) {
+			t.Errorf("%s: unexpected aria-invalid without Error: %s", tc.ty, in)
+		}
+		mustContain(t, out, `for="field-when"`, `id="field-when-help"`, `id="field-when-feedback"`)
+	}
+}
+
+func TestField_DateError(t *testing.T) {
+	out := render(t, FormField(Field{Name: "when", Label: "When", Type: TypeDate, Error: "Too early"}))
+	in := tag(t, out, `<input[^>]*>`)
+	if n := strings.Count(in, `aria-invalid="true"`); n != 1 {
+		t.Errorf("got %d aria-invalid, want 1: %s", n, in)
+	}
+	for _, bad := range []string{"min=", "max=", "value="} {
+		if strings.Contains(in, bad) {
+			t.Errorf("unexpected %s on an empty field: %s", bad, in)
+		}
+	}
+	mustContain(t, out, "Too early", `role="alert"`)
+}
+
+func TestField_File(t *testing.T) {
+	out := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Accept: "image/*", Multiple: true, Preview: true, Required: true, Help: "PNG", Value: "ignored.png"}))
+	// The root is f.ControlID(); the hidden file input is the labelled control.
+	mustContain(t, out, `id="field-art"`, `for="field-art-input"`)
+	in := tag(t, out, `<input type="file"[^>]*>`)
+	mustContain(t, in, `id="field-art-input"`, `name="art"`, `accept="image/*"`, " multiple",
+		`aria-describedby="field-art-help field-art-feedback"`)
+	if n := len(requiredAttr.FindAllString(in, -1)); n != 1 {
+		t.Errorf("got %d required, want 1: %s", n, in)
+	}
+	if strings.Contains(in, "value=") || strings.Contains(out, "ignored.png") {
+		t.Errorf("a file input cannot carry a value: %s", out)
+	}
+	if strings.Contains(in, `aria-invalid="true"`) {
+		t.Errorf("unexpected aria-invalid without Error: %s", in)
+	}
+	// Preview turns on the thumbnail template; a single-file field without
+	// Preview has none.
+	mustContain(t, out, `x-if="f.url"`, "Drop files here or choose")
+	single := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile}))
+	if strings.Contains(single, `x-if="f.url"`) || strings.Contains(tag(t, single, `<input type="file"[^>]*>`), " multiple") {
+		t.Errorf("unexpected preview/multiple on a plain file field: %s", single)
+	}
+	mustContain(t, single, "Drop a file here or choose")
+}
+
+func TestField_FileError(t *testing.T) {
+	out := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Error: "Too big"}))
+	in := tag(t, out, `<input type="file"[^>]*>`)
+	if n := strings.Count(in, `aria-invalid="true"`); n != 1 {
+		t.Errorf("got %d aria-invalid, want 1: %s", n, in)
+	}
+	// The zone styles itself from the input's aria-invalid.
+	mustContain(t, out, "has-aria-invalid:border-destructive", "Too big", `role="alert"`)
+}
+
+func TestField_WidgetValidateUsesChange(t *testing.T) {
+	for _, ty := range []Type{TypeTags, TypeRating, TypeFile} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Validate: "/v"}))
+		mustContain(t, out, `hx-trigger="change"`, `hx-post="/v"`, `hx-target="#field-x-feedback"`, `hx-swap="outerHTML"`, `hx-params="x"`)
+	}
+	for _, ty := range []Type{TypeDate, TypeDateTime, TypeTime} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Validate: "/v"}))
+		mustContain(t, out, `hx-trigger="blur changed"`, `hx-post="/v"`)
+	}
+	// The rating's hx-* sit on the fieldset (change bubbles from the radios).
+	mustContain(t, tag(t, render(t, FormField(Field{Name: "x", Label: "X", Type: TypeRating, Validate: "/v"})), `<fieldset[^>]*>`), `hx-post="/v"`)
+}
+
+func TestField_WidgetAttributesReachControl(t *testing.T) {
+	attrs := templ.Attributes{"data-x": "1"}
+	mustContain(t, tag(t, render(t, FormField(Field{Name: "a", Label: "A", Type: TypeTags, Attributes: attrs})), `<input id="field-a"[^>]*>`), `data-x="1"`)
+	mustContain(t, tag(t, render(t, FormField(Field{Name: "a", Label: "A", Type: TypeRating, Attributes: attrs})), `<fieldset[^>]*>`), `data-x="1"`)
+	mustContain(t, tag(t, render(t, FormField(Field{Name: "a", Label: "A", Type: TypeDate, Attributes: attrs})), `<input[^>]*>`), `data-x="1"`)
+	mustContain(t, tag(t, render(t, FormField(Field{Name: "a", Label: "A", Type: TypeFile, Attributes: attrs})), `<input type="file"[^>]*>`), `data-x="1"`)
+}
+
+func TestField_WidgetsDisabled(t *testing.T) {
+	disabledAttr := regexp.MustCompile(`\sdisabled[\s/>]`)
+	for _, ty := range []Type{TypeTags, TypeRating, TypeDate, TypeFile} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Disabled: true}))
+		if !disabledAttr.MatchString(out) {
+			t.Errorf("%s: Disabled did not reach the widget: %s", ty, out)
+		}
+	}
+}
+
+// TestField_TagsMaxTags: MaxTags reaches tagsinput as its cap (data-max on
+// the root and the "n/max" count); zero means no cap (data-max="0").
+func TestField_TagsMaxTags(t *testing.T) {
+	out := render(t, FormField(Field{Name: "tags", Label: "Tags", Type: TypeTags, Value: "a,b", MaxTags: 5}))
+	mustContain(t, out, `id="field-tags-root"`, `data-max="5"`, "2/5")
+	out = render(t, FormField(Field{Name: "tags", Label: "Tags", Type: TypeTags, Value: "a,b"}))
+	mustContain(t, out, `data-max="0"`)
+	if strings.Contains(out, "2/0") {
+		t.Errorf("count shown without a cap: %s", out)
+	}
+}

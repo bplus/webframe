@@ -3,6 +3,7 @@ package demo
 import (
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -95,11 +96,71 @@ func TestPages_SettingsForm(t *testing.T) {
 	wantNone(t, body, "Please fix", `aria-invalid="true"`)
 	// The digest toggle is on, mentions off.
 	inOrder(t, body, `role="switch" checked id="field-digest"`, `role="switch" id="field-mentions"`)
-	// The Danger zone comes after the form and before the save bar, which is
-	// the page's last child so it stays stuck across the Danger zone.
-	inOrder(t, body, "</form>", `id="danger-zone"`, "wf-settings-bar")
+	// The Environment group is the form's last section (its editor is the
+	// group's Content, posted by the Save button); the Danger zone comes
+	// after the form and before the save bar, which is the page's last child
+	// so it stays stuck across both. One form.
+	inOrder(t, body, `id="settings"`, `id="notifications"`, `id="environment"`, `name="env.key"`, "</form>", `id="danger-zone"`, "wf-settings-bar")
 	if n := strings.Count(body, "</form>"); n != 1 {
-		t.Errorf("%d forms, want 1 (the Danger zone is outside it)", n)
+		t.Errorf("%d forms, want 1 (the Environment editor is inside the settings form)", n)
+	}
+}
+
+// TestPages_SettingsBatch5: the quiet-hours time field round-trips through
+// the settings form, and the Environment editor (the Environment group's
+// Content, inside the settings form) saves its rows with the fields through
+// the one Save button (POST /settings).
+func TestPages_SettingsBatch5(t *testing.T) {
+	h := pagesHandler(t)
+	body := do(h, "GET", "/settings", nil, nil).Body.String()
+	wantAll(t, body,
+		// The time field with the stored value.
+		"Quiet hours start", `type="time"`, `name="quiet_start"`, `value="22:00"`,
+		// The Environment editor inside the form: the two rows as
+		// env.key/env.value pairs, the cap, the add button.
+		`id="environment"`, "Environment",
+		`name="env.key"`, `name="env.value"`, `value="REGION"`, `value="eu-west"`, `value="LOG_LEVEL"`, `value="info"`, `data-max="8"`, "Add variable",
+	)
+	// No form or save button of its own, no environment route.
+	wantNone(t, body, `id="environment-form"`, "/settings/environment", "Save environment")
+	inOrder(t, body, `id="settings"`, `id="environment"`, `name="env.key"`, "</form>", `id="danger-zone"`)
+	// A bad time is an error; the display name rule still applies; the
+	// submitted rows come back in the re-rendered form and nothing is stored.
+	rec := do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"ten pm"}, "env.key": {"TYPED"}, "env.value": {"kept"}}, hx("settings"))
+	if rec.Code != 422 {
+		t.Fatalf("POST /settings with a bad time = %d, want 422", rec.Code)
+	}
+	wantAll(t, rec.Body.String(), "Enter the time as HH:MM", `value="ten pm"`, `value="TYPED"`, `value="kept"`)
+	if rows := Settings.Env(); len(rows) != 2 || rows[0].Key != "REGION" {
+		t.Errorf("env rows changed on an invalid submit: %+v", rows)
+	}
+	// A good time saves, and the rows with it: they zip in order, a blank
+	// key is dropped, and an htmx submit goes back to the page (HX-Redirect),
+	// which shows the saved time and rows.
+	rec = do(h, "POST", "/settings", url.Values{"display_name": {"Morgan"}, "quiet_start": {"23:30"}, "env.key": {"REGION", "  ", "DEBUG"}, "env.value": {"us-east", "ignored", "1"}}, hx(""))
+	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/settings" || rec.Body.Len() != 0 {
+		t.Fatalf("htmx POST /settings = %d HX-Redirect %q body %q", rec.Code, rec.Header().Get("HX-Redirect"), rec.Body.String())
+	}
+	if got := Settings.Values()["quiet_start"]; got != "23:30" {
+		t.Errorf("quiet_start = %q, want 23:30", got)
+	}
+	if rows := Settings.Env(); len(rows) != 2 || rows[0].Key != "REGION" || rows[0].Value != "us-east" || rows[1].Key != "DEBUG" || rows[1].Value != "1" {
+		t.Errorf("env rows = %+v", rows)
+	}
+	body = do(h, "GET", "/settings", nil, nil).Body.String()
+	wantAll(t, body, `value="23:30"`, `value="us-east"`, `value="DEBUG"`)
+	wantNone(t, body, `value="LOG_LEVEL"`, "Environment saved")
+	// A plain POST: 303 back to the page; more than eight rows are cut.
+	form := url.Values{"display_name": {"Morgan"}, "quiet_start": {"23:30"}}
+	for i := 0; i < 10; i++ {
+		form.Add("env.key", "K"+strconv.Itoa(i))
+		form.Add("env.value", "v")
+	}
+	if rec = do(h, "POST", "/settings", form, nil); rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings" {
+		t.Errorf("plain POST /settings = %d Location %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if rows := Settings.Env(); len(rows) != maxEnvRows {
+		t.Errorf("%d env rows, want %d", len(rows), maxEnvRows)
 	}
 }
 
@@ -157,9 +218,14 @@ func TestPages_SettingsSaveRedirects(t *testing.T) {
 	// The next render shows the saved values and nothing else.
 	body := do(h, "GET", "/settings", nil, nil).Body.String()
 	wantAll(t, body, `value="Netherese Morgan"`, `value="k@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`)
-	// No success message anywhere: the flash slot is empty, no banner.
+	// No success message anywhere: the flash slot is empty, no banner. The
+	// one role="status" on the page is the command palette's own "No
+	// matches" line, which every page carries.
 	wantAll(t, body, `<div id="wf-flash"></div>`)
-	wantNone(t, body, "Please fix", `role="status"`, `role="alert"`)
+	wantNone(t, body, "Please fix", `role="alert"`, "Settings saved")
+	if n := strings.Count(body, `role="status"`); n != 1 {
+		t.Errorf("%d role=status regions, want 1 (the palette's)", n)
+	}
 
 	// An htmx submit gets HX-Redirect with an empty 200.
 	form.Set("display_name", "Morgan")
@@ -332,9 +398,11 @@ func TestPages_MethodNotAllowed(t *testing.T) {
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
 		t.Errorf("Content-Type = %q", ct)
 	}
-	// An item that takes GET, POST and DELETE but not PUT.
+	// An item that takes GET, POST and DELETE but not PUT; the Allow header
+	// is the mux's own (errorpage.Handler copies it), which sorts the
+	// methods.
 	rec = do(h, "PUT", "/items/1", nil, nil)
-	if rec.Code != 405 || rec.Header().Get("Allow") != "GET, HEAD, POST, DELETE" {
+	if rec.Code != 405 || rec.Header().Get("Allow") != "DELETE, GET, HEAD, POST" {
 		t.Errorf("PUT /items/1 = %d Allow %q", rec.Code, rec.Header().Get("Allow"))
 	}
 	// Over htmx the 405 page is the body only, still with its status.
@@ -402,7 +470,10 @@ func TestPages_ShowcaseSections(t *testing.T) {
 	if n := strings.Count(body, "Circlet of Borrowed Thought and Other Long Names"); n != 1 {
 		t.Errorf("long card title appears %d times, want 1", n)
 	}
-	if n := strings.Count(body, `datetime="2026-10-`); n != 7 {
+	// Counted inside the timeline section only: the log viewer's lines
+	// carry <time> elements of their own.
+	timeline := body[strings.Index(body, `id="showcase-timeline"`):strings.Index(body, `id="splitpane"`)]
+	if n := strings.Count(timeline, `datetime="2026-10-`); n != 7 {
 		t.Errorf("%d timeline datetimes (2 day headings + 5 events), want 7", n)
 	}
 	// The shell loads the guard script exactly once.

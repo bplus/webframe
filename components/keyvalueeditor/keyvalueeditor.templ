@@ -1,0 +1,119 @@
+package keyvalueeditor
+
+import (
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/utils"
+)
+
+// KeyValueEditor renders the editor: a root <div> (id p.ID, Alpine state
+// seeded from the rows it contains, see alpineData), the rows (one
+// [data-row] grid per Row with a key input named {Name}.key, a value input
+// named {Name}.value and a remove button), the x-for template that takes
+// over the rows under Alpine, and the Add row ghost button. Only the first
+// Props value is used.
+templ KeyValueEditor(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	{{ p = p.resolve() }}
+	<div
+		id={ p.ID }
+		class={ utils.TwMerge("w-full", p.Class) }
+		x-data={ alpineData }
+		data-max={ p.maxAttr() }
+		if p.Disabled {
+			data-disabled
+		}
+		{ p.Attributes... }
+	>
+		<div class="flex flex-col gap-2" role="list" aria-label="Rows">
+			for i, row := range p.Rows {
+				<div data-row role="listitem" class={ rowClass }>
+					@input.Input(input.Props{
+						ID:          p.keyID(i),
+						Name:        p.KeyName(),
+						Value:       row.Key,
+						Placeholder: p.KeyPlaceholder,
+						Disabled:    p.Disabled,
+						Attributes:  templ.Attributes{"data-key": true, "aria-label": p.KeyPlaceholder},
+					})
+					@input.Input(input.Props{
+						ID:          p.valueID(i),
+						Name:        p.ValueName(),
+						Value:       row.Value,
+						Placeholder: p.ValuePlaceholder,
+						Disabled:    p.Disabled,
+						Attributes:  templ.Attributes{"data-value": true, "aria-label": p.ValuePlaceholder},
+					})
+					@button.Button(button.Props{
+						Variant:    button.VariantGhost,
+						Size:       button.SizeIcon,
+						Class:      "justify-self-end",
+						Disabled:   p.Disabled,
+						Attributes: templ.Attributes{"aria-label": p.removeLabel(i)},
+					}) {
+						@icon.X()
+					}
+				</div>
+			}
+			<template x-for="(row, i) in rows" :key="row.id">
+				<div data-row role="listitem" class={ rowClass }>
+					@input.Input(input.Props{
+						ID:          p.ID + "-key-live",
+						Name:        p.KeyName(),
+						Placeholder: p.KeyPlaceholder,
+						Attributes: templ.Attributes{
+							"data-key":        true,
+							"aria-label":      p.KeyPlaceholder,
+							"x-model":         "row.key",
+							"x-bind:id":       "$root.id + '-key-' + i",
+							"x-bind:disabled": "disabled",
+						},
+					})
+					@input.Input(input.Props{
+						ID:          p.ID + "-value-live",
+						Name:        p.ValueName(),
+						Placeholder: p.ValuePlaceholder,
+						Attributes: templ.Attributes{
+							"data-value":      true,
+							"aria-label":      p.ValuePlaceholder,
+							"x-model":         "row.value",
+							"x-bind:id":       "$root.id + '-value-' + i",
+							"x-bind:disabled": "disabled",
+						},
+					})
+					@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Size:    button.SizeIcon,
+						Class:   "justify-self-end",
+						Attributes: templ.Attributes{
+							"x-bind:aria-label": "'Remove row ' + (i + 1)",
+							"x-bind:disabled":   "disabled",
+							"x-on:click":        "removeAt(i)",
+						},
+					}) {
+						@icon.X()
+					}
+				</div>
+			</template>
+		</div>
+		<div class="mt-2">
+			@button.Button(button.Props{
+				ID:       p.addID(),
+				Variant:  button.VariantGhost,
+				Size:     button.SizeSm,
+				Disabled: p.Disabled || p.atMax(),
+				Attributes: templ.Attributes{
+					"x-on:click":      "add()",
+					"x-bind:disabled": "disabled || atMax",
+				},
+			}) {
+				@icon.Plus()
+				{ p.AddLabel }
+			}
+		</div>
+	</div>
+}

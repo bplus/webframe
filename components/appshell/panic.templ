@@ -1,0 +1,21 @@
+package appshell
+
+// PanicPage is the body of the default 500 answer App.Middleware writes
+// when a handler panics and App.OnPanic is not set: a short message and
+// the request id in small monospace, centered, no component below it so
+// it needs nothing of the app that may itself be broken. An app that
+// wants the styled page assigns App.OnPanic = errorpage.PanicHandler.
+//
+// Phone: one centered column inside the page's own padding; the id is
+// break-all so it never widens the page.
+//
+// @pure
+templ PanicPage(requestID string) {
+	<main class="mx-auto w-full max-w-md px-4 py-12 text-center">
+		<h1 class="text-2xl font-semibold tracking-tight">Something went wrong</h1>
+		<p class="mt-2 text-muted-foreground">The server hit an error. Try again, and if it keeps happening, tell us the request id below.</p>
+		if requestID != "" {
+			<p class="mt-4 font-mono text-xs text-muted-foreground break-all">Request id: { requestID }</p>
+		}
+	</main>
+}

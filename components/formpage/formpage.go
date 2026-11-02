@@ -25,10 +25,17 @@ import (
 )
 
 // Section is one titled group of fields, rendered as a layout.Section
-// (h3) holding a formfield.Fieldset.
+// (h3) holding a formfield.Fieldset of Fields, then Content when set.
 type Section struct {
 	Title, Description string
 	Fields             []formfield.Field
+	// Content, when non-nil, renders inside the section after the fieldset
+	// and inside the <form>, so a widget that is not a formfield.Field (a
+	// keyvalueeditor, a prose note, a codeblock) is posted by the form's
+	// submit button with the fields and is re-rendered by an error swap of
+	// the form; the handler reads it from r.Form like any field. A section
+	// with Content and no Fields renders no fieldset, only the Content.
+	Content templ.Component
 }
 
 // Props configures a form page. Only Sections and Action are needed for a
@@ -69,7 +76,11 @@ type Props struct {
 	// Cancel, when set, renders before Submit (secondary unless given a
 	// Variant) and is usually a plain link back to the list.
 	Cancel *action.Action
-	// Multipart emits enctype="multipart/form-data"; needed for TypeFile.
+	// Multipart emits enctype="multipart/form-data"; required for a
+	// TypeFile field. The handler of a multipart form must call
+	// r.ParseMultipartForm before reading any value: a prior r.ParseForm
+	// parses only the URL query and leaves the body unread, so r.FormValue
+	// then returns "" for every field in the body.
 	Multipart bool
 }
 

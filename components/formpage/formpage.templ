@@ -18,14 +18,21 @@ templ Page(p Props) {
 // Body renders exactly the <form> element (id p.ID, default "form"), so it
 // is the swap region for an HxPost submit: the error banner (only when
 // Errors is non-empty), one layout.Section (h3) per Section holding a
-// formfield.Fieldset of the resolved fields, then the submit row.
+// formfield.Fieldset of the resolved fields and then the section's Content
+// when set (the fieldset is skipped for a section with Content and no
+// Fields), then the submit row.
 templ Body(p Props) {
 	@form.Form(p.formProps()) {
 		<div class="flex flex-col gap-8">
 			@ErrorBanner(p.allFields(), p.Errors)
 			for _, s := range p.Sections {
 				@layout.Section(layout.SectionProps{Title: s.Title, Description: s.Description, Level: 3}) {
-					@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(s)})
+					if len(s.Fields) > 0 || s.Content == nil {
+						@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(s)})
+					}
+					if s.Content != nil {
+						@s.Content
+					}
 				}
 			}
 			@submitRow(p)

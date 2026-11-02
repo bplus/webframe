@@ -29,6 +29,8 @@ import (
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/cardgrid"
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/codeblock"
+	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/confirmdialog"
 	"github.com/bplus/webframe/components/copybutton"
 	"github.com/bplus/webframe/components/customblock"
@@ -37,13 +39,16 @@ import (
 	"github.com/bplus/webframe/components/dashboardheader"
 	"github.com/bplus/webframe/components/dashboardpage"
 	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/datetimepicker"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/detailpage"
 	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/components/diffview"
 	"github.com/bplus/webframe/components/dropdown"
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/errorpage"
 	"github.com/bplus/webframe/components/figure"
+	"github.com/bplus/webframe/components/filedrop"
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/form"
@@ -55,10 +60,13 @@ import (
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/image"
 	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/jsonviewer"
+	"github.com/bplus/webframe/components/keyvalueeditor"
 	"github.com/bplus/webframe/components/label"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/lifecyclestepper"
 	"github.com/bplus/webframe/components/listpage"
+	"github.com/bplus/webframe/components/logviewer"
 	"github.com/bplus/webframe/components/metricring"
 	"github.com/bplus/webframe/components/nodepill"
 	"github.com/bplus/webframe/components/pageheader"
@@ -67,7 +75,9 @@ import (
 	"github.com/bplus/webframe/components/piechart"
 	"github.com/bplus/webframe/components/popover"
 	"github.com/bplus/webframe/components/progressbar"
+	"github.com/bplus/webframe/components/prose"
 	"github.com/bplus/webframe/components/radio"
+	"github.com/bplus/webframe/components/rating"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/separator"
 	"github.com/bplus/webframe/components/settingspage"
@@ -82,6 +92,7 @@ import (
 	"github.com/bplus/webframe/components/swatch"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/components/tabs"
+	"github.com/bplus/webframe/components/tagsinput"
 	"github.com/bplus/webframe/components/textarea"
 	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toast"
@@ -136,6 +147,8 @@ var componentCases = []componentCase{
 	{name: "breadcrumbs", constructor: func() templ.Component { return breadcrumbs.Breadcrumbs() }},
 	{name: "button", constructor: func() templ.Component { return button.Button() }},
 	{name: "card", constructor: func() templ.Component { return card.Card() }},
+	{name: "codeblock", constructor: func() templ.Component { return codeblock.CodeBlock() }},
+	{name: "commandpalette", constructor: func() templ.Component { return commandpalette.Palette(commandpalette.Props{}) }},
 	{name: "cardgrid", constructor: func() templ.Component { return cardgrid.CardGrid(cardgrid.Props{}) }},
 	{name: "checkbox", constructor: func() templ.Component { return checkbox.Checkbox() }},
 	{name: "confirmdialog", constructor: func() templ.Component { return confirmdialog.ConfirmDialog(confirmdialog.Props{}) }},
@@ -146,9 +159,11 @@ var componentCases = []componentCase{
 	{name: "dashboardheader", constructor: func() templ.Component { return dashboardheader.Header() }},
 	{name: "dashboardpage", constructor: func() templ.Component { return dashboardpage.Page(dashboardpage.Props{}) }},
 	{name: "datatable", constructor: func() templ.Component { return datatable.DataTable() }},
+	{name: "datetimepicker", constructor: func() templ.Component { return datetimepicker.DateTimePicker() }},
 	{name: "descriptionlist", constructor: func() templ.Component { return descriptionlist.DescriptionList() }},
 	{name: "detailpage", constructor: func() templ.Component { return detailpage.Page(detailpage.Props{}) }},
 	{name: "dialog", constructor: func() templ.Component { return dialog.Dialog() }},
+	{name: "diffview", constructor: func() templ.Component { return diffview.DiffView(diffview.Props{}) }},
 	{
 		name:              "dropdown",
 		constructor:       func() templ.Component { return dropdown.Dropdown() },
@@ -158,6 +173,7 @@ var componentCases = []componentCase{
 	{name: "emptystate", constructor: func() templ.Component { return emptystate.EmptyState() }},
 	{name: "errorpage", constructor: func() templ.Component { return errorpage.ErrorPage() }},
 	{name: "figure", constructor: func() templ.Component { return figure.Figure() }},
+	{name: "filedrop", constructor: func() templ.Component { return filedrop.FileDrop() }},
 	{name: "filterbar", constructor: func() templ.Component { return filterbar.FilterBar() }},
 	{name: "flash", constructor: func() templ.Component { return flash.Flash(flash.Message{}) }},
 	{name: "form", constructor: func() templ.Component { return form.Item() }},
@@ -171,11 +187,14 @@ var componentCases = []componentCase{
 	// so calling one of those with zero Props exercises the same rendering path.
 	{name: "icon", constructor: func() templ.Component { return icon.AArrowDown() }},
 	{name: "image", constructor: func() templ.Component { return image.Image() }},
+	{name: "jsonviewer", constructor: func() templ.Component { return jsonviewer.JSONViewer(jsonviewer.Props{}) }},
+	{name: "keyvalueeditor", constructor: func() templ.Component { return keyvalueeditor.KeyValueEditor() }},
 	{name: "input", constructor: func() templ.Component { return input.Input() }},
 	{name: "label", constructor: func() templ.Component { return label.Label() }},
 	{name: "layout", constructor: func() templ.Component { return layout.Stack() }},
 	{name: "lifecyclestepper", constructor: func() templ.Component { return lifecyclestepper.LifecycleStepper() }},
 	{name: "listpage", constructor: func() templ.Component { return listpage.Page(listpage.Props{}) }},
+	{name: "logviewer", constructor: func() templ.Component { return logviewer.LogViewer() }},
 	{name: "metricring", constructor: func() templ.Component { return metricring.MetricRing() }},
 	{name: "nodepill", constructor: func() templ.Component { return nodepill.NodePill() }},
 	{name: "pageheader", constructor: func() templ.Component { return pageheader.PageHeader() }},
@@ -186,8 +205,10 @@ var componentCases = []componentCase{
 	// panel and the best single representative of the package.
 	{name: "popover", constructor: func() templ.Component { return popover.Content() }},
 	{name: "progressbar", constructor: func() templ.Component { return progressbar.ProgressBar() }},
+	{name: "prose", constructor: func() templ.Component { return prose.Prose(prose.Props{Text: "x"}) }},
 	{name: "action", constructor: func() templ.Component { return action.Button(action.Action{Label: "Go"}) }},
 	{name: "radio", constructor: func() templ.Component { return radio.Radio() }},
+	{name: "rating", constructor: func() templ.Component { return rating.Rating() }},
 	{name: "selectbox", constructor: func() templ.Component { return selectbox.SelectBox() }},
 	{name: "separator", constructor: func() templ.Component { return separator.Separator() }},
 	{name: "settingspage", constructor: func() templ.Component { return settingspage.Page(settingspage.Props{}) }},
@@ -204,6 +225,7 @@ var componentCases = []componentCase{
 	// tabs.Content() exercises the empty-Value rendering path covered by the
 	// package-level regression test.
 	{name: "tabs", constructor: func() templ.Component { return tabs.Content() }},
+	{name: "tagsinput", constructor: func() templ.Component { return tagsinput.TagsInput() }},
 	{name: "textarea", constructor: func() templ.Component { return textarea.Textarea() }},
 	{name: "timeline", constructor: func() templ.Component { return timeline.Timeline() }},
 	{

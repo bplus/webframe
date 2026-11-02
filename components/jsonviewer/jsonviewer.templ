@@ -1,0 +1,119 @@
+package jsonviewer
+
+import (
+	"github.com/bplus/webframe/components/copybutton"
+	"github.com/bplus/webframe/utils"
+)
+
+// JSONViewer renders p.Value as a collapsible JSON tree inside a monospace
+// frame. Objects and arrays are <details> elements whose <summary> shows the
+// key, the size ("{3}" / "[2]") and, with CopyPath, a copy button for the
+// node's path; scalars are one line each, toned by type (strings success,
+// numbers info, booleans warning, null muted). Collapsed, MaxDepth and Sort
+// are described on Props.
+//
+// Phone width (390px): see the package comment. The frame scrolls
+// horizontally only when a single line cannot fit; strings break anywhere
+// and the indent is capped at six levels so deep nesting never pushes the
+// tree past the viewport.
+//
+// @pure marshals p.Value once per render; no state or I/O beyond that
+templ JSONViewer(p Props) {
+	{{ root, err := build(p.Value, p.Sort) }}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				"w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-muted/30 p-3 font-mono text-xs leading-5 text-foreground",
+				p.Class,
+			),
+		}
+		{ p.Attributes... }
+	>
+		if err != nil {
+			<span class="text-destructive">{ errorText(err) }</span>
+		} else {
+			@p.nodeView(root, "$", "", false, 0)
+		}
+	</div>
+}
+
+// nodeView renders one node at depth. key/isMember carry the object key
+// when the node is an object member; path is its JSON path.
+templ (p Props) nodeView(n *node, path string, key string, isMember bool, depth int) {
+	if n.isContainer() {
+		if n.size() == 0 {
+			<div class="flex items-center gap-1" data-path={ path }>
+				@p.keyView(key, isMember)
+				<span class="text-muted-foreground">{ n.emptyLabel() }</span>
+				@p.copyPath(path)
+			</div>
+		} else if p.isElided(depth) {
+			<div class="flex items-center gap-1" data-path={ path }>
+				@p.keyView(key, isMember)
+				<span class="text-muted-foreground" title="elided: deeper than MaxDepth">… { n.sizeLabel() }</span>
+				@p.copyPath(path)
+			</div>
+		} else {
+			<details
+				class="group/json"
+				data-path={ path }
+				if p.isOpen(depth) {
+					open
+				}
+			>
+				<summary class="flex cursor-pointer list-none items-center gap-1 rounded-sm hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+					<span class="inline-block w-3 shrink-0 select-none text-muted-foreground transition-transform group-open/json:rotate-90" aria-hidden="true">▸</span>
+					@p.keyView(key, isMember)
+					<span class="text-muted-foreground">{ n.sizeLabel() }</span>
+					if p.CopyPath {
+						<span x-data x-on:click.prevent.stop class="contents">
+							@p.copyPath(path)
+						</span>
+					}
+				</summary>
+				<div class={ childrenClass(depth) }>
+					for i, c := range n.children {
+						if n.kind == kindObject {
+							@p.nodeView(c, childPath(path, n.keys[i], i, true), n.keys[i], true, depth+1)
+						} else {
+							@p.nodeView(c, childPath(path, "", i, false), "", false, depth+1)
+						}
+					}
+				</div>
+			</details>
+		}
+	} else {
+		<div class="flex items-start gap-1 pl-4" data-path={ path }>
+			@p.keyView(key, isMember)
+			<span class={ n.scalarClass() }>{ n.scalarText() }</span>
+			@p.copyPath(path)
+		</div>
+	}
+}
+
+// keyView renders the "key:" prefix of an object member; nothing otherwise.
+templ (p Props) keyView(key string, isMember bool) {
+	if isMember {
+		<span class="break-all text-muted-foreground">{ keyLabel(key, isMember) }</span>
+	}
+}
+
+// copyPath renders the copy-path button when CopyPath is set. Inside a
+// <summary> the caller wraps it in an element that calls preventDefault on
+// the click, so copying a path does not also toggle the node.
+templ (p Props) copyPath(path string) {
+	if p.CopyPath {
+		@copybutton.CopyButton(copybutton.Props{
+			Value: path,
+			Size:  copybutton.SizeSm,
+			Class: "ml-1 h-5 w-5 shrink-0",
+			Attributes: templ.Attributes{
+				"aria-label": "Copy path " + path,
+				"title":      path,
+			},
+		})
+	}
+}

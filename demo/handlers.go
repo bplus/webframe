@@ -319,6 +319,19 @@ func HandleBoom(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "boom: the demo's deliberate plain-text 500", http.StatusInternalServerError)
 }
 
+// HandlePanic is the showcase's deliberate panic (GET /api/panic): the
+// handler fails the way a nil dereference or an unchecked index would.
+// appshell.Middleware recovers it, logs the value and the stack with the
+// request id, and calls App.OnPanic, which the demo sets to
+// errorpage.PanicHandler, so the answer is the styled 500 page in the
+// shell with that request id to quote.
+//
+// @boundary HTTP
+// @side-effects panics; the shell's middleware writes the 500
+func HandlePanic(w http.ResponseWriter, r *http.Request) {
+	panic("demo: the deliberate panic behind /api/panic")
+}
+
 // fragment writes an htmx response fragment, logging a render error (the
 // status line is already sent by then).
 func fragment(w http.ResponseWriter, r *http.Request, name string, c templ.Component) {

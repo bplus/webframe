@@ -14,9 +14,10 @@ import (
 )
 
 // DangerZone is the settings page's After content (settingspage.Props.After):
-// an h2 section holding one destructive action that asks first. It sits
-// outside the form, after it and before the save bar, so a submit never
-// posts it and an error re-render never redraws it.
+// an h2 section holding one destructive action that asks first; the demo
+// then refuses it (HandleDeleteAccount). It sits outside the settings form,
+// after it and before the save bar, so a settings submit never posts it and
+// an error re-render never redraws it.
 func DangerZone(danger action.Action) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

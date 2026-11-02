@@ -49,7 +49,8 @@ type SlotProps struct {
 // render inside the grid and are typically Slot cells, though any content
 // participates as a grid item. The div also carries the stable class
 // wf-dashgrid, which static/css/input.css uses (with !important) to
-// collapse the grid to one column under a 900px viewport -- the inline
+// collapse the grid to one column below md (48rem; 900px until batch 5),
+// the point every other layout collapses at -- the inline
 // column-count style has no other way to be overridden by a media query
 // (a stats page had no phone-width
 // breakpoint because Cols is a runtime value, not a Tailwind utility
@@ -105,7 +106,7 @@ templ Grid(props ...Props) {
 // content like tables shrink instead of blowing out the column); children
 // are the cell's content. The div also carries the stable class
 // wf-dashslot, which static/css/input.css uses (with !important) to reset
-// span to 1x1 under a 900px viewport, matching Grid's own wf-dashgrid
+// span to 1x1 below md (48rem), matching Grid's own wf-dashgrid
 // breakpoint so a Slot never spans past its now-single-column Grid.
 //
 // No scripts, generated IDs, or JS wiring are emitted.

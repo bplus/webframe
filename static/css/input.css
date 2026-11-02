@@ -9,6 +9,13 @@
 @source not "../../components/icon/*.go"; /* icon name tables, not classes */
 @source "../../demo/**/*.templ";
 
+/* ── Dark variant follows the theme attribute, not the OS ──
+   The theme switches on data-theme (theme-toggle.js, the appshell Document's
+   flash-free init), so dark: utilities must match that attribute too;
+   Tailwind's default dark variant is prefers-color-scheme, which would let a
+   component's dark:bg-... follow the OS while the tokens follow the toggle. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */
 @source inline("divide-border divide-y font-extrabold grid-cols-2 grid-cols-3 items-end items-stretch lg:grid-cols-5 list-disc list-inside max-w-3xl max-w-5xl max-w-xl mb-10 mb-8 ml-2 mt-6 mt-8 my-6 py-10 py-6 py-8 sm:grid-cols-3 sm:grid-cols-5 sm:grid-cols-6 sm:px-10 space-y-1 space-y-3 space-y-5 space-y-6 space-y-8 text-3xl text-6xl text-red-600 text-xl underline w-40 w-56");
 
@@ -97,7 +104,10 @@
 
 /* Readability: slightly larger root size — every rem-based Tailwind size
    scales with it (the letters were too small). */
-:root { font-size: 17px; }
+:root {
+  font-size: 17px;
+  color-scheme: light; /* native controls, scrollbars and pickers draw light by default */
+}
 
 /* ── Light theme, explicit (same as the default; kept so products that
       already set data-theme="light" stay correct) ── */
@@ -131,6 +141,7 @@
 
 /* ── Dark theme, explicit opt-in (the pre-2026-08-31 default, preserved) ── */
 :root[data-theme="dark"] {
+  color-scheme: dark; /* native controls follow the attribute, not the OS */
   --color-background:           var(--color-surface-950);
   --color-foreground:           var(--color-surface-50);
   --color-card:                 var(--color-surface-900);
@@ -319,6 +330,7 @@
 }
 
 .wf-sidebar-toggle > summary { display: none; }
+.wf-sidebar-phone-actions { display: none; }
 
 .wf-sidebar {
   display: flex;
@@ -414,6 +426,16 @@
   .wf-sidebar-toggle {
     border-bottom: 1px solid var(--color-border);
   }
+  /* The palette trigger sits on the "Menu" row on a phone, where the
+     sidebar footer (its desktop home) is folded away. */
+  .wf-shell--sidebar { position: relative; }
+  .wf-sidebar-phone-actions {
+    display: flex;
+    position: absolute;
+    top: 0.45rem;
+    right: 0.75rem;
+    z-index: 1;
+  }
   .wf-sidebar-toggle > summary {
     display: block;
     cursor: pointer;
@@ -461,6 +483,108 @@
 :where(.wf-content) img:not([class]) { max-width: 100%; height: auto; }
 :where(.wf-content) small:not([class]) { color: var(--color-muted-foreground); }
 
+/* ── Prose (prose.Prose, root .wf-prose) ──
+   Scoped element typography for trusted HTML and plain text: the content
+   carries no classes, so every element is styled here. Spacing is in em
+   (it scales with the size modifiers), colors come from the tokens. The
+   rules are unlayered so they beat Tailwind's preflight (@layer base). */
+.wf-prose {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--color-foreground);
+  overflow-wrap: anywhere; /* a long URL never widens a 390px page */
+}
+.wf-prose--sm { font-size: 0.875rem; }
+.wf-prose--lg { font-size: 1.125rem; }
+.wf-prose > :first-child { margin-top: 0; }
+.wf-prose > :last-child { margin-bottom: 0; }
+.wf-prose h1, .wf-prose h2, .wf-prose h3, .wf-prose h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-foreground);
+  margin: 1.5em 0 0.5em;
+  text-wrap: balance;
+}
+.wf-prose h1 { font-size: 2em; }
+.wf-prose h2 { font-size: 1.5em; }
+.wf-prose h3 { font-size: 1.25em; }
+.wf-prose h4 { font-size: 1.125em; }
+.wf-prose p { margin: 0 0 1em; }
+.wf-prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.wf-prose a:hover { color: var(--color-primary-400); }
+.wf-prose strong { font-weight: 600; }
+.wf-prose ul, .wf-prose ol { padding-left: 1.5em; margin: 0 0 1em; }
+.wf-prose ul { list-style: disc; }
+.wf-prose ol { list-style: decimal; }
+.wf-prose li { margin: 0.25em 0; }
+.wf-prose li > ul, .wf-prose li > ol { margin: 0.25em 0 0; }
+.wf-prose blockquote {
+  margin: 0 0 1em;
+  padding: 0.25em 0 0.25em 1em;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-muted-foreground);
+}
+.wf-prose blockquote > :last-child { margin-bottom: 0; }
+.wf-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--color-muted);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+}
+.wf-prose pre {
+  margin: 0 0 1em;
+  padding: 0.75em 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  line-height: 1.5;
+  overflow-x: auto; /* long lines scroll inside the block, not the page */
+  overflow-wrap: normal;
+}
+.wf-prose pre code { background: none; padding: 0; font-size: inherit; border-radius: 0; }
+/* Tables: display: block with width: max-content lets a wide table scroll
+   horizontally inside its own box (max-width 100%) instead of widening the
+   page at 390px; a narrow table stays as wide as its content. */
+.wf-prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  font-size: 0.9375em;
+  line-height: 1.5;
+}
+.wf-prose th, .wf-prose td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+.wf-prose th {
+  font-weight: 600;
+  background: var(--color-muted);
+}
+.wf-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  margin: 0 0 1em;
+}
+.wf-prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: 2em 0;
+}
+
 /* ── Section styling ── */
 .wf-section {
   padding: 2rem 0;
@@ -495,6 +619,29 @@
 [data-wf-tabs-sizing="fixed"] > [data-tui-tabs-content] { grid-row: 2; height: var(--wf-tabs-h, 20rem); overflow: auto; }
 [data-wf-tabs-sizing="fixed"][data-wf-tabs-height="s"] { --wf-tabs-h: 12rem; }
 [data-wf-tabs-sizing="fixed"][data-wf-tabs-height="l"] { --wf-tabs-h: 32rem; }
+
+/* ── Code blocks (codeblock.CodeBlock, root .wf-code) ── */
+/* Line numbers are a CSS counter on the per-line spans the component emits
+   when LineNumbers is set (figure[data-wf-code-numbered]); no JS. Each line
+   is a two-column grid (number gutter, text) so a soft-wrapped continuation
+   (Wrap) lines up under the text, not under the number. The gutter is as
+   wide as the last line number's digits (--wf-code-digits, set on the
+   figure by the component; 3 when absent) plus half a character. The
+   gutter is not selectable, so copying by selection copies the code only. */
+.wf-code[data-wf-code-numbered] code { counter-reset: wf-code-line; }
+.wf-code .wf-code-line {
+  display: grid;
+  grid-template-columns: calc(var(--wf-code-digits, 3) * 1ch + 0.5ch) minmax(0, 1fr);
+  column-gap: 1.5ch;
+  counter-increment: wf-code-line;
+}
+.wf-code .wf-code-line::before {
+  content: counter(wf-code-line);
+  text-align: right;
+  color: var(--color-muted-foreground);
+  user-select: none;
+  -webkit-user-select: none;
+}
 
 /* ── HTMX indicator ── */
 .htmx-indicator {
@@ -677,12 +824,16 @@
     border-top: 1px solid var(--color-border);
     min-height: 120px;
   }
+}
 
-  /* dashboardgrid.Grid/.Slot compute grid-template-columns
-     and grid-column:span as inline styles from a runtime Cols/ColSpan
-     value, so no Tailwind responsive utility class can target them --
-     !important is the only way to collapse a dashboard grid to one
-     column under 900px. */
+/* dashboardgrid.Grid/.Slot compute grid-template-columns
+   and grid-column:span as inline styles from a runtime Cols/ColSpan
+   value, so no Tailwind responsive utility class can target them --
+   !important is the only way to collapse a dashboard grid to one
+   column. The breakpoint is Tailwind's md (48rem = 768px at the default
+   root font size), the same point layout.TwoColumn, cardgrid and the
+   rest collapse at; until batch 5 it was 900px. */
+@media (max-width: 47.99rem) {
   .wf-dashgrid {
     grid-template-columns: 1fr !important;
   }

@@ -28,17 +28,24 @@ templ Page(p Props) {
 // Body renders exactly the <form> element (id p.ID, default "settings"),
 // so it is the swap region for an HxPost submit: the error banner (only
 // when Errors is non-empty), then one layout.Section (h2) per Group
-// holding a formfield.Fieldset of the resolved fields. The banner lives
-// inside the form so an error re-render that swaps the form brings its
-// own banner and takes the old one away with it. The save bar is not part
-// of Body: it is Page's last child and submits the form through its form
-// attribute, so a swap of the form leaves the bar in place.
+// holding a formfield.Fieldset of the resolved fields and then the
+// group's Content when set (the fieldset is skipped for a group with
+// Content and no Fields). The banner lives inside the form so an error
+// re-render that swaps the form brings its own banner and takes the old
+// one away with it. The save bar is not part of Body: it is Page's last
+// child and submits the form through its form attribute, so a swap of the
+// form leaves the bar in place.
 templ Body(p Props) {
 	@form.Form(p.formProps()) {
 		@formpage.ErrorBanner(p.allFields(), p.Errors)
 		for _, g := range p.Groups {
 			@layout.Section(layout.SectionProps{ID: g.ID, Title: g.Title, Description: g.Description, Level: 2}) {
-				@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(g)})
+				if len(g.Fields) > 0 || g.Content == nil {
+					@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(g)})
+				}
+				if g.Content != nil {
+					@g.Content
+				}
 			}
 		}
 	}

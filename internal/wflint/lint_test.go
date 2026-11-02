@@ -578,3 +578,44 @@ func TestFenceHelpers(t *testing.T) {
 		}
 	}
 }
+
+// TestLint_HTMLFromGoString_ProseExempt: a string literal that is the
+// argument of a prose.HTML(...) conversion or the value of the HTML: key in
+// a prose.Props{...} literal is content handed to prose, not app markup, so
+// it is not reported, in .go files and in the Go sections of .templ files.
+// The package is resolved from the file's imports, so an alias (content in
+// prose_ok.go) works and prose.HTML under a name the file does not import
+// the package as does not. Every other literal is still reported: a plain
+// "<div class=\"x\">" (prose_ok.go:26, prose.templ.txt:9), the Text: value
+// of a prose.Props literal (prose_ok.go:23) and the wrong-name conversion
+// (prose_ok.go:28).
+func TestLint_HTMLFromGoString_ProseExempt(t *testing.T) {
+	for file, wantLines := range map[string][]int{
+		"testdata/prose_ok.go":     {23, 26, 28},
+		"testdata/prose.templ.txt": {9},
+	} {
+		vs := lintOne(t, file)
+		var got []int
+		for _, v := range vs {
+			if v.Rule != "html-from-go-string" {
+				t.Errorf("%s: unexpected %+v", file, v)
+				continue
+			}
+			got = append(got, v.Line)
+		}
+		if !slices.Equal(got, wantLines) {
+			t.Errorf("%s: html-from-go-string at lines %v, want %v: %+v", file, got, wantLines, vs)
+		}
+	}
+	// Without an import of prose nothing is exempt: the same conversion
+	// under the default name is reported.
+	dir := t.TempDir()
+	f := filepath.Join(dir, "noimport.go")
+	src := "package x\n\nvar v = prose.HTML(\"<div class=\\\"x\\\">\")\n"
+	if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if vs := lintOne(t, f); len(vs) != 1 || vs[0].Rule != "html-from-go-string" || vs[0].Line != 3 {
+		t.Errorf("noimport.go: got %+v, want one html-from-go-string at line 3", vs)
+	}
+}

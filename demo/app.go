@@ -1,9 +1,7 @@
 package demo
 
 import (
-	"log"
 	"net/http"
-	"strings"
 
 	"github.com/bplus/webframe/assets"
 	"github.com/bplus/webframe/components/appshell"
@@ -17,7 +15,10 @@ import (
 // nav item. The Items pages are served through SidebarApp instead (see
 // RegisterItemRoutes); the "Items" entry here links across to them. Flash
 // is flash.Take, so a one-shot message set before a redirect shows once on
-// the next page the shell renders.
+// the next page the shell renders. PaletteFor builds the same command
+// palette as the Items app's per request, so the showcase's palette section
+// can be tried where it is read; OnPanic answers a handler panic with the
+// styled 500 page.
 var App = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -28,13 +29,16 @@ var App = &appshell.App{
 		{Label: "Items", Href: "/items", Match: "/items"},
 		{Label: "Traffic", Href: "/traffic"},
 		{Label: "Forms", Href: "/#forms"},
+		{Label: "Content", Href: "/#content"},
 		{Label: "Interactive", Href: "/#interactive"},
 		{Label: "Patterns", Href: "/#patterns"},
 		{Label: "Layout", Href: "/#layout"},
 		{Label: "Actions", Href: "/#actions"},
 		{Label: "Feedback", Href: "/#feedback"},
 	},
-	Flash: flash.Take,
+	Flash:      flash.Take,
+	PaletteFor: demoPaletteFor,
+	OnPanic:    errorpage.PanicHandler,
 }
 
 // SidebarApp is the shell of the Items app (a dashboard sketch of
@@ -48,6 +52,9 @@ var App = &appshell.App{
 // are never active themselves (the shell compares paths). Flash is wired
 // exactly as on App: the two shells share the one wf_flash cookie, so a
 // flash set by an Items handler shows wherever the browser lands next.
+// PaletteFor (demoPaletteFor) lists the pages and the store's items as of
+// each render; the shell renders its trigger in the sidebar footer and the
+// dialog once per page.
 var SidebarApp = &appshell.App{
 	Name:        "Webframe",
 	HomeHref:    "/",
@@ -59,6 +66,7 @@ var SidebarApp = &appshell.App{
 			{Label: "Items", Href: "/items", Match: "/items"},
 			{Label: "Browse", Href: "/browse", Match: "/browse"},
 			{Label: "Settings", Href: "/settings", Match: "/settings"},
+			{Label: "Logs", Href: "/logs"},
 			{Label: "Mods", Href: "/items?type=weapon"},
 			{Label: "Drafts", Href: "/items?status=draft"},
 			{Label: "Builds", Href: "/items?status=published"},
@@ -69,16 +77,18 @@ var SidebarApp = &appshell.App{
 			{Label: "Saved", Href: "/items?type=accessory"},
 		}},
 	},
-	Flash: flash.Take,
+	Flash:      flash.Take,
+	PaletteFor: demoPaletteFor,
+	OnPanic:    errorpage.PanicHandler,
 }
 
 // Routes mounts every demo route on mux: the embedded static files, the
-// showcase and traffic pages, the Items app and the batch 4 pages, the auth
-// and error pages and the htmx endpoints. There is no catch-all: a path no
-// pattern claims, and a claimed path asked with the wrong method, are left
-// to the mux, and styledErrors (which Handler wraps around the mux) turns
-// the mux's plain 404 and 405 into the error pages. cmd/demo and the tests
-// call it so both serve the same table.
+// showcase and traffic pages, the Items app, the batch 4 pages and the Logs
+// page, the auth and error pages and the htmx endpoints. There is no
+// catch-all: a path no pattern claims, and a claimed path asked with the
+// wrong method, are left to the mux, and errorpage.Handler (which Handler
+// wraps around the mux) turns the mux's plain 404 and 405 into the error
+// pages. cmd/demo and the tests call it so both serve the same table.
 func Routes(mux *http.ServeMux) {
 	// Static files, served from the assets package's embedded copy.
 	assets.Mount(mux)
@@ -93,8 +103,9 @@ func Routes(mux *http.ServeMux) {
 	// /items/publish; DELETE /items/{id}; GET /sidebar → /items.
 	RegisterItemRoutes(mux)
 
-	// The batch 4 pages on the same shell: GET /dashboard; GET and POST
-	// /settings, POST /settings/delete-account; GET /browse, /browse/{id}.
+	// The batch 4 and 5 pages on the same shell: GET /dashboard; GET and
+	// POST /settings, POST /settings/delete-account; GET /browse,
+	// /browse/{id}; GET /logs and its poll, GET /logs/tail.
 	RegisterPageRoutes(mux)
 
 	// The pages outside the app's own content: sign in, signed out,
@@ -115,54 +126,16 @@ func Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/flash", HandleFlash)
 	mux.HandleFunc("GET /api/slow", HandleSlow)
 	mux.HandleFunc("GET /api/boom", HandleBoom)
+	mux.HandleFunc("GET /api/panic", HandlePanic)
 }
 
 // Handler returns the demo server's whole handler: Routes on a fresh mux,
-// styledErrors around the mux, and App.Middleware around that so every
-// page (the Items pages re-wrap themselves in SidebarApp.Middleware) and
-// both error pages render in a shell.
+// errorpage.Handler around the mux (the mux's plain 404 and 405 become the
+// styled pages), and App.Middleware around that so every page (the Items
+// pages re-wrap themselves in SidebarApp.Middleware), both error pages and
+// a recovered panic (App.OnPanic) render in a shell.
 func Handler() http.Handler {
 	mux := http.NewServeMux()
 	Routes(mux)
-	return App.Middleware(styledErrors(mux))
-}
-
-// probeMethods are the methods styledErrors tries when a path matched no
-// pattern for the request's own method, to tell "no such page" from
-// "wrong method" and to build the Allow header.
-var probeMethods = []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"}
-
-// styledErrors is the wrapper the errorpage package documents: ServeMux
-// answers a method mismatch itself with a plain-text 405 before any
-// handler runs, and reports both "no route" and "wrong method" as an empty
-// pattern from mux.Handler, so the wrapper probes the other methods to
-// tell them apart. A path some method accepts gets the 405 page with the
-// Allow header the mux would have sent; a path nothing accepts gets the
-// 404 page. Any request the mux has a pattern for (including its own
-// trailing-slash redirects) goes to the mux untouched. It replaces the
-// catch-all "/" route the demo used to register: with a catch-all in the
-// table every path has a pattern and the 405 case can never be seen.
-func styledErrors(mux *http.ServeMux) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, pattern := mux.Handler(r); pattern != "" {
-			mux.ServeHTTP(w, r)
-			return
-		}
-		var allowed []string
-		probe := r.Clone(r.Context())
-		for _, m := range probeMethods {
-			probe.Method = m
-			if _, pattern := mux.Handler(probe); pattern != "" {
-				allowed = append(allowed, m)
-			}
-		}
-		if len(allowed) == 0 {
-			HandleNotFound(w, r)
-			return
-		}
-		w.Header().Set("Allow", strings.Join(allowed, ", "))
-		if err := errorpage.MethodNotAllowed(w, r); err != nil {
-			log.Printf("demo: render method not allowed %s %s: %v", r.Method, r.URL.Path, err)
-		}
-	})
+	return App.Middleware(errorpage.Handler(mux))
 }

@@ -1,7 +1,9 @@
 package demo
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +15,7 @@ import (
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/datetimepicker"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/detailpage"
 	"github.com/bplus/webframe/components/errorpage"
@@ -20,8 +23,11 @@ import (
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/formpage"
+	"github.com/bplus/webframe/components/jsonviewer"
 	"github.com/bplus/webframe/components/listpage"
+	"github.com/bplus/webframe/components/logviewer"
 	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/rating"
 	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/demo/pages"
 	"github.com/bplus/webframe/listquery"
@@ -68,6 +74,31 @@ var itemStatusOptions = []formfield.Option{
 	{Label: "Published", Value: "published"},
 	{Label: "Draft", Value: "draft"},
 }
+
+// maxItemTags caps an item's tags: Field.MaxTags on the form's tags field
+// (the widget stops at the cap) and the validator (a handcrafted request
+// cannot exceed it).
+const maxItemTags = 5
+
+// itemTagSuggestions are the tags the form's tags field offers as
+// completions (TypeTags renders Options' labels as a datalist); any other
+// tag can still be typed.
+var itemTagSuggestions = []formfield.Option{
+	{Label: "legendary"}, {Label: "rare"}, {Label: "cursed"}, {Label: "fire"}, {Label: "water"},
+	{Label: "radiant"}, {Label: "stealth"}, {Label: "two-handed"}, {Label: "ranged"}, {Label: "netherese"},
+}
+
+// maxRating is the star count of the rating field and the top of the
+// accepted range (0 means unrated).
+const maxRating = 5
+
+// Upload limits for the artwork file: the whole request body (every part
+// together) and the one file. The filedrop's MaxSize is the same number,
+// so the browser refuses first and the server enforces it anyway.
+const (
+	maxItemFormBytes = 8 << 20
+	maxArtworkBytes  = 2 << 20
+)
 
 // RegisterItemRoutes mounts the Items app on mux. Every page handler is
 // wrapped in SidebarApp.Middleware so the pages render in the sidebar
@@ -239,6 +270,7 @@ func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	Items.Delete(it.ID)
+	Logs.Append(logviewer.LevelWarn, fmt.Sprintf("deleted item #%s %s", it.ID, it.Name))
 	if r.Header.Get("HX-Target") == itemsResultsID {
 		respondResults(w, r)
 		return
@@ -258,6 +290,7 @@ func refuseDelete(w http.ResponseWriter, r *http.Request, it Item) {
 	if it.UsedIn == "" {
 		body = "The demo keeps this item so the refused delete can be seen."
 	}
+	Logs.Append(logviewer.LevelError, fmt.Sprintf("refused to delete item #%s %s: protected", it.ID, it.Name))
 	if appshell.IsHX(r) {
 		if err := toast.Respond(w, r, http.StatusConflict, toast.Error(title, body)); err != nil {
 			log.Printf("demo: render refused delete toast: %v", err)
@@ -288,7 +321,8 @@ func HandleItemsPublish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	Items.Publish(r.Form["ids"])
+	n := Items.Publish(r.Form["ids"])
+	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("published %s (%d selected)", plural(n, "item"), len(r.Form["ids"])))
 	respondResults(w, r)
 }
 
@@ -324,11 +358,31 @@ func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// itemDetailProps declares the detail page for it.
+// itemDetailProps declares the detail page for it: the sketch's summary
+// rows plus the batch 5 fields (tags as badges, the rating read-only, the
+// release date, the artwork file name), each with a muted dash when empty.
 func itemDetailProps(it Item) detailpage.Props {
 	usedIn := descriptionlist.Item{Label: "Used in", Value: it.UsedIn}
 	if it.UsedIn == "" {
 		usedIn = descriptionlist.Item{Label: "Used in", Value: "—", Muted: true}
+	}
+	tags := descriptionlist.Item{Label: "Tags", Component: pages.TagBadges(it.Tags)}
+	if len(it.Tags) == 0 {
+		tags = descriptionlist.Item{Label: "Tags", Value: "—", Muted: true}
+	}
+	stars := descriptionlist.Item{Label: "Rating", Component: rating.Rating(rating.Props{
+		ID: "item-rating", ReadOnly: true, Value: it.Rating, Max: maxRating, Size: rating.SizeSm, Label: "Rating",
+	})}
+	if it.Rating == 0 {
+		stars = descriptionlist.Item{Label: "Rating", Value: "Not rated", Muted: true}
+	}
+	released := descriptionlist.Item{Label: "Released", Value: it.Released.Format("Jan 2, 2006")}
+	if it.Released.IsZero() {
+		released = descriptionlist.Item{Label: "Released", Value: "—", Muted: true}
+	}
+	artwork := descriptionlist.Item{Label: "Artwork", Value: it.Artwork, Mono: true}
+	if it.Artwork == "" {
+		artwork = descriptionlist.Item{Label: "Artwork", Value: "—", Muted: true}
 	}
 	return detailpage.Props{
 		ID: "item",
@@ -350,6 +404,10 @@ func itemDetailProps(it Item) detailpage.Props {
 			descriptionlist.BadgeItem("Status", badge.StatusLabel(it.Status), it.Status),
 			usedIn,
 			{Label: "Updated", Value: relativeTime(it.Updated, time.Now()) + " ago · " + it.Updated.Format("Jan 2, 2006")},
+			tags,
+			stars,
+			released,
+			artwork,
 			{Label: "ID", Value: it.ID, Mono: true, Copyable: true},
 		},
 		SummaryColumns: 2,
@@ -361,8 +419,10 @@ func itemDetailProps(it Item) detailpage.Props {
 }
 
 // HandleItemHistory renders the History tab panel (GET
-// /items/{id}/history): a description list of three dated lines, written
-// as a fragment (the tab swaps it into its panel), not through the shell.
+// /items/{id}/history): a description list of three dated lines, a diff of
+// the notes against their previous version (demo data: notesDiff) and the
+// item's record as a JSON tree, written as a fragment (the tab swaps it
+// into its panel), not through the shell.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
@@ -378,7 +438,9 @@ func HandleItemHistory(w http.ResponseWriter, r *http.Request) {
 		{Label: date(it.Updated.Add(-3 * day)), Value: "Status set to " + strings.ToLower(badge.StatusLabel(it.Status))},
 		{Label: date(it.Updated.Add(-10 * day)), Value: "Created"},
 	}
-	fragment(w, r, "item history", pages.ItemHistory(lines))
+	fragment(w, r, "item history", pages.ItemHistory(lines, notesDiffProps(it), jsonviewer.Props{
+		ID: "item-json", Value: it, Collapsed: 2, CopyPath: true,
+	}))
 }
 
 // ---- form -----------------------------------------------------------------
@@ -388,21 +450,32 @@ func HandleItemHistory(w http.ResponseWriter, r *http.Request) {
 // URL, the Cancel target, the submit label and the validate URL (which
 // carries the id so a name check skips the item itself) differ.
 func itemFormProps(it *Item) formpage.Props {
+	artworkHelp := "PNG, JPEG or SVG up to 2 MB. The demo keeps the file name only."
+	if it != nil && it.Artwork != "" {
+		artworkHelp = "Current file: " + it.Artwork + ". Choose another to replace it; the demo keeps the file name only."
+	}
 	p := formpage.Props{
-		ID:       itemFormID,
-		Header:   pageheader.Props{Title: "New item", Back: &pageheader.Link{Label: "Items", Href: "/items"}},
-		Action:   "/items",
-		HxPost:   true,
-		Validate: "/items/validate",
+		ID:        itemFormID,
+		Header:    pageheader.Props{Title: "New item", Back: &pageheader.Link{Label: "Items", Href: "/items"}},
+		Action:    "/items",
+		HxPost:    true,
+		Multipart: true,
+		Validate:  "/items/validate",
 		Sections: []formpage.Section{
 			{Title: "Details", Fields: []formfield.Field{
 				{Name: "name", Label: "Name", Required: true, Placeholder: "Blade of the Fallen Star", Help: "At least 3 characters; names are unique."},
 				{Name: "type", Label: "Type", Type: formfield.TypeSelect, Required: true, Options: itemTypeOptions, Placeholder: "Choose a type"},
 				{Name: "status", Label: "Status", Type: formfield.TypeRadio, Options: itemStatusOptions, Value: "draft"},
 				{Name: "remixable", Label: "Remixable", Type: formfield.TypeToggle, Help: "Let other builders start from this item."},
+				{Name: "tags", Label: "Tags", Type: formfield.TypeTags, Options: itemTagSuggestions, MaxTags: maxItemTags, Placeholder: "Add a tag", Help: "Enter or a comma adds a tag, up to five; Backspace removes the last one."},
+			}},
+			{Title: "Release", Fields: []formfield.Field{
+				{Name: "released", Label: "Released", Type: formfield.TypeDate, MaxValue: datetimepicker.Format(datetimepicker.KindDate, time.Now()), Help: "The day the item shipped; not in the future.", Width: formfield.WidthHalf},
+				{Name: "rating", Label: "Rating", Type: formfield.TypeRating, Max: maxRating, Help: "Leave every star empty for unrated.", Width: formfield.WidthHalf},
+				{Name: "artwork", Label: "Artwork", Type: formfield.TypeFile, Accept: "image/*", Preview: true, Help: artworkHelp},
 			}},
 			{Title: "Notes", Fields: []formfield.Field{
-				{Name: "notes", Label: "Notes", Type: formfield.TypeTextarea, Placeholder: "Where it drops, what it does, what is left to do."},
+				{Name: "notes", Label: "Notes", Type: formfield.TypeTextarea, Placeholder: "Where it drops, what it does, what is left to do.", Help: "Plain text; a blank line starts a new paragraph."},
 			}},
 		},
 		Submit: action.Action{Label: "Create item"},
@@ -428,7 +501,10 @@ func itemFields(p formpage.Props) []formfield.Field {
 	return out
 }
 
-// itemValues is the form's Values for an existing item.
+// itemValues is the form's Values for an existing item, each in the
+// shape its widget submits: tags comma-joined, the release date as the
+// native input writes it, the rating as an integer string ("" unrated).
+// The artwork is a file input and cannot be refilled, so it has no entry.
 //
 // @pure
 func itemValues(it Item) map[string]string {
@@ -436,18 +512,40 @@ func itemValues(it Item) map[string]string {
 	if it.Remixable {
 		remixable = "on"
 	}
+	stars := ""
+	if it.Rating > 0 {
+		stars = strconv.Itoa(it.Rating)
+	}
 	return map[string]string{
 		"name":      it.Name,
 		"type":      it.Type,
 		"status":    it.Status,
 		"remixable": remixable,
+		"tags":      strings.Join(it.Tags, ","),
+		"released":  datetimepicker.Format(datetimepicker.KindDate, it.Released),
+		"rating":    stars,
 		"notes":     it.Notes,
 	}
 }
 
+// parseItemForm parses the item form's body: multipart (the form is
+// Multipart for the artwork file; the body is capped at maxItemFormBytes)
+// or, for a plain urlencoded post, the ordinary form. ParseMultipartForm
+// has already read a urlencoded body when it reports ErrNotMultipart, so
+// that error is not one.
+func parseItemForm(w http.ResponseWriter, r *http.Request) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxItemFormBytes)
+	err := r.ParseMultipartForm(maxArtworkBytes)
+	if errors.Is(err, http.ErrNotMultipart) {
+		return nil
+	}
+	return err
+}
+
 // submittedValues reads every declared field from the parsed form, so an
 // error re-render preserves exactly what was typed (an unchecked toggle
-// comes back as "", which formpage renders unchecked).
+// comes back as "", which formpage renders unchecked). The artwork file is
+// not a value; readArtwork reads it.
 func submittedValues(r *http.Request, p formpage.Props) map[string]string {
 	vals := make(map[string]string)
 	for _, f := range itemFields(p) {
@@ -456,10 +554,73 @@ func submittedValues(r *http.Request, p formpage.Props) map[string]string {
 	return vals
 }
 
+// readArtwork reads the artwork part of a parsed multipart form and
+// returns the file name to store, or the error to show under the field:
+// the file must be an image (sniffed from its first bytes, not trusted
+// from the browser's type) and at most maxArtworkBytes. No file (the user
+// picked none, or the post was not multipart) returns "", "".
+func readArtwork(r *http.Request) (name, errMsg string) {
+	f, hdr, err := r.FormFile("artwork")
+	if err != nil {
+		if errors.Is(err, http.ErrMissingFile) || errors.Is(err, http.ErrNotMultipart) {
+			return "", ""
+		}
+		return "", "The artwork could not be read; choose it again"
+	}
+	defer f.Close()
+	if hdr.Size > maxArtworkBytes {
+		return "", "Artwork must be 2 MB or smaller"
+	}
+	head := make([]byte, 512)
+	n, err := io.ReadFull(f, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return "", "The artwork could not be read; choose it again"
+	}
+	if n == 0 || !strings.HasPrefix(http.DetectContentType(head[:n]), "image/") {
+		return "", "Artwork must be an image (PNG, JPEG, GIF, WebP or SVG)"
+	}
+	return hdr.Filename, ""
+}
+
+// parseTags splits a tags field's value (the tags joined with commas, as
+// tagsinput submits them), trims each, drops empties and duplicates
+// (compared case-insensitively, the first spelling kept).
+//
+// @pure
+func parseTags(value string) []string {
+	var out []string
+	seen := make(map[string]bool)
+	for _, t := range strings.Split(value, ",") {
+		t = strings.TrimSpace(t)
+		if t == "" || seen[strings.ToLower(t)] {
+			continue
+		}
+		seen[strings.ToLower(t)] = true
+		out = append(out, t)
+	}
+	return out
+}
+
+// parseRating reads a rating field's value: "" is 0 (unrated); otherwise
+// an integer from 0 to maxRating. Anything else is an error.
+//
+// @pure
+func parseRating(value string) (int, error) {
+	if strings.TrimSpace(value) == "" {
+		return 0, nil
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(value))
+	if err != nil || n < 0 || n > maxRating {
+		return 0, fmt.Errorf("rating %q is not 0 to %d", value, maxRating)
+	}
+	return n, nil
+}
+
 // validateItemField returns the error for one field's value, or "":
 // name must be at least 3 characters after trimming and unique among the
 // other items (exceptID is the item being edited); type must be one of
-// the known types. Other fields have no rules.
+// the known types; rating must parse to 0–5; released must be a date and
+// not after today. Other fields have no rules.
 func validateItemField(name, value, exceptID string) string {
 	switch name {
 	case "name":
@@ -481,6 +642,22 @@ func validateItemField(name, value, exceptID string) string {
 		if value != "published" && value != "draft" {
 			return "Choose Published or Draft"
 		}
+	case "tags":
+		if len(parseTags(value)) > maxItemTags {
+			return fmt.Sprintf("At most %d tags", maxItemTags)
+		}
+	case "rating":
+		if _, err := parseRating(value); err != nil {
+			return fmt.Sprintf("Rating must be 0 to %d", maxRating)
+		}
+	case "released":
+		t, err := datetimepicker.Parse(datetimepicker.KindDate, value, nil)
+		if err != nil {
+			return "Enter the release date as YYYY-MM-DD"
+		}
+		if t.After(time.Now()) {
+			return "The release date cannot be in the future"
+		}
 	}
 	return ""
 }
@@ -497,7 +674,9 @@ func validateItem(vals map[string]string, exceptID string) map[string]string {
 	return errs
 }
 
-// applyValues copies validated form values onto it.
+// applyValues copies validated form values onto it (the artwork name is
+// set by the handler from the file part, when one was sent). The rating
+// and release date have been validated, so their parse errors are ignored.
 //
 // @pure
 func applyValues(it Item, vals map[string]string) Item {
@@ -505,6 +684,9 @@ func applyValues(it Item, vals map[string]string) Item {
 	it.Type = vals["type"]
 	it.Status = vals["status"]
 	it.Remixable = vals["remixable"] != ""
+	it.Tags = parseTags(vals["tags"])
+	it.Rating, _ = parseRating(vals["rating"])
+	it.Released, _ = datetimepicker.Parse(datetimepicker.KindDate, vals["released"], nil)
 	it.Notes = strings.TrimSpace(vals["notes"])
 	return it
 }
@@ -536,61 +718,83 @@ func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleItemCreate handles the create form's submit (POST /items). On
-// validation errors it re-renders the form with the submitted values and
-// the errors (422; appshell configures htmx to swap error responses, so the
-// form re-renders in place); on success it saves and redirects to the new
-// item's detail page (HX-Redirect for an htmx submit, else 303). It never
-// renders a success message.
+// HandleItemCreate handles the create form's submit (POST /items,
+// multipart or urlencoded). On validation errors it re-renders the form
+// with the submitted values and the errors (422; appshell configures htmx
+// to swap error responses, so the form re-renders in place; the file
+// field comes back empty, as a file input must); on success it saves,
+// logs the change and redirects to the new item's detail page (HX-Redirect
+// for an htmx submit, else 303). It never renders a success message.
 //
 // @boundary HTTP
-// @side-effects mutates Items; writes HTML or a redirect
+// @side-effects mutates Items and Logs; writes HTML or a redirect
 func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
+	if err := parseItemForm(w, r); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
 	p := itemFormProps(nil)
 	vals := submittedValues(r, p)
-	if errs := validateItem(vals, ""); len(errs) > 0 {
+	errs := validateItem(vals, "")
+	artwork, artErr := readArtwork(r)
+	if artErr != "" {
+		errs["artwork"] = artErr
+	}
+	if len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
 		if err := formpage.Respond(w, r, "New item", p); err != nil {
 			log.Printf("demo: render new item errors: %v", err)
 		}
 		return
 	}
-	it := Items.Create(applyValues(Item{}, vals))
+	it := applyValues(Item{}, vals)
+	it.Artwork = artwork
+	it = Items.Create(it)
+	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("created item #%s %s (%s, %s)", it.ID, it.Name, it.Type, it.Status))
 	redirectTo(w, r, "/items/"+it.ID)
 }
 
 // HandleItemUpdate handles the edit form's submit (POST /items/{id}), with
 // the same error and success behavior as HandleItemCreate; the name check
-// skips the item itself. An unknown id is the 404 error page, like the
-// edit form's own GET.
+// skips the item itself, and a submit without a file keeps the stored
+// artwork. An unknown id is the 404 error page, like the edit form's own
+// GET.
 //
 // @boundary HTTP
-// @side-effects mutates Items; writes HTML or a redirect
+// @side-effects mutates Items and Logs; writes HTML or a redirect
 func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
 		notFound(w, r)
 		return
 	}
-	if err := r.ParseForm(); err != nil {
+	if err := parseItemForm(w, r); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
 	p := itemFormProps(&it)
 	vals := submittedValues(r, p)
-	if errs := validateItem(vals, it.ID); len(errs) > 0 {
+	errs := validateItem(vals, it.ID)
+	artwork, artErr := readArtwork(r)
+	if artErr != "" {
+		errs["artwork"] = artErr
+	}
+	if len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
 		if err := formpage.Respond(w, r, "Edit "+it.Name, p); err != nil {
 			log.Printf("demo: render edit item %s errors: %v", it.ID, err)
 		}
 		return
 	}
-	Items.Update(applyValues(it, vals))
-	redirectTo(w, r, "/items/"+it.ID)
+	// No new file keeps the stored artwork: a file input cannot carry the
+	// old choice back.
+	updated := applyValues(it, vals)
+	if artwork != "" {
+		updated.Artwork = artwork
+	}
+	Items.Update(updated)
+	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("updated item #%s %s (%s, %s)", updated.ID, updated.Name, updated.Type, updated.Status))
+	redirectTo(w, r, "/items/"+updated.ID)
 }
 
 // HandleItemValidate answers one field's blur validation (POST

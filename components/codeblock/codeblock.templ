@@ -1,0 +1,74 @@
+package codeblock
+
+import "github.com/bplus/webframe/components/copybutton"
+
+// CodeBlock renders Props.Code in a <figure class="wf-code">: a header row
+// (Language label left, copy button right) only when Language or Copy is
+// set, a <pre><code> with the text escaped, line numbers as a CSS counter
+// on per-line <span class="wf-code-line"> elements when LineNumbers (rules
+// in the .wf-code section of static/css/input.css; no JS; the figure's
+// --wf-code-digits custom property sizes the gutter to the line count),
+// soft wrap or horizontal scroll per Wrap, a MaxHeight cap that scrolls
+// inside, and a
+// <figcaption> when Caption is set. A scrollable <pre> (no Wrap, or a
+// MaxHeight) carries tabindex="0" so keyboard users can scroll it.
+//
+// Phone (390px): the <pre> is overflow-x-auto and min-w-0, so the block
+// never widens the page; the header wraps.
+templ CodeBlock(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<figure
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ p.rootClass() }
+		if p.LineNumbers {
+			data-wf-code-numbered
+			style={ p.digitsStyle() }
+		}
+		{ p.Attributes... }
+	>
+		if p.hasHeader() {
+			<div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5">
+				if p.Language != "" {
+					<span class="font-mono text-xs text-muted-foreground">{ p.Language }</span>
+				} else {
+					<span></span>
+				}
+				if p.Copy {
+					@copybutton.CopyButton(copybutton.Props{
+						Value:      p.Code,
+						Size:       copybutton.SizeSm,
+						Attributes: templ.Attributes{"aria-label": "Copy code", "title": "Copy code"},
+					})
+				}
+			</div>
+		}
+		<pre
+			class={ p.preClass() }
+			if p.scrollable() {
+				tabindex="0"
+			}
+		>
+			<code
+				if p.codeClass() != "" {
+					class={ p.codeClass() }
+				}
+			>
+				if p.LineNumbers {
+					for _, line := range p.lines() {
+						<span class="wf-code-line">{ line }</span>
+					}
+				} else {
+					{ p.text() }
+				}
+			</code>
+		</pre>
+		if p.Caption != "" {
+			<figcaption class="border-t border-border px-3 py-1.5 text-xs text-muted-foreground">{ p.Caption }</figcaption>
+		}
+	</figure>
+}

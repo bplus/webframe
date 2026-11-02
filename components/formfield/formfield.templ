@@ -4,10 +4,14 @@ import (
 	"strconv"
 
 	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/datetimepicker"
+	"github.com/bplus/webframe/components/filedrop"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/input"
 	"github.com/bplus/webframe/components/radio"
+	"github.com/bplus/webframe/components/rating"
 	"github.com/bplus/webframe/components/selectbox"
+	"github.com/bplus/webframe/components/tagsinput"
 	"github.com/bplus/webframe/components/textarea"
 	"github.com/bplus/webframe/components/toggle"
 	"github.com/bplus/webframe/utils"
@@ -22,10 +26,16 @@ func rootClass(f Field) string {
 // success text. With neither set, nothing below the control is visible
 // and no space is reserved. TypeHidden renders only the hidden input.
 // TypeCheckbox and TypeToggle put the label inline after the control on
-// one row. With Validate set the control carries the htmx wiring that
-// swaps the Feedback wrapper (see Field.Validate and RespondFeedback).
+// one row. TypeTags, TypeRating, the date and time types and TypeFile
+// render the tagsinput, rating, datetimepicker and filedrop widgets with
+// the same label, help, error and required wiring on the control that
+// receives focus (the tags text input, the rating fieldset, the native
+// date input, the hidden file input). With Validate set the control
+// carries the htmx wiring that swaps the Feedback wrapper (see
+// Field.Validate and RespondFeedback).
 // Phone width: label, control and messages stack in one column; the
-// Fieldset grid decides whether two fields share a row.
+// Fieldset grid decides whether two fields share a row; each widget's
+// own phone behavior is in its package doc.
 templ FormField(f Field) {
 	if f.Type == TypeHidden {
 		@hiddenControl(f)
@@ -45,6 +55,18 @@ templ FormField(f Field) {
 				case TypeTextarea:
 					@fieldLabel(f, f.ControlID())
 					@textareaControl(f)
+				case TypeTags:
+					@fieldLabel(f, f.ControlID())
+					@tagsControl(f)
+				case TypeRating:
+					@fieldLabel(f, "")
+					@ratingControl(f)
+				case TypeDate, TypeDateTime, TypeTime:
+					@fieldLabel(f, f.ControlID())
+					@dateControl(f)
+				case TypeFile:
+					@fieldLabel(f, fileProps(f).ControlID())
+					@fileControl(f)
 				default:
 					@fieldLabel(f, f.ControlID())
 					@textControl(f)
@@ -186,6 +208,83 @@ templ radioControl(f Field) {
 			</label>
 		}
 	</div>
+}
+
+// tagsControl renders tagsinput with f.ControlID() as the text input's
+// id (the label's target and the focused control), the comma-split Value
+// as chips, the Options' labels as suggestions and MaxTags as the cap.
+// HasError puts aria-invalid on the text input; the attributes add
+// aria-describedby (merged by the widget with its own hint id),
+// aria-required and the Validate wiring, never `required` (the text input
+// is not what submits).
+templ tagsControl(f Field) {
+	@tagsinput.TagsInput(tagsinput.Props{
+		ID:          f.ControlID(),
+		Name:        f.Name,
+		Values:      f.tagValues(),
+		Placeholder: f.Placeholder,
+		Disabled:    f.Disabled,
+		HasError:    f.Error != "",
+		Suggestions: f.suggestions(),
+		MaxTags:     f.MaxTags,
+		Attributes:  f.widgetAttrs(false, true),
+	})
+}
+
+// ratingControl renders rating in input mode: the fieldset is
+// f.ControlID() and carries aria-labelledby (the form.Label above it),
+// aria-describedby, aria-invalid and aria-required; Required puts
+// `required` on the radio group through the widget.
+templ ratingControl(f Field) {
+	@rating.Rating(rating.Props{
+		ID:         f.ControlID(),
+		Name:       f.Name,
+		Value:      f.ratingValue(),
+		Max:        f.ratingMax(),
+		Required:   f.Required,
+		Disabled:   f.Disabled,
+		Attributes: f.ratingAttrs(),
+	})
+}
+
+// dateControl renders datetimepicker for TypeDate, TypeDateTime and
+// TypeTime with Value echoed verbatim (ValueString) and MinValue/MaxValue
+// as min/max; aria-invalid lands on the <input>, which the input
+// component styles as an error.
+templ dateControl(f Field) {
+	@datetimepicker.DateTimePicker(datetimepicker.Props{
+		ID:          f.ControlID(),
+		Name:        f.Name,
+		Kind:        dateKind(f.Type),
+		ValueString: f.Value,
+		Min:         f.MinValue,
+		Max:         f.MaxValue,
+		Required:    f.Required,
+		Disabled:    f.Disabled,
+		Attributes:  f.widgetAttrs(true, false),
+	})
+}
+
+// fileProps builds the filedrop Props for f: the root is f.ControlID()
+// and the hidden <input type="file"> is fileProps(f).ControlID()
+// (f.ControlID()+"-input"), which the label and the aria wiring target.
+func fileProps(f Field) filedrop.Props {
+	return filedrop.Props{
+		ID:         f.ControlID(),
+		Name:       f.Name,
+		Accept:     f.Accept,
+		Multiple:   f.Multiple,
+		Preview:    f.Preview,
+		Required:   f.Required,
+		Disabled:   f.Disabled,
+		Attributes: f.widgetAttrs(true, false),
+	}
+}
+
+// fileControl renders filedrop; aria-invalid on the hidden input turns
+// the zone's border destructive (has-aria-invalid).
+templ fileControl(f Field) {
+	@filedrop.FileDrop(fileProps(f))
 }
 
 templ hiddenControl(f Field) {

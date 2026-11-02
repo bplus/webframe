@@ -1,6 +1,9 @@
 package demo
 
 import (
+	"bytes"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/commandpalette"
 )
 
 // itemsHandler builds the server as cmd/demo does (assets, the Items
@@ -39,6 +43,55 @@ func do(h http.Handler, method, target string, form url.Values, headers map[stri
 	h.ServeHTTP(rec, req)
 	return rec
 }
+
+// mainContent is body without the command palette the shell renders at
+// the end of every page: the palette lists every item's name, so a test
+// that asserts an item is absent from a filtered list looks here.
+func mainContent(body string) string {
+	if i := strings.Index(body, `id="`+commandpalette.DefaultID+`"`); i >= 0 {
+		return body[:i]
+	}
+	return body
+}
+
+// doMultipart issues one multipart POST through h: fields as ordinary
+// parts and, when fileField is set, one file part with the given name and
+// bytes.
+func doMultipart(h http.Handler, target string, fields url.Values, fileField, fileName string, file []byte, headers map[string]string) *httptest.ResponseRecorder {
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	for k, vs := range fields {
+		for _, v := range vs {
+			if err := mw.WriteField(k, v); err != nil {
+				panic(err)
+			}
+		}
+	}
+	if fileField != "" {
+		fw, err := mw.CreateFormFile(fileField, fileName)
+		if err != nil {
+			panic(err)
+		}
+		if _, err := io.Copy(fw, bytes.NewReader(file)); err != nil {
+			panic(err)
+		}
+	}
+	if err := mw.Close(); err != nil {
+		panic(err)
+	}
+	req := httptest.NewRequest("POST", target, &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+// pngBytes is the eight-byte PNG signature plus a few bytes: enough for
+// http.DetectContentType to call it image/png.
+var pngBytes = []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
 
 // hx are the headers of a plain htmx request targeting id.
 func hx(target string) map[string]string {
@@ -92,7 +145,7 @@ func TestItems_ListSortsAndFilters(t *testing.T) {
 	body := rec.Body.String()
 	// Only the three drafts, in name order.
 	inOrder(t, body, "Amulet of Still Water", "Cloak of Whispers", "Helm of the Last Watch")
-	wantNone(t, body, "Blade of the Fallen Star", "Ashen Dagger")
+	wantNone(t, mainContent(body), "Blade of the Fallen Star", "Ashen Dagger")
 	// Name is the sorted column.
 	m := thAsc.FindStringSubmatch(body)
 	if m == nil || !strings.Contains(m[1], "Name") {
@@ -118,7 +171,7 @@ func TestItems_ListSortsAndFilters(t *testing.T) {
 	// A search narrows by name, case-insensitively.
 	body = do(h, "GET", "/items?q=OF+THE", nil, nil).Body.String()
 	wantAll(t, body, "Blade of the Fallen Star", "Pendant of the Weave")
-	wantNone(t, body, "Ashen Dagger")
+	wantNone(t, mainContent(body), "Ashen Dagger")
 	// Hostile input parses to defaults.
 	if rec := do(h, "GET", "/items?sort=evil&dir=sideways&page=-3&per=100000", nil, nil); rec.Code != 200 {
 		t.Errorf("hostile query = %d", rec.Code)
@@ -400,6 +453,185 @@ func TestItems_DetailAndHistory(t *testing.T) {
 	body = do(h, "GET", "/items/new", nil, nil).Body.String()
 	wantAll(t, body, "New item — Webframe</title>", "Create item", "Cancel", `href="/items"`, "Details", "Notes", "Remixable", `role="switch"`, `hx-post="/items/validate"`)
 	wantNone(t, body, "Please fix")
+}
+
+// TestItems_Batch5Form: the form carries the batch 5 widgets, a POST with
+// tags, a rating and a date round-trips (422 keeps every value as chips,
+// stars and the filled date; success stores them), and the detail page
+// shows them.
+func TestItems_Batch5Form(t *testing.T) {
+	h := itemsHandler(t)
+	body := do(h, "GET", "/items/new", nil, nil).Body.String()
+	wantAll(t, body,
+		`enctype="multipart/form-data"`,
+		// Tags: the hidden field, the suggestion datalist, the text input.
+		`name="tags"`, `id="field-tags-options"`, `<option value="legendary">`, `placeholder="Add a tag"`, `id="field-tags-root"`, `data-max="5"`, "0/5",
+		// Release date with today as max; rating radios 1..5; the file drop.
+		`type="date"`, `name="released"`,
+		`name="rating"`, `id="field-rating-5"`, "Leave every star empty for unrated.",
+		`type="file"`, `name="artwork"`, `accept="image/*"`, "Drop a file here or choose",
+		"Release", "Plain text; a blank line starts a new paragraph.",
+	)
+	wantNone(t, body, `id="field-rating-6"`)
+	// The max is today, computed by the handler from its own time.Now();
+	// asserting the exact date would flake across midnight, so check the
+	// shape (an ISO date in this century) on the released field's input.
+	if m := regexp.MustCompile(`name="released"[^>]*\bmax="(20\d\d-\d\d-\d\d)"`).FindStringSubmatch(body); m == nil {
+		t.Errorf("released max is not an ISO date in:\n%s", body)
+	}
+
+	// Errors: a future date and a rating out of range, with the tags kept.
+	tomorrow := time.Now().Add(48 * time.Hour).Format("2006-01-02")
+	form := url.Values{"name": {"Tidecaller Spear"}, "type": {"weapon"}, "status": {"draft"}, "tags": {"water, reach ,water"}, "released": {tomorrow}, "rating": {"9"}, "notes": {"keep me"}}
+	rec := do(h, "POST", "/items", form, hx("item-form"))
+	if rec.Code != 422 {
+		t.Fatalf("POST /items with a future date = %d, want 422", rec.Code)
+	}
+	body = rec.Body.String()
+	wantAll(t, body,
+		"Please fix the 2 errors below.", "The release date cannot be in the future", "Rating must be 0 to 5",
+		// The chips come back from the submitted value, the date is echoed.
+		`data-tag="water"`, `data-tag="reach"`, `value="`+tomorrow+`"`, "keep me",
+	)
+	if total, _, _ := Items.Counts(); total != 14 {
+		t.Errorf("store changed on an invalid submit: %d items", total)
+	}
+	// A rating that is not a number and a date that is not a date.
+	form.Set("released", "yesterday")
+	form.Set("rating", "lots")
+	body = do(h, "POST", "/items", form, hx("item-form")).Body.String()
+	wantAll(t, body, "Enter the release date as YYYY-MM-DD", "Rating must be 0 to 5")
+	// More tags than the cap (Field.MaxTags stops the user in the widget;
+	// the validator stops a handcrafted request).
+	form.Set("tags", "a,b,c,d,e,f")
+	wantAll(t, do(h, "POST", "/items", form, hx("item-form")).Body.String(), "At most 5 tags")
+	// Blur validation knows the two fields too.
+	body = do(h, "POST", "/items/validate", url.Values{"rating": {"7"}}, hx("")).Body.String()
+	wantAll(t, body, `id="field-rating-feedback"`, "Rating must be 0 to 5")
+	body = do(h, "POST", "/items/validate", url.Values{"released": {"2026-01-05"}}, hx("")).Body.String()
+	wantNone(t, body, "<p")
+
+	// Success: tags deduplicated case-insensitively and trimmed, the
+	// rating and date parsed, then shown on the detail page.
+	form = url.Values{"name": {"Tidecaller Spear"}, "type": {"weapon"}, "status": {"published"}, "tags": {"water, Reach ,WATER,,"}, "released": {"2026-01-05"}, "rating": {"4"}, "notes": {"First line.\n\nSecond paragraph."}}
+	rec = do(h, "POST", "/items", form, nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items/15" {
+		t.Fatalf("POST /items = %d Location %q, want 303 /items/15", rec.Code, rec.Header().Get("Location"))
+	}
+	it, ok := Items.Get("15")
+	if !ok || strings.Join(it.Tags, "|") != "water|Reach" || it.Rating != 4 || it.Released.Format("2006-01-02") != "2026-01-05" || it.Artwork != "" {
+		t.Errorf("stored item = %+v", it)
+	}
+	body = do(h, "GET", "/items/15", nil, nil).Body.String()
+	wantAll(t, body,
+		">water<", ">Reach<", // the tag badges
+		`id="item-rating"`, `aria-label="Rating: 4 of 5"`, `role="img"`,
+		"Jan 5, 2026", "Artwork", "—",
+		// Notes through prose.Text: two paragraphs.
+		`id="item-notes"`, "wf-prose", "<p>First line.</p>", "<p>Second paragraph.</p>",
+	)
+	// The edit form carries them back in the widgets' own shapes.
+	body = do(h, "GET", "/items/15/edit", nil, nil).Body.String()
+	wantAll(t, body, `value="water,Reach"`, `data-tag="Reach"`, `value="2026-01-05"`, `id="field-rating-4" name="rating" value="4" class="sr-only" checked`)
+	// An item with none of them shows the muted dashes and "Not rated".
+	body = do(h, "GET", "/items/6", nil, nil).Body.String()
+	wantAll(t, body, "Not rated", "Tags")
+	wantNone(t, body, `id="item-rating"`)
+	// A seeded item shows its tags and stars.
+	body = do(h, "GET", "/items/1", nil, nil).Body.String()
+	wantAll(t, body, ">legendary<", ">fire<", ">two-handed<", `aria-label="Rating: 5 of 5"`, "Sep 12, 2026")
+}
+
+// TestItems_MultipartArtwork: a multipart POST with a small image stores
+// its file name, a non-image is refused under the artwork field, and an
+// edit without a file keeps the stored name.
+func TestItems_MultipartArtwork(t *testing.T) {
+	h := itemsHandler(t)
+	fields := url.Values{"name": {"Painted Shield"}, "type": {"armor"}, "status": {"draft"}, "tags": {"art"}, "rating": {"3"}, "notes": {"Has a picture."}}
+	rec := doMultipart(h, "/items", fields, "artwork", "shield.png", pngBytes, nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items/15" {
+		t.Fatalf("multipart POST /items = %d Location %q, want 303 /items/15", rec.Code, rec.Header().Get("Location"))
+	}
+	it, _ := Items.Get("15")
+	if it.Artwork != "shield.png" || it.Rating != 3 || strings.Join(it.Tags, ",") != "art" || it.Notes != "Has a picture." {
+		t.Errorf("stored item = %+v", it)
+	}
+	body := do(h, "GET", "/items/15", nil, nil).Body.String()
+	wantAll(t, body, "shield.png")
+	// The edit form names the current file; a save with no file keeps it.
+	body = do(h, "GET", "/items/15/edit", nil, nil).Body.String()
+	wantAll(t, body, "Current file: shield.png")
+	fields.Set("name", "Painted Shield II")
+	rec = doMultipart(h, "/items/15", fields, "", "", nil, hx("item-form"))
+	if rec.Code != 200 || rec.Header().Get("HX-Redirect") != "/items/15" {
+		t.Errorf("multipart edit without a file = %d HX-Redirect %q", rec.Code, rec.Header().Get("HX-Redirect"))
+	}
+	if it, _ := Items.Get("15"); it.Artwork != "shield.png" || it.Name != "Painted Shield II" {
+		t.Errorf("edited item = %+v", it)
+	}
+	// A text file is not artwork: 422 with the error under the field, the
+	// other values kept, nothing stored.
+	fields.Set("name", "Scroll of Text")
+	rec = doMultipart(h, "/items", fields, "artwork", "notes.txt", []byte("just some words\n"), hx("item-form"))
+	if rec.Code != 422 {
+		t.Fatalf("multipart POST with a text file = %d, want 422", rec.Code)
+	}
+	wantAll(t, rec.Body.String(), "Please fix the 1 error below.", "Artwork must be an image", `value="Scroll of Text"`, `data-tag="art"`)
+	if total, _, _ := Items.Counts(); total != 15 {
+		t.Errorf("store changed on a refused file: %d items", total)
+	}
+	// A multipart POST with no file part at all is an ordinary create.
+	fields.Set("name", "Plain Buckler")
+	rec = doMultipart(h, "/items", fields, "", "", nil, nil)
+	if rec.Code != http.StatusSeeOther {
+		t.Errorf("multipart POST without a file = %d, want 303", rec.Code)
+	}
+	if it, _ := Items.Get("16"); it.Artwork != "" || it.Name != "Plain Buckler" {
+		t.Errorf("item without artwork = %+v", it)
+	}
+}
+
+// TestItems_HistoryDiffAndJSON: the History tab fragment adds a diff of the
+// notes against their previous version and the record as a JSON tree.
+func TestItems_HistoryDiffAndJSON(t *testing.T) {
+	h := itemsHandler(t)
+	rec := do(h, "GET", "/items/1/history", nil, hx("history-panel"))
+	if rec.Code != 200 {
+		t.Fatalf("GET /items/1/history = %d", rec.Code)
+	}
+	body := rec.Body.String()
+	wantAll(t, body,
+		// The dated lines are still there.
+		"Status set to published", "Created",
+		// The diff: one file, inline, a deletion and an addition of the
+		// status line, the seed's first line as context.
+		`id="item-notes-diff"`, `data-mode="inline"`, "items/1/notes.txt", "@@ -1,3 +1,4 @@",
+		`data-kind="context"`, `data-kind="del"`, `data-kind="add"`, "Status: draft", "Status: published", "TODO: describe where it drops.",
+		// The JSON tree with the item's keys and the copy-path buttons.
+		`id="item-json"`, `&#34;name&#34;:`, "Blade of the Fallen Star", `&#34;tags&#34;:`, "legendary", `&#34;rating&#34;:`, "$.tags",
+	)
+	wantNone(t, body, "<html", "<h1", "wf-sidebar", "0001-01-01")
+	// A draft with no release date leaves the key out (omitzero).
+	body = do(h, "GET", "/items/2/history", nil, hx("history-panel")).Body.String()
+	wantNone(t, body, `&#34;released&#34;:`)
+	wantAll(t, body, "Status: draft", `data-kind="add"`)
+}
+
+func TestItems_DiffLines(t *testing.T) {
+	lines := diffLines([]string{"a", "b", "c"}, []string{"a", "x", "c", "d"})
+	var got []string
+	for _, l := range lines {
+		got = append(got, string(l.Kind)+":"+l.Text)
+	}
+	if want := ":a del:b add:x :c add:d"; strings.Join(got, " ") != want {
+		t.Errorf("diffLines = %q, want %q", strings.Join(got, " "), want)
+	}
+	if got := hunkHeader(lines); got != "@@ -1,3 +1,4 @@" {
+		t.Errorf("hunkHeader = %q", got)
+	}
+	if got := diffLines(nil, nil); len(got) != 0 {
+		t.Errorf("empty diff has %d lines", len(got))
+	}
 }
 
 func TestItems_SidebarRedirect(t *testing.T) {

@@ -76,11 +76,13 @@ func Page(p Props) templ.Component {
 // Body renders exactly the <form> element (id p.ID, default "settings"),
 // so it is the swap region for an HxPost submit: the error banner (only
 // when Errors is non-empty), then one layout.Section (h2) per Group
-// holding a formfield.Fieldset of the resolved fields. The banner lives
-// inside the form so an error re-render that swaps the form brings its
-// own banner and takes the old one away with it. The save bar is not part
-// of Body: it is Page's last child and submits the form through its form
-// attribute, so a swap of the form leaves the bar in place.
+// holding a formfield.Fieldset of the resolved fields and then the
+// group's Content when set (the fieldset is skipped for a group with
+// Content and no Fields). The banner lives inside the form so an error
+// re-render that swaps the form brings its own banner and takes the old
+// one away with it. The save bar is not part of Body: it is Page's last
+// child and submits the form through its form attribute, so a swap of the
+// form leaves the bar in place.
 func Body(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -131,9 +133,21 @@ func Body(p Props) templ.Component {
 						}()
 					}
 					ctx = templ.InitializeContext(ctx)
-					templ_7745c5c3_Err = formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(g)}).Render(ctx, templ_7745c5c3_Buffer)
+					if len(g.Fields) > 0 || g.Content == nil {
+						templ_7745c5c3_Err = formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(g)}).Render(ctx, templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
+					}
+					if g.Content != nil {
+						templ_7745c5c3_Err = g.Content.Render(ctx, templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
 					}
 					return nil
 				})
@@ -182,7 +196,7 @@ func saveBar(p Props) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -195,7 +209,7 @@ func saveBar(p Props) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -218,7 +232,7 @@ func saveBar(p Props) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -232,7 +246,7 @@ func saveBar(p Props) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

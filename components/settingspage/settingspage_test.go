@@ -383,3 +383,44 @@ func TestRespond_NoApp(t *testing.T) {
 		t.Errorf("err = %v, want one naming Middleware", err)
 	}
 }
+
+// TestBody_GroupContent: a Group's Content renders inside the <form> (so
+// the save bar posts it with the fields), inside its own section after the
+// fieldset; a group with Content and no Fields renders no fieldset; nil
+// Content renders nothing beyond the fieldset.
+func TestBody_GroupContent(t *testing.T) {
+	p := settingsProps()
+	p.Groups[1].Content = templ.Raw(`<p id="extra">EXTRA</p>`)
+	p.Groups = append(p.Groups, Group{ID: "environment", Title: "Environment", Content: templ.Raw(`<p id="env">ENVCONTENT</p>`)})
+	out := render(t, Body(p))
+	// Inside the form: after the form opens, before it closes.
+	mustOrder(t, out, "<form", `<section id="notifications"`, "<fieldset", `name="digest"`, "</fieldset>", `id="extra"`, "EXTRA", "</section>",
+		`<section id="environment"`, "ENVCONTENT", "</section>", "</form>")
+	// The content-only group has no fieldset: exactly one per group with fields.
+	if n := strings.Count(out, "<fieldset"); n != 2 {
+		t.Errorf("got %d fieldsets, want 2 (one per group with fields):\n%s", n, out)
+	}
+	env := out[strings.Index(out, `<section id="environment"`):]
+	env = env[:strings.Index(env, "</section>")]
+	mustNotContain(t, env, "<fieldset")
+	// Content is part of the form, so a targeted re-render (Body) carries it.
+	mustContain(t, render(t, Page(p)), "ENVCONTENT")
+	// Nil Content: the section holds the fieldset and nothing after it.
+	q := settingsProps()
+	out = render(t, Body(q))
+	sec := out[strings.Index(out, `<section id="notifications"`):]
+	sec = sec[:strings.Index(sec, "</section>")]
+	after := sec[strings.LastIndex(sec, "</fieldset>")+len("</fieldset>"):]
+	if strings.TrimSpace(after) != "" {
+		t.Errorf("content after the fieldset without Content: %q", after)
+	}
+}
+
+// TestBody_Multipart: Multipart puts enctype on the <form>, as formpage
+// does; off by default.
+func TestBody_Multipart(t *testing.T) {
+	mustNotContain(t, render(t, Body(settingsProps())), "multipart/form-data")
+	p := settingsProps()
+	p.Multipart = true
+	mustContain(t, render(t, Body(p)), `enctype="multipart/form-data"`)
+}

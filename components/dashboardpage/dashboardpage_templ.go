@@ -25,14 +25,16 @@ import (
 // tiles and no sections only the header renders.
 //
 // Phone: dashboardgrid's root carries wf-dashgrid and every slot
-// wf-dashslot; static/css/input.css collapses those under a 900px viewport
-// to one column with every span reset to 1 (!important, because the grid's
-// columns and spans are inline styles computed from runtime values). So at
-// 390px every tile and every section is full width, one per row, in
-// declaration order, whatever ColSpan says; nothing in a tile overflows its
-// cell because the slot is min-w-0 and stattile wraps its value row at a
-// fixed graphic width. The collapse point is 900px, not Tailwind's md
-// (768px): between 768 and 900 the grid is already one column.
+// wf-dashslot; static/css/input.css collapses those below md (48rem,
+// 768px at the default root font size) to one column with every span reset
+// to 1 (!important, because the grid's columns and spans are inline styles
+// computed from runtime values). So at 390px every tile and every section
+// is full width, one per row, in declaration order, whatever ColSpan says;
+// nothing in a tile overflows its cell because the slot is min-w-0 and
+// stattile wraps its value row at a fixed graphic width. The collapse point
+// is the same md every other layout uses (it was 900px until batch 5, so
+// between 768 and 900 a dashboard was one column while layout.TwoColumn
+// and cardgrid were two).
 //
 // @pure
 func Page(p Props) templ.Component {
@@ -73,7 +75,7 @@ func Page(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardpage/dashboardpage.templ`, Line: 33, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dashboardpage/dashboardpage.templ`, Line: 35, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

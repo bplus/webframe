@@ -1,0 +1,111 @@
+package logviewer
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/input"
+	"github.com/bplus/webframe/components/toggle"
+)
+
+// LogViewer renders the toolbar (filter box when Filter, Follow switch when
+// Src, Download when set) over a fixed-height role="log" box. Lines render
+// oldest first, one <div class="wf-log-line"> each, toned by Level, with an
+// optional <time>. With Src the lines container carries hx-get, hx-trigger
+// "every Ns" and hx-swap "beforeend"; the handler answers with Fragment.
+// Alpine state on the root owns follow, filter and MaxLines; see the
+// package doc for what moves and what does not.
+//
+// Phone (390px): the toolbar wraps, the box keeps its Height tier, long
+// lines wrap or scroll inside the box per Wrap; the page never widens.
+templ LogViewer(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ p.rootClass() }
+		x-data={ p.xData() }
+		x-effect="apply()"
+		x-on:htmx:after-swap="onSwap()"
+		data-wf-log-max={ p.maxLinesAttr() }
+		{ p.Attributes... }
+	>
+		if p.hasToolbar() {
+			<div class="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+				if p.Filter {
+					<div class="min-w-[12rem] flex-1 basis-full sm:basis-auto sm:max-w-xs">
+						@input.Input(input.Props{
+							Type:        input.TypeSearch,
+							Placeholder: "Filter lines",
+							Class:       "h-8 md:text-xs",
+							Attributes:  templ.Attributes{"x-model": "q", "aria-label": "Filter lines"},
+						})
+					</div>
+				}
+				if p.Src != "" {
+					@toggle.Toggle(toggle.Props{
+						Size:       toggle.SizeS,
+						Checked:    p.Follow,
+						Attributes: templ.Attributes{"x-model": "follow"},
+					}) {
+						<span class="text-xs">Follow</span>
+					}
+				}
+				if p.Download != nil {
+					<div class="ml-auto">
+						@action.Button(p.download())
+					</div>
+				}
+			</div>
+		}
+		<div
+			x-ref="box"
+			role="log"
+			aria-label="Log"
+			tabindex="0"
+			class={ p.boxClass() }
+			x-on:scroll="onScroll()"
+		>
+			<div
+				x-ref="lines"
+				class={ p.linesClass() }
+				if p.Src != "" {
+					hx-get={ p.Src }
+					hx-trigger={ p.every() }
+					hx-swap="beforeend"
+				}
+			>
+				@Fragment(p.visible())
+			</div>
+			if p.Empty != "" && len(p.visible()) == 0 {
+				<p class="px-3 text-muted-foreground" x-show="n === 0">{ p.Empty }</p>
+			}
+		</div>
+	</div>
+}
+
+// Fragment renders lines only, one <div class="wf-log-line"> each: the
+// response body for a Props.Src polling handler (htmx appends it to the
+// lines container). Respond with no lines (an empty body) when nothing is
+// new.
+templ Fragment(lines []Line) {
+	for _, l := range lines {
+		@line(l)
+	}
+}
+
+templ line(l Line) {
+	<div
+		class={ lineClass(l) }
+		if l.Level != LevelNone {
+			data-level={ string(l.Level) }
+		}
+	>
+		if !l.At.IsZero() {
+			<time datetime={ atAttr(l.At) } class="shrink-0 tabular-nums text-muted-foreground">{ atText(l.At) }</time>
+		}
+		<span class="min-w-0 flex-1">{ lineText(l.Text) }</span>
+	</div>
+}
