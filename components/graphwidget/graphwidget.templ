@@ -1,16 +1,17 @@
 package graphwidget
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/bplus/webframe/components/spinner"
 	"github.com/bplus/webframe/utils"
 )
 
 // NodeColorEntry maps one node type to a CSS color for GraphWidget's
-// NodeColorMap. Entries are interpolated verbatim into a JSON object emitted
-// as a data attribute — there is no JSON escaping, so Type and Color must not
-// contain double quotes or backslashes or the resulting JSON is invalid. These
+// NodeColorMap. Entries are JSON-encoded (encoding/json) into an object
+// emitted as a data attribute, so any Type or Color string is safe. These
 // colors are consumed by the client-side graph script, not inline styles, and
 // are NOT passed through utils.SanitizeColor.
 type NodeColorEntry struct {
@@ -49,19 +50,25 @@ type Props struct {
 	NodeClickURL    string // URL pattern with "{id}" placeholder
 }
 
+// colorMapJSON encodes entries as one JSON object, keys in entry order (so
+// the markup is deterministic and, as with JSON.parse, a repeated Type's
+// last Color wins). Each key and value goes through encoding/json, which
+// cannot fail for a string.
 func colorMapJSON(entries []NodeColorEntry) string {
-	if len(entries) == 0 {
-		return "{}"
-	}
-	result := "{"
+	var b strings.Builder
+	b.WriteByte('{')
 	for i, e := range entries {
 		if i > 0 {
-			result += ","
+			b.WriteByte(',')
 		}
-		result += fmt.Sprintf(`"%s":"%s"`, e.Type, e.Color)
+		k, _ := json.Marshal(e.Type)
+		v, _ := json.Marshal(e.Color)
+		b.Write(k)
+		b.WriteByte(':')
+		b.Write(v)
 	}
-	result += "}"
-	return result
+	b.WriteByte('}')
+	return b.String()
 }
 
 func dimensionStr(v int) string {
