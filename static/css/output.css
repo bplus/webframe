@@ -754,6 +754,9 @@
   .max-w-\[calc\(100\%-2rem\)\] {
     max-width: calc(100% - 2rem);
   }
+  .max-w-\[min\(100\%\,15rem\)\] {
+    max-width: min(100%, 15rem);
+  }
   .max-w-full {
     max-width: 100%;
   }
@@ -1212,12 +1215,6 @@
       background-color: color-mix(in oklab, var(--color-destructive) 10%, transparent);
     }
   }
-  .bg-destructive\/60 {
-    background-color: color-mix(in srgb, #E34948 60%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-destructive) 60%, transparent);
-    }
-  }
   .bg-foreground\/40 {
     background-color: color-mix(in srgb, #0B0B0B 40%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1231,12 +1228,6 @@
     background-color: color-mix(in srgb, #2B6CB0 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-info) 10%, transparent);
-    }
-  }
-  .bg-info\/60 {
-    background-color: color-mix(in srgb, #2B6CB0 60%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-info) 60%, transparent);
     }
   }
   .bg-input {
@@ -1294,12 +1285,6 @@
     background-color: color-mix(in srgb, #2F7D4F 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-success) 10%, transparent);
-    }
-  }
-  .bg-success\/60 {
-    background-color: color-mix(in srgb, #2F7D4F 60%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-success) 60%, transparent);
     }
   }
   .bg-transparent {
@@ -1587,6 +1572,9 @@
   }
   .break-words {
     overflow-wrap: break-word;
+  }
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
   }
   .break-all {
     word-break: break-all;
