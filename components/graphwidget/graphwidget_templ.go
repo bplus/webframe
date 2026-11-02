@@ -17,30 +17,18 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// NodeColorEntry maps one node type to a CSS color for GraphWidget's
-// NodeColorMap. Entries are JSON-encoded (encoding/json) into an object
-// emitted as a data attribute, so any Type or Color string is safe. These
-// colors are consumed by the client-side graph script, not inline styles, and
-// are NOT passed through utils.SanitizeColor.
+// NodeColorEntry maps one node type to a CSS color. Entries are
+// JSON-encoded into a data attribute for the client script, so any string
+// is safe in the markup; unlike the SVG charts, colors are not passed
+// through utils.SanitizeColor.
 type NodeColorEntry struct {
 	Type  string
 	Color string
 }
 
-// Props configures GraphWidget; pass it as the single optional argument. All
-// behavior is declared through data-tui-graph-* attributes read by
-// static/js/graphwidget.min.js — the Go side renders no graph itself. The zero
-// value renders a container that fills its parent (Width/Height <= 0 become
-// "100%"); DataURL is effectively required, since it is the endpoint the
-// client script fetches the initial graph JSON from. An empty NodeColorMap
-// emits "{}" and the client falls back to its built-in palette.
-//
-// An empty DataURL is not a documented no-op, it is a stuck spinner: the
-// client script's fetch branch is gated on a truthy dataURL
-// (static/js/graphwidget.min.js:150), so an empty attribute skips the fetch
-// entirely with no error and the loading placeholder is left showing
-// indefinitely. The only supported way to populate a graph without a
-// DataURL is the imperative window.tui.graph.setData(id, data) API.
+// Props configures GraphWidget. DataURL is effectively required: with it
+// empty the client never fetches and the loading spinner stays up, unless
+// the page fills the graph itself with window.tui.graph.setData(id, data).
 type Props struct {
 	ID              string
 	Class           string
@@ -58,10 +46,8 @@ type Props struct {
 	NodeClickURL    string // URL pattern with "{id}" placeholder
 }
 
-// colorMapJSON encodes entries as one JSON object, keys in entry order (so
-// the markup is deterministic and, as with JSON.parse, a repeated Type's
-// last Color wins). Each key and value goes through encoding/json, which
-// cannot fail for a string.
+// colorMapJSON encodes entries as one JSON object, keys in entry order so
+// the markup is deterministic. Marshalling a string cannot fail.
 func colorMapJSON(entries []NodeColorEntry) string {
 	var b strings.Builder
 	b.WriteByte('{')
@@ -86,46 +72,15 @@ func dimensionStr(v int) string {
 	return fmt.Sprintf("%dpx", v)
 }
 
-// GraphWidget renders the server-side mount point for an interactive 3D
-// force-directed graph: a container <div> carrying data-tui-graph-*
-// configuration attributes plus a loading placeholder, which the client
-// script (3d-force-graph + graphwidget.min.js) replaces with a live canvas
-// after fetching graph JSON from DataURL. The placeholder is
-// spinner.Spinner at SizeLg (32px) centered over the container with a
-// "Loading graph..." caption under it; the spinner's sr-only label
-// ("Loading graph") is the announcement, so the caption is aria-hidden.
+// GraphWidget renders the mount point for an interactive 3D force-directed
+// graph: a container with data-tui-graph-* attributes and a loading
+// spinner, which graphwidget.min.js (see Script) replaces with a canvas
+// after fetching graph JSON from DataURL. Without Script on the page it
+// stays on the spinner. An empty ID gets a random one per render.
 //
-// Accepts zero or one Props: called with no arguments it uses the zero value,
-// and any Props beyond the first are ignored. When Props.ID is empty a fresh
-// random id is generated on every render, so output is not byte-stable across
-// renders. This component emits only static HTML — nothing becomes
-// interactive until Script() is also included on the page.
-//
-// Returns a templ.Component that renders the container div with its loading
-// placeholder.
-//
-// @side-effects calls utils.RandomID() when Props.ID is empty (non-idempotent
-// output)
-// @temporal-coupling Script() must be emitted on the same page (typically in
-// the layout) or the widget stays on its loading spinner forever
-// @boundary HTTP — the client script fetches DataURL, and optionally
-// ExpandURL / NodeClickURL, at runtime; none are validated server-side
-// @ai-context unlike the SVG chart components, colors here bypass
-// utils.SanitizeColor — NodeColorMap travels through a JSON data attribute to
-// the client script.
-//
-// Client-side failure behavior (verified against static/js/graphwidget.min.js,
-// which is unminified/readable despite the extension):
-//   - DataURL fetch fails, or its body isn't valid JSON: both cases hit the
-//     same catch handler, which replaces the loading placeholder with a
-//     "Failed to load graph" message. This degrades visibly; it does not
-//     spin forever.
-//   - HTTP error statuses are not checked: a 4xx/5xx response with valid JSON
-//     is treated as successful graph data and hides the loading placeholder.
-//   - ExpandURL fetch (neighbor expansion on node click) fails: only
-//     console.error is called — no UI feedback, the click silently does
-//     nothing further. Unlike the initial load, this failure is invisible
-//     to the end user.
+// Client-side failures: a failed DataURL fetch or invalid JSON replaces the
+// spinner with "Failed to load graph", but HTTP error statuses are not
+// checked. A failed ExpandURL fetch is only logged to the console.
 func GraphWidget(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -167,7 +122,7 @@ func GraphWidget(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 131, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 86, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -180,7 +135,7 @@ func GraphWidget(props ...Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 133, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 88, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -198,7 +153,7 @@ func GraphWidget(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.BackgroundColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 135, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 90, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -216,7 +171,7 @@ func GraphWidget(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(colorMapJSON(p.NodeColorMap))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 137, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 92, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -246,7 +201,7 @@ func GraphWidget(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ExpandURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 145, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 100, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -265,7 +220,7 @@ func GraphWidget(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ControlType)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 148, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 103, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -284,7 +239,7 @@ func GraphWidget(props ...Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.OnNodeClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 151, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 106, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -303,7 +258,7 @@ func GraphWidget(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.NodeClickURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 154, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 109, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -334,7 +289,7 @@ func GraphWidget(props ...Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width:%s;height:%s", dimensionStr(p.Width), dimensionStr(p.Height)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 157, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 112, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -364,17 +319,8 @@ func GraphWidget(props ...Props) templ.Component {
 	})
 }
 
-// Script emits the two <script> tags (3d-force-graph.min.js and
-// graphwidget.min.js) that initialize every GraphWidget on the page. Include
-// it once per page that uses GraphWidget, typically in the layout. Both tags
-// are deferred, carry the templ CSP nonce from ctx, and use utils.ScriptURL
-// for cache-busting (?v= fixed at process start).
-//
-// Returns a templ.Component that renders the script tags.
-//
-// @side-effects emits <script> tags; reads the CSP nonce from ctx via
-// templ.GetNonce
-// @temporal-coupling pairs with GraphWidget — widgets render inert without it
+// Script loads 3d-force-graph.min.js and graphwidget.min.js, which
+// initialize every GraphWidget on the page. Include it once per page.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -403,7 +349,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 182, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 128, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -416,7 +362,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/3d-force-graph.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 182, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 128, Col: 102}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -429,7 +375,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 183, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 129, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -442,7 +388,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/graphwidget.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 183, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 129, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {

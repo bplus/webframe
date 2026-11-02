@@ -16,37 +16,32 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures an Autocomplete. HxGet is required; everything else
-// is optional with the defaults noted per field.
+// Props configures an Autocomplete. HxGet is required.
 type Props struct {
-	// ID is the text box's id; the listbox is ID+"-list". Defaults to
-	// utils.RandomID(). Set it explicitly for stable markup.
+	// ID is the text box's id; the listbox is ID+"-list". Defaults to a
+	// random id.
 	ID         string
 	Class      string
 	Attributes templ.Attributes // spread on the root
 
 	// Name is the hidden field carrying the picked Value; "" renders no
-	// hidden field (free text only, submitted under TextName).
+	// hidden field, leaving free text only.
 	Name string
-	// TextName is the visible text box's name (the query parameter sent
-	// to HxGet and the field a plain form submit carries); "" → "q".
+	// TextName is the text box's name and the query parameter sent to
+	// HxGet; defaults to "q".
 	TextName    string
 	Label       string // optional visible label
 	Placeholder string
 	Value       string // initial picked value (hidden field)
 	Text        string // initial visible text
 
-	// HxGet is the server URL (required; empty renders an inline error):
-	// the request is GET HxGet?q=<typed text> and the response should be
-	// a Results(...) fragment.
+	// HxGet is the suggestions URL; it should return a Results fragment.
+	// Empty renders an inline error.
 	HxGet    string
 	MinChars int // default 1: fewer typed characters → no request, list closed
 	DelayMs  int // default 300: typing pause before the request fires
-	// Required puts required on the text box. When Name is also set the
-	// root carries data-wf-ac-required and autocomplete.js keeps a
-	// custom validity message ("Pick an item from the list") on the text
-	// box while the hidden value is empty, so inside a form "required"
-	// means "picked", not "typed something".
+	// Required marks the text box required. With Name set, autocomplete.js
+	// treats it as "an item was picked", not merely "text was typed".
 	Required bool
 	// Disabled disables the text box and the hidden value input, so a
 	// disabled picker submits nothing.
@@ -61,9 +56,8 @@ func (p Props) textName() string {
 	return "q"
 }
 
-// Item is one suggestion in a Results list. Label is shown and copied
-// into the text box on pick; Value goes into the hidden field;
-// Description is optional muted text beside the label.
+// Item is one suggestion. On pick, Label goes into the text box and Value
+// into the hidden field. Description is muted text beside the label.
 type Item struct{ Label, Value, Description string }
 
 func (p Props) inputAttrs() templ.Attributes {
@@ -86,20 +80,12 @@ func (p Props) inputAttrs() templ.Attributes {
 	return a
 }
 
-// Autocomplete renders a server-backed type-ahead picker: a search text
-// box that GETs HxGet?q=<text> (via HTMX) after DelayMs of typing and
-// swaps the server's Results fragment into a listbox below it. Picking
-// an option (click, or arrow keys + Enter) copies its label into the
-// text box and its value into the hidden field named Name, then fires
-// a bubbling "wf:autocomplete:select" event with detail {value, label}
-// on the root. Editing the text after a pick clears the hidden value.
-// ArrowDown on a closed list re-requests the suggestions for the
-// current text (when it meets MinChars) and opens the list.
-//
-// @temporal-coupling picking, keyboard navigation, MinChars gating and
-// closing are inert unless Script() is on the page (appshell.Scripts
-// includes it); HTMX must be loaded for any results to appear.
-// @side-effects calls utils.RandomID when Props.ID is empty.
+// Autocomplete renders a server-backed type-ahead: the text box fetches
+// HxGet with htmx after DelayMs of typing and shows the returned Results.
+// Picking an option fills the text box and hidden field and fires a
+// bubbling "wf:autocomplete:select" event with detail {value, label}.
+// Editing the text after a pick clears the hidden value. Picking and
+// keyboard navigation need Script (included in appshell.Scripts).
 func Autocomplete(props Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -156,7 +142,7 @@ func Autocomplete(props Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.MinChars))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 109, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 95, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -202,7 +188,7 @@ func Autocomplete(props Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 120, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 106, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -234,7 +220,7 @@ func Autocomplete(props Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 132, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 118, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -247,7 +233,7 @@ func Autocomplete(props Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 132, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 118, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -275,7 +261,7 @@ func Autocomplete(props Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID + "-list")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 135, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 121, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -293,7 +279,7 @@ func Autocomplete(props Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID + "-label")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 138, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 124, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -312,11 +298,8 @@ func Autocomplete(props Props) templ.Component {
 	})
 }
 
-// Results renders the listbox contents the server returns for a query:
-// one selectable option per item, or a single "No matches" row when
-// items is empty (role="option" aria-disabled="true", never pickable).
-//
-// @pure
+// Results renders the listbox contents for a query response, or a
+// non-selectable "No matches" row when items is empty.
 func Results(items []Item) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -352,7 +335,7 @@ func Results(items []Item) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(it.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 156, Col: 164}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 139, Col: 164}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -365,7 +348,7 @@ func Results(items []Item) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 156, Col: 199}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 139, Col: 199}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -378,7 +361,7 @@ func Results(items []Item) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 157, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 140, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -396,7 +379,7 @@ func Results(items []Item) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(it.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 159, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 142, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -416,11 +399,8 @@ func Results(items []Item) templ.Component {
 	})
 }
 
-// Script emits the deferred <script> tag for /static/js/autocomplete.js,
-// CSP-nonced and cache-busted. Include once per page; appshell.Scripts
+// Script loads autocomplete.js. Include it once per page; appshell.Scripts
 // already does.
-//
-// @idempotent
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -449,7 +429,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 171, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 151, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -462,7 +442,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/autocomplete.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 171, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/autocomplete/autocomplete.templ`, Line: 151, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {

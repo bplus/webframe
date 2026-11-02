@@ -8,24 +8,16 @@ package custompage
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// Props configures a CustomPage. There is deliberately no Class or
-// Attributes field: this component is the one declared exemption from
-// the no-raw-HTML/classes/styles rule, and it stays minimal on purpose.
-// Reason is required by convention; an empty Reason renders
-// data-wf-missing-reason="true" so the omission is visible on the page.
+// Props configures CustomPage. It deliberately has no Class or Attributes.
 type Props struct {
 	ID     string
-	Reason string // Required: why this page cannot use design-system components
+	Reason string // why this page cannot use design-system components
 }
 
-// CustomPage renders a plain <div data-wf-custom="page"> fence around
-// hand-written markup that the design-system lint would otherwise
-// reject. The lint detects it by the call custompage.CustomPage( and by
-// the data-wf-custom attribute. The root carries data-wf-reason, and
-// data-wf-missing-reason="true" only when Reason is empty. No classes
-// are applied to the root. Only the first Props is used.
-//
-// @pure
+// CustomPage fences hand-written markup that the design-system lint would
+// otherwise reject; the lint recognizes the call and the data-wf-custom
+// attribute. An empty Reason renders data-wf-missing-reason="true" so the
+// omission shows on the page.
 func CustomPage(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -63,7 +55,7 @@ func CustomPage(props ...Props) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/custompage/custompage.templ`, Line: 28, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/custompage/custompage.templ`, Line: 20, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -81,7 +73,7 @@ func CustomPage(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Reason)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/custompage/custompage.templ`, Line: 31, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/custompage/custompage.templ`, Line: 23, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {

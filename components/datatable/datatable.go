@@ -9,14 +9,11 @@
 // labelled "Row actions" (`md:hidden`). Both renderings are in the DOM at
 // every width; CSS picks one.
 //
-// Sticky header: StickyHeader pins the thead (sticky z-10 bg-card; top-0 inside a capped box, top offset by the shell's --wf-sticky-top when sticking to the page,
-// opaque so rows scroll under it). With MaxHeight the table's wrapper is a
-// capped scroll box and the header sticks to its top at every width.
-// Without MaxHeight the wrapper stops clipping on md and up
-// (`md:overflow-visible`) so the header sticks to the page; below md the
-// wrapper keeps its own horizontal scroll (Hidden columns are what make a
-// table fit a phone, and a table that still overflows must stay reachable),
-// so there the header sticks only within that scroll box.
+// Sticky header: with MaxHeight, the wrapper is a capped scroll box and the
+// header sticks to its top at every width. Without MaxHeight, on md and up
+// the wrapper stops clipping so the header sticks to the page (offset by
+// the shell's --wf-sticky-top); below md the wrapper keeps its horizontal
+// scroll, so the header sticks only within that box.
 package datatable
 
 import (
@@ -87,13 +84,9 @@ type Cell struct {
 	Component templ.Component
 }
 
-// BadgeCell is a Cell whose Text is shown inside a status badge: kind goes
-// through badge.StatusPtr to pick the variant (published → success, failed →
-// destructive, and so on; unknown words → outline) and text is what the
-// badge says. Pass badge.StatusLabel(kind) as text for the display form of
-// the status word itself.
-//
-// @pure
+// BadgeCell is a Cell showing text inside a status badge whose variant is
+// picked from kind by badge.StatusPtr (unknown words get outline). Pass
+// badge.StatusLabel(kind) as text to display the status word itself.
 func BadgeCell(text, kind string) Cell {
 	return Cell{Text: text, Badge: badge.StatusPtr(kind)}
 }
@@ -110,34 +103,19 @@ type Row struct {
 	Actions []action.Action
 }
 
-// Props configures DataTable. Columns and Rows are the data; Spec is the
-// current sort state and the source of every header link (via
-// Spec.URL(Base, listquery.WithSort(key))). Base "" falls back to the
-// request path stored by appshell.Middleware, and to "" (a query-only href
-// relative to the current URL) when there is none either.
+// Props configures DataTable. Spec is the current sort state; header links
+// are Spec.URL(Base, listquery.WithSort(key)). An empty Base falls back to
+// the request path stored by appshell.Middleware, else to a query-only href.
 //
-// Selection adds a leading checkbox column at every width (the app asked
-// for selection; when a phone row runs out of room, Hidden columns are
-// the lever, not the checkbox): the header box is the group
-// parent for checkbox.min.js select-all; row boxes carry SelectionName
-// ("" → "ids"), the row ID as value, and SelectionForm as their form
-// attribute so the bulk form can live outside the table. HxTarget makes
-// sort links also htmx requests (hx-get to the same URL, hx-target,
-// hx-push-url="true").
+// Selection adds a leading checkbox column (the header box drives
+// checkbox.min.js select-all). Row boxes are named SelectionName (default
+// "ids") and carry SelectionForm as their form attribute, so the bulk form
+// can live outside the table. HxTarget makes sort links htmx requests that
+// push the URL.
 //
-// MaxHeight caps the wrapper (max-h-[240px|400px|600px] for HeightSm, Md,
-// Lg; HeightNone/"" sets no cap) and the rows scroll inside it, at every
-// width. StickyHeader makes the thead `sticky z-10 bg-card` (`top-0` in a capped box, `top-[var(--wf-sticky-top)]` page-level so the topbar shell's bar does not hide it; opaque,
-// so rows scroll under it). Where it sticks depends on MaxHeight: with a
-// cap, to the top of the wrapper's scroll box; without one, the wrapper
-// becomes `md:overflow-visible` so on md and up (768px+) the header sticks
-// to the page as the user scrolls past the table, while below md the
-// wrapper keeps `overflow-auto` for horizontal overflow and the header only
-// sticks within that box (Hidden columns are the lever that makes a phone
-// table fit without needing to scroll it). Dense tightens cell padding to
-// py-1.5. Empty is shown in one full-width cell when there are no rows; its
-// zero value reads "Nothing here yet". Caption is a visually hidden
-// <caption>.
+// StickyHeader pins the thead; see the package doc for where it sticks.
+// Empty is shown in one full-width cell when there are no rows; its zero
+// value reads "Nothing here yet". Caption is visually hidden.
 type Props struct {
 	ID         string
 	Class      string
@@ -161,7 +139,6 @@ type Props struct {
 	Caption      string
 }
 
-// selectionName resolves SelectionName's default.
 func (p Props) selectionName() string {
 	if p.SelectionName == "" {
 		return "ids"
@@ -202,7 +179,6 @@ func (p Props) columnCount() int {
 	return n
 }
 
-// colspan returns columnCount as an attribute value.
 func (p Props) colspan() string { return strconv.Itoa(p.columnCount()) }
 
 // empty resolves the zero-value Empty props to the default title.
@@ -234,7 +210,6 @@ func cellAt(r Row, i int) Cell {
 	return Cell{}
 }
 
-// alignClass maps Align to a text alignment utility.
 func alignClass(a Align) string {
 	switch a {
 	case AlignRight:

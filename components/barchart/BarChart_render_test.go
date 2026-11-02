@@ -17,8 +17,8 @@ func render(t *testing.T, p Props) string {
 	return buf.String()
 }
 
-// Problem 1: a label wider than the old 60px gutter must render in full, and the
-// SVG (viewBox) must widen to make room rather than clipping the label.
+// A label wider than the 60px minimum gutter renders in full, and the SVG
+// (viewBox) widens to make room rather than clipping it.
 func TestRender_LongLabelRendersFullAndWidens(t *testing.T) {
 	html := render(t, Props{
 		Bars:       []Bar{{Label: "acme-billing/concept", Value: 10}},
@@ -34,7 +34,7 @@ func TestRender_LongLabelRendersFullAndWidens(t *testing.T) {
 	}
 }
 
-// Problem 1: an overlong label is truncated with an ellipsis and its full text is
+// An overlong label is truncated with an ellipsis and its full text is
 // preserved in a <title> tooltip.
 func TestRender_OverlongLabelTruncatedWithTooltip(t *testing.T) {
 	full := strings.Repeat("verylongtoken ", 8) // ~112 chars, exceeds even the 2x-widened gutter
@@ -52,7 +52,7 @@ func TestRender_OverlongLabelTruncatedWithTooltip(t *testing.T) {
 	}
 }
 
-// Problem 2: MaxBars caps the rendered bars and folds the rest into "Other (K)".
+// MaxBars caps the rendered bars and folds the rest into "Other (K)".
 func TestRender_MaxBarsCapsAndAggregates(t *testing.T) {
 	bars := make([]Bar, 0, 20)
 	for i := 1; i <= 20; i++ {
@@ -73,11 +73,9 @@ func TestRender_MaxBarsCapsAndAggregates(t *testing.T) {
 	}
 }
 
-// A fixed-width/height SVG forced the whole page to scroll
-// sideways at a narrow viewport even after its dashboardgrid.Slot had
-// already collapsed to one column. max-width:100%/height:auto lets the
-// SVG shrink to fit its container while viewBox keeps bars/labels drawn
-// at their original scale.
+// max-width:100%/height:auto lets the SVG shrink to fit a narrow container
+// instead of forcing the page to scroll sideways; viewBox keeps the drawing
+// in proportion.
 func TestRender_SVGIsResponsive(t *testing.T) {
 	html := render(t, Props{Bars: []Bar{{Label: "a", Value: 10}}, Width: 640, Height: 190})
 	if !strings.Contains(html, `style="max-width:100%;height:auto;"`) {
@@ -85,7 +83,7 @@ func TestRender_SVGIsResponsive(t *testing.T) {
 	}
 }
 
-// Backward-compat: MaxBars=0 leaves all bars untouched (no Other bucket).
+// MaxBars=0 leaves all bars untouched (no Other bucket).
 func TestRender_MaxBarsZeroUnlimited(t *testing.T) {
 	bars := make([]Bar, 0, 20)
 	for i := 1; i <= 20; i++ {

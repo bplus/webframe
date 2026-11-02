@@ -1,15 +1,7 @@
-// Package authpage renders the three pages an app shows outside its own
-// chrome: sign in (a form), signed out (a message and a link back to sign
-// in) and forbidden (a message and a way home). Each is one centered card
-// with the app name as the heading; there is never a nav or a shell, so
-// the page works before the user has an account and before the handler
-// chain reaches App.Middleware.
-//
-// Phone width (390px): the centered column keeps 16px of padding on each
-// side and the card is w-full inside it (max-w-sm only bites on wider
-// screens); fields stack one per row; the submit button and every
-// Provider button are full width at every width, and Providers stack one
-// per row.
+// Package authpage renders the pages an app shows outside its own chrome:
+// sign in, signed out, and forbidden. Each is one centered card with the
+// app name as the heading and no nav, so it works before the user has an
+// account and outside App.Middleware.
 package authpage
 
 import (
@@ -41,63 +33,49 @@ const (
 )
 
 // Props configures an auth page. Only Mode and, for sign in, Action and
-// Fields are needed; everything else has a usable zero value.
+// Fields are required.
 type Props struct {
-	// ID and Class land on the outer centered column; Attributes spread
-	// on it last.
+	// ID, Class and Attributes apply to the outer centered column.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 
-	// AppName is the card heading (the page's <h1>). Respond fills it
-	// from App.Name when empty and an App is in the context; with
-	// neither, the heading falls back to the mode's title.
+	// AppName is the card heading. Respond fills it from App.Name when
+	// empty; with neither, the heading is the mode's title.
 	AppName string
 	// Mode is the page to render; the zero value is ModeSignIn.
 	Mode Mode
-	// Action is the sign-in form's post URL (ModeSignIn) and the href of
-	// the "Sign in again" link (ModeSignedOut, unless Submit.Href is set).
-	// Emitted plain; templ sanitizes it.
+	// Action is the sign-in form's post URL, and the default href of the
+	// "Sign in again" link in ModeSignedOut.
 	Action string
 	// Method is the form method; "post" when empty.
 	Method string
-	// Fields are the sign-in form's fields, rendered one per row through
-	// formfield.FormField in declared order. Field.Width is ignored: the
-	// card is one column.
+	// Fields are the sign-in form's fields, one per row. Field.Width is
+	// ignored. Email and password fields default to autocomplete
+	// "username" and "current-password" unless the field sets its own.
 	Fields []formfield.Field
-	// Values override Field.Value by Name, exactly as formpage does: a
-	// present key wins even when "", an absent key leaves Field.Value
-	// alone, keys naming no field are ignored.
+	// Values override Field.Value by Name; a present key wins even when "".
 	Values map[string]string
-	// Errors set Field.Error by Name and, when Error is empty, drive the
-	// summary banner ("Please fix the N errors below." with one linked
-	// line per field). A key naming no field is listed without a link.
+	// Errors set Field.Error by Name and are listed in the error banner,
+	// linked to their fields.
 	Errors map[string]string
-	// Submit is the page's one primary action. ModeSignIn: the submit
-	// button (always <button type="submit">, full width; Href and Hx* are
-	// ignored), default Label "Sign in". ModeSignedOut: a full-width link
-	// to Submit.Href or Action, default Label "Sign in again".
-	// ModeForbidden: a full-width link or button, default
-	// {Label: "Go home", Href: "/"}. Variant defaults to primary.
+	// Submit is the page's primary action, always full width. In
+	// ModeSignIn it is the form's submit button (Href and Hx* are
+	// ignored). Defaults per mode: "Sign in"; "Sign in again" linking to
+	// Action; "Go home" linking to "/".
 	Submit action.Action
-	// Providers render under the form, below a divider reading "or", as
-	// full-width buttons ("Continue with …"), one per row. A Provider's
-	// own Variant is kept when set (a provider that is the primary way
-	// in can be VariantPrimary); an empty Variant is VariantOutline, so
-	// the usual row of alternatives stays uniform. A plain Href renders
-	// a link; Hx* fields render a button. ModeSignIn only.
+	// Providers are alternative sign-in buttons (such as "Continue with
+	// …") shown under the form after an "or" divider, outline unless
+	// they set a Variant. ModeSignIn only.
 	Providers []action.Action
-	// Message is the body text above the action for ModeSignedOut
-	// (default "You have been signed out.") and ModeForbidden (default
-	// "Your account does not have access."). ModeSignIn shows it under
-	// the heading when set.
+	// Message is the body text. ModeSignedOut and ModeForbidden have
+	// defaults; ModeSignIn shows it under the heading when set.
 	Message string
-	// Error is the title of an error banner (role="alert") rendered above
-	// the form, inside the card: "Email or password is incorrect." Field
-	// Errors, when any, are listed under it.
+	// Error is the title of an error banner above the form, such as
+	// "Email or password is incorrect."
 	Error string
-	// Footer, when non-nil, renders centered under everything else, e.g.
-	// a "Create account" link line.
+	// Footer, when non-nil, renders centered at the bottom, such as a
+	// "Create account" link.
 	Footer templ.Component
 	// Logo, when non-nil, renders centered above the app name.
 	Logo templ.Component
@@ -113,8 +91,7 @@ func (p Props) mode() Mode {
 	}
 }
 
-// title returns the document title for the mode: "Sign in", "Signed out"
-// or "Not allowed".
+// title returns the document title for the mode.
 func (p Props) title() string {
 	switch p.mode() {
 	case ModeSignedOut:
@@ -157,8 +134,8 @@ func (p Props) formID() string {
 	return "signin-form"
 }
 
-// resolve applies Values and Errors to one declared field without
-// mutating the caller's slice, and drops Width (the card is one column).
+// resolve applies Values, Errors and the autocomplete default to one
+// field, without mutating the caller's slice.
 func (p Props) resolve(f formfield.Field) formfield.Field {
 	if v, ok := p.Values[f.Name]; ok {
 		f.Value = v
@@ -167,9 +144,8 @@ func (p Props) resolve(f formfield.Field) formfield.Field {
 		f.Error = e
 	}
 	f.Width = formfield.WidthFull
-	// Browser and password-manager autofill key off autocomplete; a sign-in
-	// form that forgets it is painful on a phone. Default the two fields a
-	// sign-in has unless the app set its own (sign-up wants new-password).
+	// Password managers key off autocomplete. Default it unless the app set
+	// its own (a sign-up form wants new-password).
 	if ac := defaultAutocomplete(f.Type); ac != "" {
 		if _, set := f.Attributes["autocomplete"]; !set {
 			attrs := make(templ.Attributes, len(f.Attributes)+1)
@@ -183,9 +159,8 @@ func (p Props) resolve(f formfield.Field) formfield.Field {
 	return f
 }
 
-// defaultAutocomplete is the autocomplete token a sign-in form's field
-// gets by default: username for the email field, current-password for the
-// password field, nothing for the rest.
+// defaultAutocomplete is the default autocomplete token for a sign-in
+// field of type t, or "".
 func defaultAutocomplete(t formfield.Type) string {
 	switch t {
 	case formfield.TypeEmail:
@@ -232,8 +207,8 @@ func (p Props) hasBanner() bool {
 	return p.Error != "" || len(p.Errors) > 0
 }
 
-// bannerTitle is the banner's first line: Error when set, otherwise
-// "Please fix the N errors below." (singular for one), as formpage says.
+// bannerTitle is Error when set, otherwise "Please fix the N errors
+// below."
 func (p Props) bannerTitle() string {
 	if p.Error != "" {
 		return p.Error
@@ -251,9 +226,8 @@ type errorItem struct {
 	Href           string // "#"+ControlID(), or "" for an error naming no field
 }
 
-// errorItems lists the field Errors for the banner: in declared field
-// order (label from the field, falling back to its name), then errors
-// whose key names no field, sorted by key so output is deterministic.
+// errorItems lists Errors in declared field order, then errors naming no
+// field (unlinked), sorted by key.
 func (p Props) errorItems() []errorItem {
 	if len(p.Errors) == 0 {
 		return nil
@@ -285,11 +259,8 @@ func (p Props) errorItems() []errorItem {
 	return items
 }
 
-// submit returns Submit with the mode's defaults applied, always
-// FullWidth: Label and, for ModeForbidden, Href "/" when the action has no
-// destination at all. For ModeSignIn it is marked Submit with Href and the
-// Hx* fields cleared, so action.Button renders the form's real
-// <button type="submit"> and nothing else, as Props.Submit promises.
+// submit returns Submit with the mode's defaults applied. For ModeSignIn
+// Href and Hx* are cleared so it renders as a plain submit button.
 func (p Props) submit() action.Action {
 	a := p.Submit
 	if a.Variant == "" {
@@ -324,9 +295,8 @@ func (p Props) submit() action.Action {
 	return a
 }
 
-// provider returns one Provider as a full-width action, outline unless
-// the caller set a Variant: a link for a plain Href, a button carrying the
-// hx-* attributes otherwise.
+// provider returns a Provider as a full-width action, outline unless it
+// set a Variant.
 func provider(a action.Action) action.Action {
 	if a.Variant == "" {
 		a.Variant = action.VariantOutline
@@ -335,22 +305,10 @@ func provider(a action.Action) action.Action {
 	return a
 }
 
-// Respond writes the auth page for r without the shell. With an App in
-// the context (the handler sits under App.Middleware) it renders through
-// (*App).RenderBare, so the title suffix, theme init and App.Head match
-// the rest of the app, and fills AppName from App.Name when empty;
-// without one it renders through appshell.RenderBare, so a sign-in page
-// served before App.Middleware still answers. Either way the response is
-// the full document for a normal request and the bare card for a plain
-// htmx request, and never includes the nav. The document title is
-// "Sign in", "Signed out" or "Not allowed" (with the " — AppName" suffix
-// when there is an app name).
-//
-// Respond answers 200, or 422 Unprocessable Entity for the re-render after
-// a refused sign-in POST (Error or Errors set); appshell.Document
-// configures htmx to swap error responses, so an htmx submit still shows
-// it. A successful sign in redirects instead (303 See Other) and never
-// renders this page.
+// Respond writes the auth page for r without the shell, through
+// (*App).RenderBare when an App is in the context (filling AppName from
+// it) and appshell.RenderBare otherwise. The status is 200, or 422 when
+// Error or Errors is set.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	if p.Error != "" || len(p.Errors) > 0 {
 		appshell.SetHeaders(w)

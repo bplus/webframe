@@ -95,16 +95,15 @@ type Props struct {
 	MaxVisible int
 	User       *User
 	Right      templ.Component
-	// Palette, when non-nil, puts commandpalette.Trigger first in the
-	// right controls (topbar) or the sidebar footer. The palette itself is
-	// rendered by Document from DocProps.Palette, not by Shell.
+	// Palette, when non-nil, puts the palette trigger in the topbar's
+	// right controls or the sidebar footer. Document renders the palette
+	// itself (DocProps.Palette).
 	Palette     *commandpalette.Props
 	ThemeToggle bool
 	LiveDot     *LiveDot
 	Width       Width
-	// Flash, when non-nil, renders inside the #wf-flash slot at the top
-	// of <main>, above the page body; it is the only thing that slot ever
-	// holds. (*App).RenderParts fills it from App.Flash.
+	// Flash, when non-nil, renders in the #wf-flash slot at the top of
+	// <main>.
 	Flash templ.Component
 }
 

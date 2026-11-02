@@ -10,14 +10,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// AuthPage renders the page: a full-height centered column holding one
-// card (max-w-sm, w-full) with the optional Logo, the app name as the
-// <h1>, the error banner (Error or field Errors), then the mode's
-// content, then the Footer. No nav, no shell: it is the whole body.
-//
-// Phone width (390px): the column keeps p-4 (16px) on each side and the
-// card fills the rest; every button is full width; Providers stack one
-// per row.
+// AuthPage renders the whole page body: a full-height centered card with
+// the optional Logo, the app name, the error banner, the mode's content
+// and the Footer. Respond wraps it in a document.
 templ AuthPage(p Props) {
 	<div
 		if p.ID != "" {
@@ -57,9 +52,7 @@ templ AuthPage(p Props) {
 	</div>
 }
 
-// signIn is the sign-in content: the optional Message, the <form> of
-// fields with a full-width submit button, then the Providers under an
-// "or" divider.
+// signIn is the sign-in content: Message, the form, then Providers.
 templ signIn(p Props) {
 	if p.Message != "" {
 		<p class="text-center text-sm text-muted-foreground">{ p.Message }</p>
@@ -80,17 +73,14 @@ templ signIn(p Props) {
 	}
 }
 
-// messagePage is the signed-out and forbidden content: the message, then
-// Submit as a full-width link or button.
+// messagePage is the signed-out and forbidden content.
 templ messagePage(p Props) {
 	<p class="text-center text-sm text-muted-foreground">{ p.message() }</p>
 	@action.Button(p.submit())
 }
 
-// errorDetails is the banner's list of field errors: "Label: message"
-// linking to the field's control, or the bare message for an error naming
-// no field. Renders nothing for no items (Error alone keeps a one-line
-// banner).
+// errorDetails lists field errors as "Label: message" links to each
+// field, or the bare message for an error naming no field.
 templ errorDetails(items []errorItem) {
 	if len(items) > 0 {
 		<ul class="list-disc space-y-1 pl-5">

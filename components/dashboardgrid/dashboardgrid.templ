@@ -5,15 +5,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures the outer Grid container. The zero value is fully usable:
-// each field's default (noted below) is applied at render time, so Props{}
-// yields a standard 12-column grid. After defaulting, Cols is clamped to
-// [1, 24], so an out-of-range value degrades to the nearest bound instead of
-// emitting broken grid CSS. Gap and PageMargin are only defaulted when
-// exactly 0; negative values pass through into the inline style unchanged.
-// Flush sets the outer padding to 0 regardless of PageMargin, for a grid
-// placed inside a Section, Panel or other container that already insets
-// its content; PageMargin keeps meaning "default 32 when zero".
+// Props configures Grid. Cols is clamped to [1, 24]. Gap and PageMargin
+// take their defaults only when exactly 0. Flush drops the outer padding,
+// for a grid inside a container that already insets its content.
 type Props struct {
 	ID         string
 	Class      string
@@ -24,11 +18,8 @@ type Props struct {
 	Flush      bool // outer padding 0, overriding PageMargin
 }
 
-// SlotProps configures one Slot cell inside a Grid. ColSpan 0 defaults to 12
-// (full width of the default 12-column grid) and RowSpan 0 defaults to 1;
-// after defaulting, both are clamped to [1, 12], so a bad span degrades to
-// an edge value rather than invalid CSS. Note the ColSpan cap is 12 even
-// when the parent Grid has up to 24 columns.
+// SlotProps configures Slot. Both spans are clamped to [1, 12], even when
+// the Grid has more than 12 columns.
 type SlotProps struct {
 	ID         string
 	Class      string
@@ -37,29 +28,9 @@ type SlotProps struct {
 	RowSpan    int // rows to span, default 1
 }
 
-// Grid renders the top-level dashboard layout container: a CSS grid whose
-// column count, gap, and outer padding come from Props, so dashboard pages
-// get consistent spacing without hand-written layout CSS.
-//
-// It accepts zero or one Props (extras ignored); zero-value fields take the
-// defaults documented on Props, and Cols is clamped to [1, 24] via clamp().
-//
-// Returns a templ.Component rooted at a w-full <div> carrying inline
-// display:grid / grid-template-columns / gap / padding styles; children
-// render inside the grid and are typically Slot cells, though any content
-// participates as a grid item. The div also carries the stable class
-// wf-dashgrid, which static/css/input.css uses (with !important) to
-// collapse the grid to one column below md (48rem; 900px until batch 5),
-// the point every other layout collapses at -- the inline
-// column-count style has no other way to be overridden by a media query
-// (a stats page had no phone-width
-// breakpoint because Cols is a runtime value, not a Tailwind utility
-// class Tailwind's build can see and generate a responsive variant for).
-//
-// No scripts, generated IDs, or JS wiring are emitted.
-//
-// @pure
-// @invariant the emitted grid-template-columns always has 1-24 tracks
+// Grid renders a CSS grid for dashboard tiles, typically Slots. Below md it
+// collapses to one column via the wf-dashgrid rule in static/css/input.css,
+// since a media query cannot otherwise override the inline column count.
 templ Grid(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -95,24 +66,9 @@ templ Grid(props ...Props) {
 	</div>
 }
 
-// Slot renders one cell of a Grid, translating ColSpan/RowSpan into inline
-// grid-column / grid-row span styles so callers size dashboard tiles without
-// writing CSS.
-//
-// It accepts zero or one SlotProps (extras ignored); ColSpan 0 becomes 12,
-// RowSpan 0 becomes 1, then both are clamped to [1, 12] via clamp().
-//
-// Returns a templ.Component rooted at a min-w-0 <div> (min-w-0 lets wide
-// content like tables shrink instead of blowing out the column); children
-// are the cell's content. The div also carries the stable class
-// wf-dashslot, which static/css/input.css uses (with !important) to reset
-// span to 1x1 below md (48rem), matching Grid's own wf-dashgrid
-// breakpoint so a Slot never spans past its now-single-column Grid.
-//
-// No scripts, generated IDs, or JS wiring are emitted.
-//
-// @pure
-// @invariant emitted column and row span values are always within [1, 12]
+// Slot renders one cell of a Grid spanning ColSpan columns and RowSpan
+// rows. Below md it resets to 1x1 (the wf-dashslot rule), matching Grid's
+// one-column layout.
 templ Slot(props ...SlotProps) {
 	{{ var p SlotProps }}
 	if len(props) > 0 {

@@ -157,7 +157,7 @@ func TestEmptyState_Action(t *testing.T) {
 		t.Errorf("action should follow the mt-4 slot in: %s", html)
 	}
 
-	// nil Action leaves the output unchanged from before.
+	// A nil Action renders no control.
 	buf.Reset()
 	if err := emptystate.EmptyState(emptystate.Props{Title: "No matches"}).Render(context.Background(), &buf); err != nil {
 		t.Fatalf("render: %v", err)

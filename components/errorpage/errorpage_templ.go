@@ -18,14 +18,12 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures an ErrorPage. Code picks the default wording: 404, 403,
-// 405 and 500 have their own; any other number renders with 500's wording
-// and the given number. Title and Message override the defaults when set.
-// Home is the single call to action; nil renders {Label: "Go home"} linking
-// to the App's HomeHref when an appshell.App is in the render context, else
-// "/". RequestID renders in small monospace text under the message when
-// set, so a user can quote it. Details, when non-nil, renders last (a
-// stack trace in development, for instance).
+// Props configures ErrorPage. Code picks the default wording: 404, 403, 405
+// and 500 have their own, any other number uses 500's. Title and Message
+// override the defaults. Home is the call to action; nil means "Go home",
+// linking to the App's HomeHref (or "/"). RequestID is shown so a user can
+// quote it. Details, when set, renders last (a stack trace in development,
+// for instance).
 type Props struct {
 	ID         string
 	Class      string
@@ -81,16 +79,9 @@ func home(ctx context.Context, p Props) action.Action {
 	return action.Action{Label: "Go home", Href: href, Variant: action.VariantPrimary}
 }
 
-// ErrorPage renders one error page body: the status code in large muted
-// digits, the title as the page h1, the message, the request id (when
-// set) in small monospace, the Home action as a button, then Details.
-// Everything sits in one centered column no wider than max-w-md.
-//
-// On a phone (390px) it is the same single centered column; the code uses
-// tabular-nums and no letter-spacing, so three digits never overflow the
-// 16px gutters and nothing scrolls horizontally.
-//
-// @pure
+// ErrorPage renders an error page body in one centered column: the status
+// code, the title as the page h1, the message, the request id, the Home
+// action, then Details.
 func ErrorPage(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -136,7 +127,7 @@ func ErrorPage(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(code(p)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 98, Col: 113}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 89, Col: 113}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -149,7 +140,7 @@ func ErrorPage(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 99, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 90, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -162,7 +153,7 @@ func ErrorPage(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 100, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 91, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +171,7 @@ func ErrorPage(props ...Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.RequestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 102, Col: 89}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/errorpage/errorpage.templ`, Line: 93, Col: 89}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {

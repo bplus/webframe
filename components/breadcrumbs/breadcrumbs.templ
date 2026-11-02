@@ -8,8 +8,7 @@ type Item struct {
 	Href  string
 }
 
-// Props configures Breadcrumbs. Class is merged via utils.TwMerge;
-// Attributes spread onto the root <nav>.
+// Props configures Breadcrumbs.
 type Props struct {
 	ID         string
 	Class      string
@@ -19,10 +18,7 @@ type Props struct {
 
 // Breadcrumbs renders a navigation trail. Every item but the last is a
 // link; the last is a <span aria-current="page">. Separators are "/"
-// in aria-hidden spans. Zero items renders an empty <nav>; only the
-// first Props is used.
-//
-// @pure
+// in aria-hidden spans.
 templ Breadcrumbs(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

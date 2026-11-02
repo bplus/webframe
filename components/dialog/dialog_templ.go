@@ -25,14 +25,9 @@ const (
 	openKey     contextKey = "dialogOpen"
 )
 
-// Props configures the Dialog root wrapper. The zero value is usable: an
-// instance ID is generated automatically and the dialog starts closed with
-// click-away and ESC dismissal enabled.
-//
-// ID doubles as the dialog's instance ID, which links the root to its
-// Trigger/Content/Close descendants (and to external Trigger/Close elements
-// via their For field). Leave it empty unless something outside the Dialog
-// subtree needs to reference this dialog.
+// Props configures Dialog. The zero value starts closed, dismissable by
+// click-away and Escape, with a generated instance ID. Set ID only when a
+// Trigger or Close outside the Dialog needs to reference it via For.
 type Props struct {
 	ID               string
 	Class            string
@@ -42,10 +37,8 @@ type Props struct {
 	Open             bool // initial open state, propagated to Content via render context
 }
 
-// TriggerProps configures a Trigger element. The zero value works when the
-// Trigger is nested inside a Dialog: the instance ID is inherited from the
-// surrounding Dialog's render context. Set For only for triggers placed
-// outside the Dialog subtree.
+// TriggerProps configures Trigger. Inside a Dialog the instance is
+// inherited; set For only for a trigger placed outside it.
 type TriggerProps struct {
 	ID         string
 	Class      string
@@ -53,10 +46,9 @@ type TriggerProps struct {
 	For        string // Reference to a specific dialog ID (for external triggers)
 }
 
-// ContentProps configures the Content (backdrop + panel) of a dialog. When
-// Content renders inside a Dialog, ID and Open are overridden by the values
-// the Dialog placed in the render context; set them directly only for
-// standalone usage without a Dialog wrapper.
+// ContentProps configures Content. Inside a Dialog, ID and Open come from
+// the Dialog and these fields are ignored; set them only for a standalone
+// Content.
 type ContentProps struct {
 	ID               string
 	Class            string
@@ -66,9 +58,8 @@ type ContentProps struct {
 	DisableAutoFocus bool // when true, focus is not moved into the dialog on open
 }
 
-// CloseProps configures a Close element. The zero value closes the nearest
-// enclosing dialog; set For to target a specific dialog by ID from anywhere
-// on the page.
+// CloseProps configures Close. The zero value closes the nearest enclosing
+// dialog; For targets a dialog by ID from anywhere on the page.
 type CloseProps struct {
 	ID         string
 	Class      string
@@ -76,63 +67,39 @@ type CloseProps struct {
 	For        string // ID of the dialog to close (optional, defaults to closest dialog)
 }
 
-// HeaderProps configures the Header layout wrapper. All fields are optional
-// pass-throughs to the rendered div.
+// HeaderProps configures Header.
 type HeaderProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// FooterProps configures the Footer layout wrapper. All fields are optional
-// pass-throughs to the rendered div.
+// FooterProps configures Footer.
 type FooterProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// TitleProps configures the Title heading. All fields are optional
-// pass-throughs to the rendered h2.
+// TitleProps configures Title.
 type TitleProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// DescriptionProps configures the Description paragraph. All fields are
-// optional pass-throughs to the rendered p.
+// DescriptionProps configures Description.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// Dialog is the root wrapper that binds a modal's Trigger and Content into
-// one interactive unit. Use it when trigger and content live together in the
-// same subtree; sub-components placed elsewhere must link by ID via their
-// For props instead.
-//
-// Accepts zero or one Props; with none, a zero-value Props is used (random
-// instance ID, closed, dismissable). Extra Props beyond the first are
-// ignored. Returns a templ.Component rendering a plain div (no layout of its
-// own) with children in its body.
-//
-// Side effects: calls utils.RandomID when Props.ID is empty, and injects the
-// resolved instance ID plus Props.Open into the render context so nested
-// Trigger/Content resolve the same instance without explicit wiring. State is
-// NOT Alpine-based: open/close is driven by data-tui-dialog-* attributes that
-// the external script from Script() (static/js/dialog.min.js) reads and
-// toggles.
-//
-// @ai-context Composition contract: Dialog > { Trigger, Content > { Header >
-// { Title, Description }, Footer, Close } }. All parts share one instance ID
-// (attribute data-dialog-instance) — nested parts inherit it via context;
-// external Trigger/Close elements must set For to the Dialog's Props.ID.
-// @temporal-coupling Script() must be included once on any page using Dialog,
-// or triggers and close buttons are inert server-rendered markup.
-// @side-effects reads crypto/rand entropy via utils.RandomID when Props.ID
-// is empty, and derives a new render context for descendants.
+// Dialog is the root that ties a Trigger and its Content together: it
+// passes its instance ID and open state to nested parts through the render
+// context. The parts compose as Dialog > Trigger, Content > Header > Title,
+// Description, Footer, Close. Open and close are driven by dialog.min.js
+// (see Script), not Alpine; without Script the markup is inert.
 func Dialog(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -181,7 +148,7 @@ func Dialog(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 139, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 106, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -199,7 +166,7 @@ func Dialog(props ...Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 142, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 109, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -258,24 +225,9 @@ func Dialog(props ...Props) templ.Component {
 	})
 }
 
-// Trigger wraps arbitrary children (typically a button) so that clicking
-// them opens the associated dialog. Use it instead of hand-wiring click
-// handlers.
-//
-// Accepts zero or one TriggerProps (extras ignored; zero value = inherit the
-// enclosing Dialog's instance). Returns a templ.Component rendering a span
-// with class "contents" — the span is layout-neutral and the children slot
-// provides the visible control.
-//
-// Side effects: none beyond markup; it reads (never writes) the instance ID
-// from the render context. The click behavior itself comes from
-// dialog.min.js, which matches this element's data-tui-dialog-trigger value
-// to the target dialog.
-//
-// @invariant The resolved instance ID (For, or inherited context) must equal
-// the target Dialog/Content's instance ID; an empty ID (no For, no enclosing
-// Dialog) produces a trigger bound to nothing. For overrides context when
-// both are present.
+// Trigger makes its children (typically a button) open the dialog. It
+// targets For when set, otherwise the enclosing Dialog; with neither it is
+// bound to nothing.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -324,7 +276,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 188, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 140, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -342,7 +294,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 190, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 142, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -355,7 +307,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 191, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 143, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -398,26 +350,9 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
-// Content renders the modal itself: a fixed full-screen backdrop plus a
-// centered panel that fades/scales in. Place it inside a Dialog (usual case)
-// or standalone with an explicit ContentProps.ID for external triggers.
-//
-// Accepts zero or one ContentProps (extras ignored). Returns a
-// templ.Component emitting two sibling fixed-position divs (backdrop, then
-// panel); children render inside the panel, followed by a default close
-// button (icon.X) unless HideCloseButton is set.
-//
-// Side effects: calls utils.RandomID when no ID is available from props or
-// context. Open/close state lives in data-tui-dialog-open /
-// data-tui-dialog-hidden attributes on both divs — server-rendered from the
-// initial open flag, then toggled at runtime by dialog.min.js (not Alpine).
-//
-// @temporal-coupling Context values from an enclosing Dialog override
-// ContentProps.ID and ContentProps.Open, so inside a Dialog those two props
-// are dead — configure them on the Dialog instead. Standalone (no Dialog),
-// the props are authoritative and ID must match the external Trigger's For.
-// @side-effects reads crypto/rand entropy via utils.RandomID when no ID is
-// supplied by props or context.
+// Content renders the modal: a full-screen backdrop and a centered panel
+// holding the children and, unless HideCloseButton is set, an X close
+// button.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -459,10 +394,9 @@ func Content(props ...ContentProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 = []any{utils.TwMerge(
-			// A scrim darkens in both themes (a shadow, not a surface
-			// color); bg-foreground/40 lightened the page in dark mode.
-			// Overlay ladder: slideover 55/60 < dialog 65 < toast 70, so a
-			// confirm dialog opened from inside a sheet is on top of it.
+			// Black, not a theme color, so the scrim darkens in both
+			// themes. Overlay ladder: slideover 55/60 < dialog 65 <
+			// toast 70, so a confirm opened from a sheet sits on top.
 			"fixed inset-0 z-[65] bg-black/50",
 			"transition-opacity duration-300",
 			"data-[tui-dialog-open=false]:opacity-0",
@@ -495,7 +429,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 255, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 189, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -569,7 +503,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 292, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 226, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -654,7 +588,7 @@ func Content(props ...ContentProps) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 328, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 262, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -681,19 +615,8 @@ func Content(props ...ContentProps) templ.Component {
 	})
 }
 
-// Close wraps children (e.g. a Cancel button) so that clicking them closes a
-// dialog — the in-content alternative to the default X button.
-//
-// Accepts zero or one CloseProps (extras ignored). Returns a templ.Component
-// rendering a layout-neutral span (class "contents cursor-pointer") with
-// children as the visible control. No side effects and no context reads: with
-// For set it emits data-tui-dialog-close="<id>" targeting that dialog;
-// without, it emits a bare data-tui-dialog-close and dialog.min.js resolves
-// the closest enclosing dialog at click time.
-//
-// @pure server-side rendering is deterministic (no RandomID, no context
-// writes); the close behavior itself is applied by the external
-// dialog.min.js script.
+// Close makes its children (e.g. a Cancel button) close a dialog: the one
+// named by For, otherwise the nearest enclosing one.
 func Close(props ...CloseProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -736,7 +659,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 359, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 282, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -755,7 +678,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 362, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 285, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -808,14 +731,7 @@ func Close(props ...CloseProps) templ.Component {
 	})
 }
 
-// Header groups the Title and Description at the top of a dialog's Content
-// with standard spacing (stacked, centered on mobile, left-aligned from sm:).
-//
-// Accepts zero or one HeaderProps (extras ignored; zero value fine). Returns
-// a templ.Component rendering a div with children as its slot. Purely
-// presentational — no instance wiring, no context access.
-//
-// @pure deterministic markup from props and children only.
+// Header groups the Title and Description at the top of Content.
 func Header(props ...HeaderProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -858,7 +774,7 @@ func Header(props ...HeaderProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 388, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 304, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -906,15 +822,8 @@ func Header(props ...HeaderProps) templ.Component {
 	})
 }
 
-// Footer holds a dialog's action row (confirm/cancel buttons): stacked in
-// reverse order on mobile, right-aligned in a row from sm:. Pair action
-// buttons with Close to make them dismiss the dialog.
-//
-// Accepts zero or one FooterProps (extras ignored; zero value fine). Returns
-// a templ.Component rendering a div with children as its slot. Purely
-// presentational — no instance wiring, no context access.
-//
-// @pure deterministic markup from props and children only.
+// Footer holds the action row: stacked in reverse on mobile, right-aligned
+// from sm up. Wrap buttons in Close to make them dismiss the dialog.
 func Footer(props ...FooterProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -957,7 +866,7 @@ func Footer(props ...FooterProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 413, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 322, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -1005,13 +914,7 @@ func Footer(props ...FooterProps) templ.Component {
 	})
 }
 
-// Title renders the dialog's heading with the library's standard typography;
-// place it inside Header so spacing against Description is handled.
-//
-// Accepts zero or one TitleProps (extras ignored; zero value fine). Returns
-// a templ.Component rendering an h2 with children as the heading text.
-//
-// @pure deterministic markup from props and children only.
+// Title renders the dialog heading as an h2.
 func Title(props ...TitleProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1054,7 +957,7 @@ func Title(props ...TitleProps) templ.Component {
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 436, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 339, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -1102,13 +1005,7 @@ func Title(props ...TitleProps) templ.Component {
 	})
 }
 
-// Description renders muted supporting text under the Title; place it inside
-// Header alongside Title.
-//
-// Accepts zero or one DescriptionProps (extras ignored; zero value fine).
-// Returns a templ.Component rendering a p with children as the body text.
-//
-// @pure deterministic markup from props and children only.
+// Description renders muted supporting text under the Title.
 func Description(props ...DescriptionProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1151,7 +1048,7 @@ func Description(props ...DescriptionProps) templ.Component {
 			var templ_7745c5c3_Var41 string
 			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 459, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 356, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
@@ -1199,19 +1096,8 @@ func Description(props ...DescriptionProps) templ.Component {
 	})
 }
 
-// Script emits the script tag that activates every dialog on the page —
-// wiring trigger clicks, backdrop/ESC dismissal, focus handling, and the
-// data-tui-dialog-open attribute toggling that drives the CSS transitions.
-// Include it once per page (typically in the layout) whenever Dialog is used.
-//
-// Takes no arguments and returns a templ.Component rendering a single
-// deferred script tag. Side effects: reads the CSP nonce from the render
-// context via templ.GetNonce, and utils.ScriptURL appends a per-process
-// ?v= cache-busting timestamp to /static/js/dialog.min.js.
-//
-// @temporal-coupling Dialog/Trigger/Content/Close render inert markup until
-// this script loads; it must appear on the same page, after which no further
-// per-instance setup is needed.
+// Script loads dialog.min.js, which wires triggers, backdrop and Escape
+// dismissal, and focus handling. Include it once per page that uses Dialog.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1240,7 +1126,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 482, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 368, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -1253,7 +1139,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/dialog.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 482, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 368, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {

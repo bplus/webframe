@@ -7,30 +7,23 @@ import (
 	"strings"
 )
 
-// DataPoint is one X/Y sample in a Series. Label is display text only (dates,
-// hours, categories) and carries no ordering or spacing semantics — points
-// render in slice order, evenly spaced across the plot width.
+// DataPoint is one sample in a Series. Points render in slice order,
+// evenly spaced; Label is display text only.
 type DataPoint struct {
 	Label string  // X-axis label (e.g. date)
 	Value float64 // Y value
 }
 
-// Series is one named line-plus-area in an AreaChart. An empty Color is
-// assigned from a built-in five-color palette by series index; a non-empty
-// Color passes through utils.SanitizeColor, so invalid values render as gray
-// #888 rather than being dropped. A Series with empty Data draws nothing but
-// still occupies a legend row and a palette slot.
+// Series is one named line-plus-area. An empty Color is picked from a
+// built-in palette by index; a set Color is sanitized, so an invalid value
+// renders gray.
 type Series struct {
 	Label string // Legend label
 	Data  []DataPoint
 	Color string // Line/fill color (hex or CSS)
 }
 
-// Props configures AreaChart; pass it as the single optional argument. The
-// zero value renders an empty 400x200 SVG frame: Width/Height default to
-// 400x200 when <= 0, and Series may be nil. All series share one global Y
-// scale computed over every data point of every series, so overlaid lines are
-// directly comparable; there is no per-series normalization.
+// Props configures AreaChart. Width and Height default to 400x200.
 type Props struct {
 	ID         string
 	Class      string
@@ -108,28 +101,11 @@ func buildAreaPoints(data []DataPoint, w, h, padL, padR, padT, padB int, minV, m
 	return
 }
 
-// AreaChart renders one or more overlaid line-plus-filled-area series as an
-// inline SVG, for comparing trends on a single shared Y scale (the min/max is
-// computed globally across all series, never per series).
-//
-// Accepts zero or one Props: called with no arguments it uses the zero value,
-// and any Props beyond the first are ignored. Series with no data points are
-// skipped; with no data at all an empty SVG frame still renders at the
-// resolved size. When ShowLabels is set, X-axis labels come from the FIRST
-// series only, thinned to roughly six evenly spaced labels. The legend renders
-// only when ShowLegend is set AND there are at least two series. The filled
-// area uses the stroke color at 15% opacity.
-//
-// Returns a templ.Component that renders a <div>-wrapped <svg> plus the
-// optional legend.
-//
-// @pure
-// @complexity O(total data points across all series)
-// @ai-context explicit series colors pass through utils.SanitizeColor; when
-// every value across ALL series is identical (global min == max), the lines
-// render along the BOTTOM edge, not centered — the flat range is padded to 1,
-// anchoring values at the minimum. A flat series next to a varying one instead
-// renders at its value's height on the shared global scale.
+// AreaChart renders overlaid line-plus-area series as an inline SVG. All
+// series share one Y scale, so they are directly comparable; if every
+// value is equal, the lines sit on the bottom edge. X-axis labels
+// (ShowLabels) come from the first series, thinned to about six. The
+// legend shows only with two or more series.
 templ AreaChart(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

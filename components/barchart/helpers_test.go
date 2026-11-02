@@ -2,7 +2,7 @@ package barchart
 
 import "testing"
 
-// --- capBars() tests (Problem 2: MaxBars cap + aggregated Other bar) ---
+// --- capBars ---
 
 func TestCapBars_ZeroMaxUnlimited(t *testing.T) {
 	// MaxBars == 0 means unlimited: bars returned untouched, original order.
@@ -80,11 +80,10 @@ func TestCapBars_DoesNotMutateInput(t *testing.T) {
 	}
 }
 
-// --- computeLabelGutter() tests (Problem 1: adaptive gutter) ---
+// --- computeLabelGutter ---
 
 func TestComputeLabelGutter_ShortLabelsKeepFloor(t *testing.T) {
-	// Short labels must not regress: gutter stays at the 60px floor and width
-	// is unchanged.
+	// Short labels keep the 60px minimum gutter and the requested width.
 	bars := []Bar{{Label: "A"}, {Label: "BB"}, {Label: "CCC"}}
 	gutter, w := computeLabelGutter(bars, 300, true)
 	if gutter != 60 {
@@ -96,7 +95,7 @@ func TestComputeLabelGutter_ShortLabelsKeepFloor(t *testing.T) {
 }
 
 func TestComputeLabelGutter_NoLabelsUnchanged(t *testing.T) {
-	// When labels are not shown, keep the historical 60px gutter and original width.
+	// Without labels, the gutter is a fixed 60px and the width is unchanged.
 	bars := []Bar{{Label: "a very long label indeed that would overflow"}}
 	gutter, w := computeLabelGutter(bars, 300, false)
 	if gutter != 60 {
@@ -108,7 +107,7 @@ func TestComputeLabelGutter_NoLabelsUnchanged(t *testing.T) {
 }
 
 func TestComputeLabelGutter_LongLabelWidensGutter(t *testing.T) {
-	// A label far wider than the old 60px gutter must widen the gutter beyond 60.
+	// A label wider than 60px widens the gutter.
 	bars := []Bar{{Label: "acme-billing/concept"}} // 20 chars
 	gutter, w := computeLabelGutter(bars, 300, true)
 	if gutter <= 60 {
@@ -141,7 +140,7 @@ func TestComputeLabelGutter_PathologicalLabelClampsWidth(t *testing.T) {
 	}
 }
 
-// --- fitLabel() tests (Problem 1: graceful truncation) ---
+// --- fitLabel ---
 
 func TestFitLabel_FitsUntouched(t *testing.T) {
 	disp, truncated := fitLabel("short", 60)

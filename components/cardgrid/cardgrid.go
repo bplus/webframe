@@ -1,6 +1,5 @@
-// Package cardgrid renders a catalog of cards: the public-catalog
-// multi-item display (a library grid, an Explore page, a list of mods or
-// creators) declared as data. Each card is card.Card with optional art
+// Package cardgrid renders a catalog of cards (a library grid, an Explore
+// page, a list of products or people) declared as data. Each card is card.Card with optional art
 // on top, a title (a link when Href is set), a muted subtitle, badges,
 // a meta line and footer actions.
 package cardgrid
@@ -16,33 +15,25 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 )
 
-// Art is the picture on top of a card, rendered through
-// aspectratio.AspectRatio and image.Image with object-cover so the file
-// is cropped to the frame rather than stretching it. The zero Ratio
-// means aspectratio.RatioVideo (16:9): aspectratio.RatioAuto would
-// collapse the frame to zero height, so it is not a useful default here.
-// Alt is always emitted; an empty Alt marks the picture as decorative.
+// Art is the picture on top of a card, cropped to its frame. A zero or
+// RatioAuto Ratio means aspectratio.RatioVideo (16:9), since RatioAuto would
+// collapse the frame to zero height. An empty Alt marks it as decorative.
 type Art struct {
 	Src   string
 	Alt   string
 	Ratio aspectratio.Ratio
 }
 
-// Badge is one status pill on a card: the Label is the badge text and
-// Props its badge.Props (variant, class, attributes). badge.Props carries
-// no text of its own, which is why the plan's `[]badge.Props` became
-// this pair. StatusBadge builds one from a status word.
+// Badge is one status pill on a card. badge.Props carries no text, so the
+// Label travels with it. StatusBadge builds one from a status word.
 type Badge struct {
 	Label string
 	Props badge.Props
 }
 
-// StatusBadge builds a Badge whose Label is badge.StatusLabel(kind) and
-// whose variant is badge.Status(kind), so apps never pick colors:
-// StatusBadge("", "published") shows "Published" in the success tone.
-// A non-empty label overrides the derived display text.
-//
-// @pure
+// StatusBadge builds a Badge colored by badge.Status(kind). An empty label
+// becomes badge.StatusLabel(kind): StatusBadge("", "published") shows
+// "Published" in the success tone.
 func StatusBadge(label, kind string) Badge {
 	if label == "" {
 		label = badge.StatusLabel(kind)
@@ -60,9 +51,8 @@ func StatusBadge(label, kind string) Badge {
 //   - Art, when non-nil, is the picture on top.
 //   - Badges render in a wrapping row under the subtitle.
 //   - Meta is a list of short facts joined with " · " on one small line.
-//   - Actions render as small ghost buttons in the footer (an Action with
-//     its own Variant keeps it); Footer is a free component rendered in
-//     the same footer row, after the actions.
+//   - Actions render as small ghost buttons in the footer unless they set
+//     their own Variant or Size; Footer renders after them in the same row.
 type Card struct {
 	ID       string
 	Title    string
@@ -78,9 +68,8 @@ type Card struct {
 // Props configures a CardGrid.
 //
 //   - Items are the cards, in order.
-//   - Columns caps the column count on wide screens: 4 (the default for 0
-//     and any other value), 3 or 2. The grid always starts at one column
-//     and adds columns by breakpoint up to the cap (see CardGrid).
+//   - Columns caps the column count on wide screens: 2, 3, or 4 (any other
+//     value, including 0).
 //   - Dense tightens card padding (p-4 instead of p-6) and the grid gap.
 //   - Empty is shown full width when Items is empty; a zero value gets
 //     the title "Nothing here yet".

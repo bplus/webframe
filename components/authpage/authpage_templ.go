@@ -18,14 +18,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// AuthPage renders the page: a full-height centered column holding one
-// card (max-w-sm, w-full) with the optional Logo, the app name as the
-// <h1>, the error banner (Error or field Errors), then the mode's
-// content, then the Footer. No nav, no shell: it is the whole body.
-//
-// Phone width (390px): the column keeps p-4 (16px) on each side and the
-// card fills the rest; every button is full width; Providers stack one
-// per row.
+// AuthPage renders the whole page body: a full-height centered card with
+// the optional Logo, the app name, the error banner, the mode's content
+// and the Footer. Respond wraps it in a document.
 func AuthPage(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -64,7 +59,7 @@ func AuthPage(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 24, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 19, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -145,7 +140,7 @@ func AuthPage(p Props) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.heading())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 36, Col: 63}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 31, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -219,9 +214,7 @@ func AuthPage(p Props) templ.Component {
 	})
 }
 
-// signIn is the sign-in content: the optional Message, the <form> of
-// fields with a full-width submit button, then the Providers under an
-// "or" divider.
+// signIn is the sign-in content: Message, the form, then Providers.
 func signIn(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -251,7 +244,7 @@ func signIn(p Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 65, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 58, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -318,8 +311,7 @@ func signIn(p Props) templ.Component {
 	})
 }
 
-// messagePage is the signed-out and forbidden content: the message, then
-// Submit as a full-width link or button.
+// messagePage is the signed-out and forbidden content.
 func messagePage(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -348,7 +340,7 @@ func messagePage(p Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.message())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 86, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 78, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -366,10 +358,8 @@ func messagePage(p Props) templ.Component {
 	})
 }
 
-// errorDetails is the banner's list of field errors: "Label: message"
-// linking to the field's control, or the bare message for an error naming
-// no field. Renders nothing for no items (Error alone keeps a one-line
-// banner).
+// errorDetails lists field errors as "Label: message" links to each
+// field, or the bare message for an error naming no field.
 func errorDetails(items []errorItem) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -409,7 +399,7 @@ func errorDetails(items []errorItem) templ.Component {
 					var templ_7745c5c3_Var14 templ.SafeURL
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 100, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 90, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
@@ -422,7 +412,7 @@ func errorDetails(items []errorItem) templ.Component {
 					var templ_7745c5c3_Var15 string
 					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 100, Col: 95}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 90, Col: 95}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -435,7 +425,7 @@ func errorDetails(items []errorItem) templ.Component {
 					var templ_7745c5c3_Var16 string
 					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(it.Message)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 100, Col: 111}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 90, Col: 111}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 					if templ_7745c5c3_Err != nil {
@@ -449,7 +439,7 @@ func errorDetails(items []errorItem) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(it.Message)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 102, Col: 18}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/authpage/authpage.templ`, Line: 92, Col: 18}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {

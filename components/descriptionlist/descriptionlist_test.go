@@ -170,8 +170,7 @@ func TestDL_Empty(t *testing.T) {
 	}
 }
 
-// BadgeItem builds the badge row callers used to assemble by hand: kind
-// picks the variant through badge.StatusPtr, text is the badge's text.
+// BadgeItem picks the variant from kind; text is the badge's text.
 func TestDL_BadgeItem(t *testing.T) {
 	it := BadgeItem("Status", "Failed", "failed")
 	if it.Label != "Status" || it.Value != "Failed" || it.Badge == nil || it.Badge.Variant != badge.VariantDestructive {

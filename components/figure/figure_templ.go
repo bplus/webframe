@@ -25,8 +25,7 @@ const (
 	AlignStart  Align = "start"
 )
 
-// Props configures a Figure. Caption renders a <figcaption> under the
-// media; empty renders none. Align defaults to centered.
+// Props configures Figure. An empty Caption renders no <figcaption>.
 type Props struct {
 	ID         string
 	Class      string
@@ -42,12 +41,8 @@ func alignClass(a Align) string {
 	return "items-center"
 }
 
-// Figure renders its children as a block of media with Caption beneath
-// in muted small text. Media and caption stack vertically, so at phone
-// width nothing collapses: the figure is as wide as its content and
-// wraps inside whatever Inline or grid places it.
-//
-// @pure
+// Figure renders its children as the media, with Caption beneath in small
+// muted text.
 func Figure(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -90,7 +85,7 @@ func Figure(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/figure/figure.templ`, Line: 47, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/figure/figure.templ`, Line: 42, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -138,7 +133,7 @@ func Figure(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Caption)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/figure/figure.templ`, Line: 54, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/figure/figure.templ`, Line: 49, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

@@ -51,7 +51,7 @@ func TestHoverLinkIsSanitized(t *testing.T) {
 	}
 }
 
-// TestHover_CardIsScrollableCapped pins batch 2 input #13: the card body is
+// TestHover_CardIsScrollableCapped: the card body is
 // capped to the height popover.min.js reports as available (--wf-pop-max,
 // falling back to 70vh before the script has positioned it) and scrolls
 // inside, so a tall card beside a mid-screen trigger at 390x844 never

@@ -6,22 +6,14 @@ import (
 	"sort"
 )
 
-// labelCharW is the approximate width in px of a single label character at the
-// 11px font size used for horizontal-orientation axis labels. Used both to size
-// the adaptive label gutter and to decide when a label needs truncation.
+// labelCharW is the approximate width in px of one character of an 11px
+// horizontal axis label.
 const labelCharW = 6.5
 
-// capBars enforces an optional cap on the number of bars. When maxBars <= 0
-// (the default) or the input already fits, the bars are returned untouched in
-// their original order — this preserves the historical behavior. When there are
-// more bars than maxBars, the largest maxBars bars are kept (stable-sorted
-// descending by raw Value, not |Value| — a large-magnitude negative sorts last)
-// and everything else is folded into a single aggregated "Other (K)" bar whose
-// value is the sum of the folded remainder and K is the number folded. The
-// caller's slice is never mutated.
-//
-// @pure - sorts a copy; no mutation of the input, no I/O
-// @complexity O(n log n) time, O(n) space, n = len(bars)
+// capBars keeps the maxBars largest bars (by raw Value, so a large negative
+// sorts last) and folds the rest into one "Other (K)" bar holding their sum.
+// It returns bars unchanged when maxBars <= 0 or they already fit, and never
+// mutates the input.
 func capBars(bars []Bar, maxBars int) []Bar {
 	if maxBars <= 0 || len(bars) <= maxBars {
 		return bars
@@ -41,12 +33,7 @@ func capBars(bars []Bar, maxBars int) []Bar {
 	return out
 }
 
-// longestLabelRunes returns the rune length of the widest bar label. Rune
-// length (not byte length) is used so multi-byte UTF-8 labels don't over-size
-// the gutter. Returns 0 for an empty slice or all-empty labels.
-//
-// @pure
-// @complexity O(total label bytes)
+// longestLabelRunes returns the length in runes of the longest bar label.
 func longestLabelRunes(bars []Bar) int {
 	m := 0
 	for _, b := range bars {
@@ -57,25 +44,11 @@ func longestLabelRunes(bars []Bar) int {
 	return m
 }
 
-// computeLabelGutter sizes the left label gutter for horizontal bar charts so
-// that real labels render fully instead of being clipped off the left edge of
-// the viewBox. It returns the gutter width and the (possibly widened) SVG width.
-//
-// Rules:
-//   - When labels are not shown, the historical 60px gutter and original width
-//     are returned unchanged (no regression for label-less charts).
-//   - The gutter is sized to the widest label (chars * labelCharW + padding),
-//     with a 60px floor so short-label charts are pixel-identical to before.
-//   - The gutter is capped at 45% of the SVG width so bars always have room. If
-//     the desired gutter exceeds that ceiling, the SVG is widened (up to 2x the
-//     original width) to accommodate it; anything still too long is clamped and
-//     will be truncated with an ellipsis + <title> tooltip by fitLabel.
-//
-// @pure
-// @complexity O(n) over bars (dominated by longestLabelRunes)
-// @invariant outWidth <= 2 * width always; gutter <= 0.45 * outWidth whenever
-// showLabels is true (the !showLabels early return keeps the fixed 60px gutter,
-// which can exceed 45% of a width below 134px)
+// computeLabelGutter returns the left label gutter for a horizontal chart and
+// the SVG width to use. Without labels the gutter is a fixed 60px. With
+// labels it fits the widest label (minimum 60px) but stays within 45% of the
+// SVG width, widening the SVG up to 2x to make room; labels that still don't
+// fit are truncated by fitLabel.
 func computeLabelGutter(bars []Bar, width int, showLabels bool) (gutter, outWidth int) {
 	const floor = 60
 	if !showLabels {
@@ -102,14 +75,9 @@ func computeLabelGutter(bars []Bar, width int, showLabels bool) (gutter, outWidt
 	return desired, outWidth
 }
 
-// fitLabel truncates a label to fit within a gutter of gutterPx pixels, adding a
-// trailing ellipsis when it does. It returns the display string and whether it
-// was truncated (so the caller can attach a <title> tooltip with the full text).
-// A gutter too narrow for even one character still yields a bare "…" rather
-// than an empty string, so the row is never silently unlabeled.
-//
-// @pure
-// @complexity O(len(label))
+// fitLabel truncates label with a trailing ellipsis to fit gutterPx and
+// reports whether it did. A gutter too narrow for one character still yields
+// "…", so a row is never unlabeled.
 func fitLabel(label string, gutterPx int) (string, bool) {
 	runes := []rune(label)
 	// Leave ~8px of padding inside the gutter for the text anchor offset.

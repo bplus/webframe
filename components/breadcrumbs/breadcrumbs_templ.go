@@ -16,8 +16,7 @@ type Item struct {
 	Href  string
 }
 
-// Props configures Breadcrumbs. Class is merged via utils.TwMerge;
-// Attributes spread onto the root <nav>.
+// Props configures Breadcrumbs.
 type Props struct {
 	ID         string
 	Class      string
@@ -27,10 +26,7 @@ type Props struct {
 
 // Breadcrumbs renders a navigation trail. Every item but the last is a
 // link; the last is a <span aria-current="page">. Separators are "/"
-// in aria-hidden spans. Zero items renders an empty <nav>; only the
-// first Props is used.
-//
-// @pure
+// in aria-hidden spans.
 func Breadcrumbs(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -73,7 +69,7 @@ func Breadcrumbs(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 34, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 30, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -128,7 +124,7 @@ func Breadcrumbs(props ...Props) templ.Component {
 						var templ_7745c5c3_Var5 templ.SafeURL
 						templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(it.Href)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 45, Col: 25}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 41, Col: 25}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 						if templ_7745c5c3_Err != nil {
@@ -141,7 +137,7 @@ func Breadcrumbs(props ...Props) templ.Component {
 						var templ_7745c5c3_Var6 string
 						templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 45, Col: 65}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 41, Col: 65}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 						if templ_7745c5c3_Err != nil {
@@ -159,7 +155,7 @@ func Breadcrumbs(props ...Props) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 47, Col: 24}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 43, Col: 24}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -182,7 +178,7 @@ func Breadcrumbs(props ...Props) templ.Component {
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 51, Col: 67}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/breadcrumbs/breadcrumbs.templ`, Line: 47, Col: 67}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {

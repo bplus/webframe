@@ -7,19 +7,12 @@
 // row per line; ModeSideBySide pairs each deletion with the addition that
 // follows it, old text left, new text right.
 //
-// Side-by-side rendering strategy: the component renders the hunk twice,
-// an inline table shown below md (`md:hidden`) and a side-by-side table
-// shown from md up (inside a `hidden overflow-x-auto md:block` wrapper).
-// Two renderings were chosen over one
-// CSS-grid table that collapses because the two layouts do not share a row
-// order (side-by-side pairs a deletion with the following addition; inline
-// keeps the diff's own order), so one DOM could not serve both without
-// JavaScript. The cost is duplicated markup for side-by-side diffs only.
+// A side-by-side diff renders each hunk twice, an inline table below md and
+// a side-by-side table from md up. The two layouts order rows differently,
+// so one DOM could not serve both without JavaScript.
 //
-// Phone width (390px): every diff is inline, the number gutters are narrow
-// (w-8, enough for four digits), the file header wraps (badge, then the
-// path), and a long line scrolls inside its hunk (overflow-x-auto on the
-// hunk, whitespace-pre on the text cell) rather than widening the page.
+// On a phone every diff is inline and a long line scrolls inside its hunk
+// rather than widening the page.
 package diffview
 
 import (
@@ -295,15 +288,11 @@ func summaryID(base string, i int) string {
 // any file header.
 var ErrNoFile = errors.New("diffview: hunk before any file header")
 
-// Parse reads a unified diff (as written by `git diff`, `diff -u` or `git
-// format-patch`) into Files. It understands `diff --git` headers with
-// `rename from`/`rename to`, `new file mode`, `deleted file mode`,
-// `similarity index` and `index` lines, the `---`/`+++` pair (with the a/
-// and b/ prefixes stripped and /dev/null meaning added or deleted), `@@`
-// hunk headers with optional counts, and `\ No newline at end of file`
-// markers (dropped). Diffs without `diff --git` lines (plain `---`/`+++`
-// pairs) parse too. Any other line outside a hunk is ignored; a content
-// line before any file, or a malformed `@@` header, is an error.
+// Parse reads a unified diff (from `git diff`, `diff -u` or `git
+// format-patch`) into Files, detecting added, deleted and renamed files and
+// stripping git's a/ and b/ prefixes. Diffs without `diff --git` lines
+// parse too. Unrecognized lines outside a hunk are ignored; a content line
+// before any file header, or a malformed `@@` header, is an error.
 func Parse(unified string) ([]File, error) {
 	var files []File
 	var cur *File

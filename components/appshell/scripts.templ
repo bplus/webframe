@@ -17,22 +17,12 @@ import (
 	"github.com/bplus/webframe/components/textarea"
 )
 
-// Scripts renders the standard script bundle: confirm.js (the htmx:confirm
-// interceptor; htmx itself loads in <head>, so this is the first tag of the
-// bundle and runs before any component script), then htmx-errors.js (the
-// htmx:beforeSwap guard that refuses to swap a non-HTML error body or an
-// error body aimed at a data-wf-swallow-errors element), then splitpane.js
-// (split pane list links: the detail swap from md up), then the Script()
-// tag of tabs, popover, dropdown, dialog, selectbox, autocomplete, input,
-// checkbox, textarea, avatar, label, slideover and filterbar, followed by
-// theme-toggle.js. Document renders it at the end of <body>. It
-// deliberately omits trafficstream and graphwidget; pages using those add
-// their own Script(). The first-party scripts each guard against a second
-// run (window.wf.confirm, window.wf.errors, window.wf.splitpane,
-// window.wf.theme, window.wf.autocomplete), since
-// htmx re-executes <script src> tags found in swapped content.
-//
-// @boundary
+// Scripts renders the standard script bundle that Document puts at the
+// end of <body>: confirm.js first (so it runs before any component
+// script), htmx-errors.js (refuses to swap non-HTML error bodies),
+// splitpane.js, then each common component's Script and theme-toggle.js.
+// trafficstream and graphwidget are not included; pages using them add
+// their own Script.
 templ Scripts() {
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/confirm.js") }></script>
 	<script defer nonce={ templ.GetNonce(ctx) } src={ assets.URL("/static/js/htmx-errors.js") }></script>

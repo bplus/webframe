@@ -15,12 +15,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// KeyValueEditor renders the editor: a root <div> (id p.ID, Alpine state
-// seeded from the rows it contains, see alpineData), the rows (one
-// [data-row] grid per Row with a key input named {Name}.key, a value input
-// named {Name}.value and a remove button), the x-for template that takes
-// over the rows under Alpine, and the Add row ghost button. Only the first
-// Props value is used.
+// KeyValueEditor renders the rows, the Alpine x-for template that takes
+// them over in the browser, and the Add row button.
 func KeyValueEditor(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -59,7 +55,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 23, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 19, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -85,7 +81,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(alpineData)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 25, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 21, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -98,7 +94,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.maxAttr())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 26, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 22, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -314,7 +310,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.AddLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 115, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/keyvalueeditor/keyvalueeditor.templ`, Line: 111, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {

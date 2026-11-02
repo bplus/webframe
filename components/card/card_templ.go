@@ -14,63 +14,51 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// Props configures the Card container. All fields are optional; Class
-// is merged into the base card classes via utils.TwMerge (caller classes
-// win Tailwind conflicts) and Attributes are spread onto the root <div>.
+// Props configures Card.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// HeaderProps configures the Header section; all fields optional.
+// HeaderProps configures Header.
 type HeaderProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// TitleProps configures the Title heading; all fields optional.
+// TitleProps configures Title.
 type TitleProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// DescriptionProps configures the Description paragraph; all fields
-// optional.
+// DescriptionProps configures Description.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// ContentProps configures the Content section; all fields optional.
+// ContentProps configures Content.
 type ContentProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// FooterProps configures the Footer section; all fields optional.
+// FooterProps configures Footer.
 type FooterProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// Card renders the outer surface for grouped content — a bordered,
-// full-width, rounded panel on the card background color. Call with no
-// arguments for defaults; only the first Props is used and extras are
-// silently ignored. Returns a templ.Component rendering a root <div>
-// whose children slot takes the section sub-components.
-//
-// @pure
-// @ai-context Composition contract (by convention, not enforced):
-// Card > [Header > [Title, Description], Content, Footer]. Spacing
-// depends on the order — Header uses p-6 pb-0, Content p-6, Footer p-6
-// pt-0 — so Header-then-Content-then-Footer is the only order that
-// produces even padding. Any sub-component may be omitted.
+// Card renders a bordered, rounded panel. Its children are, in order, an
+// optional Header (holding Title and Description), Content and Footer; the
+// sections' padding only comes out even in that order.
 func Card(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -117,7 +105,7 @@ func Card(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 71, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 59, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -166,12 +154,7 @@ func Card(props ...Props) templ.Component {
 }
 
 // Header renders the top section of a Card, stacking its children
-// (typically Title and Description) vertically with p-6 pb-0 padding.
-// Zero-value / omitted props give defaults; extras beyond the first are
-// ignored. Returns a templ.Component rendering a <div> with a children
-// slot.
-//
-// @pure
+// (typically Title and Description).
 func Header(props ...HeaderProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -218,7 +201,7 @@ func Header(props ...HeaderProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 99, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 82, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -266,12 +249,7 @@ func Header(props ...HeaderProps) templ.Component {
 	})
 }
 
-// Title renders the card's heading as an <h3> (semantic heading level
-// is fixed, not configurable) with a children slot for the heading
-// text. Zero-value / omitted props give defaults; extras beyond the
-// first are ignored.
-//
-// @pure
+// Title renders the card's heading. It is always an <h3>.
 func Title(props ...TitleProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -318,7 +296,7 @@ func Title(props ...TitleProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 126, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 104, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -366,11 +344,7 @@ func Title(props ...TitleProps) templ.Component {
 	})
 }
 
-// Description renders muted supporting text under a Title, as a <p>
-// with a children slot. Zero-value / omitted props give defaults;
-// extras beyond the first are ignored.
-//
-// @pure
+// Description renders muted supporting text under a Title.
 func Description(props ...DescriptionProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -417,7 +391,7 @@ func Description(props ...DescriptionProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 152, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 126, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -465,11 +439,7 @@ func Description(props ...DescriptionProps) templ.Component {
 	})
 }
 
-// Content renders the card body with uniform p-6 padding, as a <div>
-// with a children slot. Zero-value / omitted props give defaults;
-// extras beyond the first are ignored.
-//
-// @pure
+// Content renders the card body.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -516,7 +486,7 @@ func Content(props ...ContentProps) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 178, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 148, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -564,13 +534,8 @@ func Content(props ...ContentProps) templ.Component {
 	})
 }
 
-// Footer renders the bottom action row of a Card — children are laid
-// out horizontally (flex items-center) with p-6 pt-0 padding, typically
-// for buttons. Zero-value / omitted props give defaults; extras beyond
-// the first are ignored. Returns a templ.Component rendering a <div>
-// with a children slot.
-//
-// @pure
+// Footer renders the bottom row of a Card, laying its children (typically
+// buttons) out horizontally.
 func Footer(props ...FooterProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -617,7 +582,7 @@ func Footer(props ...FooterProps) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 206, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/card/card.templ`, Line: 171, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {

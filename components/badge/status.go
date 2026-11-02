@@ -2,9 +2,7 @@ package badge
 
 import "strings"
 
-// statusVariants maps a normalized status word (lower-case, trimmed) to the
-// badge Variant that conveys it. Words not listed here fall back to
-// VariantOutline in Status.
+// statusVariants maps a lower-cased, trimmed status word to its Variant.
 var statusVariants = map[string]Variant{
 	// Success
 	"published": VariantSuccess,
@@ -52,8 +50,6 @@ var statusVariants = map[string]Variant{
 //	running, building, in-progress, syncing, open             → Info
 //	warning, stale, degraded, retrying, flaky                 → Warning
 //	anything else                                             → Outline
-//
-// @pure
 func Status(kind string) Props {
 	key := strings.ToLower(strings.TrimSpace(kind))
 	if v, ok := statusVariants[key]; ok {
@@ -62,12 +58,9 @@ func Status(kind string) Props {
 	return Props{Variant: VariantOutline}
 }
 
-// StatusPtr is Status for the fields that take *Props (datatable.Cell.Badge,
-// descriptionlist.Item.Badge): it returns the address of a fresh Props so
-// callers stop writing a one-line helper for it. Prefer datatable.BadgeCell
-// and descriptionlist.BadgeItem, which call it.
-//
-// @pure returns a new pointer on every call; nothing is shared.
+// StatusPtr is Status for fields that take *Props, such as
+// datatable.Cell.Badge. datatable.BadgeCell and descriptionlist.BadgeItem
+// wrap it.
 func StatusPtr(kind string) *Props {
 	p := Status(kind)
 	return &p
@@ -77,8 +70,6 @@ func StatusPtr(kind string) *Props {
 // are trimmed, dashes and underscores become spaces, and only the first
 // letter is upper-cased ("in-progress" → "In progress", "FAILED" → "Failed").
 // An empty or all-space input yields "".
-//
-// @pure
 func StatusLabel(kind string) string {
 	s := strings.TrimSpace(kind)
 	if s == "" {

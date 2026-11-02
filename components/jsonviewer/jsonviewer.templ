@@ -5,19 +5,10 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// JSONViewer renders p.Value as a collapsible JSON tree inside a monospace
-// frame. Objects and arrays are <details> elements whose <summary> shows the
+// JSONViewer renders p.Value as a collapsible JSON tree in a monospace
+// frame. Objects and arrays are <details> elements whose summary shows the
 // key, the size ("{3}" / "[2]") and, with CopyPath, a copy button for the
-// node's path; scalars are one line each, toned by type (strings success,
-// numbers info, booleans warning, null muted). Collapsed, MaxDepth and Sort
-// are described on Props.
-//
-// Phone width (390px): see the package comment. The frame scrolls
-// horizontally only when a single line cannot fit; strings break anywhere
-// and the indent is capped at six levels so deep nesting never pushes the
-// tree past the viewport.
-//
-// @pure marshals p.Value once per render; no state or I/O beyond that
+// node's path; scalars are toned by type.
 templ JSONViewer(p Props) {
 	{{ root, err := build(p.Value, p.Sort) }}
 	<div

@@ -1,8 +1,8 @@
 // Package components_test contains a cross-package render smoke test: every
 // component package's primary constructor, called with zero-value Props,
 // must render without panicking, without erroring, and without leaking
-// template-generation artifacts (e.g. the templ.NopComponent text
-// bug) into its HTML output.
+// template-generation artifacts (such as the literal text of a
+// templ.NopComponent) into its HTML output.
 package components_test
 
 import (
@@ -120,12 +120,9 @@ type componentCase struct {
 	// expectEmptyReason explains why, so this isn't a silent skip.
 	expectEmptyReason string
 
-	// knownIssue points at a tracked bug that makes this row's output
-	// contain a banned substring today. While the issue is open the row is
-	// skipped (not failed) with a pointer to it. Once the bug is fixed the
-	// banned-substring check stops triggering and this case starts failing
-	// loudly again (with a message to remove knownIssue) — the row "flips"
-	// back to a real assertion instead of silently passing forever.
+	// knownIssue names a tracked bug that makes this row's output contain a
+	// banned substring. The row is skipped while the bug exists, and fails
+	// (asking for knownIssue to be removed) once the output is clean.
 	knownIssue string
 }
 

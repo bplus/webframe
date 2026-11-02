@@ -25,26 +25,20 @@ type DocProps struct {
 	Lang string
 	// Head, when non-nil, renders extra content at the end of <head>.
 	Head templ.Component
-	// Palette, when non-nil, renders commandpalette.Palette once at the end
-	// of <body>, before #toast-container. (*App).RenderParts fills it from
-	// App.Palette (or App.PaletteFor's result for the request); RenderBare
-	// leaves it nil.
+	// Palette, when non-nil, renders the command palette at the end of
+	// <body>.
 	Palette *commandpalette.Props
 }
 
 // htmxConfig makes htmx swap 4xx and 5xx responses like 2xx ones (htmx 2
-// leaves the target untouched on an error status by default). The server
-// decides what an error looks like: a 422 form re-render with the errors
-// under the fields, a 409 whose only body is a toast, a 404 error page, so
-// the status code can be truthful and the user still sees the answer. 204
-// still swaps nothing; the error status still fires htmx:responseError
-// for apps that listen.
+// ignores error bodies by default), so the server can send a truthful
+// status with a visible answer, such as a 422 form re-render. 204 still
+// swaps nothing, and error statuses still fire htmx:responseError.
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
 
-// PageTitle is the document title a page with title gets under the App in
-// ctx ("{title} — {App.Name}", the same rule Document applies), or "" when
-// no App is in ctx. A fragment response can carry it in a <title> so htmx
-// updates the tab and the history entry after a swap.
+// PageTitle returns the document title for title under the App in ctx,
+// or "" when there is none. A fragment response can carry it in a <title>
+// so htmx updates the tab after a swap.
 func PageTitle(ctx context.Context, title string) string {
 	app, ok := FromContext(ctx)
 	if !ok {
@@ -70,21 +64,11 @@ func docLang(p DocProps) string {
 	return p.Lang
 }
 
-// Document renders the complete HTML document frame: doctype, head
-// (charset, viewport, title, stylesheet, flash-free theme init reading
-// localStorage "wf-theme" and defaulting to light, blocking htmx, deferred
-// alpine, optional p.Head), then <body class="wf-theme antialiased"> holding
-// the children, the command palette when p.Palette is set (closed and
-// zero-height until mod+k or the shell's trigger opens it), the
-// #toast-container, the page's one confirm dialog
-// (confirmdialog.Host, id "wf-confirm", closed and zero-height until
-// confirm.js opens it for an hx-confirm request), the Scripts bundle, and an
-// inline htmx:afterSwap listener that calls Alpine.initTree on swapped-in
-// content.
-//
-// @side-effects inline scripts set data-theme on <html> and re-init Alpine
-// after HTMX swaps
-// @boundary browser localStorage ("wf-theme") and static asset URLs
+// Document renders the full HTML document around its children: head with
+// stylesheet, htmx, Alpine and an inline theme init (localStorage
+// "wf-theme", default light, applied before paint), and a body ending in
+// the optional palette, #toast-container, the confirm dialog, the Scripts
+// bundle, and a listener that initializes Alpine on htmx-swapped content.
 func Document(p DocProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -113,7 +97,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(docLang(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 82, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 66, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -126,7 +110,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(docTitle(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 86, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 70, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -139,7 +123,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("/static/css/output.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 87, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 71, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -152,7 +136,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(htmxConfig)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 100, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 84, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

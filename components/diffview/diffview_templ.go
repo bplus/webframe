@@ -13,9 +13,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Shared cell classes. Gutters are w-8 (four digits) below md and w-12 from
-// md up; every cell is dense monospace. select-none on gutters and markers
-// keeps a copy of the diff text free of line numbers.
+// Shared cell classes. select-none on gutters and markers keeps a copy of
+// the diff text free of line numbers.
 const (
 	gutterClass = "w-8 md:w-12 shrink-0 select-none px-1 text-right align-top text-muted-foreground"
 	markerCell  = "w-4 select-none px-1 text-center align-top"
@@ -24,19 +23,9 @@ const (
 	hunkHeader  = "bg-muted/60 px-2 py-1 font-mono text-xs text-muted-foreground whitespace-pre overflow-x-auto"
 )
 
-// DiffView renders p.Files as collapsible per-file sections. Each file is a
-// <details> (open unless Collapsed) whose <summary> carries a status badge
-// and the path, "old → new" for a rename; each hunk is its header line over
-// a table with old/new number gutters, a +/-/space marker and the text,
-// rows tinted bg-success/10 (added) and bg-destructive/10 (deleted).
-// ModeSideBySide renders a second table per hunk with old text left and new
-// text right, shown from md up while the inline table is shown below md
-// (see the package comment for why two renderings).
-//
-// Phone width (390px): always the inline table; gutters w-8; the summary
-// wraps badge over path; a long line scrolls inside the hunk.
-//
-// @pure renders markup only
+// DiffView renders p.Files as collapsible per-file <details> sections,
+// each headed by a status badge and the path ("old → new" for a rename).
+// Line numbers and markers are select-none, so copied text is just the code.
 func DiffView(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -75,7 +64,7 @@ func DiffView(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 35, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 24, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -106,7 +95,7 @@ func DiffView(p Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(modeAttr(p.Mode))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 38, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 27, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -167,7 +156,7 @@ func (p Props) fileView(f File, i int) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(statusAttr(f.Status))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 51, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 40, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -195,7 +184,7 @@ func (p Props) fileView(f File, i int) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 58, Col: 11}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 47, Col: 11}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +214,7 @@ func (p Props) fileView(f File, i int) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(statusLabel(f.Status))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 64, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 53, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -249,7 +238,7 @@ func (p Props) fileView(f File, i int) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(f.OldPath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 68, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 57, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -263,7 +252,7 @@ func (p Props) fileView(f File, i int) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(f.Path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 72, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 61, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -341,7 +330,7 @@ func (p Props) hunkView(h Hunk) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(h.Header)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 89, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 78, Col: 39}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -474,7 +463,7 @@ func inlineTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(kindAttr(l.Kind))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 107, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 96, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -509,7 +498,7 @@ func inlineTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var27 string
 			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(num(l.OldNo))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 108, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 97, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
@@ -544,7 +533,7 @@ func inlineTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var30 string
 			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(num(l.NewNo))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 109, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 98, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 			if templ_7745c5c3_Err != nil {
@@ -579,7 +568,7 @@ func inlineTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(marker(l.Kind))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 110, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 99, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -614,7 +603,7 @@ func inlineTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var36 string
 			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(l.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 111, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 100, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 			if templ_7745c5c3_Err != nil {
@@ -708,7 +697,7 @@ func sideBySideTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(gutterNo(pr.Left, true))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 131, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 120, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {
@@ -743,7 +732,7 @@ func sideBySideTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(text(pr.Left))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 132, Col: 121}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 121, Col: 121}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -778,7 +767,7 @@ func sideBySideTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var48 string
 			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(gutterNo(pr.Right, false))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 133, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 122, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 			if templ_7745c5c3_Err != nil {
@@ -813,7 +802,7 @@ func sideBySideTable(lines []Line) templ.Component {
 			var templ_7745c5c3_Var51 string
 			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(text(pr.Right))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 134, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/diffview/diffview.templ`, Line: 123, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 			if templ_7745c5c3_Err != nil {

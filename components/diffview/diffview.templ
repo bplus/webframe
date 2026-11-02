@@ -5,9 +5,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Shared cell classes. Gutters are w-8 (four digits) below md and w-12 from
-// md up; every cell is dense monospace. select-none on gutters and markers
-// keeps a copy of the diff text free of line numbers.
+// Shared cell classes. select-none on gutters and markers keeps a copy of
+// the diff text free of line numbers.
 const (
 	gutterClass = "w-8 md:w-12 shrink-0 select-none px-1 text-right align-top text-muted-foreground"
 	markerCell  = "w-4 select-none px-1 text-center align-top"
@@ -16,19 +15,9 @@ const (
 	hunkHeader  = "bg-muted/60 px-2 py-1 font-mono text-xs text-muted-foreground whitespace-pre overflow-x-auto"
 )
 
-// DiffView renders p.Files as collapsible per-file sections. Each file is a
-// <details> (open unless Collapsed) whose <summary> carries a status badge
-// and the path, "old → new" for a rename; each hunk is its header line over
-// a table with old/new number gutters, a +/-/space marker and the text,
-// rows tinted bg-success/10 (added) and bg-destructive/10 (deleted).
-// ModeSideBySide renders a second table per hunk with old text left and new
-// text right, shown from md up while the inline table is shown below md
-// (see the package comment for why two renderings).
-//
-// Phone width (390px): always the inline table; gutters w-8; the summary
-// wraps badge over path; a long line scrolls inside the hunk.
-//
-// @pure renders markup only
+// DiffView renders p.Files as collapsible per-file <details> sections,
+// each headed by a status badge and the path ("old → new" for a rename).
+// Line numbers and markers are select-none, so copied text is just the code.
 templ DiffView(p Props) {
 	<div
 		if p.ID != "" {

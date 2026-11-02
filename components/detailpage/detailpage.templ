@@ -8,24 +8,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Page renders the detail page in this order: pageheader; then the summary
-// descriptionlist (when it has items), the tabs (when there are any), and
-// the children (free content) — those three directly under the header, or,
-// when Aside is set, inside the main column of a layout.TwoColumn whose
-// aside is Aside. At phone width the summary collapses to one column and
-// the aside stacks under the main column (both are the composed
-// components' own behavior).
-//
-// Tabs: each Tab is a tabs.Trigger (label) and a tabs.Content panel with
-// id Tab.ID+"-panel". An inline tab renders Tab.Content in its panel. A
-// lazy tab (HxGet set) renders an empty panel and puts hx-get=HxGet,
-// hx-target="#<ID>-panel", hx-trigger="click once" on the Trigger; when
-// the lazy tab is the active one its trigger is "load" instead, so the
-// open panel is filled at page load rather than left blank. The lazy
-// response is swapped into the panel's innerHTML, so the handler returns
-// the panel body only.
-//
-// @pure
+// Page renders the pageheader, then the summary, the tabs and the
+// children, in that order. With Aside set, everything after the header sits
+// in the main column of a layout.TwoColumn.
 templ Page(p Props) {
 	<div
 		if p.ID != "" {

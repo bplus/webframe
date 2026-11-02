@@ -14,8 +14,7 @@ const (
 	AlignStart  Align = "start"
 )
 
-// Props configures a Figure. Caption renders a <figcaption> under the
-// media; empty renders none. Align defaults to centered.
+// Props configures Figure. An empty Caption renders no <figcaption>.
 type Props struct {
 	ID         string
 	Class      string
@@ -31,12 +30,8 @@ func alignClass(a Align) string {
 	return "items-center"
 }
 
-// Figure renders its children as a block of media with Caption beneath
-// in muted small text. Media and caption stack vertically, so at phone
-// width nothing collapses: the figure is as wide as its content and
-// wraps inside whatever Inline or grid places it.
-//
-// @pure
+// Figure renders its children as the media, with Caption beneath in small
+// muted text.
 templ Figure(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

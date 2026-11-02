@@ -19,85 +19,66 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures Form, the <form> element itself. The zero value
-// renders <form method="post"> with no action (submits to the current
-// URL). Class merges after the built-in classes via utils.TwMerge;
-// Attributes spread last on the <form>, so a caller attribute wins
-// over anything Props would emit.
+// Props configures Form. The zero value renders <form method="post"> with no
+// action (submits to the current URL). Attributes are spread last, so they
+// win over anything Props emits.
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	// Action is the submit URL, emitted plain (templ sanitizes it; no
-	// templ.SafeURL). Empty omits the attribute.
+	// Action is the submit URL (sanitized by templ). Empty omits it.
 	Action string
-	// Method is "post" when empty; "get" is the other valid value and
-	// is passed through as written.
+	// Method defaults to "post".
 	Method string
-	// HxPost / HxGet / HxTarget / HxSwap are emitted as the matching
-	// hx-* attributes when non-empty. HxPost and HxGet are independent
-	// of Action/Method: set both for a form that works with and without
-	// htmx.
+	// HxPost, HxGet, HxTarget and HxSwap emit the matching hx-* attributes
+	// when set. They are independent of Action/Method: set both for a form
+	// that works with and without htmx.
 	HxPost, HxGet, HxTarget, HxSwap string
-	// Hidden renders one <input type="hidden" name=key value=val> per
-	// entry before the children, in sorted key order so markup is
-	// deterministic.
+	// Hidden renders one hidden input per entry before the children, in
+	// sorted key order so markup is deterministic.
 	Hidden map[string]string
-	// NoValidate emits novalidate: the browser skips its own
-	// required/pattern checks and the server does all validation.
+	// NoValidate disables the browser's own required/pattern checks.
 	NoValidate bool
-	// Multipart emits enctype="multipart/form-data"; required for file
-	// inputs.
+	// Multipart sets enctype="multipart/form-data", required for file inputs.
 	Multipart bool
 }
 
-// MessageVariant selects the color of a Message. The zero value
-// leaves the text in the surrounding foreground color. Colors are theme
-// tokens: destructive for errors, info for hints.
+// MessageVariant selects the color of a Message. The zero value inherits
+// the surrounding text color.
 type MessageVariant string
 
-// Message color variants: error renders in the destructive token
-// (validation failures), info in the info token (neutral hints).
+// Message variants: errors use the destructive color, hints the info color.
 const (
 	MessageVariantError MessageVariant = "error"
 	MessageVariantInfo  MessageVariant = "info"
 )
 
-// ItemProps configures the Item and ItemFlex field wrappers. The zero
-// value is fine; Class merges after the built-in layout classes via
-// utils.TwMerge.
+// ItemProps configures Item and ItemFlex.
 type ItemProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// LabelProps configures form.Label; ID, Class, Attributes, and For are
-// forwarded to the underlying label component.
+// LabelProps configures Label.
 type LabelProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	// For is the id of the control this label describes; it must match
-	// the control's rendered id (auto-id components like input need an
-	// explicit ID).
+	// For is the id of the control this label describes. It must match the
+	// control's rendered id, so give auto-id components like input an
+	// explicit ID.
 	For string
-	// DisabledClass is currently unused: form.Label does not forward
-	// it, and the label component hardcodes its disabled styling.
-	DisabledClass string
 }
 
-// DescriptionProps configures Description. The zero value is fine;
-// Class merges after the built-in classes via utils.TwMerge.
+// DescriptionProps configures Description.
 type DescriptionProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 }
 
-// MessageProps configures Message. The zero-value Variant renders
-// uncolored text; use MessageVariantError/MessageVariantInfo for
-// red/blue feedback.
+// MessageProps configures Message.
 type MessageProps struct {
 	ID         string
 	Class      string
@@ -105,16 +86,9 @@ type MessageProps struct {
 	Variant    MessageVariant
 }
 
-// Form renders the <form> element that app code uses instead of a raw
-// <form> (wflint forbids the raw tag): method defaults to "post", the
-// Hidden entries render first as hidden inputs in sorted key order,
-// then the children. Accepts zero or one Props (extras ignored).
-// Phone width: a block element with no layout of its own; the fields
-// inside decide how they stack.
-//
-// @pure
-// @invariant Hidden keys are emitted sorted so two renders of the same
-// map produce identical markup.
+// Form renders a <form> element; app code uses it instead of a raw <form>
+// tag, which wflint forbids. Hidden inputs render before the children. It
+// has no layout of its own.
 func Form(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -160,7 +134,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 118, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 92, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -198,7 +172,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 templ.SafeURL
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(p.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 124, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 98, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -216,7 +190,7 @@ func Form(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Method)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 126, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 100, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -246,7 +220,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 132, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 106, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -265,7 +239,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxGet)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 135, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 109, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -284,7 +258,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 138, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 112, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -303,7 +277,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxSwap)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 141, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 115, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -330,7 +304,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(k)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 146, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 120, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -343,7 +317,7 @@ func Form(props ...Props) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Hidden[k])
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 146, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 120, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -376,13 +350,8 @@ func hiddenKeys(m map[string]string) []string {
 	return keys
 }
 
-// Item renders the vertical wrapper for one form field: a <div> with
-// space-y-2 that stacks its children — typically form.Label, the
-// control, form.Description, and form.Message — with consistent
-// spacing. Accepts zero or one ItemProps (extras ignored); returns a
-// templ.Component rooted at the <div> with children rendered inside.
-//
-// @pure
+// Item stacks one form field vertically: typically Label, the control,
+// Description and Message.
 func Item(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -425,7 +394,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 176, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 145, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -473,13 +442,8 @@ func Item(props ...ItemProps) templ.Component {
 	})
 }
 
-// ItemFlex is the horizontal counterpart of Item: an items-center
-// flex row with space-x-2, suited to fields where the control sits
-// beside its label (checkboxes, radios, switches). Accepts zero or
-// one ItemProps (extras ignored); returns a templ.Component rooted at
-// the <div> with children rendered inside.
-//
-// @pure
+// ItemFlex is the horizontal counterpart of Item, for fields where the
+// control sits beside its label (checkboxes, radios, switches).
 func ItemFlex(props ...ItemProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -522,7 +486,7 @@ func ItemFlex(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 199, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 163, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -570,22 +534,8 @@ func ItemFlex(props ...ItemProps) templ.Component {
 	})
 }
 
-// Label is the form-scoped wrapper around label.Label, so form
-// markup reads uniformly (form.Item > form.Label > form.Message). It
-// forwards ID, Class, Attributes, and For, and renders children as
-// the label text; the underlying label supplies styling and the
-// disabled-dimming hook.
-//
-// Accepts zero or one LabelProps (extras ignored); returns a
-// templ.Component rooted at the <label> element.
-//
-// @invariant For must equal the described control's rendered id for
-// click-to-focus and accessibility to work.
-// @ai-context LabelProps.DisabledClass is confirmed dead
-// configuration: this wrapper forwards only ID, Class, Attributes, and
-// For; label.Props has no DisabledClass field, and label.Label
-// hardcodes its disabled styling ("opacity-50 cursor-not-allowed") via
-// data-tui-label-disabled-style. Setting it has no effect.
+// Label wraps label.Label so form markup reads uniformly
+// (form.Item > form.Label > form.Message).
 func Label(props ...LabelProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -642,13 +592,7 @@ func Label(props ...LabelProps) templ.Component {
 	})
 }
 
-// Description renders muted helper text (<p class="text-sm
-// text-muted-foreground">) for a form field — the always-visible hint
-// under a control, as opposed to Message which carries state-colored
-// feedback. Accepts zero or one DescriptionProps (extras ignored);
-// children are the text; returns a templ.Component rooted at the <p>.
-//
-// @pure
+// Description renders muted, always-visible helper text under a control.
 func Description(props ...DescriptionProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -691,7 +635,7 @@ func Description(props ...DescriptionProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 253, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 197, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -739,19 +683,9 @@ func Description(props ...DescriptionProps) templ.Component {
 	})
 }
 
-// Message renders a small feedback line (<p>) colored by Variant:
-// text-destructive for MessageVariantError, text-info for
-// MessageVariantInfo, inherited color for the zero value. It carries the validation text whose
-// presence usually accompanies HasError on the control and Error on
-// the label (those style themselves; this renders the words).
-//
-// Accepts zero or one MessageProps (extras ignored); children are the
-// message text; returns a templ.Component rooted at the <p>.
-//
-// @pure
-// @ai-context Message has no show/hide logic of its own — the caller
-// decides whether to render it (typically only when validation
-// produced text).
+// Message renders a feedback line, such as a validation error, colored by
+// Variant. It has no show/hide logic: the caller renders it only when there
+// is something to say.
 func Message(props ...MessageProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -799,7 +733,7 @@ func Message(props ...MessageProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 282, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/form/form.templ`, Line: 216, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {

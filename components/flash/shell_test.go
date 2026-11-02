@@ -16,7 +16,7 @@ import (
 // TestShell_FlashShowsOnceOnNextFullPage drives the real wiring: a handler
 // sets the flash and redirects; the next full render shows the banner inside
 // #wf-flash and clears the cookie; a reload shows nothing; an htmx body-only
-// render never consumes it.
+// render consumes it as an out-of-band swap.
 func TestShell_FlashShowsOnceOnNextFullPage(t *testing.T) {
 	app := &appshell.App{Name: "Movies", HomeHref: "/"}
 	app.Flash = Take
@@ -48,9 +48,8 @@ func TestShell_FlashShowsOnceOnNextFullPage(t *testing.T) {
 	}
 
 	// 2. An htmx body-only render with the cookie consumes it too: the
-	// banner follows the fragment out of band into #wf-flash (so a flash
-	// set by an htmx action, or by a redirect htmx followed as XHR, shows
-	// on the page the user is looking at) and the cookie is cleared.
+	// banner follows the fragment out of band into #wf-flash and the
+	// cookie is cleared.
 	rec = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/movies", nil)
 	r.Header.Set("HX-Request", "true")

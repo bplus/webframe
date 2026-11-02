@@ -10,10 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/components/button"
 
-// Button renders one Action as an <a> (plain link) or a <button>
-// (anything with Hx* attributes, Submit, or no Href), with optional
-// Icon before the Label. Submit gives the button type="submit"; Form
-// and FullWidth pass through to button.Props.
+// Button renders an Action as an <a> when it is a plain link (see
+// IsLink), otherwise as a <button>, with Icon before the Label.
 func Button(a Action) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -60,7 +58,7 @@ func Button(a Action) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(a.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/action/action.templ`, Line: 14, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/action/action.templ`, Line: 12, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -80,7 +78,7 @@ func Button(a Action) templ.Component {
 	})
 }
 
-// Group renders actions as an inline row with a gap-2 gap, in order.
+// Group renders actions as a wrapping inline row.
 func Group(actions []Action) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

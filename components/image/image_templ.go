@@ -14,10 +14,8 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Fit controls how the picture fills its box when Width/Height (or a
-// caller class) fix the box to a shape the file does not match. The zero
-// value keeps the whole picture visible (object-contain behaviour);
-// FitCover crops to fill the box.
+// Fit controls how the picture fills a box whose shape it does not match.
+// The zero value keeps the whole picture visible; FitCover crops to fill.
 type Fit string
 
 const (
@@ -25,19 +23,11 @@ const (
 	FitCover   Fit = "cover"
 )
 
-// Props configures an Image. Only Src and Alt are normally set.
-//
-//   - Src is the image URL. It is URL-sanitized: a javascript: or other
-//     unsafe scheme renders as about:invalid. An empty Src omits the
-//     attribute entirely (src="" would make the browser fetch the page).
-//   - Alt is always emitted, even when empty: alt="" marks the picture as
-//     decorative for screen readers, a missing alt makes them read the URL.
-//   - Width/Height are the intrinsic pixel size, emitted as width/height
-//     attributes so the browser reserves the box before the file arrives
-//     and nothing on the page moves. 0 omits the attribute.
-//   - Eager turns off loading="lazy" for above-the-fold images.
-//   - Fit applies object-fit when Width/Height fix the box.
-//   - Rounded adds rounded-md.
+// Props configures Image. Src is URL-sanitized (an unsafe scheme such as
+// javascript: renders as about:invalid) and omitted when empty. Alt is
+// always emitted; empty marks the picture decorative. Width and Height are
+// the intrinsic pixel size, so the browser reserves the box before the file
+// arrives. Eager turns off loading="lazy" for above-the-fold images.
 type Props struct {
 	ID         string
 	Class      string
@@ -51,21 +41,10 @@ type Props struct {
 	Rounded    bool
 }
 
-// Image is the component every picture in an app goes through, so sizing,
-// loading and fit are webframe's decisions rather than attributes in a
-// page body (the ui lint forbids a raw <img>). Only the first Props is
-// used. Renders a self-closing <img> with loading="lazy" and
-// decoding="async" by default; width/height are emitted only when > 0.
-//
-// Phone width: the base class is max-w-full, so a picture wider than its
-// column shrinks to the column; with the zero Fit it keeps its aspect
-// ratio (h-auto). With FitCover the height attribute governs the box and
-// the picture is cropped to fill it.
-//
-// Compose: figure.Figure is the captioned wrapper, aspectratio.AspectRatio
-// the fixed-ratio frame (give the Image Class "h-full w-full" inside it).
-//
-// @pure
+// Image renders an <img> (wflint forbids a raw one in pages), lazy-loaded
+// and async-decoded by default, shrinking to its column's width. For a
+// caption wrap it in figure.Figure; for a fixed ratio put it in
+// aspectratio.AspectRatio with Class "h-full w-full".
 func Image(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -108,7 +87,7 @@ func Image(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 68, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 47, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -127,7 +106,7 @@ func Image(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.URL(p.Src))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 71, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 50, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -145,7 +124,7 @@ func Image(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Alt)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 73, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 52, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -163,7 +142,7 @@ func Image(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.Width))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 75, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 54, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -182,7 +161,7 @@ func Image(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.Height))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 78, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/image/image.templ`, Line: 57, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -229,7 +208,7 @@ func Image(props ...Props) templ.Component {
 }
 
 // fitClass: the zero Fit keeps the natural aspect ratio (h-auto, so the
-// width/height attributes only reserve the box); FitCover crops.
+// width/height attributes only reserve the box).
 func fitClass(f Fit) string {
 	if f == FitCover {
 		return "object-cover"

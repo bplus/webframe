@@ -17,19 +17,16 @@ import (
 	"github.com/bplus/webframe/components/tabs"
 )
 
-// Tab is one tab of the detail page. ID is the tab value (unique within the
-// page) and also names the panel element: ID+"-panel". Content is rendered
-// inline inside the panel. HxGet makes the tab lazy instead: the panel is
-// rendered empty and the tab's Trigger carries hx-get=HxGet,
-// hx-target="#"+ID+"-panel" and hx-trigger="click once" (or "load" when the
-// tab is the active one, so an active lazy tab is never blank). The
-// handler behind HxGet returns the panel body as a plain fragment (no tabs
-// wrapper needed; it is swapped into the panel's innerHTML). Content is
-// ignored when HxGet is set.
+// Tab is one tab of the detail page. ID must be unique within the page and
+// also names the panel element (see PanelID). Content renders inline in the
+// panel. Setting HxGet makes the tab lazy instead (Content is ignored): the
+// panel renders empty and is filled on the tab's first click, or at page
+// load when it is the active tab. The HxGet handler returns the panel body
+// as a plain fragment.
 //
-// The trigger is a click, not "revealed" or "intersect": under tabs'
-// default (tallest) sizing inactive panels are laid out, only
-// visibility-hidden, so a viewport-based trigger would fire at page load.
+// The trigger is a click, not "revealed": under tabs' default sizing,
+// inactive panels are laid out (only visibility-hidden), so a
+// viewport-based trigger would fire at page load.
 type Tab struct {
 	ID, Label string
 	Content   templ.Component
@@ -42,9 +39,8 @@ func (t Tab) Lazy() bool { return t.HxGet != "" }
 // PanelID is the element id of the tab's panel: ID+"-panel".
 func (t Tab) PanelID() string { return t.ID + "-panel" }
 
-// triggerAttrs returns the htmx attributes for the tab's Trigger: none for
-// an inline tab; hx-get/hx-target/hx-trigger for a lazy one. The active lazy
-// tab fires on "load" (and never again); an inactive one on its first click.
+// triggerAttrs returns the htmx attributes for a lazy tab's Trigger, nil
+// for an inline one.
 func (t Tab) triggerAttrs(active bool) templ.Attributes {
 	if !t.Lazy() {
 		return nil
@@ -60,13 +56,9 @@ func (t Tab) triggerAttrs(active bool) templ.Attributes {
 	}
 }
 
-// Props declares a detail page. Header is the pageheader; Summary is the
-// description list directly under it (SummaryColumns 1 or 2; zero means 1);
-// Tabs render below the summary, ActiveTab naming the open one ("" means
-// the first); TabsSizing is passed to tabs.Tabs (default tallest). With
-// Aside set, everything after the header sits in a layout.TwoColumn with
-// AsideWidth and AsideSticky. Class is merged onto the root with
-// utils.TwMerge; Attributes spread last on the root element.
+// Props declares a detail page. Summary is the description list under the
+// header. ActiveTab names the open tab; empty or unknown means the first.
+// With Aside set, everything after the header sits in a layout.TwoColumn.
 type Props struct {
 	ID         string
 	Class      string
@@ -118,17 +110,15 @@ func (p Props) twoColumnProps() layout.TwoColumnProps {
 	return layout.TwoColumnProps{Aside: p.Aside, AsideWidth: p.AsideWidth, Sticky: p.AsideSticky}
 }
 
-// Respond writes the detail page for r: the full document (shell and all)
-// for a normal or boosted request, the bare page body for a plain htmx
-// request, per appshell's Render rule. The App comes from the request
-// context, so the handler chain must include (*appshell.App).Middleware;
-// otherwise Respond returns the error from appshell.Must without writing.
-// Lazy tab panels are not served here: the app registers its own handler
-// for each Tab.HxGet URL and returns the panel body as a fragment.
+// Respond writes the detail page for r via appshell's Render: the full
+// document for a normal or boosted request, the bare body for a plain htmx
+// request. The handler chain must include (*appshell.App).Middleware;
+// otherwise Respond returns an error without writing. Lazy tab panels are
+// served by the app's own handlers for each Tab.HxGet.
 //
-// Respond renders Page(p) with no children. To put free content under the
-// summary or tabs from a handler, render Page(p) yourself with
-// templ.WithChildren and pass it to app.Render.
+// Respond renders Page(p) with no children. For free content under the
+// summary or tabs, render Page(p) with templ.WithChildren and pass it to
+// app.Render.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

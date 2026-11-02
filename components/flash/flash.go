@@ -46,16 +46,10 @@ type wire struct {
 	Body  string         `json:"b,omitempty"`
 }
 
-// Set stores m in the flash cookie on w so the next full page the shell
-// renders for this browser shows it once. Call it before the redirect (or
-// before the first body write) of the response that handled the action.
-//
-// The cookie is HttpOnly, SameSite=Lax, Path=/, MaxAge 5 minutes, and
-// Secure when r arrived over TLS or behind a proxy that set
-// X-Forwarded-Proto: https. The value is base64url(JSON); a Body too long
-// for the 2 KB cap is truncated and ends in "…" (a Title too long for even
-// an empty Body is truncated the same way). A Message with no Title and no
-// Body still sets the cookie, and Take then renders nothing.
+// Set stores m in the flash cookie so the next page rendered for this
+// browser shows it once. Call it before the first body write. The cookie is
+// Secure when r arrived over TLS or with X-Forwarded-Proto: https. Text too
+// long for the 2 KB cap is truncated (Body first, then Title) and ends in "…".
 func Set(w http.ResponseWriter, r *http.Request, m Message) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
@@ -89,17 +83,10 @@ func Success(w http.ResponseWriter, r *http.Request, title, body string) {
 	Set(w, r, Message{Kind: banner.VariantSuccess, Title: title, Body: body})
 }
 
-// Take consumes the flash cookie on r: it returns Flash(m) for the message
-// it carried, or nil when there is no cookie, the value does not decode, or
-// the message has no text. Whenever the cookie is present Take clears it on
-// w (MaxAge -1, same Path) whether or not it decoded, so a tampered or
-// stale value is dropped by the same render that saw it; with no cookie it
-// writes no header at all. Take never panics on garbage.
-//
-// Take has the signature appshell.App.Flash expects: App.Flash = flash.Take
-// is the whole wiring. appshell calls it once per response (shell render
-// or htmx fragment; see the package doc), before the first body write, so
-// the clearing Set-Cookie is sent.
+// Take consumes the flash cookie on r and returns Flash(m) for its message,
+// or nil when there is no cookie, the value does not decode, or the message
+// has no text. Whenever the cookie is present Take clears it, decoded or
+// not; with no cookie it writes no header. It matches appshell.App.Flash.
 func Take(w http.ResponseWriter, r *http.Request) templ.Component {
 	c, err := r.Cookie(CookieName)
 	if err != nil {

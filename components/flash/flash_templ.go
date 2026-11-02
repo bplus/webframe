@@ -3,13 +3,11 @@
 // templ: version: v0.3.1001
 // Package flash carries a one-shot message across a redirect and shows it
 
-// once on the next page. A handler that answers an action with a redirect
+// once on the next page. A handler calls flash.Error (or Set, Success, ...)
 
-// has no page to put a banner on; it calls flash.Error (or Set) before
+// before redirecting; the shell renders the message in its #wf-flash slot
 
-// redirecting, the shell renders the message in its #wf-flash slot above
-
-// the page body on the next render, and the same render clears it, so a
+// above the page body on the next render, and that render clears it, so a
 
 // reload shows nothing.
 
@@ -23,49 +21,23 @@
 
 //
 
-// appshell calls App.Flash once per response, before the first body write:
+// appshell calls App.Flash once per response, before the first body write.
 
-// a response that includes the shell (a plain request, a boosted link, a
+// A response that includes the shell renders the banner inside #wf-flash; a
 
-// history restore) renders the banner inside #wf-flash; a body-only or
+// body-only or part-only htmx response appends it as an out-of-band swap of
 
-// part-only htmx response appends the banner after the fragment as an
+// #wf-flash, so a flash set by an htmx action (or a redirect htmx followed)
 
-// out-of-band swap of #wf-flash, so a flash set by an htmx action, or by a
-
-// redirect htmx followed as XHR, shows on the page the user is looking at
-
-// rather than on some later full page. The cookie
-
-// is HttpOnly, SameSite=Lax, Path=/, lives at most five minutes, and holds
-
-// base64url(JSON) under 2 KB; a value that does not decode renders nothing
-
-// and is cleared like any other.
+// shows on the page the user is looking at.
 
 //
 
-// flash.Error is for an action that failed and sent the user elsewhere;
+// The cookie is HttpOnly, SameSite=Lax, Path=/, lives at most five minutes,
 
-// flash.Success is the ordinary "Saved" after a redirect; Warning and Info
+// and holds base64url(JSON) under 2 KB; a value that does not decode renders
 
-// are notices. (The project's rule against per-field "looks good" markers
-
-// is about form fields, not about these.)
-
-//
-
-// Phone width (390px): the flash is a banner.Banner in normal flow inside
-
-// the shell's main content, so it keeps the content's 16px gutters, wraps
-
-// its text, and adds no horizontal overflow (no negative margins, no fixed
-
-// widths). Below it the page body starts one banner height plus 24px lower
-
-// than it would without a flash; nothing overlaps and nothing jumps after
-
-// load. Dismissing it hides it client-side only.
+// nothing and is cleared like any other.
 
 package flash
 
@@ -76,10 +48,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/components/banner"
 
-// Flash renders m as a dismissible banner with a 24px bottom margin, so the
-// page body below starts where it would without a flash plus one banner
-// height. Error messages carry role="alert"; every other kind role="status".
-// Take returns this; an app renders it directly only in a test or showcase.
+// Flash renders m as a dismissible banner with a 24px bottom margin. Error
+// messages carry role="alert"; every other kind role="status". Apps normally
+// get it from Take rather than calling it directly.
 func Flash(m Message) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

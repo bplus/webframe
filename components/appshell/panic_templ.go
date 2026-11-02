@@ -8,16 +8,9 @@ package appshell
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// PanicPage is the body of the default 500 answer App.Middleware writes
-// when a handler panics and App.OnPanic is not set: a short message and
-// the request id in small monospace, centered, no component below it so
-// it needs nothing of the app that may itself be broken. An app that
-// wants the styled page assigns App.OnPanic = errorpage.PanicHandler.
-//
-// Phone: one centered column inside the page's own padding; the id is
-// break-all so it never widens the page.
-//
-// @pure
+// PanicPage is the body of the default 500 page: a short message and the
+// request id. It uses no components, so it renders even when the app is
+// broken.
 func PanicPage(requestID string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -51,7 +44,7 @@ func PanicPage(requestID string) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(requestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/panic.templ`, Line: 18, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/panic.templ`, Line: 11, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {

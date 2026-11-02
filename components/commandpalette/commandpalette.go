@@ -1,26 +1,20 @@
 // Package commandpalette is the app-wide "jump anywhere" dialog: a search
 // input over a server-rendered, grouped list of links that Alpine filters
 // as the user types. It opens on a keyboard shortcut (mod+k by default:
-// Cmd+K on a Mac, Ctrl+K elsewhere) and from Trigger, the ghost button the
-// shell shows in its topbar / sidebar footer.
+// Cmd+K on a Mac, Ctrl+K elsewhere) and from Trigger, a ghost button.
 //
 // An app sets appshell.App.Palette to a *Props; the shell then renders
 // Trigger in its right controls and appshell.Document renders Palette once
 // near the end of <body>. App code never renders Palette or Trigger itself.
 //
-// Every item is a plain <a href>, so the list works without JS (open the
-// dialog through its id and the links are ordinary links) and Enter on the
-// active item is a plain navigation (the anchor's click; hx-boost applies
-// when the page has it, nothing else is assumed). Filtering, the active
-// row and the shortcut live in one inline Alpine x-data on the dialog
-// root; the JS reads labels and keywords from the items' data attributes,
-// never from values baked into the script.
+// Every item is a plain <a href>, so Enter on the active item is an ordinary
+// navigation (hx-boost applies if the page uses it). Filtering, the active
+// row and the shortcut live in one inline Alpine x-data on the dialog root,
+// which reads labels and keywords from the items' data attributes.
 //
 // The browser-side public API is window.wf.palette: open(id), close(id),
-// isOpen(id) (id optional: the page's first palette), registered once by
-// the first palette's x-init. Opening goes through dialog.min.js
-// (window.tui.dialog.open) and then focuses the input; closing goes
-// through window.tui.dialog.close and returns focus to the element that
+// isOpen(id) (id optional: the page's first palette). It needs dialog.min.js
+// (window.tui.dialog) on the page. Closing returns focus to the element that
 // was focused when the palette opened.
 package commandpalette
 
@@ -42,10 +36,7 @@ const (
 	DefaultEmpty       = "No matches"
 )
 
-// Item is one entry in the palette: a link with a label, optional hidden
-// search keywords, an optional group heading, an optional icon and an
-// optional shortcut hint shown right-aligned (display only; the palette
-// does not bind it).
+// Item is one link in the palette.
 type Item struct {
 	Label    string
 	Href     string
@@ -55,8 +46,7 @@ type Item struct {
 	Icon     templ.Component
 }
 
-// Props configures Palette and Trigger. The zero value renders an empty
-// palette with the defaults; set at least Items.
+// Props configures Palette and Trigger.
 type Props struct {
 	ID         string // defaults to DefaultID; the dialog id Trigger and the shortcut open
 	Class      string
@@ -71,7 +61,6 @@ type Props struct {
 	Empty    string // text shown when no item matches; defaults to DefaultEmpty
 }
 
-// withDefaults returns p with empty fields set to the defaults.
 func (p Props) withDefaults() Props {
 	if p.ID == "" {
 		p.ID = DefaultID
@@ -111,8 +100,7 @@ func groupItems(items []Item) []group {
 	return groups
 }
 
-// inputID, listID, optionID and groupID derive the element ids the ARIA
-// wiring uses from the palette id.
+// Element ids for the ARIA wiring, derived from the palette id.
 func inputID(id string) string         { return id + "-input" }
 func listID(id string) string          { return id + "-list" }
 func optionID(id string, n int) string { return id + "-option-" + strconv.Itoa(n) }
@@ -180,9 +168,8 @@ func keyShortcuts(shortcut string) string {
 	return one("")
 }
 
-// rootAttrs are the attributes on the dialog root: the palette marker the
-// shortcut listener looks up, the shortcut spec, the Alpine state, then
-// the caller's Attributes (which win on conflict).
+// rootAttrs returns the dialog root's attributes. The caller's Attributes
+// win on conflict.
 func rootAttrs(p Props) templ.Attributes {
 	attrs := templ.Attributes{
 		"data-wf-palette":          "",
@@ -196,31 +183,25 @@ func rootAttrs(p Props) templ.Attributes {
 }
 
 // contentClass reshapes dialog.Content's centered panel. Below sm it is a
-// top sheet: fixed to the top edge, spanning the width, rounded at the
-// bottom only, at most 60dvh tall (so the list stays above a phone keyboard, which dvh does not account for) with the list scrolling inside, padded
-// for the status bar's safe area. From sm up it is the dialog's usual
-// centered panel at max-w-lg. The panel is a column (input row, list,
-// empty text) with no padding of its own.
+// full-width sheet at the top edge, at most 60dvh tall so the list stays
+// above a phone keyboard (which dvh does not account for). From sm up it is
+// the usual centered panel at max-w-lg.
 const contentClass = "flex flex-col gap-0 p-0 overflow-hidden " +
 	"left-0 right-0 top-0 translate-x-0 translate-y-0 w-full max-w-none rounded-none rounded-b-xl max-h-[60dvh] pt-[env(safe-area-inset-top,0px)] " +
 	"sm:left-[50%] sm:right-auto sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:rounded-lg sm:max-h-[80vh] sm:pt-0"
 
-// paletteData is the Alpine x-data on the dialog root. It owns the query
-// and the active row, filters the server-rendered items (label plus
-// keywords, case-insensitive substring) by toggling the hidden attribute
-// on items and groups, mirrors the active row into aria-selected /
-// aria-activedescendant / data-active, and handles the input's keys.
-// Its init registers the page-wide window.wf.palette API and the shortcut
-// keydown listener exactly once (guarded on window.wf.palette, so a second
-// palette or a boosted re-init adds nothing), then watches the panel's
-// data-tui-dialog-open attribute so every close path (Escape, backdrop,
-// close()) resets the query and returns focus to the opener.
+// paletteData is the Alpine x-data on the dialog root. It filters items by
+// a case-insensitive substring of label plus keywords and tracks the active
+// row. init registers window.wf.palette and the shortcut listener once per
+// page (a second palette or a boosted re-init adds nothing), and watches
+// data-tui-dialog-open so every close path resets the query and restores
+// focus.
 const paletteData = `{
 	q: '',
 	active: 0,
 	init() {
 		// $root, not $el: a method called from a child's x-on handler sees that
-		// child as $el (measured 2026-10-31: the filter never hid a row).
+		// child as $el.
 		const root = this.$root;
 		if (!(window.wf && window.wf.palette)) {
 			window.wf = window.wf || {};

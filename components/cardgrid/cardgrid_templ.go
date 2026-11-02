@@ -18,35 +18,13 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// CardGrid renders Props.Items as a responsive grid of cards. The grid
-// starts at one column and adds columns by breakpoint (sm 2, lg 3, xl 4)
-// up to the Columns cap, so a catalog goes 4→2→1 (or 3→2→1, 2→1) as the
-// viewport narrows. Every card is a card.Card holding, top to bottom: the
-// art (aspectratio.AspectRatio around an image.Image with object-cover,
-// so the picture is cropped to the frame and never stretches it), the
-// title (card.Title; a link when Href is set), the muted subtitle, the
-// badges row, the meta line, and a footer with the actions as small ghost
-// buttons followed by the card's Footer component. Sections with nothing
-// to show are omitted.
+// CardGrid renders Props.Items as a responsive grid of cards: one column
+// on phones, adding columns at the sm, lg and xl breakpoints up to the
+// Columns cap. Sections of a card with nothing to show are omitted.
 //
-// Whole-card click: when Href is set the title link's ::after pseudo
-// element covers the card (after:absolute after:inset-0 on a relative
-// card), so the whole surface navigates while the card has exactly one
-// focusable element for it; the footer sits above that overlay
-// (relative z-10) so its buttons and the Footer component stay
-// clickable. A focus ring on the link draws around the card.
-//
-// Dense swaps the p-6 card padding for p-4 and the gap-4 grid gap for
-// gap-3. When Items is empty the grid holds one full-width
-// emptystate.EmptyState from Props.Empty (default title "Nothing here
-// yet").
-//
-// Phone width (390): one column; each card spans the width, the art
-// keeps its ratio (the frame is the column width, the picture is
-// cropped to it, nothing overflows), titles wrap, badges wrap onto new
-// rows, and the footer actions wrap (flex-wrap) rather than overflow.
-//
-// @pure
+// When Href is set, the title link's ::after covers the whole card, so the
+// entire card is clickable while the link stays its only focusable element.
+// The footer sits above that overlay so its buttons remain clickable.
 func CardGrid(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -85,7 +63,7 @@ func CardGrid(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 45, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 23, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -150,10 +128,8 @@ func CardGrid(p Props) templ.Component {
 	})
 }
 
-// gridCard renders one Card. The card is relative and overflow-hidden
-// (so the art's corners follow the card's) and a flex column with the
-// footer pushed to the bottom (mt-auto), so cards in one row line up
-// their footers when their bodies differ in height.
+// gridCard renders one Card. The footer is pushed to the bottom so cards in
+// a row line up their footers when their bodies differ in height.
 func gridCard(p Props, c Card) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -247,7 +223,7 @@ func gridCard(p Props, c Card) templ.Component {
 						var templ_7745c5c3_Var10 templ.SafeURL
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(c.Href))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 80, Col: 30}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 56, Col: 30}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -260,7 +236,7 @@ func gridCard(p Props, c Card) templ.Component {
 						var templ_7745c5c3_Var11 string
 						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(c.Title)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 83, Col: 15}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 59, Col: 15}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {
@@ -274,7 +250,7 @@ func gridCard(p Props, c Card) templ.Component {
 						var templ_7745c5c3_Var12 string
 						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(c.Title)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 86, Col: 14}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 62, Col: 14}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 						if templ_7745c5c3_Err != nil {
@@ -307,7 +283,7 @@ func gridCard(p Props, c Card) templ.Component {
 						var templ_7745c5c3_Var14 string
 						templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(c.Subtitle)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 91, Col: 17}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 67, Col: 17}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 						if templ_7745c5c3_Err != nil {
@@ -345,7 +321,7 @@ func gridCard(p Props, c Card) templ.Component {
 							var templ_7745c5c3_Var16 string
 							templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(b.Label)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 98, Col: 16}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 74, Col: 16}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 							if templ_7745c5c3_Err != nil {
@@ -375,7 +351,7 @@ func gridCard(p Props, c Card) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(c.metaLine())
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 105, Col: 19}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/cardgrid/cardgrid.templ`, Line: 81, Col: 19}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {

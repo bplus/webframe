@@ -10,14 +10,12 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Props configures an ErrorPage. Code picks the default wording: 404, 403,
-// 405 and 500 have their own; any other number renders with 500's wording
-// and the given number. Title and Message override the defaults when set.
-// Home is the single call to action; nil renders {Label: "Go home"} linking
-// to the App's HomeHref when an appshell.App is in the render context, else
-// "/". RequestID renders in small monospace text under the message when
-// set, so a user can quote it. Details, when non-nil, renders last (a
-// stack trace in development, for instance).
+// Props configures ErrorPage. Code picks the default wording: 404, 403, 405
+// and 500 have their own, any other number uses 500's. Title and Message
+// override the defaults. Home is the call to action; nil means "Go home",
+// linking to the App's HomeHref (or "/"). RequestID is shown so a user can
+// quote it. Details, when set, renders last (a stack trace in development,
+// for instance).
 type Props struct {
 	ID         string
 	Class      string
@@ -73,16 +71,9 @@ func home(ctx context.Context, p Props) action.Action {
 	return action.Action{Label: "Go home", Href: href, Variant: action.VariantPrimary}
 }
 
-// ErrorPage renders one error page body: the status code in large muted
-// digits, the title as the page h1, the message, the request id (when
-// set) in small monospace, the Home action as a button, then Details.
-// Everything sits in one centered column no wider than max-w-md.
-//
-// On a phone (390px) it is the same single centered column; the code uses
-// tabular-nums and no letter-spacing, so three digits never overflow the
-// 16px gutters and nothing scrolls horizontally.
-//
-// @pure
+// ErrorPage renders an error page body in one centered column: the status
+// code, the title as the page h1, the message, the request id, the Home
+// action, then Details.
 templ ErrorPage(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

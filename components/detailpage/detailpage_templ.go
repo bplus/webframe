@@ -16,24 +16,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Page renders the detail page in this order: pageheader; then the summary
-// descriptionlist (when it has items), the tabs (when there are any), and
-// the children (free content) — those three directly under the header, or,
-// when Aside is set, inside the main column of a layout.TwoColumn whose
-// aside is Aside. At phone width the summary collapses to one column and
-// the aside stacks under the main column (both are the composed
-// components' own behavior).
-//
-// Tabs: each Tab is a tabs.Trigger (label) and a tabs.Content panel with
-// id Tab.ID+"-panel". An inline tab renders Tab.Content in its panel. A
-// lazy tab (HxGet set) renders an empty panel and puts hx-get=HxGet,
-// hx-target="#<ID>-panel", hx-trigger="click once" on the Trigger; when
-// the lazy tab is the active one its trigger is "load" instead, so the
-// open panel is filled at page load rather than left blank. The lazy
-// response is swapped into the panel's innerHTML, so the handler returns
-// the panel body only.
-//
-// @pure
+// Page renders the pageheader, then the summary, the tabs and the
+// children, in that order. With Aside set, everything after the header sits
+// in the main column of a layout.TwoColumn.
 func Page(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -72,7 +57,7 @@ func Page(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/detailpage/detailpage.templ`, Line: 32, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/detailpage/detailpage.templ`, Line: 17, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -299,7 +284,7 @@ func tabGroup(p Props) templ.Component {
 						var templ_7745c5c3_Var13 string
 						templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(t.Label)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/detailpage/detailpage.templ`, Line: 73, Col: 14}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/detailpage/detailpage.templ`, Line: 58, Col: 14}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 						if templ_7745c5c3_Err != nil {
