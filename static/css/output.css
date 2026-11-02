@@ -316,9 +316,6 @@
   .top-\[50\%\] {
     top: 50%;
   }
-  .top-\[var\(--wf-sticky-top\)\] {
-    top: var(--wf-sticky-top);
-  }
   .top-\[var\(--wf-sticky-top\,0px\)\] {
     top: var(--wf-sticky-top,0px);
   }
