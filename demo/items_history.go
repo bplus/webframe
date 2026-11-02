@@ -17,8 +17,6 @@ import (
 
 // notesVersions returns the previous and current text the History tab
 // diffs for it.
-//
-// @pure
 func notesVersions(it Item) (previous, current string) {
 	first := strings.SplitN(seedNotes, "\n", 2)[0]
 	otherStatus := "draft"
@@ -52,8 +50,6 @@ func notesDiffProps(it Item) diffview.Props {
 
 // splitLines splits text on newlines; empty text is no lines (not one
 // empty line).
-//
-// @pure
 func splitLines(text string) []string {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	if text == "" {
@@ -65,8 +61,6 @@ func splitLines(text string) []string {
 // diffLines computes a line diff of old against new by longest common
 // subsequence: common lines are context, lines only in old are deletions,
 // lines only in new are additions, each numbered on its own side.
-//
-// @pure
 func diffLines(old, new []string) []diffview.Line {
 	n, m := len(old), len(new)
 	// lcs[i][j] is the LCS length of old[i:] and new[j:].
@@ -106,8 +100,6 @@ func diffLines(old, new []string) []diffview.Line {
 
 // hunkHeader writes the "@@ -1,a +1,b @@" header for a hunk that starts at
 // line 1 on both sides, counting the lines present on each.
-//
-// @pure
 func hunkHeader(lines []diffview.Line) string {
 	oldCount, newCount := 0, 0
 	for _, l := range lines {

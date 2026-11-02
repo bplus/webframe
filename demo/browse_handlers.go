@@ -23,9 +23,6 @@ const (
 // HandleBrowse renders the two-pane browser with no item selected (GET
 // /browse): the list of item names on the left and, from md up, the
 // placeholder in the detail region; on a phone the list alone.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleBrowse(w http.ResponseWriter, r *http.Request) {
 	if err := splitpane.Respond(w, r, "Browse", browseProps("", nil)); err != nil {
 		log.Printf("demo: render browse: %v", err)
@@ -38,9 +35,6 @@ func HandleBrowse(w http.ResponseWriter, r *http.Request) {
 // region and receives the detail alone; a phone's click, a reload or a
 // bookmark gets the whole page, which shows the detail with a Back link.
 // An unknown id is the 404 error page.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleBrowseItem(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {

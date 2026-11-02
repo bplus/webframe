@@ -12,7 +12,7 @@
 //
 // Why not hx-get with a filtered hx-trigger: htmx calls preventDefault on
 // an anchor's click before it evaluates the trigger filter, so a filtered
-// link never navigates on a phone (measured 2026-10-31).
+// link never navigates on a phone.
 (function () {
   'use strict';
   if (window.wf && window.wf.splitpane) return;

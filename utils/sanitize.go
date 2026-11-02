@@ -20,8 +20,6 @@ var validColorRe = regexp.MustCompile(`^[a-zA-Z0-9#(),. %_-]+$`)
 // user-provided colors straight through without their own empty check. Use
 // this for any color that reaches an SVG attribute or inline style; the
 // fallback deliberately renders visibly (gray) rather than failing.
-//
-// @pure
 func SanitizeColor(c string) string {
 	if c != "" && validColorRe.MatchString(c) {
 		return c

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// widgetsHandler is fullHandler with the log reset too, so every batch 5
+// widgetsHandler is fullHandler with the log reset too, so every widget
 // test starts from the seeded store, account and log.
 func widgetsHandler(t *testing.T) http.Handler {
 	t.Helper()
@@ -179,7 +179,7 @@ func TestWidgets_PanicIsStyled500(t *testing.T) {
 	}
 }
 
-// TestWidgets_ShowcaseSections pins each batch 5 section's id and the
+// TestWidgets_ShowcaseSections pins each widget section's id and the
 // markup its demo relies on.
 func TestWidgets_ShowcaseSections(t *testing.T) {
 	h := widgetsHandler(t)

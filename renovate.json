@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "description": "Freshness for this repo's own pins (templ, tailwind-merge-go via go.mod's default gomod manager; golang:1.24-alpine via the default dockerfile manager).",
+  "description": "Freshness for this repo's own pins: templ and tailwind-merge-go via go.mod's default gomod manager; golang:1.24-alpine via the default dockerfile manager.",
   "dependencyDashboard": false,
   "labels": [],
   "packageRules": [

@@ -121,8 +121,6 @@ func RegisterItemRoutes(mux *http.ServeMux) {
 
 // HandleSidebarRedirect sends the old sidebar demo URL to the Items list,
 // which is now the sidebar-layout page (GET /sidebar → 302 /items).
-//
-// @boundary HTTP
 func HandleSidebarRedirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/items", http.StatusFound)
 }
@@ -133,9 +131,6 @@ func HandleSidebarRedirect(w http.ResponseWriter, r *http.Request) {
 // a Spec, apply it to the store, declare the page, Respond. A sort, filter
 // or page request from inside the results region receives only the
 // results (listpage.Respond reads HX-Target).
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 	spec := listquery.Parse(r, itemsQuery)
 	if err := listpage.Respond(w, r, "Items", itemsListProps(spec)); err != nil {
@@ -144,7 +139,7 @@ func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 }
 
 // itemsListProps applies spec to the store and declares the list page: the
-// sketch's intro line, the Type select and Status pills, the search box,
+// intro line, the Type select and Status pills, the search box,
 // the toolbar ("Build mod", "+ Create item", bulk "Publish selected") and
 // the five columns with their row actions.
 func itemsListProps(spec listquery.Spec) listpage.Props {
@@ -212,8 +207,6 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 
 // filterOptions converts form options into filter-bar options (the two
 // packages keep separate types; the choices are the same).
-//
-// @pure
 func filterOptions(opts []formfield.Option) []filterbar.FilterOption {
 	out := make([]filterbar.FilterOption, len(opts))
 	for i, o := range opts {
@@ -223,8 +216,6 @@ func filterOptions(opts []formfield.Option) []filterbar.FilterOption {
 }
 
 // plural renders "1 item" / "3 items".
-//
-// @pure
 func plural(n int, noun string) string {
 	if n == 1 {
 		return "1 " + noun
@@ -256,9 +247,6 @@ const protectedItemID = "1"
 // row disappears and the summary and intro update; from anywhere else over
 // htmx (the detail page) it answers HX-Redirect to /items; a plain request
 // gets a 303 to /items. Unknown ids are 404.
-//
-// @boundary HTTP
-// @side-effects mutates Items; writes HTML or a redirect
 func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
@@ -313,9 +301,6 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 // HandleItemsPublish publishes the selected items (POST /items/publish,
 // repeated "ids" from the bulk form's row checkboxes) and re-renders the
 // results for the current URL.
-//
-// @boundary HTTP
-// @side-effects mutates Items; writes HTML response
 func HandleItemsPublish(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -344,9 +329,6 @@ func redirectTo(w http.ResponseWriter, r *http.Request, location string) {
 // status badge, Back to Items, Edit and Delete; a two-column summary; Notes
 // inline and History loaded lazily from /items/{id}/history. An unknown id
 // is the 404 error page.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
@@ -358,8 +340,8 @@ func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// itemDetailProps declares the detail page for it: the sketch's summary
-// rows plus the batch 5 fields (tags as badges, the rating read-only, the
+// itemDetailProps declares the detail page for it: the summary rows plus
+// tags (as badges, the rating read-only, the
 // release date, the artwork file name), each with a muted dash when empty.
 func itemDetailProps(it Item) detailpage.Props {
 	usedIn := descriptionlist.Item{Label: "Used in", Value: it.UsedIn}
@@ -423,9 +405,6 @@ func itemDetailProps(it Item) detailpage.Props {
 // the notes against their previous version (demo data: notesDiff) and the
 // item's record as a JSON tree, written as a fragment (the tab swaps it
 // into its panel), not through the shell.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemHistory(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
@@ -505,8 +484,6 @@ func itemFields(p formpage.Props) []formfield.Field {
 // shape its widget submits: tags comma-joined, the release date as the
 // native input writes it, the rating as an integer string ("" unrated).
 // The artwork is a file input and cannot be refilled, so it has no entry.
-//
-// @pure
 func itemValues(it Item) map[string]string {
 	remixable := ""
 	if it.Remixable {
@@ -585,8 +562,6 @@ func readArtwork(r *http.Request) (name, errMsg string) {
 // parseTags splits a tags field's value (the tags joined with commas, as
 // tagsinput submits them), trims each, drops empties and duplicates
 // (compared case-insensitively, the first spelling kept).
-//
-// @pure
 func parseTags(value string) []string {
 	var out []string
 	seen := make(map[string]bool)
@@ -603,8 +578,6 @@ func parseTags(value string) []string {
 
 // parseRating reads a rating field's value: "" is 0 (unrated); otherwise
 // an integer from 0 to maxRating. Anything else is an error.
-//
-// @pure
 func parseRating(value string) (int, error) {
 	if strings.TrimSpace(value) == "" {
 		return 0, nil
@@ -677,8 +650,6 @@ func validateItem(vals map[string]string, exceptID string) map[string]string {
 // applyValues copies validated form values onto it (the artwork name is
 // set by the handler from the file part, when one was sent). The rating
 // and release date have been validated, so their parse errors are ignored.
-//
-// @pure
 func applyValues(it Item, vals map[string]string) Item {
 	it.Name = strings.TrimSpace(vals["name"])
 	it.Type = vals["type"]
@@ -692,9 +663,6 @@ func applyValues(it Item, vals map[string]string) Item {
 }
 
 // HandleItemNew renders the empty create form (GET /items/new).
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemNew(w http.ResponseWriter, r *http.Request) {
 	if err := formpage.Respond(w, r, "New item", itemFormProps(nil)); err != nil {
 		log.Printf("demo: render new item: %v", err)
@@ -704,9 +672,6 @@ func HandleItemNew(w http.ResponseWriter, r *http.Request) {
 // HandleItemEdit renders the edit form for one item (GET
 // /items/{id}/edit) with its current values. An unknown id is the 404
 // error page.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
@@ -725,9 +690,6 @@ func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 // field comes back empty, as a file input must); on success it saves,
 // logs the change and redirects to the new item's detail page (HX-Redirect
 // for an htmx submit, else 303) with a "Saved" flash shown once there.
-//
-// @boundary HTTP
-// @side-effects mutates Items and Logs; writes HTML or a redirect
 func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 	if err := parseItemForm(w, r); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -760,9 +722,6 @@ func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 // skips the item itself, and a submit without a file keeps the stored
 // artwork. An unknown id is the 404 error page, like the edit form's own
 // GET.
-//
-// @boundary HTTP
-// @side-effects mutates Items and Logs; writes HTML or a redirect
 func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
@@ -806,9 +765,6 @@ func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 // when present. ?id names the item being edited
 // so its own name is not reported as taken. The answer is the field's
 // Feedback slot: a message, or the empty slot when the value is valid.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleItemValidate(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)

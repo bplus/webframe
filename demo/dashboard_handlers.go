@@ -31,9 +31,6 @@ const (
 // HandleDashboard renders the Items dashboard (GET /dashboard): four stat
 // tiles computed from the store, a timeline of the most recent changes and
 // a card grid of the newest items, through dashboardpage.Respond.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
 func HandleDashboard(w http.ResponseWriter, r *http.Request) {
 	if err := dashboardpage.Respond(w, r, "Dashboard", dashboardProps(time.Now())); err != nil {
 		log.Printf("demo: render dashboard: %v", err)
@@ -82,8 +79,6 @@ func dashboardProps(now time.Time) dashboardpage.Props {
 
 // newestFirst returns items sorted by Updated, newest first (stable, so
 // equal times keep store order).
-//
-// @pure
 func newestFirst(items []Item) []Item {
 	out := make([]Item, len(items))
 	copy(out, items)
@@ -93,8 +88,6 @@ func newestFirst(items []Item) []Item {
 
 // packNames returns the distinct pack names items are used in, in first
 // seen order.
-//
-// @pure
 func packNames(items []Item) []string {
 	seen := make(map[string]bool)
 	var out []string
@@ -109,8 +102,6 @@ func packNames(items []Item) []string {
 
 // packsLine is the Packs tile's sub line: the pack names joined, or a note
 // when no item is in a pack.
-//
-// @pure
 func packsLine(packs []string) string {
 	if len(packs) == 0 {
 		return "No item is in a pack"

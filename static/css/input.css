@@ -16,7 +16,9 @@
    component's dark:bg-... follow the OS while the tokens follow the toggle. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* ── Legacy consumer classes ── remove when each migrates to appshell; see CLAUDE.md */
+/* ── Legacy consumer classes ── utilities that older consumer pages, written
+   before appshell, use directly; templates outside this module are never
+   scanned, so they are listed here. Remove once those pages move to appshell. */
 @source inline("divide-border divide-y font-extrabold grid-cols-2 grid-cols-3 items-end items-stretch lg:grid-cols-5 list-disc list-inside max-w-3xl max-w-5xl max-w-xl mb-10 mb-8 ml-2 mt-6 mt-8 my-6 py-10 py-6 py-8 sm:grid-cols-3 sm:grid-cols-5 sm:grid-cols-6 sm:px-10 space-y-1 space-y-3 space-y-5 space-y-6 space-y-8 text-3xl text-6xl text-red-600 text-xl underline w-40 w-56");
 
 /* ── Classes written only by first-party JS (static/js/trafficstream.min.js swaps the connection dot) ── source(none) never scans JS */
@@ -62,10 +64,8 @@
   --color-surface-950: #020617;
 
   /* ── shadcn/templUI semantic tokens ──
-     LIGHT, HIGH-CONTRAST DEFAULT (decided 2026-08-31: light ground,
-     near-black ink, across all products). Palette adopted from the
-     Observatory mockup: warm paper ground, white cards, warm hairline
-     borders, deep-purple accent. Dark remains available as an explicit
+     Light, high-contrast default: warm paper ground, near-black ink, white
+     cards, warm hairline borders, deep-purple accent. Dark is an explicit
      opt-in via [data-theme="dark"]. */
   --color-background:           #F5F5F2;
   --color-foreground:           #0B0B0B;
@@ -96,14 +96,14 @@
   /* ── Radius ── */
   --radius: 0.5rem;
 
-  /* ── Fonts (Observatory pairing; graceful system fallbacks) ── */
+  /* ── Fonts (Archivo + IBM Plex Mono; system fallbacks) ── */
   --font-sans: 'Archivo', 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Archivo', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* Readability: slightly larger root size — every rem-based Tailwind size
-   scales with it (the letters were too small). */
+   scales with it. */
 :root {
   font-size: 17px;
   color-scheme: light; /* native controls, scrollbars and pickers draw light by default */
@@ -139,7 +139,7 @@
   --color-ring:                 #4A3AA7;
 }
 
-/* ── Dark theme, explicit opt-in (the pre-2026-08-31 default, preserved) ── */
+/* ── Dark theme, explicit opt-in ── */
 :root[data-theme="dark"] {
   color-scheme: dark; /* native controls follow the attribute, not the OS */
   --color-background:           var(--color-surface-950);
@@ -832,7 +832,7 @@
    !important is the only way to collapse a dashboard grid to one
    column. The breakpoint is Tailwind's md (48rem = 768px at the default
    root font size), the same point layout.TwoColumn, cardgrid and the
-   rest collapse at; until batch 5 it was 900px. */
+   rest collapse at. */
 @media (max-width: 47.99rem) {
   .wf-dashgrid {
     grid-template-columns: 1fr !important;
@@ -848,8 +848,8 @@
    Inter and JetBrains Mono ship as variable woff2 files (Latin subset,
    SIL OFL 1.1, licenses beside them) under static/css/fonts/. The URLs
    are relative to this stylesheet on purpose: a consumer that serves
-   output.css from any path (one consumer symlinks the whole static/css dir)
-   gets the fonts from the same place with no handler change. Never a
+   output.css from any path (for example, by symlinking the whole
+   static/css dir) gets the fonts from the same place with no handler change. Never a
    bare @import of an external stylesheet here: it is a render-blocking
    request on every page of every consumer. */
 @font-face {

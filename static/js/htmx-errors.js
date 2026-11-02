@@ -14,8 +14,8 @@
 //      appshell.SetHeaders gets Go's content sniffer, which does not know
 //      fragments starting with <form, <section, <nav, <span, <ul or <tr and
 //      labels them text/plain. So a missing or non-HTML Content-Type is
-//      overruled when the body's first non-whitespace character is "<"
-//      (batch 5). A JSON or plain-text error never starts with "<"; an XML
+//      overruled when the body's first non-whitespace character is "<".
+//      A JSON or plain-text error never starts with "<"; an XML
 //      error body would, and would swap as markup (label it, or answer it
 //      through errorpage).
 //   2. A target that is one of the page's live elements: the shell's nav
@@ -31,7 +31,7 @@
 // response is not HTML (its Content-Type header is not text/html, missing
 // counts as not HTML, and its body does not start with "<") OR the target
 // or one of its ancestors carries data-wf-swallow-errors. In every other case shouldSwap is left exactly as
-// htmx computed it, so the batch 3 behavior (swap the error body) stands for
+// htmx computed it, so the default (swap the error body) stands for
 // an HTML error answer to an ordinary target. htmx still fires
 // htmx:responseError after a refused swap, so an app that listens for it is
 // unaffected.

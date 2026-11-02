@@ -11,9 +11,6 @@ import "strings"
 // a JS string-literal context only (it does not make arbitrary HTML-attribute
 // or URL contexts safe), and it does not escape U+2028/U+2029, which are
 // invalid inside pre-ES2019 string literals.
-//
-// @pure
-// @complexity O(len(s))
 func EscapeJS(s string) string {
 	replacer := strings.NewReplacer(
 		`\`, `\\`,

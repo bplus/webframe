@@ -78,10 +78,7 @@ import (
 // Alpine x-data examples, and HTMX demos that POST/GET /api/click,
 // /api/search, /api/picked, /api/validate, /api/toast, /api/flash and
 // /api/slow (handled in demo/handlers.go), all relying on the scripts
-// loaded by appshell.Document.
-//
-// @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
-// the library's importable API
+// loaded by appshell.Document. Served by demo.HandleShowcase at GET /.
 templ Showcase() {
 	@pageheader.PageHeader(pageheader.Props{
 		Title:    "Webframe Components",
@@ -220,7 +217,7 @@ templ formsGroup() {
 	}
 }
 
-// contentGroup holds the batch 5 content widgets: trusted and plain text
+// contentGroup holds the content widgets: trusted and plain text
 // through prose, source text, a log, a JSON tree and a diff.
 templ contentGroup() {
 	@layout.Section(layout.SectionProps{Level: 2, ID: "content", Title: "Content"}) {
@@ -1938,7 +1935,7 @@ templ descriptionlistSection() {
 // Pages
 // ═══════════════════════════════════════
 templ pagesSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "pages", Title: "Pages", Description: "The three page kinds this batch builds, assembled from the pieces above on the sidebar shell; each link opens the Items demo app."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "pages", Title: "Pages", Description: "The three page kinds, assembled from the pieces above on the sidebar shell; each link opens the Items demo app."}) {
 		@panel.Panel(panel.Props{Level: 4, Title: "List, detail and form", Subtitle: "Open each at desktop and phone width; the sentences say what each page is for."}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
 				<p><a href="/items">Items</a>: a list page with filters, sortable columns, pagination, row actions and an empty state, all driven by the query string.</p>
@@ -2217,7 +2214,7 @@ templ bottomsheetSection() {
 }
 
 // ═══════════════════════════════════════
-// Batch 4: card grid, timeline, split pane, the three page types
+// Card grid, timeline, split pane, the three page types
 // ═══════════════════════════════════════
 
 // showcaseArt is the local placeholder every showcase card shows.
@@ -2311,7 +2308,7 @@ templ errorswapSection() {
 }
 
 // ═══════════════════════════════════════
-// Batch 5 form widgets
+// Form widgets
 // ═══════════════════════════════════════
 templ tagsinputSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "tagsinput", Title: "Tags input", Description: "Type a tag and press Enter or a comma, Backspace on the empty box removes the last chip, and at five tags the box turns read-only with \"Limit reached\" while keeping focus, so a phone's keyboard stays open; the hidden field submits the tags comma-joined."}) {
@@ -2425,7 +2422,7 @@ templ ratingSection() {
 }
 
 // ═══════════════════════════════════════
-// Batch 5 content widgets
+// Content widgets
 // ═══════════════════════════════════════
 templ proseSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "prose", Title: "Prose", Description: "The typography specimen is one prose.HTML value with no class on any element: at 390px the table scrolls inside its own box and the long URL in the last paragraph wraps instead of widening the page; the Text sample below it is escaped, so its <script> tag reads as text and its blank line makes a second paragraph."}) {
@@ -2550,7 +2547,7 @@ const showcaseDiff = `diff --git a/items/1/notes.txt b/items/1/notes.txt
 --- a/items/1/notes.txt
 +++ b/items/1/notes.txt
 @@ -1,4 +1,5 @@
- Seeded from the 2026-10-21 dashboard sketch.
+ Seeded demo data.
 -Status: draft
 +Status: published
 -TODO: describe where it drops.

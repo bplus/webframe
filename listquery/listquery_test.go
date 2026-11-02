@@ -202,7 +202,7 @@ func TestURL_RoundTrip(t *testing.T) {
 			name: "ampersand in search, space in filter",
 			opts: itemOpts,
 			spec: Spec{Sort: "created", Dir: Desc, Page: 3, PageSize: 50, Search: "a&b",
-				Filters: map[string][]string{"status": {"in review", "draft"}, "owner": {"ada"}}, defaultSize: 25},
+				Filters: map[string][]string{"status": {"in review", "draft"}, "owner": {"alice"}}, defaultSize: 25},
 		},
 		{
 			name: "prefixed",

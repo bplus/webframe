@@ -44,7 +44,7 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 		}
 	}
 
-	// The showcase sections added for the page-layer batch 2 pieces: each
+	// The showcase sections for the page-layer components: each
 	// new component's signature markup is on the page, and the hand-wired
 	// htmx that Validate and form.Form replaced is gone.
 	_, body := get("/")
@@ -84,8 +84,8 @@ func TestShowcaseAndTrafficRenderThroughShell(t *testing.T) {
 	if code, _ := get("/static/img/placeholder-wide.svg"); code != 200 {
 		t.Errorf("GET /static/img/placeholder-wide.svg = %d, want 200", code)
 	}
-	// The Items app renders through SidebarApp: the sidebar shell with the
-	// sketch's groups, the Items entry active.
+	// The Items app renders through SidebarApp: the sidebar shell with its
+	// MINE and DISCOVER groups, the Items entry active.
 	code, body := get("/items")
 	if code != 200 {
 		t.Errorf("GET /items = %d, want 200", code)

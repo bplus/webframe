@@ -1,5 +1,5 @@
 // Command demo runs the webframe development/showcase server. It exists only
-// for developing this library — webframe itself is a component module imported
+// for developing this library: webframe itself is a component module imported
 // by consuming applications and ships no server.
 package main
 
@@ -15,9 +15,6 @@ import (
 // middleware; the table is in demo.Routes) on the hard-coded address :3333.
 // It blocks forever; log.Fatal exits the process if the listener cannot
 // bind (e.g. port already in use).
-//
-// @boundary HTTP - listens on :3333
-// @side-effects binds a TCP port, writes startup line to stdout
 func main() {
 	addr := ":3333"
 	fmt.Printf("Webframe running at http://localhost%s\n", addr)

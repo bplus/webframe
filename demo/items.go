@@ -9,13 +9,12 @@ import (
 	"github.com/bplus/webframe/listquery"
 )
 
-// Item is one record of the demo's "Items" app (a dashboard
-// sketch): a mod item with a type, a publish status, the mod pack it is
-// used in, its last update, free-text notes, and (since batch 5) tags, a
-// release date, a 0–5 rating and the name of an uploaded artwork file. The
-// json tags name the keys the detail page's History tab shows the record
-// under (jsonviewer); the zero Released is left out rather than printed as
-// year 1.
+// Item is one record of the demo's "Items" app: a mod item with a type, a
+// publish status, the mod pack it is used in, its last update, free-text
+// notes, tags, a release date, a 0–5 rating and the name of an uploaded
+// artwork file. The json tags name the keys the detail page's History tab
+// shows the record under (jsonviewer); the zero Released is left out rather
+// than printed as year 1.
 type Item struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -46,8 +45,6 @@ var itemTypeLabels = map[string]string{
 
 // itemTypeLabel returns the display label for a type value, or the value
 // itself when it is not a known type.
-//
-// @pure
 func itemTypeLabel(t string) string {
 	if l, ok := itemTypeLabels[t]; ok {
 		return l
@@ -63,9 +60,8 @@ type ItemStore struct {
 	next  int
 }
 
-// seedItems are the 14 items of the dashboard sketch; Updated is an age
-// relative to the store's creation time. Tags, the release date and the
-// rating are batch 5 demo data: drafts have no release date and no rating.
+// seedItems are the 14 seeded items; Updated is an age relative to the
+// store's creation time. Drafts have no release date and no rating.
 var seedItems = []struct {
 	name, typ, status, usedIn string
 	age                       time.Duration
@@ -95,8 +91,8 @@ const (
 	month = 30 * day
 )
 
-// NewItemStore returns a store seeded with the sketch's 14 items, ids "1"
-// to "14" in sketch order, with Updated set relative to now.
+// NewItemStore returns a store seeded with the 14 seed items, ids "1"
+// to "14" in seed order, with Updated set relative to now.
 func NewItemStore(now time.Time) *ItemStore {
 	s := &ItemStore{next: 1}
 	for _, seed := range seedItems {
@@ -124,7 +120,7 @@ func NewItemStore(now time.Time) *ItemStore {
 // seedNotes is every seeded item's Notes: two paragraphs, so the Notes tab
 // (prose.Text) shows a paragraph break and the History tab's diff has
 // lines to work with.
-const seedNotes = "Seeded from the 2026-10-21 dashboard sketch.\n\nDrops from the first vault chest; the second paragraph is here so the notes block shows a paragraph break."
+const seedNotes = "Seeded demo data.\n\nDrops from the first vault chest; the second paragraph is here so the notes block shows a paragraph break."
 
 // Items is the demo server's store. Tests replace it with a fresh one.
 var Items = NewItemStore(time.Now())
@@ -255,8 +251,6 @@ var itemSorters = map[string]func(a, b Item) bool{
 // one of the "type" filter values (when any), its Status one of the
 // "status" values (when any), and its Name must contain the search text
 // case-insensitively (when any).
-//
-// @pure
 func itemMatch(it Item, s listquery.Spec) bool {
 	if vals := s.Filters["type"]; len(vals) > 0 && !containsFold(vals, it.Type) {
 		return false
@@ -271,8 +265,6 @@ func itemMatch(it Item, s listquery.Spec) bool {
 }
 
 // containsFold reports whether vals holds v, compared case-insensitively.
-//
-// @pure
 func containsFold(vals []string, v string) bool {
 	for _, x := range vals {
 		if strings.EqualFold(x, v) {
@@ -282,11 +274,9 @@ func containsFold(vals []string, v string) bool {
 	return false
 }
 
-// relativeTime renders how long before now t was, as the sketch's short
+// relativeTime renders how long before now t was, as short
 // labels: "now" under a minute, then "5m", "3h", "2d", "1w" (7–29 days),
 // "1mo" (30–364 days), "1y". A t after now reads "now".
-//
-// @pure
 func relativeTime(t, now time.Time) string {
 	d := now.Sub(t)
 	switch {

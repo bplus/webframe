@@ -41,9 +41,8 @@ var App = &appshell.App{
 	OnPanic:    errorpage.PanicHandler,
 }
 
-// SidebarApp is the shell of the Items app (a dashboard sketch of
-// 2026-10-21): the sidebar layout with the sketch's MINE and DISCOVER
-// groups. MINE opens with the batch 4 pages (Dashboard, Browse, Settings)
+// SidebarApp is the shell of the Items app: the sidebar layout with MINE
+// and DISCOVER groups. MINE opens with the Dashboard, Browse and Settings pages
 // and the Items list; the remaining entries are views of the one list.
 // RegisterItemRoutes and RegisterPageRoutes wrap their handlers in
 // SidebarApp.Middleware, so Respond renders them in this shell while the
@@ -83,8 +82,8 @@ var SidebarApp = &appshell.App{
 }
 
 // Routes mounts every demo route on mux: the embedded static files, the
-// showcase and traffic pages, the Items app, the batch 4 pages and the Logs
-// page, the auth and error pages and the htmx endpoints. There is no
+// showcase and traffic pages, the Items app, the dashboard, settings,
+// browse and logs pages, the auth and error pages and the htmx endpoints. There is no
 // catch-all: a path no pattern claims, and a claimed path asked with the
 // wrong method, are left to the mux, and errorpage.Handler (which Handler
 // wraps around the mux) turns the mux's plain 404 and 405 into the error
@@ -103,7 +102,7 @@ func Routes(mux *http.ServeMux) {
 	// /items/publish; DELETE /items/{id}; GET /sidebar → /items.
 	RegisterItemRoutes(mux)
 
-	// The batch 4 and 5 pages on the same shell: GET /dashboard; GET and
+	// The dashboard, settings, browse and logs pages on the same shell: GET /dashboard; GET and
 	// POST /settings, POST /settings/delete-account; GET /browse,
 	// /browse/{id}; GET /logs and its poll, GET /logs/tail.
 	RegisterPageRoutes(mux)

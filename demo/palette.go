@@ -17,8 +17,6 @@ func demoPaletteFor(*http.Request) *commandpalette.Props {
 }
 
 // paletteProps declares the palette for items.
-//
-// @pure
 func paletteProps(items []Item) *commandpalette.Props {
 	entries := []commandpalette.Item{
 		{Label: "Dashboard", Href: "/dashboard", Keywords: "home tiles overview"},
