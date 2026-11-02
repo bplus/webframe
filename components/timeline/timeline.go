@@ -27,7 +27,7 @@ import (
 // a reference). Icon, when set, is rendered in the gutter in place of the
 // dot, colored by Variant; pass a 16px glyph (icon.Props{Size: 16}).
 // Variant tones the dot: the badge variants map to the same tokens the
-// badge uses (see Tone); the zero value is the primary dot.
+// badge uses (see badge.DotClass); the zero value is the primary dot.
 type Item struct {
 	At      time.Time
 	Title   string
@@ -158,7 +158,7 @@ func (p Props) rootClass() string {
 
 // dotClass is the class of the dot in the gutter.
 func dotClass(v badge.Variant) string {
-	return utils.TwMerge("mt-1.5 size-3 shrink-0 rounded-full", Tone(v))
+	return utils.TwMerge("mt-1.5 size-3 shrink-0 rounded-full", badge.DotClass(v))
 }
 
 // iconClass is the class of the icon wrapper in the gutter.

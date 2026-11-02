@@ -580,28 +580,6 @@ func Timeline(props ...Props) templ.Component {
 	})
 }
 
-// Tone returns the background class for the dot of variant v, using the
-// tokens the badge of the same variant uses. outline is a hollow dot; the
-// default is the primary dot.
-func Tone(v badge.Variant) string {
-	switch v {
-	case badge.VariantDestructive:
-		return "bg-destructive"
-	case badge.VariantSuccess:
-		return "bg-success"
-	case badge.VariantWarning:
-		return "bg-warning"
-	case badge.VariantInfo:
-		return "bg-info"
-	case badge.VariantSecondary:
-		return "bg-muted-foreground"
-	case badge.VariantOutline:
-		return "border-2 border-border bg-background"
-	default:
-		return "bg-primary"
-	}
-}
-
 // iconTone returns the text color class for an Item.Icon of variant v, so
 // a glyph in the gutter reads in the same token as the dot it replaces.
 func iconTone(v badge.Variant) string {

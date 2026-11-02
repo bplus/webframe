@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/bplus/webframe/components/badge"
-	"github.com/bplus/webframe/components/timeline"
 )
 
 func render(t *testing.T, p Props) string {
@@ -67,13 +66,13 @@ func find(t *testing.T, out, marker string) tag {
 var allVariants = []badge.Variant{"", badge.VariantDefault, badge.VariantSecondary, badge.VariantDestructive, badge.VariantOutline, badge.VariantSuccess, badge.VariantWarning, badge.VariantInfo}
 
 // TestVariantPicksTheTimelineDot checks the dot carries every class
-// timeline.Tone gives the same variant, so a pill and a timeline dot of one
+// badge.DotClass gives the same variant, so a pill and a timeline dot of one
 // variant always match.
 func TestVariantPicksTheTimelineDot(t *testing.T) {
 	for _, v := range allVariants {
 		t.Run(string(v), func(t *testing.T) {
 			got := find(t, render(t, Props{Title: "x", Variant: v}), "data-nodepill-dot").classes()
-			for _, c := range strings.Fields(timeline.Tone(v)) {
+			for _, c := range strings.Fields(badge.DotClass(v)) {
 				if !got[c] {
 					t.Errorf("dot for %q lacks %q: %v", v, c, got)
 				}

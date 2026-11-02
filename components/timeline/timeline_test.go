@@ -179,8 +179,8 @@ func TestTimeline_TonePerVariant(t *testing.T) {
 		{badge.VariantOutline, "border-border"},
 	}
 	for _, c := range cases {
-		if got := Tone(c.v); !strings.Contains(got, c.want) {
-			t.Errorf("Tone(%q) = %q, want %q", c.v, got, c.want)
+		if got := badge.DotClass(c.v); !strings.Contains(got, c.want) {
+			t.Errorf("badge.DotClass(%q) = %q, want %q", c.v, got, c.want)
 		}
 		out := render(t, Props{Items: []Item{{At: time.Now(), Title: "x", Variant: c.v}}})
 		if !strings.Contains(out, c.want) {
