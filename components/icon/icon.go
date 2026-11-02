@@ -5,6 +5,7 @@ package icon
 import (
 	"context"
 	"fmt"
+	"html"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -39,9 +40,9 @@ var iconGenerations atomic.Int64
 // The zero value is valid and renders the Lucide defaults: Size <= 0 becomes
 // 24, empty Fill becomes "none", empty Stroke falls back to Color and then to
 // "currentColor", and empty StrokeWidth becomes "2" (all applied in
-// generateSVG at render time). Values are interpolated into SVG attributes
-// without sanitization, so props must come from trusted (developer) code, not
-// end-user input.
+// generateSVG at render time). String values are HTML-escaped into their SVG
+// attributes, so a quote cannot break out of one; they are not otherwise
+// validated (a bogus color is passed through as text).
 type Props struct {
 	Size        int
 	Color       string
@@ -52,7 +53,7 @@ type Props struct {
 	// each occupy a cache slot; the cache is bounded to iconCacheCap and
 	// clears itself when full rather than growing without limit.
 	//
-	// Unlike most component Props.Class fields, this is interpolated as-is
+	// Unlike most component Props.Class fields, this is written (escaped)
 	// into the SVG's class attribute — it is not passed through TwMerge, so
 	// conflicting utilities are not resolved; callers cannot rely on a later
 	// class winning over the defaults.
@@ -83,7 +84,11 @@ func Icon(name string) func(...Props) templ.Component {
 
 		// Create a unique key for the cache based on icon name and all relevant props.
 		// This ensures different stylings of the same icon are cached separately.
-		cacheKey := fmt.Sprintf("%s|s:%d|c:%s|f:%s|sk:%s|sw:%s|cl:%s",
+		// The values are quoted (%q) so the key is unambiguous: a value
+		// containing "|f:" cannot spell another Props' key. The key holds
+		// the raw values; generateSVG escapes deterministically, so equal
+		// keys still mean equal markup.
+		cacheKey := fmt.Sprintf("%q|s:%d|c:%q|f:%q|sk:%q|sw:%q|cl:%q",
 			name, p.Size, p.Color, p.Fill, p.Stroke, p.StrokeWidth, p.Class)
 
 		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
@@ -157,7 +162,7 @@ func generateSVG(name string, props Props) (string, error) {
 	// Construct the final SVG string.
 	// The data-lucide attribute helps identify these as Lucide icons if needed.
 	return fmt.Sprintf("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 24 24\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"%s\" data-lucide=\"icon\">%s</svg>",
-		size, size, fill, stroke, strokeWidth, props.Class, content), nil
+		size, size, html.EscapeString(fill), html.EscapeString(stroke), html.EscapeString(strokeWidth), html.EscapeString(props.Class), content), nil
 }
 
 // getIconContent retrieves the raw inner SVG content for a given icon name.
