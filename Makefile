@@ -6,8 +6,16 @@ build: generate css
 generate:
 	templ generate
 
-css:
-	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css
+# Node tooling (Tailwind CLI, Playwright) is pinned in tools/package.json.
+# TAILWIND can be overridden from the environment (the Dockerfile does).
+TAILWIND ?= tools/node_modules/.bin/tailwindcss
+
+tools/node_modules/.bin/tailwindcss: tools/package.json tools/package-lock.json
+	npm ci --prefix tools --no-audit --no-fund
+	touch $@
+
+css: $(TAILWIND)
+	$(TAILWIND) -i static/css/input.css -o static/css/output.css
 
 dev:
 	go run ./cmd/demo
@@ -34,9 +42,9 @@ check-ui:
 	go run ./cmd/wflint ./demo
 
 # Phone/desktop measurement with Playwright's Chromium. Not part of `check`:
-# needs `make dev` running on :3333. One-time: `npx playwright install chromium`.
+# needs `make dev` running on :3333. One-time: `npx --prefix tools playwright install chromium`.
 # The showcase deliberately 404s /static/img/missing-avatar.png (avatar fallback demo).
-ui-check:
+ui-check: tools/node_modules/.bin/tailwindcss
 	node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png --ignore-console missing-avatar.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png --ignore-console missing-avatar.png
