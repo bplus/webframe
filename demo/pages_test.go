@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// pagesHandler is fullHandler with the account reset too, so every batch 4
-// page test starts from the seeded store and the seeded account.
+// pagesHandler is fullHandler with the account reset too, so every page
+// test starts from the seeded store and the seeded account.
 func pagesHandler(t *testing.T) http.Handler {
 	t.Helper()
 	Settings = NewAccount()
@@ -106,11 +106,11 @@ func TestPages_SettingsForm(t *testing.T) {
 	}
 }
 
-// TestPages_SettingsBatch5: the quiet-hours time field round-trips through
+// TestPages_SettingsTimeAndEnv: the quiet-hours time field round-trips through
 // the settings form, and the Environment editor (the Environment group's
 // Content, inside the settings form) saves its rows with the fields through
 // the one Save button (POST /settings).
-func TestPages_SettingsBatch5(t *testing.T) {
+func TestPages_SettingsTimeAndEnv(t *testing.T) {
 	h := pagesHandler(t)
 	body := do(h, "GET", "/settings", nil, nil).Body.String()
 	wantAll(t, body,
@@ -203,7 +203,7 @@ func TestPages_SettingsErrors(t *testing.T) {
 
 func TestPages_SettingsSaveRedirects(t *testing.T) {
 	h := pagesHandler(t)
-	form := url.Values{"display_name": {"  Netherese Morgan "}, "email": {"k@example.com"}, "digest": {""}, "mentions": {"on"}}
+	form := url.Values{"display_name": {"  Morgan Reyes "}, "email": {"k@example.com"}, "digest": {""}, "mentions": {"on"}}
 	rec := do(h, "POST", "/settings", form, nil)
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings" {
 		t.Fatalf("POST /settings = %d Location %q, want 303 /settings", rec.Code, rec.Header().Get("Location"))
@@ -212,12 +212,12 @@ func TestPages_SettingsSaveRedirects(t *testing.T) {
 		t.Error("redirect response should not render a banner itself")
 	}
 	vals := Settings.Values()
-	if vals["display_name"] != "Netherese Morgan" || vals["email"] != "k@example.com" || vals["digest"] != "" || vals["mentions"] != "on" {
+	if vals["display_name"] != "Morgan Reyes" || vals["email"] != "k@example.com" || vals["digest"] != "" || vals["mentions"] != "on" {
 		t.Errorf("stored values = %v", vals)
 	}
 	// The next render shows the saved values and nothing else.
 	body := do(h, "GET", "/settings", nil, nil).Body.String()
-	wantAll(t, body, `value="Netherese Morgan"`, `value="k@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`)
+	wantAll(t, body, `value="Morgan Reyes"`, `value="k@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`)
 	// No success message anywhere: the flash slot is empty, no banner. The
 	// one role="status" on the page is the command palette's own "No
 	// matches" line, which every page carries.
@@ -444,7 +444,7 @@ func TestPages_BoomIsPlainText(t *testing.T) {
 	wantNone(t, body, "<", "wf-topbar")
 }
 
-// TestPages_ShowcaseSections pins each batch 4 section's id and the markup
+// TestPages_ShowcaseSections pins each page-type section's id and the markup
 // its demo relies on.
 func TestPages_ShowcaseSections(t *testing.T) {
 	h := pagesHandler(t)

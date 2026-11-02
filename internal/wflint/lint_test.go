@@ -371,7 +371,7 @@ func TestLint_HTMLFromGoString_Mentions(t *testing.T) {
 // TestAllowedAttrs_Download: download is allowed on a link (downloading is
 // behavior, not design); role and tabindex stay forbidden (something focusable
 // with a role is an interactive thing, and interactive things are
-// components); <img> is no longer an allowed element and points at the image
+// components); <img> is not an allowed element and points at the image
 // component, so its width is not reported separately.
 func TestAllowedAttrs_Download(t *testing.T) {
 	dir := t.TempDir()
@@ -427,8 +427,8 @@ func TestAllowedAttrs_Download(t *testing.T) {
 	}
 }
 
-// TestHints_Batch2Components: the hints point at the batch 2 components.
-func TestHints_Batch2Components(t *testing.T) {
+// TestHints_PageComponents: the hints point at the page-layer components.
+func TestHints_PageComponents(t *testing.T) {
 	for elem, want := range map[string]string{
 		"form":       "form.Form",
 		"table":      "datatable",

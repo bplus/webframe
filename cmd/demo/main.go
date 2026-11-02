@@ -1,5 +1,5 @@
 // Command demo runs the webframe development/showcase server. It exists only
-// for developing this library — webframe itself is a component module imported
+// for developing this library: webframe itself is a component module imported
 // by consuming applications and ships no server.
 package main
 

@@ -86,10 +86,7 @@ import (
 // Alpine x-data examples, and HTMX demos that POST/GET /api/click,
 // /api/search, /api/picked, /api/validate, /api/toast, /api/flash and
 // /api/slow (handled in demo/handlers.go), all relying on the scripts
-// loaded by appshell.Document.
-//
-// @ai-context served by demo.HandleShowcase at GET /; demo-only, not part of
-// the library's importable API
+// loaded by appshell.Document. Served by demo.HandleShowcase at GET /.
 func Showcase() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -614,7 +611,7 @@ func formsGroup() templ.Component {
 	})
 }
 
-// contentGroup holds the batch 5 content widgets: trusted and plain text
+// contentGroup holds the content widgets: trusted and plain text
 // through prose, source text, a log, a JSON tree and a diff.
 func contentGroup() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -1741,7 +1738,7 @@ func iconsSection() templ.Component {
 				var templ_7745c5c3_Var48 string
 				templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(`@icon.Check()  // renders inline SVG, cached in-process`)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 363, Col: 68}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 360, Col: 68}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 				if templ_7745c5c3_Err != nil {
@@ -3197,7 +3194,7 @@ func badgesSection() templ.Component {
 							var templ_7745c5c3_Var114 string
 							templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(badge.StatusLabel(s))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 541, Col: 28}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 538, Col: 28}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 							if templ_7745c5c3_Err != nil {
@@ -7361,7 +7358,7 @@ func tabLines(n int) templ.Component {
 			var templ_7745c5c3_Var294 string
 			templ_7745c5c3_Var294, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1094, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1091, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var294))
 			if templ_7745c5c3_Err != nil {
@@ -7374,7 +7371,7 @@ func tabLines(n int) templ.Component {
 			var templ_7745c5c3_Var295 string
 			templ_7745c5c3_Var295, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(n))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1094, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1091, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var295))
 			if templ_7745c5c3_Err != nil {
@@ -9857,7 +9854,7 @@ func gameiconSection() templ.Component {
 				var templ_7745c5c3_Var406 string
 				templ_7745c5c3_Var406, templ_7745c5c3_Err = templ.JoinStringErrs(`@gameicon.GameIcon(gameicon.Props{Name: "broadsword", Size: gameicon.SizeLg})`)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1439, Col: 90}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 1436, Col: 90}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var406))
 				if templ_7745c5c3_Err != nil {
@@ -12891,7 +12888,7 @@ func pagesSection() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "pages", Title: "Pages", Description: "The three page kinds this batch builds, assembled from the pieces above on the sidebar shell; each link opens the Items demo app."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var532), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "pages", Title: "Pages", Description: "The three page kinds, assembled from the pieces above on the sidebar shell; each link opens the Items demo app."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var532), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -13405,7 +13402,7 @@ func toastButton(variant, label string, v button.Variant) templ.Component {
 			var templ_7745c5c3_Var553 string
 			templ_7745c5c3_Var553, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2068, Col: 9}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2065, Col: 9}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var553))
 			if templ_7745c5c3_Err != nil {
@@ -14265,7 +14262,7 @@ func bottomsheetSection() templ.Component {
 								var templ_7745c5c3_Var589 string
 								templ_7745c5c3_Var589, templ_7745c5c3_Err = templ.JoinStringErrs(text)
 								if templ_7745c5c3_Err != nil {
-									return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2200, Col: 16}
+									return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2197, Col: 16}
 								}
 								_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var589))
 								if templ_7745c5c3_Err != nil {
@@ -14399,7 +14396,7 @@ func bottomsheetSection() templ.Component {
 }
 
 // ═══════════════════════════════════════
-// Batch 4: card grid, timeline, split pane, the three page types
+// Card grid, timeline, split pane, the three page types
 // ═══════════════════════════════════════
 
 // showcaseArt is the local placeholder every showcase card shows.
@@ -14934,7 +14931,7 @@ func errorswapSection() templ.Component {
 }
 
 // ═══════════════════════════════════════
-// Batch 5 form widgets
+// Form widgets
 // ═══════════════════════════════════════
 func tagsinputSection() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -15668,7 +15665,7 @@ func ratingSection() templ.Component {
 }
 
 // ═══════════════════════════════════════
-// Batch 5 content widgets
+// Content widgets
 // ═══════════════════════════════════════
 func proseSection() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -16189,7 +16186,7 @@ const showcaseDiff = `diff --git a/items/1/notes.txt b/items/1/notes.txt
 --- a/items/1/notes.txt
 +++ b/items/1/notes.txt
 @@ -1,4 +1,5 @@
- Seeded from the 2026-10-21 dashboard sketch.
+ Seeded demo data.
 -Status: draft
 +Status: published
 -TODO: describe where it drops.

@@ -139,7 +139,7 @@ func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 }
 
 // itemsListProps applies spec to the store and declares the list page: the
-// sketch's intro line, the Type select and Status pills, the search box,
+// intro line, the Type select and Status pills, the search box,
 // the toolbar ("Build mod", "+ Create item", bulk "Publish selected") and
 // the five columns with their row actions.
 func itemsListProps(spec listquery.Spec) listpage.Props {
@@ -340,8 +340,8 @@ func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// itemDetailProps declares the detail page for it: the sketch's summary
-// rows plus the batch 5 fields (tags as badges, the rating read-only, the
+// itemDetailProps declares the detail page for it: the summary rows plus
+// tags (as badges, the rating read-only, the
 // release date, the artwork file name), each with a muted dash when empty.
 func itemDetailProps(it Item) detailpage.Props {
 	usedIn := descriptionlist.Item{Label: "Used in", Value: it.UsedIn}

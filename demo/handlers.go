@@ -42,10 +42,9 @@ func HandleTraffic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// trafficProps declares the traffic page: the same stream the hand-written
-// page carried before batch 4 (StreamURL /api/traffic/stream, a 560px
-// table, the demo provider and event options, two seed rows sharing a
-// trace id), now as streampage.Props.
+// trafficProps declares the traffic page as streampage.Props: StreamURL
+// /api/traffic/stream, a 560px table, the demo provider and event options,
+// and two seed rows sharing a trace id.
 func trafficProps() streampage.Props {
 	return streampage.Props{
 		ID: "traffic",

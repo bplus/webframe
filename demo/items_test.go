@@ -416,7 +416,7 @@ func TestItems_DetailAndHistory(t *testing.T) {
 		"← Items", `href="/items"`, "Published",
 		`href="/items/1/edit"`, `hx-delete="/items/1"`, `hx-confirm="This cannot be undone."`, `data-wf-confirm-destructive="true"`,
 		"<dt", "Type", "Weapon", "Starfall Pack", "Updated", "2d ago", `>1<`,
-		"Notes", "Seeded from the 2026-10-21 dashboard sketch.",
+		"Notes", "Seeded demo data.",
 		"History", `hx-get="/items/1/history"`, `hx-trigger="click once"`, `hx-target="#history-panel"`,
 		`id="history-panel"`,
 	)
@@ -456,11 +456,11 @@ func TestItems_DetailAndHistory(t *testing.T) {
 	wantNone(t, body, "Please fix")
 }
 
-// TestItems_Batch5Form: the form carries the batch 5 widgets, a POST with
-// tags, a rating and a date round-trips (422 keeps every value as chips,
-// stars and the filled date; success stores them), and the detail page
-// shows them.
-func TestItems_Batch5Form(t *testing.T) {
+// TestItems_FormWidgets: the form carries the tags, rating and date
+// widgets, a POST with all three round-trips (422 keeps every value as
+// chips, stars and the filled date; success stores them), and the detail
+// page shows them.
+func TestItems_FormWidgets(t *testing.T) {
 	h := itemsHandler(t)
 	body := do(h, "GET", "/items/new", nil, nil).Body.String()
 	wantAll(t, body,
