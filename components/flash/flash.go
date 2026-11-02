@@ -83,9 +83,8 @@ func Info(w http.ResponseWriter, r *http.Request, title, body string) {
 	Set(w, r, Message{Kind: banner.VariantInfo, Title: title, Body: body})
 }
 
-// Success sets a success flash. Opt-in and discouraged: pages do not show
-// success messages unless the user asked for one; the re-rendered page is
-// the confirmation.
+// Success sets a success flash, the ordinary "Saved" shown once on the
+// page a POST redirects to.
 func Success(w http.ResponseWriter, r *http.Request, title, body string) {
 	Set(w, r, Message{Kind: banner.VariantSuccess, Title: title, Body: body})
 }

@@ -724,7 +724,7 @@ func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 // to swap error responses, so the form re-renders in place; the file
 // field comes back empty, as a file input must); on success it saves,
 // logs the change and redirects to the new item's detail page (HX-Redirect
-// for an htmx submit, else 303). It never renders a success message.
+// for an htmx submit, else 303) with a "Saved" flash shown once there.
 //
 // @boundary HTTP
 // @side-effects mutates Items and Logs; writes HTML or a redirect
@@ -751,6 +751,7 @@ func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 	it.Artwork = artwork
 	it = Items.Create(it)
 	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("created item #%s %s (%s, %s)", it.ID, it.Name, it.Type, it.Status))
+	flash.Success(w, r, "Saved", it.Name+" was created.")
 	redirectTo(w, r, "/items/"+it.ID)
 }
 
@@ -794,6 +795,7 @@ func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	Items.Update(updated)
 	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("updated item #%s %s (%s, %s)", updated.ID, updated.Name, updated.Type, updated.Status))
+	flash.Success(w, r, "Saved", updated.Name+" was updated.")
 	redirectTo(w, r, "/items/"+updated.ID)
 }
 

@@ -70,8 +70,7 @@ func Info(title, body string) Props {
 	return Props{Kind: KindInfo, Title: title, Body: body}
 }
 
-// Success builds the Props for a success toast. Opt-in: pages do not show
-// success messages unless the user asked for one.
+// Success builds the Props for a success toast.
 func Success(title, body string) Props {
 	return Props{Kind: KindSuccess, Title: title, Body: body}
 }

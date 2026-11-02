@@ -20,10 +20,10 @@
 // base64url(JSON) under 2 KB; a value that does not decode renders nothing
 // and is cleared like any other.
 //
-// Errors first: flash.Error is the common case (the action failed and the
-// user landed somewhere else). Warning and Info exist for notices; Success
-// is opt-in and discouraged by this project's "no success messages" rule:
-// the page the user lands on is the confirmation.
+// flash.Error is for an action that failed and sent the user elsewhere;
+// flash.Success is the ordinary "Saved" after a redirect; Warning and Info
+// are notices. (The project's rule against per-field "looks good" markers
+// is about form fields, not about these.)
 //
 // Phone width (390px): the flash is a banner.Banner in normal flow inside
 // the shell's main content, so it keeps the content's 16px gutters, wraps

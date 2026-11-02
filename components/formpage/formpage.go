@@ -255,8 +255,8 @@ func (p Props) submit() action.Action {
 // which answers 422 Unprocessable Entity (appshell.Document configures htmx
 // to swap error responses, so the form re-renders in place with a truthful
 // status); on success it redirects to the saved record (303 See Other, or
-// for an htmx submit an HX-Redirect header with an empty 200 body) and
-// renders no success message.
+// for an htmx submit an HX-Redirect header with an empty 200 body); a
+// flash.Success set before the redirect shows once on the next page.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

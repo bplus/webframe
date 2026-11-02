@@ -208,8 +208,8 @@ func TestPages_SettingsSaveRedirects(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings" {
 		t.Fatalf("POST /settings = %d Location %q, want 303 /settings", rec.Code, rec.Header().Get("Location"))
 	}
-	if body := strings.ToLower(rec.Body.String()); strings.Contains(body, "success") || strings.Contains(body, "saved") {
-		t.Error("success response must carry no success message")
+	if body := rec.Body.String(); strings.Contains(body, `role="status"`) {
+		t.Error("redirect response should not render a banner itself")
 	}
 	vals := Settings.Values()
 	if vals["display_name"] != "Netherese Morgan" || vals["email"] != "k@example.com" || vals["digest"] != "" || vals["mentions"] != "on" {

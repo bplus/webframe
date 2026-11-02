@@ -29,13 +29,15 @@
 
 //
 
-// Error and Warning are the obvious path (toast.Error, toast.Warning);
+// Error and Warning report failures; Success confirms an action whose
 
-// Success exists for the rare action whose only visible result is a toast,
+// result is not otherwise visible on the page (a job queued, a cache
 
-// and Info for neutral notices. Pages do not show success messages unless
+// cleared, a save that leaves the user where they were); Info is a neutral
 
-// the user asked for one.
+// notice. What webframe does not do is confirm every field: a valid field
+
+// gets no "looks good" marker (formfield.Feedback stays empty on success).
 
 //
 
@@ -73,8 +75,7 @@ type Kind string
 const (
 	// KindInfo is the neutral notice (zero value).
 	KindInfo Kind = ""
-	// KindSuccess confirms a completed action. Opt-in: pages do not show
-	// success messages unless the user asked for one.
+	// KindSuccess confirms a completed action.
 	KindSuccess Kind = "success"
 	// KindWarning flags something that needs attention but did not fail.
 	KindWarning Kind = "warning"

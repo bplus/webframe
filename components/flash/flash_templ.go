@@ -45,13 +45,13 @@
 
 //
 
-// Errors first: flash.Error is the common case (the action failed and the
+// flash.Error is for an action that failed and sent the user elsewhere;
 
-// user landed somewhere else). Warning and Info exist for notices; Success
+// flash.Success is the ordinary "Saved" after a redirect; Warning and Info
 
-// is opt-in and discouraged by this project's "no success messages" rule:
+// are notices. (The project's rule against per-field "looks good" markers
 
-// the page the user lands on is the confirmation.
+// is about form fields, not about these.)
 
 //
 

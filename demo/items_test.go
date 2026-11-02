@@ -251,8 +251,9 @@ func TestItems_CreateSuccessRedirects(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/items/15" {
 		t.Fatalf("POST /items = %d Location %q, want 303 /items/15", rec.Code, rec.Header().Get("Location"))
 	}
-	if strings.Contains(rec.Body.String(), "success") {
-		t.Error("success response must carry no success message")
+	// The redirect carries the "Saved" flash for the next page, not a body.
+	if strings.Contains(rec.Body.String(), "Saved") {
+		t.Error("redirect response should not render the flash itself")
 	}
 	it, ok := Items.Get("15")
 	if !ok || it.Name != "Sunforged Maul" || it.Type != "weapon" || !it.Remixable || it.Notes != "Hits hard." {
@@ -654,5 +655,41 @@ func TestItems_RelativeTime(t *testing.T) {
 		if got := relativeTime(now.Add(-c.age), now); got != c.want {
 			t.Errorf("relativeTime(%v) = %q, want %q", c.age, got, c.want)
 		}
+	}
+}
+
+// TestItems_SaveFlashesOnce: a successful create sets a "Saved" flash that
+// the detail page shows once (role="status" banner in #wf-flash) and a
+// reload no longer shows.
+func TestItems_SaveFlashesOnce(t *testing.T) {
+	h := itemsHandler(t)
+	form := url.Values{"name": {"Flash Probe"}, "type": {"weapon"}, "status": {"draft"}}
+	rec := do(h, "POST", "/items", form, nil)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("POST /items = %d, want 303", rec.Code)
+	}
+	cookies := rec.Result().Cookies()
+	var flashCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "wf_flash" {
+			flashCookie = c
+		}
+	}
+	if flashCookie == nil {
+		t.Fatalf("no wf_flash cookie set on save: %v", cookies)
+	}
+	req := httptest.NewRequest("GET", rec.Header().Get("Location"), nil)
+	req.AddCookie(flashCookie)
+	rec2 := httptest.NewRecorder()
+	h.ServeHTTP(rec2, req)
+	body := rec2.Body.String()
+	slot := strings.Index(body, `<div id="wf-flash">`)
+	if slot < 0 || !strings.Contains(body[slot:], `role="status"`) || !strings.Contains(body, "Flash Probe was created.") {
+		t.Errorf("detail page after save lacks the Saved flash:\n%s", body[:min(600, len(body))])
+	}
+	rec3 := httptest.NewRecorder()
+	h.ServeHTTP(rec3, httptest.NewRequest("GET", rec.Header().Get("Location"), nil))
+	if strings.Contains(rec3.Body.String(), "Flash Probe was created.") {
+		t.Errorf("reload still shows the flash")
 	}
 }
