@@ -23,7 +23,7 @@ type Sizing string
 const (
 	SizingTallest Sizing = ""      // default: group is as tall as its tallest panel; nothing moves on switch
 	SizingFixed   Sizing = "fixed" // every panel is Height tall and scrolls inside
-	SizingFit     Sizing = "fit"   // legacy: group grows and shrinks with the active panel
+	SizingFit     Sizing = "fit"   // group grows and shrinks with the active panel
 )
 
 // Height is the panel height used by SizingFixed.
@@ -67,13 +67,9 @@ type TriggerProps struct {
 	TabsID     string
 }
 
-// ContentProps configures a tab panel; Value, IsActive, and TabsID follow the
-// same rules as TriggerProps (Value required, one IsActive pair per group,
-// TabsID only for out-of-tree rendering). Sizing is read the same way: leave
-// it zero inside a Tabs root (the group's Sizing is inherited from ctx) and
-// set it to the group's Sizing when the Content is rendered standalone (an
-// HTMX partial addressed by TabsID), where ctx has nothing to inherit. A
-// non-zero Sizing always wins over ctx.
+// ContentProps configures a tab panel; Value, IsActive and TabsID follow the
+// same rules as TriggerProps. Leave Sizing zero inside a Tabs root, where it
+// is inherited; set it, with TabsID, when rendering the Content standalone.
 type ContentProps struct {
 	ID         string
 	Class      string
@@ -84,37 +80,22 @@ type ContentProps struct {
 	Sizing     Sizing // "" = inherit from the enclosing Tabs; set with TabsID for standalone rendering
 }
 
-// Tabs is the root container of a tab group; it renders a <div
-// data-tui-tabs> and establishes the group ID that ties Triggers to their
-// Content panels. Sizing defaults to SizingTallest: all panels share one
-// grid cell (inactive ones are visibility-hidden, not display-none), so the
-// group is as tall as its tallest panel and nothing moves on switch. Content
-// loaded later (e.g. via HTMX into a panel) may change that height once.
-// SizingFixed gives every panel Height and scrolls inside it; SizingFit is
-// the legacy column that grows and shrinks with the active panel; under
-// SizingFixed each panel gets tabindex="0" so a keyboard-only user can
-// scroll a panel that has nothing focusable in it.
+// Tabs is the root container of a tab group. The expected structure is
+// Tabs > { List > Trigger..., Content... }, with Script rendered once per
+// page. The group ID (random when Props.ID is empty) reaches List, Trigger
+// and Content through the render context; a part rendered standalone must
+// pass TabsID instead. The initially active tab is the pair rendered with
+// IsActive; switching happens client-side.
 //
-// Lazy-loaded panels: under SizingTallest and SizingFixed the inactive
-// panels are laid out (visibility-hidden, not display-none), so an
-// hx-trigger="intersect" inside one fires at page load, not when its tab
-// is opened. Use a "revealed" or click trigger, or SizingFit, for tabs
-// whose content should load on first open.
+// Under SizingTallest (the default) all panels share one grid cell, so the
+// group is as tall as its tallest panel and nothing moves on switch.
+// SizingFixed gives every panel Height and scrolls inside it, making each
+// panel focusable so it can be scrolled by keyboard. SizingFit grows and
+// shrinks with the active panel.
 //
-// Required nesting: Tabs > { List > Trigger..., Content... };
-// also render Script once per page. Only props[0] is used, extras ignored;
-// zero value works. Returns a templ.Component with children inside the
-// wrapper. The active tab is whichever Trigger/Content pair was rendered
-// with IsActive; tabs.min.js then switches pairs client-side by matching
-// data-tui-tabs-id + data-tui-tabs-value, with no server round-trip.
-//
-// Side effects: generates a random group ID via utils.RandomID when Props.ID
-// is empty, and stores it in ctx under the "tabsId" key.
-//
-// @temporal-coupling: List/Trigger/Content read the group ID from ctx set
-// here, so they must render inside this body (same render pass) — or pass
-// TabsID explicitly when rendering a part standalone.
-// @side-effects
+// Under SizingTallest and SizingFixed inactive panels are laid out, so an
+// hx-trigger="intersect" inside one fires at page load. Use a "revealed" or
+// click trigger, or SizingFit, for content that should load on first open.
 func Tabs(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -161,7 +142,7 @@ func Tabs(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 119, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 100, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -192,7 +173,7 @@ func Tabs(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(tabsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 123, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 104, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -205,7 +186,7 @@ func Tabs(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(sizingAttr(p.Sizing))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 124, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 105, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -223,7 +204,7 @@ func Tabs(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(heightAttr(p.Height))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 126, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 107, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -256,13 +237,9 @@ func Tabs(props ...Props) templ.Component {
 	})
 }
 
-// List renders the pill-style strip that visually groups the Trigger
-// buttons, tagged with the enclosing group's ID. Only props[0] is used; zero
-// value fine. Returns a templ.Component with children (the Triggers) inside.
-//
-// @ai-context: reads the group ID from ctx via IDFromContext, so render it
-// inside Tabs; there is no TabsID override on ListProps.
-// @temporal-coupling
+// List renders the strip that groups the Trigger buttons. It reads the
+// group ID from the enclosing Tabs and has no TabsID override, so render it
+// inside Tabs.
 func List(props ...ListProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -310,7 +287,7 @@ func List(props ...ListProps) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 151, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 128, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -341,7 +318,7 @@ func List(props ...ListProps) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(tabsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 160, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 137, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -371,16 +348,9 @@ func List(props ...ListProps) templ.Component {
 	})
 }
 
-// Trigger renders one tab button (children as its label) that tabs.min.js
-// wires to activate the Content sharing its Value within the same group.
-// Only props[0] is used; extras ignored. Value is required: when empty an
-// inline error <span> is rendered before the button. Initial visual state
-// comes from IsActive via data-tui-tabs-state="active"/"inactive"; the JS
-// flips these attributes on click. Returns a templ.Component.
-//
-// @temporal-coupling: group ID comes from ctx (set by the enclosing Tabs)
-// unless TriggerProps.TabsID overrides it; standalone rendering without
-// TabsID yields an empty group ID and the JS cannot match it to a panel.
+// Trigger renders one tab button that activates the Content with the same
+// Value in its group. An empty Value renders an inline error before the
+// button. Rendered outside Tabs without TabsID, it matches no panel.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -437,7 +407,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 191, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 161, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -468,7 +438,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(tabsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 201, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 171, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -481,7 +451,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 202, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 172, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -494,7 +464,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(utils.IfElse(p.IsActive, "active", "inactive"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 203, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 173, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -524,19 +494,9 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
-// Content renders one tab panel (children as its body), hidden with the
-// "hidden" class unless IsActive; tabs.min.js shows/hides panels by matching
-// its data-tui-tabs-id and data-tui-tabs-value against the clicked Trigger.
-// Only props[0] is used; extras ignored. Value is required: when empty an
-// inline error <span> is rendered. All panels exist in the DOM regardless of
-// IsActive — inactive ones are only CSS-hidden. Under SizingFixed (from the
-// enclosing Tabs, or from ContentProps.Sizing when rendered standalone) the
-// panel also gets tabindex="0" and the focus ring (it scrolls). Returns a
-// templ.Component.
-//
-// @temporal-coupling: group ID and Sizing come from ctx (set by the
-// enclosing Tabs) unless ContentProps.TabsID / ContentProps.Sizing override
-// them; a standalone partial must pass both or it gets neither.
+// Content renders one tab panel, hidden unless IsActive. An empty Value
+// renders an inline error. Group ID and Sizing come from the enclosing Tabs
+// unless TabsID and Sizing are set; a standalone partial must set both.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -603,7 +563,7 @@ func Content(props ...ContentProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 242, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 202, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -634,7 +594,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(tabsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 256, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 216, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -647,7 +607,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 257, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 217, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -660,7 +620,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(utils.IfElse(p.IsActive, "active", "inactive"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 258, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 218, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -701,20 +661,13 @@ type sizingKey struct{}
 
 // sizingFromContext returns the enclosing Tabs' Sizing, or SizingTallest
 // outside a Tabs render.
-//
-// @pure
 func sizingFromContext(ctx context.Context) Sizing {
 	s, _ := ctx.Value(sizingKey{}).(Sizing)
 	return s
 }
 
-// IDFromContext returns the tab group ID that the enclosing Tabs component
-// stored in the render context, or "" when called outside a Tabs render (the
-// signal to fall back to an explicit TabsID). Used internally by List,
-// Trigger, and Content; exported so out-of-tree partials can recover the
-// group ID if they hold the parent ctx.
-//
-// @pure
+// IDFromContext returns the group ID of the enclosing Tabs, or "" outside a
+// Tabs render.
 func IDFromContext(ctx context.Context) string {
 	if tabsID, ok := ctx.Value("tabsId").(string); ok {
 		return tabsID
@@ -724,8 +677,6 @@ func IDFromContext(ctx context.Context) string {
 
 // sizingAttr maps Sizing to its data-wf-tabs-sizing value; anything other
 // than fixed or fit is treated as the tallest default.
-//
-// @pure
 func sizingAttr(s Sizing) string {
 	switch s {
 	case SizingFixed:
@@ -739,8 +690,6 @@ func sizingAttr(s Sizing) string {
 
 // heightAttr maps Height to its data-wf-tabs-height value; anything other
 // than s or l is treated as the m default.
-//
-// @pure
 func heightAttr(h Height) string {
 	switch h {
 	case HeightS:
@@ -752,13 +701,8 @@ func heightAttr(h Height) string {
 	}
 }
 
-// Script emits the <script defer> tag loading tabs.min.js, which performs
-// the client-side tab switching (toggling data-tui-tabs-state and the hidden
-// class across matching Trigger/Content pairs). Include it once per page
-// whenever any Tabs is rendered; the URL is cache-busted via utils.ScriptURL
-// and the tag carries the CSP nonce from ctx.
-//
-// @boundary
+// Script emits the deferred script tag for tabs.min.js, which switches tabs
+// client-side. Include it once per page that renders Tabs.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -787,7 +731,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 332, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 276, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -800,7 +744,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/tabs.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 332, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/tabs/tabs.templ`, Line: 276, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {

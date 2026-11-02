@@ -18,21 +18,13 @@
 //
 // With both set, HTML wins and Text is ignored.
 //
-// Sizing: Size scales the whole block (the spacing is in em, so it
-// follows); MaxWidth caps the measure at 65ch by default, so a long article
-// stays readable on a wide screen. Colors come from the theme tokens, so
-// the block follows the light and dark themes like every component.
+// Size scales the whole block; MaxWidth caps the measure (65ch by default).
 //
-// Phone width (390px): the max width yields to the viewport (the block is
-// w-full and min-w-0, the cap is only a maximum), images never exceed the
-// width, long words and URLs in paragraphs and inline code wrap
-// (overflow-wrap: anywhere), <pre> blocks and tables scroll horizontally
-// inside their own box (overflow-x: auto; a table is display: block for
-// that) instead of widening the page. Note that `.wf-prose table` being
-// display: block drops the table role for assistive tech (a screen reader
-// no longer announces rows and columns); when a table must stay navigable
-// as a table, add role="table" to the <table> in the HTML (and role="row"
-// / role="cell" on its parts if the reader still flattens it).
+// On narrow screens images never exceed the width, long words wrap, and
+// <pre> blocks and tables scroll horizontally inside their own box. Tables
+// are display: block for that, which drops their table semantics for some
+// screen readers; add role="table" (and role="row"/role="cell") in the
+// HTML when a table must stay navigable as a table.
 package prose
 
 import (
@@ -44,11 +36,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// HTML is trusted markup: content the app authored or already sanitized,
-// such as Markdown rendered server-side through a sanitizer. Prose writes
-// it verbatim (templ.Raw) inside the .wf-prose scope, so whoever builds an
-// HTML value is responsible for what it contains. For text from users or
-// any other untrusted source use Props.Text, which is escaped.
+// HTML is trusted markup, such as Markdown rendered server-side through a
+// sanitizer. Prose writes it verbatim, so whoever builds an HTML value is
+// responsible for its safety. Use Props.Text for untrusted text.
 type HTML string
 
 // Size scales the block's font size; spacing follows in em. The zero value

@@ -6,12 +6,9 @@ import (
 	"strings"
 )
 
-// Props configures Sparkline; pass it as the single optional argument. The
-// zero value renders an empty 80x24 SVG: Width/Height default to 80x24 when
-// <= 0, Color defaults to "currentColor" (inheriting the surrounding text
-// color), and Fill is off. Data is auto-scaled to its own min/max to fill the
-// drawing area, so only the shape is meaningful — absolute values are not
-// comparable between sparklines.
+// Props configures Sparkline. Color defaults to "currentColor". Data is
+// scaled to its own min and max, so only the shape is meaningful; values
+// are not comparable between sparklines.
 type Props struct {
 	ID         string
 	Class      string
@@ -69,26 +66,11 @@ func buildPolylinePoints(data []float64, w, h int) string {
 	return strings.Join(pts, " ")
 }
 
-// Sparkline renders a minimal inline-SVG trend line meant to sit inside a
-// table cell or next to a metric — no axes, ticks, or labels, just the shape
-// of the data auto-scaled to fill the box.
-//
-// Accepts zero or one Props: called with no arguments it uses the zero value,
-// and any Props beyond the first are ignored. An empty Data slice renders an
-// empty <svg> at the resolved size, still occupying layout space. Values that
-// are all identical draw along the BOTTOM edge (the flat range is padded to 1,
-// anchoring values at the minimum). Fill adds a 15%-opacity area under the
-// line in the stroke color, closed along the bottom edge. A non-empty Color
-// passes through utils.SanitizeColor (invalid input becomes gray #888).
-//
-// Returns a templ.Component that renders a single <svg> element (no wrapper
-// div, unlike the other chart components).
-//
-// @pure
-// @complexity O(n) over data points
-// @ai-context the Y scale is per-sparkline min..max, so two sparklines are
-// never amplitude-comparable; both line and fill share the same 2px inset so
-// they stay aligned.
+// Sparkline renders a small inline-SVG trend line with no axes or labels,
+// for a table cell or beside a metric. It renders a single <svg> with no
+// wrapper. Empty Data renders an empty <svg> at the full size; identical
+// values draw along the bottom edge. Fill adds a faint area under the line.
+// A non-empty Color passes through utils.SanitizeColor.
 templ Sparkline(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

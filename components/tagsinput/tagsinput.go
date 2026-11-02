@@ -1,9 +1,9 @@
 // Package tagsinput renders a free-text tag editor: a framed box holding
 // one chip per tag (each with a remove button) and a text input that adds
 // a tag on Enter, on the separator key (comma by default) and on blur;
-// Backspace on the empty input removes the last chip. The tags are submitted as one plain form field,
-// <input type="hidden" name={Name}>, whose value is the tags joined with
-// Separator ("," by default), so the handler reads them with strings.Split:
+// Backspace on the empty input removes the last chip. The tags are
+// submitted as one hidden form field named Name, joined with Separator
+// ("," by default), so the handler reads them with strings.Split:
 //
 //	var tags []string
 //	for _, t := range strings.Split(r.FormValue("tags"), ",") {
@@ -12,33 +12,15 @@
 //		}
 //	}
 //
-// (strings.Split of "" is []string{""}, which the empty check drops.) The
-// handler re-renders a failed POST with Values set to the parsed tags and
-// the chips come back; nothing else is needed.
+// To re-render a failed POST, set Values to the parsed tags.
 //
-// First paint without JavaScript is complete: the chips are server-rendered
-// from Values, the hidden field already carries the joined value, the count
-// is written, and the text input is readonly (placeholder "Limit reached",
-// still focusable so a phone's keyboard stays open) when Values is at
-// MaxTags.
-// Alpine (x-data on the root, inline in this component) then takes over:
-// its init() reads the tag list from the rendered <li data-tag> chips,
-// removes them and re-renders the same chips from its own state, so the
-// server markup is the single source of the initial state and nothing is
-// written twice. Pasted "a, b, c" is split on Separator into three tags;
-// duplicates are rejected case-insensitively; MaxTags disables the input at
-// the cap and the count reads "n/max". Only the user's actions change the
-// chip row: it grows when a tag is added and shrinks when one is removed.
-//
-// Phone width (390px): the chips wrap inside the frame and the text input
-// takes the remaining width of the last row (it drops to its own full row
-// when a long chip leaves too little space). The on-screen keyboard's
-// Enter/Return key adds the tag because the component listens to keydown
-// Enter; the separator key (comma by default) adds too. Each chip's remove
-// button is a 24px target inside the chip; the input itself is at least
-// 28px tall.
-// Suggestions render a <datalist>, which phones show as autocomplete
-// suggestions above the keyboard.
+// The first paint is complete without JavaScript: chips, the hidden value
+// and the count are server-rendered from Values. Alpine then reads the
+// initial tags from the rendered chips and renders them from its own state,
+// so the server markup is the single source of the initial state. Pasted
+// "a, b, c" becomes three tags; duplicates are rejected case-insensitively;
+// at MaxTags the input turns readonly (still focusable, so a phone keyboard
+// stays open). Suggestions render a <datalist>.
 package tagsinput
 
 import (
@@ -58,26 +40,20 @@ const DefaultSeparator = ","
 // Props configures a TagsInput. Name is required for the value to submit;
 // everything else is optional with the defaults noted per field.
 type Props struct {
-	// ID is the text input's id (what a <label for> points at; the
-	// control that receives focus and aria-describedby). The hint is
-	// ID+"-hint", the chip list ID+"-list", the datalist ID+"-options" and
-	// the root ID+"-root". Defaults to utils.RandomID(); set it for stable
-	// markup.
+	// ID is the text input's id, the target of a <label for>. It also
+	// derives the ids of the hint, chip list, datalist and root. Defaults
+	// to a random id; set it for stable markup.
 	ID    string
 	Class string
-	// Attributes spread onto the text input (as input.Props.Attributes
-	// does), so a form field's aria-describedby and aria-invalid land on
-	// the focusable control. An aria-describedby here is merged with the
-	// component's own hint id.
+	// Attributes spread onto the text input. An aria-describedby here is
+	// merged with the component's own hint id.
 	Attributes templ.Attributes
 
 	// Name is the hidden field's name; the submitted value is the tags
 	// joined with Separator.
 	Name string
-	// Values are the current tags, rendered as chips in order. They are
-	// normalized first (trimmed, empties dropped, case-insensitive
-	// duplicates reduced to the first spelling), as commit() does to typed
-	// text.
+	// Values are the current tags, rendered as chips in order after
+	// trimming, dropping empties and case-insensitive duplicates.
 	Values []string
 	// Placeholder is the text input's placeholder.
 	Placeholder string
@@ -85,9 +61,8 @@ type Props struct {
 	// input turns readonly with the placeholder "Limit reached" and the
 	// hint shows "n/max".
 	MaxTags int
-	// Disabled disables the input, the chip remove buttons and the hidden
-	// field, so a disabled tags input submits nothing (as a disabled
-	// <input> does).
+	// Disabled disables the input, the remove buttons and the hidden
+	// field, so nothing is submitted.
 	Disabled bool
 	// Separator joins the tags in the hidden field and splits pasted text;
 	// "" means DefaultSeparator. A tag never contains the separator.
@@ -100,12 +75,9 @@ type Props struct {
 	HasError bool
 }
 
-// resolve fills the defaults (a random ID and the default separator) and
-// normalizes Values the way commit() normalizes typed text: each tag is
-// trimmed, empties are dropped and a case-insensitive duplicate keeps its
-// first spelling. The chips (keyed by tag in the x-for), the hidden joined
-// value and the count are all rendered from the normalized list, so they
-// agree with each other and with what Alpine would have produced.
+// resolve fills the defaults and normalizes Values the same way the client
+// normalizes typed text, so the server-rendered chips, hidden value and
+// count agree with what Alpine would produce.
 func (p Props) resolve() Props {
 	if p.ID == "" {
 		p.ID = utils.RandomID()
@@ -193,11 +165,9 @@ func (p Props) describedBy() string {
 }
 
 // inputAttrs are the attributes spread onto the text input: the Alpine
-// wiring first, then the caller's Attributes (minus aria-describedby,
-// which describedBy merged), so a caller can still override x-on hooks
-// deliberately. Values typed by the user never reach these attributes;
-// everything Alpine needs from the server is read from data attributes
-// and the rendered chips, so no JS is built from strings here.
+// wiring, then the caller's Attributes (minus aria-describedby, which
+// describedBy merged). No JavaScript is built from strings here; Alpine
+// reads server state from data attributes and the rendered chips.
 func (p Props) inputAttrs() templ.Attributes {
 	own := templ.Attributes{
 		"x-model":         "text",
@@ -244,14 +214,9 @@ func (p Props) frameClass() string {
 const textInputClass = "h-7 min-w-32 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
 
 // alpineData is the x-data of the root. init() seeds the state from the
-// server-rendered markup: data-max/data-sep/data-disabled on the root and
-// one <li data-tag> per chip, which it removes so the x-for below renders
-// the same chips from state (same tick as the walk: no paint in between).
-// commit() splits the text on the separator (so a paste adds several),
-// trims, drops empties, rejects case-insensitive duplicates and stops at
-// the cap; onKey handles Enter and the separator key (add; the separator
-// only when it is one character, so a multi-character Separator adds on
-// Enter alone) and Backspace on an empty input (remove the last chip).
+// root's data attributes and the server-rendered chips, then removes those
+// chips so the x-for renders them from state. A multi-character Separator
+// adds a tag on Enter only.
 const alpineData = `{
 	tags: [], text: '', max: 0, sep: ',', disabled: false, placeholder: '',
 	init() {

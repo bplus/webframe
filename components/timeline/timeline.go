@@ -5,14 +5,9 @@
 // grouped under one heading per calendar day (unless NoGroups); the day is
 // taken in Props.Location when set, otherwise in each item's own location.
 //
-// Layout: every row is a two-column grid with a fixed 1rem gutter holding the
-// dot and the rail segment, and a min-width-0 content column, so the rail and
-// the dots stay aligned however long a title wraps (no floats, no absolute
-// positioning).
-//
-// Phone width (390px): the same layout; the gutter keeps its 1rem width and
-// 0.75rem gap, the time sits on its own line above the title, and titles,
-// bodies and meta wrap inside the content column. Nothing is hidden.
+// Every row is a two-column grid: a fixed gutter holding the dot and the
+// rail, and a content column, so the rail stays aligned however long a
+// title wraps. The same layout is used at every width.
 package timeline
 
 import (
@@ -105,10 +100,7 @@ func (p Props) sorted() []Item {
 
 // Groups returns the items sorted and grouped by calendar day in the
 // resolved location. With NoGroups the result is a single Group whose Day
-// is the zero time. Consecutive items sharing a day share a group, so
-// groups follow the item order.
-//
-// @pure
+// is the zero time.
 func (p Props) Groups() []Group {
 	items := p.sorted()
 	if p.NoGroups {

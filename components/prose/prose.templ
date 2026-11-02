@@ -1,14 +1,8 @@
 package prose
 
-// Prose renders <div class="wf-prose ..."> holding either p.HTML verbatim
-// (the one permitted templ.Raw in the library: the caller vouches for the
-// markup, see the HTML type) or p.Text escaped as paragraphs, one <p> per
-// blank-line-separated block with <br> between the lines inside it. With
-// both set, HTML wins. Element typography comes from the .wf-prose rules in
-// the stylesheet, so the content needs no classes.
-//
-// Phone width (390px): the measure cap yields to the viewport; <pre> and
-// <table> scroll inside their own box; long words wrap.
+// Prose renders a .wf-prose block holding either p.HTML verbatim or p.Text
+// escaped as paragraphs. With both set, HTML wins. Typography comes from the
+// stylesheet, so the content needs no classes.
 templ Prose(p Props) {
 	<div
 		if p.ID != "" {

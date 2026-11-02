@@ -10,10 +10,8 @@
 // submitted when no star is chosen (Value 0 and the user left it), which
 // Required turns into a browser validation error inside a form.
 //
-// Phone width (390px): each star is its own tap target, 24px at SizeSm, 32px
-// at SizeMd and 44px at SizeLg (the recommended minimum for touch, so a
-// rating a user is asked to give should be SizeLg). Five stars at SizeLg are
-// 220px wide and fit; a wider Max wraps onto a second row.
+// Each star is its own tap target; use SizeLg (44px) for a rating the user
+// gives on a phone. A row too wide for the screen wraps.
 package rating
 
 import (
@@ -81,11 +79,10 @@ func (p Props) max() int {
 	return p.Max
 }
 
-// ControlID is the id of the element that receives the field wiring
-// (aria-describedby, aria-invalid): the fieldset in input mode, the span in
-// read-only mode. It is ID when set, else "rating-"+Name, else a fresh
-// utils.RandomID() (Rating resolves that once per render, so two read-only
-// ratings on one page never share an id; set ID for stable markup).
+// ControlID is the id of the element that receives aria-describedby and
+// aria-invalid: the fieldset in input mode, the span when read-only. It is
+// ID when set, else "rating-"+Name, else a random id (fixed once per
+// render).
 func (p Props) ControlID() string {
 	if p.ID != "" {
 		return p.ID
@@ -174,14 +171,9 @@ const (
 //   - the label of the focused radio shows a focus ring, since the radio
 //     itself is visually hidden.
 //
-// The reset rule's specificity (.wf-rating:hover .x) beats the checked
-// rules (input:checked + .x) and loses to the hover rules
-// (.wf-rating:hover .x:hover), which is what makes the preview win while
-// hovering and the checked fill return when the pointer leaves.
-//
-// Every class below is written out in full (not assembled from filledClass
-// and emptyClass) because the stylesheet's scanner only compiles complete
-// literal tokens.
+// The rules' specificities order them so the hover preview wins while
+// hovering and the checked fill returns when the pointer leaves. Classes
+// are written out in full because Tailwind only compiles literal tokens.
 func (p Props) starLabelClass() string {
 	return "inline-flex cursor-pointer items-center justify-center rounded-sm transition-colors " +
 		p.targetClass() +

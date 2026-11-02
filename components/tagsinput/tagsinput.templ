@@ -7,14 +7,9 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// TagsInput renders the tag editor: the hidden field named p.Name (value =
-// the tags joined with the separator), a framed box holding the chip list
-// (<ul role="list"> of <li> chips, each with a "Remove <tag>" button) and
-// the text input, then the hint paragraph (sr-only instructions plus the
-// visible "n/max" count when MaxTags is set) the input's aria-describedby
-// names. The text input is rendered through input.Input with p.ID; Alpine
-// state lives on the root and is seeded from this markup (see alpineData).
-// Only the first Props value is used.
+// TagsInput renders the tag editor: the hidden field, a framed box holding
+// the chip list and the text input, then a hint paragraph (screen-reader
+// instructions plus the "n/max" count when MaxTags is set).
 templ TagsInput(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {

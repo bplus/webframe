@@ -51,23 +51,11 @@ type Props struct {
 	Decoration  Decoration
 }
 
-// Separator renders a visual divider between regions, optionally with a
-// small text label centered on the line (pass the label as children;
-// note the padded label chip is emitted even when children are empty,
-// leaving a small gap at the line's center — px-2 wide horizontally,
-// py-2 tall vertically). Call with no
-// arguments for
-// a solid horizontal rule; only the first Props is used and extras are
-// silently ignored. Returns a templ.Component rendering a
-// <div role="separator" aria-orientation="..."> containing the rule
-// (aria-hidden) and a children slot on a bg-background chip that masks
-// the line behind the label.
-//
-// @pure
-// @ai-context The children label chip uses bg-background to cover the
-// rule, so on a non-default background (e.g. inside bg-card) the chip
-// color will not match its surroundings unless overridden. Vertical
-// orientation needs an explicit height from the parent (root is h-full).
+// Separator renders a divider between regions, optionally with a label
+// (the children) centered on the line. The label sits on a bg-background
+// chip that masks the line, so on another surface (such as bg-card)
+// override its color. The chip is emitted even with no children, leaving a
+// small gap at the center.
 func Separator(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -114,7 +102,7 @@ func Separator(props ...Props) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 72, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 60, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -202,7 +190,7 @@ func Separator(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 97, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/separator/separator.templ`, Line: 85, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

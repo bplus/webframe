@@ -56,8 +56,6 @@ func wrapClass(w bool) string {
 // children along the column when the Stack has room to spare (see
 // StackProps). On phones it renders unchanged: a column is already the
 // narrow-width layout.
-//
-// @pure
 func Stack(props ...StackProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -100,7 +98,7 @@ func Stack(props ...StackProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 60, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 58, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -151,8 +149,6 @@ func Stack(props ...StackProps) templ.Component {
 // Inline lays children out horizontally with a uniform gap, centered
 // vertically by default. Below md (phone width) the row always wraps;
 // Wrap makes it wrap at every width.
-//
-// @pure
 func Inline(props ...InlineProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -203,7 +199,7 @@ func Inline(props ...InlineProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 81, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 77, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

@@ -28,29 +28,20 @@
 //	<a href={ templ.URL("/mail/42") } { splitpane.LinkAttrs(p, "/mail/42")... }>{ subject }</a>
 //
 // or, through action, action.Action{Href: "/mail/42", Label: subject,
-// Attributes: splitpane.LinkAttrs(p, "/mail/42")}. LinkAttrs holds
-// data-wf-splitpane-link, hx-target=DetailTarget(p), hx-push-url="true"
-// (the address bar follows the pick) and hx-boost="false"; no hx-get:
-// static/js/splitpane.js decides the click (below). href itself is the
-// caller's (see LinkAttrs for why).
+// Attributes: splitpane.LinkAttrs(p, "/mail/42")}.
 //
 // # Why a script decides, not a trigger filter
 //
-// From md up a click should swap only the detail region, so the link is an
-// htmx request targeting it; Respond answers that request (HX-Target names
-// the detail id) with the detail region's content alone. Below md there is
-// no detail region to swap into (it is hidden, the list fills the width),
-// and the server cannot tell a phone from a desktop by the request. So the
-// phone must not send the htmx request at all. An hx-get with a filtered
-// hx-trigger cannot do that: htmx calls preventDefault on the anchor before
-// it evaluates the filter, so the link would go dead on a phone (measured
-// 2026-10-31). Instead the link carries data-wf-splitpane-link, hx-target
-// and hx-push-url but no hx-get, and static/js/splitpane.js (loaded by
-// appshell.Scripts) takes the click only when matchMedia('(min-width:
-// 48rem)') matches, calling htmx.ajax with the link as the source so
-// hx-target and hx-push-url apply. Below md the anchor navigates as a plain
-// page load; the server sees /mail/42 without an HX-Target, renders the
-// whole document, and the pane shows the detail with the Back link.
+// From md up a click should swap only the detail region; below md there is
+// no visible detail region, and the server cannot tell a phone from a
+// desktop by the request, so the phone must not send the htmx request at
+// all. A filtered hx-trigger cannot do that, because htmx calls
+// preventDefault on the anchor before it evaluates the filter, leaving the
+// link dead on a phone. Instead the link has no hx-get, and
+// static/js/splitpane.js (loaded by appshell.Scripts) takes the click only
+// when the md media query matches, calling htmx.ajax with the link as the
+// source. Below md the anchor navigates as a plain page load and the server
+// renders the whole document with the detail and its Back link.
 //
 // # Phone
 //
@@ -97,15 +88,12 @@ const defaultID = "splitpane"
 const defaultBackLabel = "Back"
 
 // Props declares the pane. List renders in the list column; Detail, when
-// non-nil, in the detail region (nil means no item is selected: the
-// region is empty and, on a phone, hidden while the list shows).
-// ListWidth is the list column's tier from md up. DetailID is the detail
-// region's element id, ID+"-detail" when empty ("splitpane-detail" with
-// an empty ID). BackHref is the phone back link's target, normally the
-// list route; BackLabel its text ("Back" when empty); the link renders
-// only when Detail is set. Title, when set, is the detail region's
-// aria-label so assistive tech can name the region. Class is merged onto
-// the root with utils.TwMerge; Attributes spread last on the root.
+// non-nil, in the detail region (nil means nothing is selected). ListWidth
+// is the list column's tier from md up. DetailID defaults to ID+"-detail".
+// BackHref and BackLabel ("Back" by default) form the phone back link,
+// rendered only when Detail is set. Title, when set, is the detail
+// region's aria-label. Class is merged onto the root; Attributes spread
+// last on it.
 type Props struct {
 	ID         string
 	Class      string
@@ -158,21 +146,12 @@ func DetailTarget(p Props) string {
 	return "#" + p.detailID()
 }
 
-// LinkAttrs returns the htmx attributes a list link needs so a click swaps
-// the detail from md up and navigates below: hx-get=href,
-// data-wf-splitpane-link="true", hx-target=DetailTarget(p) and
-// hx-push-url="true" (no hx-get: static/js/splitpane.js, in the shell's
-// bundle, issues the htmx request itself from md up and leaves the click
-// alone below md, so the anchor navigates). It does not include href: the caller sets that on the <a> (or as the
-// action.Action's Href) and passes the same value here. Two reasons: an
-// action.Action already renders its Href, so an href in Attributes would
-// emit the attribute twice; and app code may not spread an attribute map
-// onto an element (wflint), so an app that wrote its own anchor would have
-// to copy every attribute out by name, href included. List does the
-// spreading inside the library. The handler behind href is the detail
-// route, which calls Respond; it answers the htmx request with the detail
-// region's content and the plain navigation with the whole page. See the
-// package doc for why a script, not a trigger filter, decides.
+// LinkAttrs returns the attributes a list link needs so a click swaps the
+// detail from md up and navigates below: data-wf-splitpane-link,
+// hx-target=DetailTarget(p), hx-push-url="true" and hx-boost="false". There
+// is no hx-get; see the package doc. It does not include href, which the
+// caller sets on the <a> (or as the action.Action's Href) so it is never
+// emitted twice.
 func LinkAttrs(p Props, href string) templ.Attributes {
 	return templ.Attributes{
 		"data-wf-splitpane-link": "true",
@@ -219,15 +198,12 @@ func (p Props) listColID() string {
 }
 
 // Respond writes the pane for r through the appshell.App installed by
-// (*App).Middleware: a plain htmx request whose HX-Target is DetailID
-// (a list click from md up) receives only the detail region's content,
-// swapped into the region's innerHTML; any other plain htmx request
-// receives the pane alone (SplitPane(p), no shell); a boosted,
-// history-restore or non-htmx request (a phone's list click, a reload, a
-// bookmark, the browser's Back) receives the whole document. It returns
-// an error naming Middleware when no App is in the context, writing
-// nothing. Render errors are returned, not written as a 500. Both the
-// list route and the detail route call it; only Detail differs.
+// (*App).Middleware. An htmx request targeting DetailID (a list click from
+// md up) gets only the detail region's content; any other plain htmx
+// request gets SplitPane(p) without the shell; boosted, history-restore and
+// non-htmx requests get the whole document. It returns an error, writing
+// nothing, when no App is in the context. Both the list route and the
+// detail route call it; only Detail differs.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {

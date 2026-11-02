@@ -79,23 +79,10 @@ type ContentProps struct {
 	Exclusive        bool // auto-close this popover whenever another popover opens
 }
 
-// Trigger wraps arbitrary children so hovering or clicking them opens the
-// popover Content whose ID matches For. Trigger and Content are siblings by
-// design — there is no root wrapper component in this package, so the ID
-// link is the entire composition contract.
-//
-// Accepts zero or one TriggerProps (extras ignored). Zero-value default:
-// TriggerType falls back to click. Returns a templ.Component rendering a
-// span (class "group cursor-pointer") with children as the visible control.
-//
-// Side effects: none — no context access, no ID generation; interactivity is
-// supplied by popover.min.js via the data-tui-popover-trigger/-type
-// attributes.
-//
-// @invariant For must exactly match the ContentProps.ID of the target
-// Content (when For is empty, no data-tui-popover-trigger attribute is
-// emitted and the trigger opens nothing). Unlike dialog/slideover, no
-// context fallback exists.
+// Trigger wraps children so hovering or clicking them opens the Content
+// whose ID equals For. There is no root wrapper in this package: the ID
+// link is the only connection, and a Trigger with an empty For opens
+// nothing.
 func Trigger(props ...TriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -141,7 +128,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 99, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 86, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -177,7 +164,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 103, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 90, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -195,7 +182,7 @@ func Trigger(props ...TriggerProps) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(string(p.TriggerType))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 106, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 93, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -225,26 +212,13 @@ func Trigger(props ...TriggerProps) templ.Component {
 	})
 }
 
-// Content renders the floating panel a Trigger opens: an absolutely
-// positioned, initially hidden div that popover.min.js positions relative to
-// the trigger at runtime (and may reparent into a
-// data-tui-popover-portal-container element). Children render inside an
-// overflow-hidden inner wrapper; an arrow element is appended when
-// ShowArrow is set. While open, the script also sets --wf-pop-max on this
-// div to the height (px) available on the side it was placed on (Floating UI
-// size step, after flip and shift); children that must never leave the
-// viewport cap themselves with it, as hovercard does.
+// Content renders the floating panel a Trigger opens, initially hidden and
+// positioned relative to the trigger by the script. While open, the script
+// sets --wf-pop-max to the height available on the chosen side, so children
+// that must stay in the viewport can cap themselves with it.
 //
-// Accepts zero or one ContentProps (extras ignored). Zero-value defaults
-// applied here: Placement -> bottom, Offset 0 -> 8px with arrow / 4px
-// without. All options are serialized to data-tui-popover-* attributes; open
-// state starts as data-tui-popover-open="false" plus the "hidden" class and
-// is toggled entirely by the script (not Alpine).
-//
-// @invariant ContentProps.ID is the binding key: it must be non-empty,
-// page-unique, and referenced by the paired Trigger's For, or the panel can
-// never be opened. Note this component renders id={ p.ID } unconditionally,
-// so an empty ID emits id="" — there is no RandomID fallback here.
+// ID must be non-empty, unique on the page and referenced by a Trigger's
+// For; there is no generated fallback.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -295,7 +269,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 149, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 123, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -308,7 +282,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 150, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 124, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -321,7 +295,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(string(p.Placement))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 152, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 126, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -334,7 +308,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.Offset))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 153, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 127, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -347,7 +321,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.DisableClickAway))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 154, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 128, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -360,7 +334,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.DisableESC))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 155, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 129, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -373,7 +347,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.ShowArrow))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 156, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 130, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -386,7 +360,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.HoverDelay))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 157, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 131, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -399,7 +373,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(p.HoverOutDelay))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 158, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 132, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -412,7 +386,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatBool(p.Exclusive))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 159, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 133, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -475,20 +449,10 @@ func Content(props ...ContentProps) templ.Component {
 	})
 }
 
-// Script emits the script tag that activates every popover on the page —
-// trigger wiring (click/hover with delays), positioning per Placement and
-// Offset, arrow placement, click-away/ESC dismissal, exclusive-group
-// closing, and optional portal reparenting. Include it once per page
-// (typically in the layout) whenever Trigger/Content are used, including
-// indirect users such as the hovercard component.
-//
-// Takes no arguments and returns a templ.Component rendering a single
-// deferred script tag. Side effects: reads the CSP nonce from the render
-// context via templ.GetNonce, and utils.ScriptURL appends a per-process
-// ?v= cache-busting timestamp to /static/js/popover.min.js.
-//
-// @temporal-coupling Trigger and Content render inert, hidden markup until
-// this script loads on the same page.
+// Script emits the deferred script tag that activates every popover on the
+// page: click and hover triggers, positioning, click-away and Escape
+// dismissal. Include it once per page that uses popovers, including
+// indirectly through components such as hovercard.
 func Script() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -517,7 +481,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 200, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 164, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -530,7 +494,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/popover.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 200, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/popover/popover.templ`, Line: 164, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {

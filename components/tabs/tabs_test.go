@@ -142,11 +142,9 @@ func TestTabsFixedPanelsAreFocusable(t *testing.T) {
 	}
 }
 
-// TestContent_StandaloneFixedSizing pins batch 2 input #14: a Content
-// rendered outside its Tabs root (an HTMX partial addressed by TabsID) cannot
-// read the group's Sizing from ctx, so ContentProps.Sizing carries it; with
-// SizingFixed the panel is focusable and ringed exactly as inside a fixed
-// group, and without it the standalone panel stays as it was.
+// TestContent_StandaloneFixedSizing checks that a Content rendered outside
+// its Tabs root takes its Sizing from ContentProps.Sizing: with SizingFixed
+// the panel is focusable and ringed as inside a fixed group.
 func TestContent_StandaloneFixedSizing(t *testing.T) {
 	renderContent := func(p tabs.ContentProps) string {
 		var buf bytes.Buffer

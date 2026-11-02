@@ -1,25 +1,15 @@
 // Package logviewer renders a text log in a fixed-height monospace box with
 // a toolbar: a client-side filter, a Follow switch, and a download action.
-// It is the text-stream counterpart of trafficstream (which stays the
-// tabular one).
 //
 // Lines render on the server; with Src the lines container polls it with
-// htmx (hx-get, hx-trigger="every Ns", hx-swap="beforeend") and the handler
-// answers with Fragment(lines): the new lines only, or an empty body when
-// there is nothing new. Alpine state inside the component owns Follow (the
-// newest line stays in view only while the user is already at the bottom;
-// a manual scroll up stays put), the filter (hides non-matching lines,
-// case-insensitive, text and time), and MaxLines (the oldest lines are
-// removed after each poll, with the scroll position corrected so what the
-// user is reading does not move). Appending never resets the scroll.
+// htmx and the handler answers with Fragment(newLines), or an empty body
+// when there is nothing new. Follow keeps the newest line in view only while
+// the user is already at the bottom. The filter hides non-matching lines
+// case-insensitively. MaxLines drops the oldest lines after each poll
+// without moving what the user is reading.
 //
-// The box has one of three fixed heights (Height) and scrolls inside, so it
-// never grows the page however many lines arrive.
-//
-// Phone (390px): the toolbar wraps (filter box full width, Follow and
-// Download on the next row); the box keeps its Height tier; long lines
-// wrap when Wrap is set and otherwise scroll horizontally inside the box,
-// never widening the page.
+// The box has a fixed height and scrolls inside, so it never grows the
+// page. Long lines wrap when Wrap is set and otherwise scroll horizontally.
 package logviewer
 
 import (
@@ -84,11 +74,8 @@ type Props struct {
 	Src string
 	// Every is the polling interval; zero means DefaultEvery (5s).
 	Every time.Duration
-	// Follow is the Follow switch's initial state: scroll to the newest
-	// line after each poll, but only while the user is already at the
-	// bottom. On first render a following box starts scrolled to its
-	// bottom. The switch renders only with Src (without polling nothing
-	// arrives to follow); Follow without Src still starts at the bottom.
+	// Follow is the Follow switch's initial state. A following box starts
+	// scrolled to the bottom. The switch renders only with Src.
 	Follow bool
 	// Filter adds a search box that hides non-matching lines client-side.
 	Filter bool
@@ -165,14 +152,10 @@ func (p Props) linesClass() string {
 	return utils.IfElse(p.Wrap, "whitespace-pre-wrap break-words", "whitespace-pre")
 }
 
-// xData is the Alpine state (the root's x-effect="apply()" re-filters on
-// every q change; it also runs once before the lines ref exists, which
-// apply tolerates): follow (the switch), q (filter text), max
-// (MaxLines, 0 = unbounded), n (line count, for the empty text), stick
-// (the user is at the bottom). onSwap runs after every htmx append:
-// apply the filter to the new lines, trim to max keeping the viewport
-// still unless following, then scroll to the bottom only when following
-// and already there.
+// xData is the Alpine state: follow (the switch), q (filter text), max
+// (MaxLines), n (line count, for the empty text) and stick (the user is at
+// the bottom). onSwap runs after every htmx append: filter the new lines,
+// trim to max, then scroll to the bottom when following and already there.
 func (p Props) xData() string {
 	return fmt.Sprintf(`{
 follow: %t, q: '', max: %d, n: %d, stick: true,

@@ -16,36 +16,16 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Toolbar renders <div role="toolbar"> holding the Left action group,
-// the children in a flex-1 min-w-0 middle slot, and the Right group
-// (ml-auto, so it sits at the end even when the middle slot is on
-// another row). Below md the middle slot takes the full width and moves
-// to its own row under the two groups (max-md:basis-full order-last), so
-// bulk buttons wrap instead of being clipped; an empty slot is hidden
-// (empty:hidden) and adds no row.
+// Toolbar renders <div role="toolbar"> holding the Left action group, the
+// children in a growing middle slot, and the Right group. Below md the
+// middle slot moves to its own row; an empty slot adds no row.
 //
-// Phone collapse (below md, 768px): when either side has more actions
-// than Props.Overflow (default 1), each side is rendered twice, like the
-// app shell topbar. The full inline group carries `hidden md:flex`; the
-// phone group carries `md:hidden` and shows the first Overflow actions
-// inline followed by a ghost "⋯" button (icon.Ellipsis,
-// aria-label="More actions") that opens a dropdown with the rest. A
-// side that fits within Overflow still renders twice so the two
-// renderings stay symmetric; an Action.ID therefore appears twice in
-// the DOM when collapsing, so prefer targeting by class or a wrapping
-// id. When nothing overflows, or Overflow is -1, a single row is
-// rendered and simply wraps (flex-wrap) at narrow widths.
-//
-// Menu items: a link action (Action.IsLink) becomes a dropdown.Item
-// with Href; any other action becomes a dropdown.Item <button> carrying
-// the action's hx-get/hx-post/hx-delete/hx-target/hx-swap attributes,
-// hx-confirm from Confirm, and its own Attributes, via ItemProps.
-// Attributes. action.Button is not nested inside the item because the
-// item already is the button. Disabled carries over; Variant and Icon
-// do not apply inside the menu. The page must include dropdown.Script
-// (appshell does) for the menu to open.
-//
-// Accepts zero or one Props; extras are ignored.
+// Below md, when either side has more actions than Props.Overflow, each
+// side renders twice: a full group for md and up and a phone group showing
+// the first Overflow actions plus a "⋯" menu with the rest. An Action.ID
+// then appears twice in the DOM, so prefer targeting by class or a wrapping
+// id. In the menu, Variant and Icon do not apply. The page must include
+// dropdown.Script (appshell does) for the menu to open.
 func Toolbar(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -89,7 +69,7 @@ func Toolbar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 51, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 31, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -397,7 +377,7 @@ func moreMenu(menu []action.Action, placement dropdown.Placement) templ.Componen
 							var templ_7745c5c3_Var18 string
 							templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(a.Label)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 108, Col: 15}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 88, Col: 15}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 							if templ_7745c5c3_Err != nil {
@@ -425,7 +405,7 @@ func moreMenu(menu []action.Action, placement dropdown.Placement) templ.Componen
 							var templ_7745c5c3_Var20 string
 							templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(a.Label)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 112, Col: 15}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toolbar/toolbar.templ`, Line: 92, Col: 15}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 							if templ_7745c5c3_Err != nil {

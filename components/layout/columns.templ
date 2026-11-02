@@ -58,8 +58,6 @@ func stickyClass(sticky bool) string {
 
 // TwoColumn lays children out as the main column with an optional
 // aside. On phones the aside stacks under the main column.
-//
-// @pure
 templ TwoColumn(props ...TwoColumnProps) {
 	{{ var p TwoColumnProps }}
 	if len(props) > 0 {
@@ -87,8 +85,6 @@ templ TwoColumn(props ...TwoColumnProps) {
 // left and right side columns. On phones each side collapses into a
 // disclosure labeled LeftLabel / RightLabel ("Left" / "Right" when
 // empty); from md up they are open.
-//
-// @pure
 templ ThreeColumn(props ...ThreeColumnProps) {
 	{{ var p ThreeColumnProps }}
 	if len(props) > 0 {

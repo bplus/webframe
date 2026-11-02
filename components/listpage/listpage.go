@@ -22,29 +22,18 @@
 // unless a Column is Sortable, when it is the Sort select described
 // below. Selected state comes from Spec.Filters and Spec.Search.
 //
-// Sort select (phone): a sortable column marked Hidden loses its header,
-// the sort link, below md, so when any Column is Sortable the bar's last
-// control is a <select> named Spec.Param("sort"), labelled "Sort", with
-// two options per sortable column, "{Label} ↑" and "{Label} ↓" (a Label
-// past 32 runes is cut with "…" and the full text goes in the option's
-// title), both value=Key; the ↓ option carries
-// data-tui-filterbar-set-dir="desc" and ↑
-// "asc" (under the Spec's prefix), which filterbar.min.js writes into the
-// bar's hidden dir input before every update, so choosing an option
-// issues the same sort=Key&dir=… request a header click does. The option
-// matching Spec.Sort and Spec.Dir is selected; when none does (the sort
-// is a column that is not Sortable, or the Spec has no sort) a leading
-// "Default order" option (value "", dir "") is. The select has the id the
-// hidden sort input had, filterbar.HiddenID(ID+"-filterbar", Spec.Param
-// ("sort")), carries filterbar's state marker so "Clear filters" leaves
-// it alone, and is the element the out-of-band update after a header
-// click replaces, so the headers and the select never disagree. It
-// renders only below md (its wrapper is md:hidden; the headers do its job
-// on md and up) but is read by the bar's script at every width, so sort
-// rides along with filter changes there as before. A list with sortable
-// columns and no Filters or Search still gets the bar, holding only the
-// select and no "Clear filters" button, and the whole bar is md:hidden
-// then.
+// Sort select (phone): below md a Hidden column loses its sortable header,
+// so when any Column is Sortable the bar ends with a <select> named
+// Spec.Param("sort") offering "{Label} ↑" and "{Label} ↓" per sortable
+// column. Each option sets the bar's hidden dir input
+// (data-tui-filterbar-set-dir), so choosing one sends the same
+// sort=Key&dir=… request a header click does. When the current sort matches
+// no option, a leading "Default order" option is selected. The select takes
+// the hidden sort input's id, so the out-of-band update after a header click
+// keeps the headers and the select in agreement. It is visible only below md
+// but is read by the bar's script at every width. A list with sortable
+// columns and no Filters or Search gets a bar holding only the select, and
+// that bar is md:hidden.
 //
 // The URL is the list state. Every results-only response (Respond for a
 // request targeting the results region, RespondResults for a mutation)
@@ -115,11 +104,9 @@ const (
 	// defaultOrderLabel is the Sort select's option when no sortable column
 	// is the current sort.
 	defaultOrderLabel = "Default order"
-	// maxSortLabelRunes caps a column label in the Sort select's options: a
-	// <select> is as wide as its longest option and sits in a row that
-	// does not wrap, so a long label plus " ↓" would push the phone bar
-	// past 358px. A longer label is cut to maxSortLabelRunes-1 runes plus
-	// "…" and the full option text goes in the option's title.
+	// maxSortLabelRunes caps a column label in the Sort select so a long
+	// label cannot widen the non-wrapping phone bar; the full text goes in
+	// the option's title.
 	maxSortLabelRunes = 32
 	// introClass styles the intro <p> in Page and its out-of-band copy
 	// alike, so the replacement does not move anything.
@@ -260,16 +247,10 @@ func truncateLabel(label string) (string, bool) {
 	return strings.TrimRight(string(runes[:maxSortLabelRunes-1]), " ") + "…", true
 }
 
-// sortConfig builds the Sort select (see the package doc): named
-// Spec.Param("sort"), two options per sortable column whose
-// data-tui-filterbar-set-<dir param> attribute sets the hidden dir input
-// (the option for the Spec's default order carries value "" and dir "", so
-// choosing it, or changing a filter while in it, submits no sort at all),
-// the option matching Spec.Sort and Spec.Dir selected, and a leading
-// "Default order" option (value "", dir "") when none matches, so the
-// select never claims a sort the page is not in. A zero Spec.Dir counts
-// as ascending, as listquery sorts it. PhoneOnly: the headers sort on md
-// and up.
+// sortConfig builds the Sort select described in the package doc. The
+// option for the Spec's default order submits value "" and dir "", so it
+// adds no sort to the URL. A zero Spec.Dir counts as ascending, as
+// listquery sorts it.
 func (p Props) sortConfig() filterbar.FilterConfig {
 	cols := p.sortableColumns()
 	setDir := setPrefix + p.Spec.Param(dirKey)
@@ -379,19 +360,12 @@ func (p Props) filterConfigs() []filterbar.FilterConfig {
 	return append(configs, p.sortControls()...)
 }
 
-// hiddenInputs is the list state that rides along with every filter
-// change: sort, dir and per (under the Spec's prefix), with the values
-// Spec.Values writes, so per is "" when the page size equals the parsed
-// default, the same way Spec.URL omits it. All three keys are always
-// present, empty or not: filterbar.min.js skips an empty control, and the
-// out-of-band copy a results response carries (resultsPart) replaces each
-// input by id, which needs an element to replace even when the page
-// loaded with no sort at all. page, q and filters are never included: a
-// filter change lands on page 1 and the controls carry q and the filters.
-// When the bar has the Sort select (a Sortable column), the sort key is
-// still present so filterbar promotes the select in the hidden input's
-// place (filterbar.Props.Hidden); the map value for sort is then ignored
-// and the select's own selected option carries the sort.
+// hiddenInputs is the list state carried with every filter change: sort,
+// dir and per under the Spec's prefix, valued as Spec.Values writes them.
+// All three keys are always present, even when empty, because the
+// out-of-band copy in a results response replaces each input by id. page is
+// omitted so a filter change lands on page 1. When the bar has the Sort
+// select, filterbar renders it in place of the sort input.
 func (p Props) hiddenInputs() map[string]string {
 	vals := p.Spec.Values()
 	out := make(map[string]string, 3)
@@ -402,12 +376,9 @@ func (p Props) hiddenInputs() map[string]string {
 	return out
 }
 
-// filterbarProps assembles the filter bar for the resolved base path: the
-// bar's id (so its hidden inputs have ids), the controls, the hidden list
-// state, and page as the parameter the bar's URL rewrite drops (a filter
-// change lands on page 1). "Clear filters" renders only when there is a
-// filter or search control to clear; a bar holding only the Sort select
-// is md:hidden as a whole (the headers sort on md and up).
+// filterbarProps assembles the filter bar for the resolved base path. Its
+// URL rewrite drops page, so a filter change lands on page 1. "Clear
+// filters" renders only when there is a filter or search control.
 func (p Props) filterbarProps(base string) filterbar.Props {
 	return filterbar.Props{
 		ID:        p.filterbarID(),
@@ -443,23 +414,15 @@ func (p Props) bulkAction(a action.Action) action.Action {
 	return a
 }
 
-// empty resolves the Empty default: the caller's props when any field is
-// set; otherwise, when filters are active, "No matches" with a hint and a
-// "Clear filters" link whose href is Spec.URL(base, WithoutFilters()) (no
-// q, no filters; sort and page size kept); and the zero value (datatable
-// renders "Nothing here yet") when not.
+// empty resolves the Empty default. A caller-set Empty wins. Otherwise,
+// with filters active, it is "No matches" with a "Clear filters" link to
+// Spec.URL(base, WithoutFilters()); with none, the zero value.
 //
-// With filter controls on the page the link's click (Alpine, x-on:click
-// .prevent) calls window.tui.filterbar.reset on the bar, which clears the
-// bar's controls, keeps its hidden inputs and the Sort select, re-requests
-// the results region over htmx and rewrites the URL: the bar then shows
-// what the results show. The href stays as the no-JS fallback. The link
-// carries no hx-get then, since the reset issues the request and a second
-// one from the link would fetch the same results twice. Without filter
-// controls (filters came from the URL alone; a bar holding only the Sort
-// select owns none of them, so its reset could not clear them from the
-// URL) the link is a plain htmx link like the sort and page links: hx-get
-// to the same URL, targeting the results with hx-push-url.
+// When the page has filter controls the link calls
+// window.tui.filterbar.reset, so the controls clear along with the results
+// (the href is the no-JS fallback, and there is no hx-get, which would fetch
+// twice). When the filters came from the URL alone, the bar cannot clear
+// them, so the link is a plain hx-get with hx-push-url.
 func (p Props) empty(base string) emptystate.Props {
 	e := p.Empty
 	if e.Title != "" || e.Description != "" || e.Icon != "" || e.Action != nil {
@@ -525,14 +488,11 @@ func (p Props) paginationProps() pagination.Props {
 }
 
 // Respond writes the list page for r through the appshell.App installed by
-// (*App).Middleware: a plain htmx request whose HX-Target is ResultsID()
-// receives only the results part (Results(p) followed by the out-of-band
-// copies of the filter bar's hidden inputs and the intro, see the package
-// doc); any other plain htmx request receives the page body (Page(p), no
-// shell); a boosted, history-restore or non-htmx request receives the
-// whole document. It returns an error naming Middleware when no App is in
-// the context, writing nothing. Render errors are returned, not written as
-// a 500.
+// (*App).Middleware. An htmx request targeting ResultsID() gets only the
+// results part (with its out-of-band updates); any other plain htmx request
+// gets Page(p) without the shell; boosted, history-restore and non-htmx
+// requests get the whole document. It returns an error, writing nothing,
+// when no App is in the context. Render errors are returned, not written.
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
@@ -542,17 +502,13 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	return app.RenderParts(w, r, title, Page(p), parts)
 }
 
-// RespondResults writes only the results part for r (Results(p) followed
-// by the out-of-band copies of the filter bar's hidden inputs and the
-// intro): the response to a mutation issued from inside the list (a row's
-// DELETE, a bulk POST) after the handler re-applied the Spec it got from
-// listquery.ParseCurrent. It sets Content-Type and HX-Replace-Url to
-// p.Spec.URL(base), so the address bar follows the state actually served
-// (the page listquery.Apply clamped to after the last row of a page was
-// deleted). base is p.Base, else the path of listquery.CurrentURL(r): the
-// page the user is looking at, not the mutation's own path; it also
-// becomes Base for the sort and page links rendered. No appshell.App is
-// needed. Render errors are returned, not written as a 500.
+// RespondResults writes only the results part (with its out-of-band
+// updates): the response to a mutation issued from inside the list, such as
+// a row DELETE or a bulk POST. It sets HX-Replace-Url to p.Spec.URL(base) so
+// the address bar follows the state actually served (for example a page
+// clamped after its last row was deleted). base defaults to the path of
+// listquery.CurrentURL(r), the page the user is viewing rather than the
+// mutation's path. No appshell.App is needed. Render errors are returned.
 func RespondResults(w http.ResponseWriter, r *http.Request, p Props) error {
 	if p.Base == "" {
 		p.Base = listquery.CurrentURL(r).Path

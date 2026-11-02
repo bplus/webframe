@@ -27,11 +27,9 @@ const (
 )
 
 // Props configures a StatComparison tile. All display fields are
-// preformatted strings — the component does no number formatting or
-// delta math; callers supply Value, PrevValue, and Delta already
-// rendered as text. Label, PrevValue, and Delta sections are each
-// omitted when empty; Value is always emitted. Direction only matters
-// when Delta is non-empty.
+// preformatted strings; the component does no number formatting. Label,
+// PrevValue and Delta are each omitted when empty. Direction only matters
+// when Delta is set.
 type Props struct {
 	ID         string
 	Class      string
@@ -43,13 +41,9 @@ type Props struct {
 	Direction  Direction // up, down, flat
 }
 
-// ToneClass is the theme text-color class for a direction: up →
-// text-success, down → text-destructive, flat and the zero value →
-// text-muted-foreground. It is the one place the direction→color mapping
-// lives; stattile uses it so a tile's delta reads identically to a
-// StatComparison's.
-//
-// @pure
+// ToneClass is the text-color class for a direction: text-success for up,
+// text-destructive for down, text-muted-foreground otherwise. stattile uses
+// it too, so both read alike.
 func ToneClass(dir Direction) string {
 	switch dir {
 	case DirectionUp:
@@ -61,13 +55,9 @@ func ToneClass(dir Direction) string {
 	}
 }
 
-// Arrow renders the 16x16 trend icon for a direction as an inline SVG
-// stroked in currentColor (so it takes the color of the ToneClass on its
-// parent): an up arrow, a down arrow, or a flat line for DirectionFlat and
-// the zero value. It is decorative (aria-hidden); the delta text beside it
-// carries the meaning. Shared with stattile.
-//
-// @pure
+// Arrow renders the 16x16 trend icon for a direction, stroked in
+// currentColor: an up arrow, a down arrow, or a flat line. It is
+// decorative (aria-hidden).
 func Arrow(dir Direction) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -109,20 +99,10 @@ func Arrow(dir Direction) templ.Component {
 	})
 }
 
-// StatComparison renders a KPI tile that shows a current value against
-// a previous one — label, big value with "from <prev>", and a colored
-// delta row with a trend arrow. Use it in dashboards where the change
-// matters as much as the number. Zero-value / omitted props render only
-// an empty value line; only the first Props is used and extras are
-// silently ignored. Returns a templ.Component rendering a vertical
-// flex <div>; it takes no children — all content comes from Props.
-//
-// @pure
-// @ai-context Colors are fixed to "up = success, down = destructive" via
-// ToneClass; there is no way to flip the mapping for metrics where a
-// decrease is good (e.g. error counts) other than choosing a different
-// Direction than the arithmetic one. The arrow comes from Arrow, which
-// stattile shares.
+// StatComparison renders a KPI tile showing a current value against a
+// previous one: label, value with "from <prev>", and a colored delta row
+// with a trend arrow. Up is always the success color; for a metric where a
+// decrease is good, pass the Direction that should read as good.
 func StatComparison(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -165,7 +145,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 100, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 80, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -209,7 +189,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 106, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 86, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -227,7 +207,7 @@ func StatComparison(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 109, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 89, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -245,7 +225,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.PrevValue)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 111, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 91, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -294,7 +274,7 @@ func StatComparison(props ...Props) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Delta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 117, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/statcomparison/StatComparison.templ`, Line: 97, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {

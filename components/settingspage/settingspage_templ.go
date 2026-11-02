@@ -17,11 +17,8 @@ import (
 	"github.com/bplus/webframe/components/pageheader"
 )
 
-// Page renders the whole settings page as one wf-settings column: the
-// page header, Body (the form), After when set, and the save bar as the
-// root's last child, so the bar stays stuck to the viewport bottom across
-// whatever After renders and sits in flow below it once the page is
-// scrolled to the end.
+// Page renders the whole settings page: the header, Body, After when set,
+// and the save bar as the root's last child.
 func Page(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -73,16 +70,10 @@ func Page(p Props) templ.Component {
 	})
 }
 
-// Body renders exactly the <form> element (id p.ID, default "settings"),
-// so it is the swap region for an HxPost submit: the error banner (only
-// when Errors is non-empty), then one layout.Section (h2) per Group
-// holding a formfield.Fieldset of the resolved fields and then the
-// group's Content when set (the fieldset is skipped for a group with
-// Content and no Fields). The banner lives inside the form so an error
-// re-render that swaps the form brings its own banner and takes the old
-// one away with it. The save bar is not part of Body: it is Page's last
-// child and submits the form through its form attribute, so a swap of the
-// form leaves the bar in place.
+// Body renders exactly the <form> element, the swap region for an HxPost
+// submit: the error banner (when Errors is non-empty), then one
+// layout.Section per Group holding its fields and Content. The banner is
+// inside the form so an error re-render replaces it too.
 func Body(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -166,10 +157,8 @@ func Body(p Props) templ.Component {
 	})
 }
 
-// saveBar is the sticky bottom bar: Cancel (ghost, if any) then the submit
-// button, right-aligned on one row. It is always rendered. The submit
-// button sits outside the <form> and carries form=<form id>, so it still
-// submits natively and over htmx (htmx reads the button's form attribute).
+// saveBar is the sticky bottom bar: Cancel (if any) then the submit
+// button, right-aligned. It is always rendered.
 func saveBar(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

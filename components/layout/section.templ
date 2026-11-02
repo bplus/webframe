@@ -34,8 +34,6 @@ func headingTag(level int) string {
 
 // Section groups content under an optional heading row: a title heading
 // (at Level) and description on the left, Actions on the right, then children.
-//
-// @pure
 templ Section(props ...SectionProps) {
 	{{ var p SectionProps }}
 	if len(props) > 0 {
