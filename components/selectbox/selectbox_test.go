@@ -3,6 +3,8 @@ package selectbox
 import (
 	"bytes"
 	"context"
+	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -79,5 +81,52 @@ func TestTrigger_AriaInvalidOnlyWhenHasError(t *testing.T) {
 	overridden := tag(t, render(t, Trigger(TriggerProps{HasError: true, ButtonAttributes: templ.Attributes{"aria-invalid": "grammar"}})), "button")
 	if !strings.Contains(overridden, `aria-invalid="grammar"`) || strings.Contains(overridden, `aria-invalid="true"`) {
 		t.Errorf("caller aria-invalid should win over HasError: %s", overridden)
+	}
+}
+
+// TestOrphans_UniqueAndPaired: two Trigger+Content pairs rendered without a
+// SelectBox on one page get distinct ids, each trigger targeting its own
+// content; inside a SelectBox the wrapper-derived id still links them.
+func TestOrphans_UniqueAndPaired(t *testing.T) {
+	seq := func(cs ...templ.Component) templ.Component {
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			ctx = templ.InitializeContext(ctx)
+			for _, c := range cs {
+				if err := c.Render(ctx, w); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}
+	ids := func(out string) (triggers, contents []string) {
+		for _, m := range regexp.MustCompile(`data-tui-popover-trigger="([^"]*)"`).FindAllStringSubmatch(out, -1) {
+			triggers = append(triggers, m[1])
+		}
+		for _, m := range regexp.MustCompile(`data-tui-popover-id="([^"]*)"`).FindAllStringSubmatch(out, -1) {
+			contents = append(contents, m[1])
+		}
+		return
+	}
+
+	triggers, contents := ids(render(t, seq(Trigger(), Content(), Trigger(), Content())))
+	if len(triggers) != 2 || len(contents) != 2 {
+		t.Fatalf("triggers %q, contents %q, want two of each", triggers, contents)
+	}
+	if contents[0] == contents[1] {
+		t.Errorf("both orphaned contents have id %q", contents[0])
+	}
+	for i := range triggers {
+		if triggers[i] == "" || triggers[i] != contents[i] {
+			t.Errorf("trigger %d targets %q, content %d is %q", i, triggers[i], i, contents[i])
+		}
+	}
+
+	inside := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return SelectBox(Props{ID: "pick"}).Render(templ.WithChildren(ctx, seq(Trigger(), Content())), w)
+	})
+	triggers, contents = ids(render(t, inside))
+	if len(triggers) != 1 || len(contents) != 1 || triggers[0] != "pick-content" || contents[0] != "pick-content" {
+		t.Errorf("inside SelectBox: triggers %q, contents %q, want [pick-content] both", triggers, contents)
 	}
 }

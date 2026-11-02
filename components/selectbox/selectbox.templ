@@ -117,8 +117,9 @@ type ItemProps struct {
 // stores it in ctx for Trigger/Content to consume.
 //
 // @temporal-coupling: Trigger and Content resolve their shared ID from ctx
-// set here; rendered outside a SelectBox both fall back to the literal
-// "fallback-select-content-id", which collides across multiple orphans.
+// set here; rendered outside a SelectBox both fall back to utils.PairedID
+// ("wf-selectbox-0", "wf-selectbox-1", …): the n-th orphaned Trigger links to
+// the n-th orphaned Content of the same render, and orphans never share an id.
 // @side-effects
 templ SelectBox(props ...Props) {
 	{{
@@ -155,7 +156,7 @@ templ SelectBox(props ...Props) {
 // <button> and win over the built-in values.
 //
 // @temporal-coupling: targets the content ID from ctx set by the enclosing
-// SelectBox (falls back to "fallback-select-content-id" outside one); the
+// SelectBox (falls back to utils.PairedID outside one); the
 // selected value only reaches the form via the hidden input, which
 // selectbox.min.js populates — on init it syncs from Items marked Selected,
 // so form submission depends on the Script having loaded and run.
@@ -167,7 +168,10 @@ templ Trigger(props ...TriggerProps) {
 		}
 		contentID, ok := ctx.Value(contentIDKey).(string)
 		if !ok {
-			contentID = "fallback-select-content-id"
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-selectbox", "trigger"); err != nil {
+				return err
+			}
 		}
 		if p.ShowPills {
 			p.Multiple = true
@@ -283,7 +287,7 @@ templ Value(props ...ValueProps) {
 //
 // @temporal-coupling: takes its DOM ID from ctx set by the enclosing
 // SelectBox (ContentProps.ID is not applied to the element); falls back to
-// "fallback-select-content-id", matching Trigger.
+// utils.PairedID with Trigger's prefix.
 templ Content(props ...ContentProps) {
 	{{
 		var p ContentProps
@@ -292,7 +296,10 @@ templ Content(props ...ContentProps) {
 		}
 		contentID, ok := ctx.Value(contentIDKey).(string)
 		if !ok {
-			contentID = "fallback-select-content-id"
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-selectbox", "content"); err != nil {
+				return err
+			}
 		}
 	}}
 	@popover.Content(popover.ContentProps{

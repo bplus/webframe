@@ -164,8 +164,9 @@ type PortalProps struct {
 // empty, and stores it in ctx under a package-private key.
 //
 // @temporal-coupling: Trigger and Content resolve the content ID from ctx set
-// here; rendered outside a Dropdown they both fall back to the shared literal
-// "fallback-content-id", which collides across multiple orphaned dropdowns.
+// here; rendered outside a Dropdown they fall back to utils.PairedID
+// ("wf-dropdown-0", "wf-dropdown-1", …), so the n-th orphaned Trigger links
+// to the n-th orphaned Content of the same render and orphans never share an id.
 // @side-effects
 func Dropdown(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -212,7 +213,7 @@ func Dropdown(props ...Props) templ.Component {
 // templ.Component delegating all markup to popover.Trigger.
 //
 // @ai-context: must render inside Dropdown to pick up the correct content ID;
-// otherwise it targets "fallback-content-id". The open/close behavior itself
+// otherwise it targets the utils.PairedID fallback. The open/close behavior itself
 // lives in the popover component's JS, not here.
 // @temporal-coupling
 func Trigger(props ...TriggerProps) templ.Component {
@@ -242,7 +243,10 @@ func Trigger(props ...TriggerProps) templ.Component {
 		}
 		contentID, ok := ctx.Value(contentIDKey).(string)
 		if !ok {
-			contentID = "fallback-content-id"
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-dropdown", "trigger"); err != nil {
+				return err
+			}
 		}
 		templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -285,8 +289,8 @@ func Trigger(props ...TriggerProps) templ.Component {
 // currently not applied to the element.
 //
 // @temporal-coupling: reads the content ID from ctx set by Dropdown; outside
-// one it falls back to "fallback-content-id" (kept in sync with Trigger's
-// fallback so an orphaned pair still links up).
+// one it falls back to utils.PairedID with Trigger's prefix (so an orphaned
+// pair still links up, and a second orphaned pair gets its own id).
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -314,7 +318,10 @@ func Content(props ...ContentProps) templ.Component {
 		}
 		contentID, ok := ctx.Value(contentIDKey).(string)
 		if !ok {
-			contentID = "fallback-content-id"
+			var err error
+			if contentID, err = utils.PairedID(ctx, "wf-dropdown", "content"); err != nil { // prefix must match Trigger's
+				return err
+			}
 		}
 		placement := p.Placement
 		if placement == "" {
@@ -404,7 +411,7 @@ func Group(props ...GroupProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 261, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 270, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -499,7 +506,7 @@ func Label(props ...LabelProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 283, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 292, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -605,7 +612,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 313, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 322, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -623,7 +630,7 @@ func Item(props ...ItemProps) templ.Component {
 				var templ_7745c5c3_Var17 templ.SafeURL
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(p.Href)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 315, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 324, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -642,7 +649,7 @@ func Item(props ...ItemProps) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.Target)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 318, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 327, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -711,7 +718,7 @@ func Item(props ...ItemProps) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 339, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 348, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -814,7 +821,7 @@ func Separator(props ...SeparatorProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 373, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 382, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -902,7 +909,7 @@ func Shortcut(props ...ShortcutProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 394, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 403, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -961,7 +968,7 @@ func Shortcut(props ...ShortcutProps) templ.Component {
 // not clobber its parent Dropdown's content ID).
 //
 // @temporal-coupling: SubTrigger and SubContent read this ctx value; outside
-// a Sub they fall back to "fallback-subcontent-id".
+// a Sub they fall back to utils.PairedID ("wf-dropdown-sub-N").
 // @side-effects
 func Sub(props ...SubProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -1010,7 +1017,7 @@ func Sub(props ...SubProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 430, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 439, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -1066,7 +1073,7 @@ func Sub(props ...SubProps) templ.Component {
 // wrapper.
 //
 // @temporal-coupling: resolves its target ID from ctx set by the enclosing
-// Sub; falls back to "fallback-subcontent-id" outside one.
+// Sub; falls back to utils.PairedID outside one.
 func SubTrigger(props ...SubTriggerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1094,7 +1101,10 @@ func SubTrigger(props ...SubTriggerProps) templ.Component {
 		}
 		subContentID, ok := ctx.Value(subContentIDKey).(string)
 		if !ok {
-			subContentID = "fallback-subcontent-id"
+			var err error
+			if subContentID, err = utils.PairedID(ctx, "wf-dropdown-sub", "trigger"); err != nil {
+				return err
+			}
 		}
 		templ_7745c5c3_Var36 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1174,7 +1184,7 @@ func SubTrigger(props ...SubTriggerProps) templ.Component {
 //
 // @temporal-coupling: resolves its DOM ID from ctx set by the enclosing Sub
 // (SubContentProps.ID is not applied to the element); falls back to
-// "fallback-subcontent-id", matching SubTrigger.
+// utils.PairedID with SubTrigger's prefix.
 func SubContent(props ...SubContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1202,7 +1212,10 @@ func SubContent(props ...SubContentProps) templ.Component {
 		}
 		subContentID, ok := ctx.Value(subContentIDKey).(string)
 		if !ok {
-			subContentID = "fallback-subcontent-id"
+			var err error
+			if subContentID, err = utils.PairedID(ctx, "wf-dropdown-sub", "content"); err != nil {
+				return err
+			}
 		}
 		templ_7745c5c3_Var40 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1277,7 +1290,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 533, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 548, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {
@@ -1290,7 +1303,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/dropdown.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 533, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dropdown/dropdown.templ`, Line: 548, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
