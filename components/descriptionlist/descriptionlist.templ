@@ -1,0 +1,115 @@
+package descriptionlist
+
+import (
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/copybutton"
+	"github.com/bplus/webframe/utils"
+)
+
+// Item is one label/value row. Component replaces Value when set; otherwise
+// Value is rendered as text, inside Badge when set, and as a link when Href
+// is set. An empty Value with no Component renders an em dash in muted
+// color so the row never collapses.
+type Item struct {
+	Label, Value string
+	Href         string          // Value becomes a link
+	Mono         bool            // tabular mono value (ids, hashes, paths)
+	Copyable     bool            // copybutton.CopyButton{Value} after the value
+	Badge        *badge.Props    // Value rendered inside this badge
+	Component    templ.Component // replaces Value when set
+	Muted        bool            // value in muted-foreground (e.g. "—" for empty)
+}
+
+// Props configures DescriptionList. Class is merged via utils.TwMerge;
+// Attributes spread onto the root <dl>.
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Items      []Item
+	Columns    int  // 1 (default) or 2; 2 collapses to 1 below md
+	Dense      bool // py-1 instead of py-2
+}
+
+func (p Props) gridClass() string {
+	return utils.TwMerge(
+		"grid grid-cols-1",
+		utils.If(p.Columns == 2, "md:grid-cols-2 md:gap-x-8"),
+		p.Class,
+	)
+}
+
+func (p Props) rowClass() string {
+	return utils.TwMerge(
+		"flex items-baseline justify-between gap-4 border-b border-border last:border-0",
+		utils.IfElse(p.Dense, "py-1", "py-2"),
+	)
+}
+
+// isEmpty reports whether the item has nothing to show and gets the dash.
+func (it Item) isEmpty() bool {
+	return it.Component == nil && it.Value == ""
+}
+
+func (it Item) valueClass() string {
+	return utils.TwMerge(
+		"text-sm text-right min-w-0 break-words",
+		utils.If(it.Mono, "font-mono tabular-nums"),
+		utils.If(it.Muted || it.isEmpty(), "text-muted-foreground"),
+		utils.If(it.Copyable && it.Value != "", "inline-flex items-center justify-end gap-1"),
+	)
+}
+
+// valueText renders Value as plain text, wrapped in the badge when set.
+templ valueText(it Item) {
+	if it.Badge != nil {
+		@badge.Badge(*it.Badge) {
+			{ it.Value }
+		}
+	} else {
+		{ it.Value }
+	}
+}
+
+// DescriptionList renders label/value rows as a <dl> for detail pages:
+// label left in muted text, value right-aligned, one bordered row per item
+// (label and value rows). Columns 2 lays the rows out in
+// two columns from md up and collapses to one column at phone width. Zero
+// items renders an empty <dl>; only the first Props is used.
+//
+// @pure
+templ DescriptionList(props ...Props) {
+	{{ var p Props }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<dl
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ p.gridClass() }
+		{ p.Attributes... }
+	>
+		for _, it := range p.Items {
+			<div class={ p.rowClass() }>
+				<dt class="text-sm text-muted-foreground shrink-0">{ it.Label }</dt>
+				<dd class={ it.valueClass() }>
+					if it.Component != nil {
+						@it.Component
+					} else if it.isEmpty() {
+						<span aria-label="empty">—</span>
+					} else if it.Href != "" {
+						<a href={ it.Href } class="text-foreground underline-offset-4 hover:underline hover:text-primary">
+							@valueText(it)
+						</a>
+					} else {
+						@valueText(it)
+					}
+					if it.Copyable && it.Value != "" {
+						@copybutton.CopyButton(copybutton.Props{Value: it.Value, Size: copybutton.SizeSm})
+					}
+				</dd>
+			</div>
+		}
+	</dl>
+}

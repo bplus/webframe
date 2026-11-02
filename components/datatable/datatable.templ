@@ -1,0 +1,267 @@
+package datatable
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/checkbox"
+	"github.com/bplus/webframe/components/dropdown"
+	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/table"
+	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/utils"
+)
+
+// DataTable renders Props as a table.Table: an optional visually hidden
+// caption, a header row, and either one row per Props.Rows entry or, with
+// no rows, a single full-width cell holding the empty state so the header
+// never disappears.
+//
+// Header: a sortable column is an <a> (Label plus a chevron) whose href is
+// Spec.URL(Base, listquery.WithSort(Key)); its th carries aria-sort
+// ("ascending"/"descending" on the sorted column, "none" on the others).
+// The sorted column shows icon.ChevronUp or ChevronDown, every other
+// sortable column a faint icon.ChevronsUpDown, so the header width never
+// changes when the sort does. With HxTarget set the link also carries
+// hx-get (same URL), hx-target and hx-push-url="true".
+//
+// Phone collapse (below md, 768px): th and td of a Hidden column carry
+// `hidden md:table-cell`; the selection column stays at every width (the
+// app declared selection; Hidden is its lever for making room); the
+// row-actions cell holds two renderings, an
+// inline `hidden md:flex` group of ghost action.Buttons and a `md:hidden`
+// dropdown whose trigger is a ghost icon button labelled "Row actions".
+// Menu items follow toolbar: a link action is a dropdown.Item with Href,
+// anything else is a dropdown.Item <button> carrying the action's hx-*
+// attributes (no button nested in a button). dropdown.Script and
+// checkbox.Script must be on the page (appshell includes them) for the
+// menu and select-all to work.
+//
+// Accepts zero or one Props; extras are ignored.
+templ DataTable(props ...Props) {
+	{{
+		var p Props
+		if len(props) > 0 {
+			p = props[0]
+		}
+		base := p.Base
+		if base == "" {
+			base = appshell.PathFromContext(ctx)
+		}
+		actions := p.hasActions()
+	}}
+	@table.Table(table.Props{ID: p.ID, Class: p.Class, Attributes: p.Attributes}) {
+		if p.Caption != "" {
+			<caption class="sr-only">{ p.Caption }</caption>
+		}
+		@table.Header(table.Props{Class: utils.If(p.StickyHeader, "sticky top-0 z-10 bg-card")}) {
+			@table.Row(table.RowProps{Class: "hover:bg-transparent"}) {
+				if p.Selection {
+					@table.Head(table.CellProps{Class: utils.TwMerge("w-px", headPad(p.Dense))}) {
+						if len(p.Rows) > 0 {
+							@checkbox.Checkbox(checkbox.Props{
+								Group:       p.selectionGroup(),
+								GroupParent: true,
+								Attributes:  templ.Attributes{"aria-label": "Select all rows"},
+							})
+						} else {
+							<span class="sr-only">Select</span>
+						}
+					}
+				}
+				for _, col := range p.Columns {
+					@head(p, col, base)
+				}
+				if actions {
+					@table.Head(table.CellProps{Class: utils.TwMerge("w-px text-right", headPad(p.Dense))}) {
+						<span class="sr-only">Actions</span>
+					}
+				}
+			}
+		}
+		@table.Body() {
+			if len(p.Rows) == 0 {
+				@table.Row(table.RowProps{Class: "hover:bg-transparent"}) {
+					@table.Cell(table.CellProps{Attributes: templ.Attributes{"colspan": p.colspan()}}) {
+						@emptystate.EmptyState(p.empty())
+					}
+				}
+			} else {
+				for _, r := range p.Rows {
+					@row(p, r, actions)
+				}
+			}
+		}
+	}
+}
+
+// head renders one column header, as a sort link when the column is sortable.
+templ head(p Props, col Column, base string) {
+	@table.Head(table.CellProps{
+		Class: utils.TwMerge(
+			headPad(p.Dense),
+			alignClass(col.Align),
+			utils.If(col.Hidden, "hidden md:table-cell"),
+			utils.If(col.Shrink, "w-px whitespace-nowrap"),
+		),
+		Attributes: headAttrs(p.Spec, col),
+	}) {
+		if col.Sortable {
+			<a
+				class={ utils.TwMerge("inline-flex items-center gap-1 whitespace-nowrap hover:text-foreground", utils.If(col.Align == AlignRight, "flex-row-reverse")) }
+				{ p.sortAttrs(p.Spec.URL(base, listquery.WithSort(col.Key)))... }
+			>
+				{ col.Label }
+				@sortIcon(p.Spec, col.Key)
+			</a>
+		} else {
+			{ col.Label }
+		}
+	}
+}
+
+// sortIcon renders the chevron for a sortable column: a single direction on
+// the sorted column, a faint two-way chevron elsewhere so widths are stable.
+templ sortIcon(spec listquery.Spec, key string) {
+	{{ state := ariaSort(spec, key) }}
+	<span aria-hidden="true" data-sort-icon={ state } class={ utils.TwMerge("inline-flex shrink-0", utils.If(state == "none", "opacity-40")) }>
+		switch state {
+		case "ascending":
+			@icon.ChevronUp(icon.Props{Size: 14})
+		case "descending":
+			@icon.ChevronDown(icon.Props{Size: 14})
+		default:
+			@icon.ChevronsUpDown(icon.Props{Size: 14})
+		}
+	</span>
+}
+
+// row renders one data row with its optional selection and actions cells.
+templ row(p Props, r Row, actions bool) {
+	@table.Row(table.RowProps{
+		ID:    p.rowID(r),
+		Class: utils.If(r.Href != "", "cursor-pointer"),
+	}) {
+		if p.Selection {
+			@table.Cell(table.CellProps{Class: utils.TwMerge("w-px", cellPad(p.Dense))}) {
+				@checkbox.Checkbox(checkbox.Props{
+					Group:      p.selectionGroup(),
+					Name:       p.selectionName(),
+					Value:      r.ID,
+					Form:       p.SelectionForm,
+					Attributes: templ.Attributes{"aria-label": "Select row"},
+				})
+			}
+		}
+		for i, col := range p.Columns {
+			{{
+				c := cellAt(r, i)
+				if i == 0 && r.Href != "" && c.Href == "" {
+					c.Href = r.Href
+				}
+			}}
+			@table.Cell(table.CellProps{
+				Class: utils.TwMerge(
+					cellPad(p.Dense),
+					alignClass(col.Align),
+					utils.If(col.Hidden, "hidden md:table-cell"),
+					utils.If(col.Shrink, "w-px whitespace-nowrap"),
+					utils.If(col.Mono || c.Mono, "font-mono tabular-nums text-xs"),
+					utils.If(c.Muted, "text-muted-foreground"),
+				),
+			}) {
+				@cell(c)
+			}
+		}
+		if actions {
+			@table.Cell(table.CellProps{Class: utils.TwMerge("w-px whitespace-nowrap text-right", cellPad(p.Dense))}) {
+				if len(r.Actions) > 0 {
+					@rowActions(r.Actions)
+				}
+			}
+		}
+	}
+}
+
+// cell renders one cell's content: Component, else Badge around Text, else
+// Text; wrapped in a link when Href is set.
+templ cell(c Cell) {
+	if c.Href != "" {
+		<a href={ c.Href } class="font-medium text-foreground hover:underline">
+			@cellContent(c)
+		</a>
+	} else {
+		@cellContent(c)
+	}
+}
+
+templ cellContent(c Cell) {
+	if c.Component != nil {
+		@c.Component
+	} else if c.Badge != nil {
+		@badge.Badge(*c.Badge) {
+			{ c.Text }
+		}
+	} else {
+		{ c.Text }
+	}
+}
+
+// rowActions renders the two renderings of a row's actions: inline ghost
+// buttons on md+ and a "⋯" dropdown below md.
+templ rowActions(actions []action.Action) {
+	<div class="hidden md:flex items-center justify-end gap-1">
+		for _, a := range actions {
+			@action.Button(rowAction(a))
+		}
+	</div>
+	<div class="flex md:hidden items-center justify-end">
+		@dropdown.Dropdown() {
+			@dropdown.Trigger() {
+				@button.Button(button.Props{
+					Variant:    button.VariantGhost,
+					Size:       button.SizeIcon,
+					Attributes: templ.Attributes{"aria-label": "Row actions"},
+				}) {
+					@icon.Ellipsis()
+				}
+			}
+			@dropdown.Content(dropdown.ContentProps{Placement: dropdown.PlacementBottomEnd}) {
+				for _, a := range actions {
+					if a.IsLink() {
+						@dropdown.Item(dropdown.ItemProps{Href: a.Href, Disabled: a.Disabled, Attributes: a.Attributes}) {
+							{ a.Label }
+						}
+					} else {
+						@dropdown.Item(dropdown.ItemProps{Disabled: a.Disabled, Attributes: menuItemAttrs(a)}) {
+							{ a.Label }
+						}
+					}
+				}
+			}
+		}
+	</div>
+}
+
+// headAttrs builds the th attributes: aria-sort on sortable columns only.
+func headAttrs(spec listquery.Spec, col Column) templ.Attributes {
+	if !col.Sortable {
+		return nil
+	}
+	return templ.Attributes{"aria-sort": ariaSort(spec, col.Key)}
+}
+
+// cellPad is the td padding: table.Cell's p-3 by default, py-1.5 when
+// dense; below md the horizontal padding drops to px-2 so a five-column
+// row fits a 390px phone without scrolling inside its wrapper.
+func cellPad(dense bool) string {
+	return utils.TwMerge("max-md:px-2", utils.If(dense, "py-1.5"))
+}
+
+// headPad is the th height: table.Head's h-10 by default, h-9 when dense;
+// the same phone-width horizontal padding as cellPad.
+func headPad(dense bool) string {
+	return utils.TwMerge("max-md:px-2", utils.If(dense, "h-9"))
+}

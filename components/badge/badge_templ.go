@@ -32,6 +32,15 @@ const (
 	// VariantOutline is a bordered, transparent-background badge that
 	// inherits the foreground text color.
 	VariantOutline Variant = "outline"
+	// VariantSuccess is a soft chip (tinted border and background, colored
+	// text) in the success token, for "published"/"done"-style states.
+	VariantSuccess Variant = "success"
+	// VariantWarning is a soft chip in the warning token, for "stale"/
+	// "degraded"-style states.
+	VariantWarning Variant = "warning"
+	// VariantInfo is a soft chip in the info token, for "running"/
+	// "in-progress"-style states.
+	VariantInfo Variant = "info"
 )
 
 // Props configures a Badge. All fields are optional: the zero value
@@ -102,7 +111,7 @@ func Badge(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/badge/badge.templ`, Line: 52, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/badge/badge.templ`, Line: 61, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -158,6 +167,12 @@ func (p Props) variantClasses() string {
 		return "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground"
 	case VariantSecondary:
 		return "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90"
+	case VariantSuccess:
+		return "border-success/30 bg-success/10 text-success [a&]:hover:bg-success/20"
+	case VariantWarning:
+		return "border-warning/30 bg-warning/10 text-warning [a&]:hover:bg-warning/20"
+	case VariantInfo:
+		return "border-info/30 bg-info/10 text-info [a&]:hover:bg-info/20"
 	default:
 		return "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90"
 	}

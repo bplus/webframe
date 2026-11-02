@@ -28,22 +28,39 @@ var goRuleText = map[string][2]string{
 	"html-from-go":        {"building HTML from Go strings (templ.Raw, templ.FromGoHTML, templ.ComponentFunc) is not allowed in app code", "prose for content HTML"},
 	"props-class":         {"Class: is not allowed in webframe Props in app code; styling belongs inside webframe components", ""},
 	"attrs-map":           {`an attribute map (templ.Attributes or map[string]any) with a "class" or "style" key is not allowed in app code`, ""},
-	"html-from-go-string": {"a Go string literal holding HTML markup (a class= or style= attribute, or a block element such as <div>) is not allowed in app code", "render a webframe component instead"},
+	"html-from-go-string": {"a Go string literal holding HTML markup (a quoted class= or style= attribute, or a block element such as <div> with markup around it) is not allowed in app code", "render a webframe component instead"},
 }
 
-// markupAttrRe finds a class or style attribute inside a Go string literal.
-var markupAttrRe = regexp.MustCompile(`(?i)\s(?:class|style)=`)
+// quotedValue matches the start of a quoted attribute value: = followed by a
+// quote, which an interpreted literal escapes ("class=\"x\"").
+const quotedValue = `=\\?["'` + "`" + `]`
+
+// markupAttrRe finds a class or style attribute inside a Go string literal:
+// either with a quoted value, or with its = ending the literal (the value is
+// concatenated from outside: "<div class=" + q + ">"). Case-sensitive, and
+// anything else after the = is not markup, so a log format ("class=%s") or
+// SQL ("style= ?") does not match. It runs on the literal's contents without
+// the surrounding quotes, so $ is the end of the contents.
+var markupAttrRe = regexp.MustCompile(`\s(?:class|style)(?:` + quotedValue + `|=$)`)
 
 // markupTagRe finds an opening tag of a forbidden element (every element
-// that has a component Hint) inside a Go string literal.
+// that has a component Hint) inside a Go string literal. Case-sensitive:
+// "<Label>" in usage text is not a tag.
 var markupTagRe = func() *regexp.Regexp {
 	names := make([]string, 0, len(Hints))
 	for n := range Hints {
 		names = append(names, regexp.QuoteMeta(n))
 	}
 	sort.Strings(names)
-	return regexp.MustCompile(`(?i)<(?:` + strings.Join(names, "|") + `)(?:[\s/>]|$)`)
+	return regexp.MustCompile(`<(?:` + strings.Join(names, "|") + `)(?:[\s/>]|$)`)
 }()
+
+// markupAroundRe finds what separates markup from a mention of a tag: a
+// closing tag, a quoted attribute value, or one tag directly after another
+// ("<table><tr>"). A forbidden tag is reported only alongside one of these,
+// so usage text such as "<input> is not allowed" or "<div> → layout.Stack"
+// passes.
+var markupAroundRe = regexp.MustCompile(`</|` + quotedValue + `|><`)
 
 // goStringLits returns the byte offset of every interpreted ("...") and raw
 // (`...`) string literal in Go source src, with its contents. Comments and
@@ -115,7 +132,7 @@ func goFindings(src string, component bool) []goFinding {
 	} else {
 		offs, vals := goStringLits(src)
 		for i, v := range vals {
-			if markupAttrRe.MatchString(v) || markupTagRe.MatchString(v) {
+			if markupAttrRe.MatchString(v) || (markupTagRe.MatchString(v) && markupAroundRe.MatchString(v)) {
 				add(offs[i], "html-from-go-string")
 			}
 		}

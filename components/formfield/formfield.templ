@@ -9,6 +9,7 @@ import (
 	"github.com/bplus/webframe/components/radio"
 	"github.com/bplus/webframe/components/selectbox"
 	"github.com/bplus/webframe/components/textarea"
+	"github.com/bplus/webframe/components/toggle"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -20,6 +21,11 @@ func rootClass(f Field) string {
 // a Feedback wrapper (id f.FeedbackID()) holding the error or opt-in
 // success text. With neither set, nothing below the control is visible
 // and no space is reserved. TypeHidden renders only the hidden input.
+// TypeCheckbox and TypeToggle put the label inline after the control on
+// one row. With Validate set the control carries the htmx wiring that
+// swaps the Feedback wrapper (see Field.Validate and RespondFeedback).
+// Phone width: label, control and messages stack in one column; the
+// Fieldset grid decides whether two fields share a row.
 templ FormField(f Field) {
 	if f.Type == TypeHidden {
 		@hiddenControl(f)
@@ -28,6 +34,8 @@ templ FormField(f Field) {
 			switch f.Type {
 				case TypeCheckbox:
 					@checkboxControl(f)
+				case TypeToggle:
+					@toggleControl(f)
 				case TypeRadio:
 					@fieldLabel(f, "")
 					@radioControl(f)
@@ -90,17 +98,20 @@ templ textareaControl(f Field) {
 }
 
 // selectControl: selectbox.Trigger spreads Attributes on its hidden
-// input, which is what carries the value on submit. aria-describedby
-// therefore lands on that hidden input, not on the trigger button,
-// because Trigger has no way to put caller attributes on the button.
+// input, which is what carries the value on submit and what a Validate
+// hx-trigger="change" fires on, so name/required/hx-* go there. The
+// announced state (aria-describedby, aria-invalid, aria-required) goes
+// on the visible button through ButtonAttributes, because screen readers
+// focus the button and ignore the hidden input.
 templ selectControl(f Field) {
 	@selectbox.SelectBox() {
 		@selectbox.Trigger(selectbox.TriggerProps{
-			ID:         f.ControlID(),
-			Name:       f.Name,
-			HasError:   f.Error != "",
-			Disabled:   f.Disabled,
-			Attributes: f.controlAttrs(true),
+			ID:               f.ControlID(),
+			Name:             f.Name,
+			HasError:         f.Error != "",
+			Disabled:         f.Disabled,
+			Attributes:       f.controlAttrs(false),
+			ButtonAttributes: f.ariaStateAttrs(),
 		}) {
 			@selectbox.Value(selectbox.ValueProps{Placeholder: f.Placeholder})
 		}
@@ -127,8 +138,33 @@ templ checkboxControl(f Field) {
 	</div>
 }
 
+// toggleControl renders toggle.Toggle with the label text as its
+// children: the Toggle root is itself a <label> wrapping the switch, so
+// a second form.Label would double-label the control. ID and Attributes
+// land on the <input role="switch">, which is what submits and what a
+// Validate hx-trigger="change" fires on.
+templ toggleControl(f Field) {
+	@toggle.Toggle(toggle.Props{
+		ID:         f.ControlID(),
+		Name:       f.Name,
+		Checked:    f.Value != "",
+		Disabled:   f.Disabled,
+		Attributes: f.toggleAttrs(),
+	}) {
+		if f.Label != "" {
+			<span>
+				{ f.Label }
+				if f.Required {
+					<span aria-hidden="true" class="text-destructive">*</span>
+				}
+			</span>
+		}
+	}
+}
+
 templ radioControl(f Field) {
 	<div
+		id={ f.ControlID() }
 		role="radiogroup"
 		if f.Label != "" {
 			aria-labelledby={ f.ControlID() + "-label" }

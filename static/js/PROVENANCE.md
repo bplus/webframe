@@ -114,3 +114,31 @@ Batch 1 of the page layer vendored no new JavaScript. This heading is the slot f
 
 Batch 1b adds `autocomplete.js`, first-party and unminified, listed under
 Local above. The counts in the Summary predate it.
+
+Batch 2 (input #13, hover card height at phone width) makes one local edit
+to the templUI-shipped `popover.min.js`: the positioning middleware list
+(`offset, flip, shift[, arrow]`) gains Floating UI's `size` step after
+`shift`, whose `apply` writes the available height on the final side to
+the CSS variable `--wf-pop-max` on the floating element (the bundled
+`window.FloatingUIDOM.size` was already present, just unused). Nothing else
+in the file changed; re-installing the component from templUI would drop
+this edit, so re-apply it (grep for `--wf-pop-max`) after any upgrade.
+
+Batch 2 (Task B4, `filterbar.Props.Hidden`) makes one local edit to
+`filterbar.min.js`: `resetAll` skips controls whose `type` is `hidden`
+(`if(el.type==="hidden"){return}`) before clearing the rest. Hidden inputs
+carry list state that is not a filter (sort, dir, per), so "Clear filters"
+clears the filters and leaves them in place; `collectParams` already read
+every `[data-tui-filterbar-control]` by `name`, so hidden inputs ride along
+with no other change. Nothing else in the file changed.
+
+Batch 2 review fix (F1, URL sync) makes a second local edit to
+`filterbar.min.js`, in `triggerUpdate`'s URL block: before writing the
+collected parameters into the page URL it now deletes every parameter named
+by one of the bar's controls (`[data-tui-filterbar-control][name]` and
+`[data-tui-filterbar-toggle][name]`, empty ones included) and every name in
+the bar's optional `data-tui-filterbar-drop` attribute (comma-separated;
+`filterbar.Props.Drop`), then sets the non-empty values as before. A cleared
+control or a stale `page=` therefore leaves the URL, while parameters the bar
+does not own are kept (the search string is edited, not replaced). Nothing
+else in the file changed.

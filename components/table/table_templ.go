@@ -70,7 +70,7 @@ func Table(props ...Props) templ.Component {
 			p = props[0]
 		}
 		var templ_7745c5c3_Var2 = []any{utils.TwMerge(
-			"w-full overflow-auto rounded-lg border border-border",
+			"relative w-full overflow-auto rounded-lg border border-border",
 			p.Class,
 		),
 		}

@@ -149,3 +149,19 @@ func TestEscapeJS_Combined(t *testing.T) {
 		t.Errorf("EscapeJS combined: got %q, want %q", got, want)
 	}
 }
+
+// The copied-state checkmark takes its color from the success theme token,
+// never a Tailwind default palette class.
+func TestCopyButton_CopiedStateUsesSuccessToken(t *testing.T) {
+	var buf bytes.Buffer
+	if err := copybutton.CopyButton(copybutton.Props{Value: "x"}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	html := buf.String()
+	if !strings.Contains(html, `class="text-success"`) {
+		t.Errorf("expected text-success on the copied checkmark, got: %s", html)
+	}
+	if strings.Contains(html, "text-green-500") {
+		t.Errorf("default-palette class text-green-500 leaked into: %s", html)
+	}
+}

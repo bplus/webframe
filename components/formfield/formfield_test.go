@@ -3,6 +3,8 @@ package formfield
 import (
 	"bytes"
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -104,6 +106,20 @@ func TestFormFieldRadioGroup(t *testing.T) {
 	}
 }
 
+// TestFormFieldRadioGroupHasControlID: the radiogroup carries ControlID() so
+// an error-summary link to "#"+ControlID() lands on the group; the radios
+// themselves are ControlID()+"-"+i.
+func TestFormFieldRadioGroupHasControlID(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "size", Label: "Size", Type: TypeRadio,
+		Options: []Option{{Label: "A", Value: "a"}, {Label: "B", Value: "b"}},
+	}))
+	mustContain(t, out, `id="field-size" role="radiogroup"`, `id="field-size-0"`, `id="field-size-1"`)
+	if n := strings.Count(out, `id="field-size"`); n != 1 {
+		t.Errorf("got %d id=\"field-size\", want 1: %s", n, out)
+	}
+}
+
 func TestFormFieldCheckbox(t *testing.T) {
 	on := render(t, FormField(Field{Name: "agree", Label: "Agree", Type: TypeCheckbox, Value: "on"}))
 	if n := strings.Count(on, `type="checkbox"`); n != 1 {
@@ -172,4 +188,141 @@ func TestFormFieldTextareaDisabledSuccess(t *testing.T) {
 		t.Errorf("Disabled did not reach the control")
 	}
 	mustContain(t, render(t, FormField(Field{Name: "e", Label: "E", Success: "Looks good"})), "Looks good")
+}
+
+// tag returns the first element start tag whose opening matches re (a
+// regexp over the whole tag, e.g. `<button[^>]*>`), or fails the test.
+func tag(t *testing.T, out, re string) string {
+	t.Helper()
+	m := regexp.MustCompile(re).FindString(out)
+	if m == "" {
+		t.Fatalf("no tag matching %s in %s", re, out)
+	}
+	return m
+}
+
+func TestField_ValidateEmitsHx(t *testing.T) {
+	out := render(t, FormField(Field{Name: "email", Label: "Email", Type: TypeEmail, Validate: "/validate/email"}))
+	in := tag(t, out, `<input[^>]*>`)
+	mustContain(t, in,
+		`hx-post="/validate/email"`,
+		`hx-trigger="blur changed"`,
+		`hx-target="#field-email-feedback"`,
+		`hx-swap="outerHTML"`,
+		`hx-params="email"`)
+	// Without Validate no hx-* attributes appear at all.
+	plain := render(t, FormField(Field{Name: "email", Label: "Email", Type: TypeEmail}))
+	if strings.Contains(plain, "hx-") {
+		t.Errorf("unexpected hx-* without Validate: %s", plain)
+	}
+}
+
+func TestField_ValidateSelectUsesChange(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "pick", Label: "Pick", Type: TypeSelect, Validate: "/v",
+		Options: []Option{{Label: "A", Value: "a"}},
+	}))
+	hidden := tag(t, out, `<input[^>]*type="hidden"[^>]*>`)
+	mustContain(t, hidden, `hx-post="/v"`, `hx-trigger="change"`, `hx-target="#field-pick-feedback"`, `hx-swap="outerHTML"`)
+	if strings.Contains(tag(t, out, `<button[^>]*>`), "hx-") {
+		t.Errorf("hx-* must stay off the button: %s", out)
+	}
+}
+
+func TestField_ValidateChangeTypes(t *testing.T) {
+	for _, ty := range []Type{TypeCheckbox, TypeRadio, TypeToggle} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Validate: "/v", Options: []Option{{Label: "A", Value: "a"}}}))
+		mustContain(t, out, `hx-trigger="change"`, `hx-post="/v"`, `hx-target="#field-x-feedback"`, `hx-swap="outerHTML"`)
+	}
+	for _, ty := range []Type{TypeText, TypeTextarea, TypeNumber} {
+		out := render(t, FormField(Field{Name: "x", Label: "X", Type: ty, Validate: "/v"}))
+		mustContain(t, out, `hx-trigger="blur changed"`)
+	}
+}
+
+func TestField_ValidateCallerAttributesWin(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "email", Label: "Email", Validate: "/v",
+		Attributes: templ.Attributes{"hx-trigger": "keyup changed delay:300ms"},
+	}))
+	mustContain(t, out, `hx-trigger="keyup changed delay:300ms"`, `hx-post="/v"`)
+	if strings.Contains(out, `hx-trigger="blur changed"`) {
+		t.Errorf("caller hx-trigger must win: %s", out)
+	}
+}
+
+func TestField_Toggle(t *testing.T) {
+	on := render(t, FormField(Field{Name: "notify", Label: "Notify me", Type: TypeToggle, Value: "on", Help: "Weekly digest", Required: true}))
+	in := tag(t, on, `<input[^>]*>`)
+	mustContain(t, in, `role="switch"`, `type="checkbox"`, `id="field-notify"`, `name="notify"`,
+		`aria-describedby="field-notify-help field-notify-feedback"`, `aria-required="true"`)
+	if !checkedAttr.MatchString(in) {
+		t.Errorf("missing checked in %s", in)
+	}
+	mustContain(t, on, "Notify me", `id="field-notify-help"`, `id="field-notify-feedback"`)
+	// The Toggle root is itself a <label>; no second label element.
+	if n := strings.Count(on, "<label"); n != 1 {
+		t.Errorf("got %d <label, want 1: %s", n, on)
+	}
+	off := render(t, FormField(Field{Name: "notify", Label: "Notify me", Type: TypeToggle, Error: "Pick one"}))
+	if checkedAttr.MatchString(tag(t, off, `<input[^>]*>`)) {
+		t.Errorf("unexpected checked in %s", off)
+	}
+	mustContain(t, off, `aria-invalid="true"`, "Pick one", `role="alert"`)
+	if strings.Contains(off, "aria-required") {
+		t.Errorf("unexpected aria-required without Required: %s", off)
+	}
+}
+
+func TestField_SelectAriaOnButton(t *testing.T) {
+	out := render(t, FormField(Field{
+		Name: "pick", Label: "Pick", Type: TypeSelect, Required: true, Error: "Required", Help: "Choose",
+		Options: []Option{{Label: "A", Value: "a"}},
+	}))
+	btn := tag(t, out, `<button[^>]*>`)
+	mustContain(t, btn, `aria-describedby="field-pick-help field-pick-feedback"`, `aria-invalid="true"`, `aria-required="true"`)
+	hidden := tag(t, out, `<input[^>]*type="hidden"[^>]*>`)
+	for _, bad := range []string{"aria-describedby", "aria-invalid", "aria-required"} {
+		if strings.Contains(hidden, bad) {
+			t.Errorf("%s must not be on the hidden input: %s", bad, hidden)
+		}
+	}
+	mustContain(t, hidden, `name="pick"`)
+	// Not required, no error: no aria-required, no aria-invalid="true".
+	ok := render(t, FormField(Field{Name: "pick", Label: "Pick", Type: TypeSelect, Options: []Option{{Label: "A", Value: "a"}}}))
+	okBtn := tag(t, ok, `<button[^>]*>`)
+	if strings.Contains(okBtn, "aria-required") || strings.Contains(okBtn, `aria-invalid="true"`) {
+		t.Errorf("unexpected aria state on a plain select: %s", okBtn)
+	}
+}
+
+func TestRespondFeedback_Error(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/validate/email", nil)
+	if err := RespondFeedback(rec, req, Field{Name: "email"}, "Email is taken"); err != nil {
+		t.Fatalf("RespondFeedback: %v", err)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q", ct)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d", rec.Code)
+	}
+	mustContain(t, rec.Body.String(), `id="field-email-feedback"`, "Email is taken", `role="alert"`)
+}
+
+func TestRespondFeedback_Valid(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/validate/email", nil)
+	if err := RespondFeedback(rec, req, Field{Name: "email"}, ""); err != nil {
+		t.Fatalf("RespondFeedback: %v", err)
+	}
+	body := rec.Body.String()
+	mustContain(t, body, `id="field-email-feedback"`, "empty:hidden")
+	if len(body) >= 80 {
+		t.Errorf("valid feedback is %d bytes, want < 80: %s", len(body), body)
+	}
+	if strings.Contains(body, "alert") {
+		t.Errorf("valid feedback must not alert: %s", body)
+	}
 }

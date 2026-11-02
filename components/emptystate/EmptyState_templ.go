@@ -8,7 +8,10 @@ package emptystate
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/bplus/webframe/utils"
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/utils"
+)
 
 // Props configures an EmptyState. Icon, Title, and Description are each
 // rendered only when non-empty (Title is "required" by convention, but
@@ -23,12 +26,16 @@ type Props struct {
 	Icon        string // Optional: icon name or emoji to display
 	Title       string // Required: e.g., "No nodes found"
 	Description string // Optional: e.g., "Try adjusting your search filters"
+	// Action, when non-nil, renders as an action.Button inside the mt-4
+	// slot, before any children: the call to action ("Clear filters",
+	// "Create item"). nil renders nothing there.
+	Action *action.Action
 }
 
 // EmptyState renders a centered "nothing here" placeholder for empty
 // lists, empty search results, or unpopulated panels — icon over title
-// over description, with a children slot below for a call-to-action
-// (e.g. a "Create" button). Calling with no arguments renders only the
+// over description, with a slot below for a call-to-action: Props.Action
+// (an action.Button) and then any children. Calling with no arguments renders only the
 // centered container and children slot, since every text section is
 // conditional on being non-empty; only the first Props is used and
 // extras are silently ignored. Returns a templ.Component rendering a
@@ -84,7 +91,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 40, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 47, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -128,7 +135,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Icon)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 52, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 59, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -147,7 +154,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 57, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 64, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -166,7 +173,7 @@ func EmptyState(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 62, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/emptystate/EmptyState.templ`, Line: 69, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -180,6 +187,12 @@ func EmptyState(props ...Props) templ.Component {
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"mt-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
+		}
+		if p.Action != nil {
+			templ_7745c5c3_Err = action.Button(*p.Action).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		templ_7745c5c3_Err = templ_7745c5c3_Var1.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {

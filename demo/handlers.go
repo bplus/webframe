@@ -43,17 +43,6 @@ func HandleTraffic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleSidebar renders the sidebar-layout demo page (GET /sidebar) through
-// SidebarApp, a second appshell.App configured with LayoutSidebar.
-//
-// @boundary HTTP
-// @side-effects writes HTML response
-func HandleSidebar(w http.ResponseWriter, r *http.Request) {
-	if err := SidebarApp.Render(w, r, "Sidebar", pages.Sidebar()); err != nil {
-		log.Printf("demo: render sidebar: %v", err)
-	}
-}
-
 // HandleTrafficStream emits demo SSE traffic events. Every 1.2s it writes one
 // synthetic JSON event — provider/type/direction/status cycled from fixed
 // lists by loop index, so the stream is deterministic, not random — then
@@ -165,36 +154,49 @@ func HandlePicked(w http.ResponseWriter, r *http.Request) {
 	fragment(w, r, "picked", pages.PickedResult(r.FormValue("framework"), r.FormValue("q")))
 }
 
-// HandleValidate returns one field's validation feedback (demonstrates
-// hx-post on blur). Only two fields have rules — "email" (non-empty,
-// contains '@') and "name" (at least 2 bytes — byte length, not runes, so a
-// single multibyte character like "é" passes); any other "field" value has
-// no rules. It renders formfield.Feedback with id "field-<field>-feedback",
-// the slot the field's hx-target swaps: the error message, or an empty slot
-// (which takes no space) when the value is valid.
+// HandleValidate answers the Validate hx-post of the showcase's two
+// blur-validated fields (pages.ValidatedEmail, pages.ValidatedName). htmx
+// sends only the control's own name=value, so the field is recognised by
+// which key is present: "email" must be non-empty and contain '@', "name"
+// must be at least 2 bytes (byte length, not runes, so a single multibyte
+// character like "é" passes). The reply is formfield.RespondFeedback for
+// that Field: the error message, or the empty slot (which takes no space)
+// when the value is valid, always with status 200 so htmx swaps it. A
+// request naming neither field is a 400.
 //
 // @boundary HTTP
 // @side-effects writes HTML response
 func HandleValidate(w http.ResponseWriter, r *http.Request) {
-	field := r.FormValue("field")
-	value := r.FormValue("value")
-
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	var field formfield.Field
 	var errMsg string
-	switch field {
-	case "email":
+	switch {
+	case r.Form.Has(pages.ValidatedEmail.Name):
+		field = pages.ValidatedEmail
+		value := r.Form.Get(field.Name)
 		if value == "" {
 			errMsg = "Email is required"
 		} else if !strings.Contains(value, "@") {
 			errMsg = "Enter a valid email address"
 		}
-	case "name":
+	case r.Form.Has(pages.ValidatedName.Name):
+		field = pages.ValidatedName
+		value := r.Form.Get(field.Name)
 		if value == "" {
 			errMsg = "Name is required"
 		} else if len(value) < 2 {
 			errMsg = "Name must be at least 2 characters"
 		}
+	default:
+		http.Error(w, "unknown field", http.StatusBadRequest)
+		return
 	}
-	fragment(w, r, "validate", formfield.Feedback("field-"+field+"-feedback", errMsg, ""))
+	if err := formfield.RespondFeedback(w, r, field, errMsg); err != nil {
+		log.Printf("demo: render validate: %v", err)
+	}
 }
 
 // toastKinds maps a toast variant to its badge variant, label and message.

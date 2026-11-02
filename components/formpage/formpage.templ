@@ -1,0 +1,74 @@
+package formpage
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/banner"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+)
+
+// Page renders the whole form page: the page header, then Body.
+templ Page(p Props) {
+	@pageheader.PageHeader(p.Header)
+	@Body(p)
+}
+
+// Body renders exactly the <form> element (id p.ID, default "form"), so it
+// is the swap region for an HxPost submit: the error banner (only when
+// Errors is non-empty), one layout.Section (h3) per Section holding a
+// formfield.Fieldset of the resolved fields, then the submit row.
+templ Body(p Props) {
+	@form.Form(p.formProps()) {
+		<div class="flex flex-col gap-8">
+			if len(p.Errors) > 0 {
+				@banner.Banner(banner.Props{
+					Variant: banner.VariantError,
+					Title:   p.bannerTitle(),
+					Details: errorDetails(p.errorItems()),
+				})
+			}
+			for _, s := range p.Sections {
+				@layout.Section(layout.SectionProps{Title: s.Title, Description: s.Description, Level: 3}) {
+					@formfield.Fieldset(formfield.FieldsetProps{Fields: p.fields(s)})
+				}
+			}
+			@submitRow(p)
+		</div>
+	}
+}
+
+// errorDetails is the banner's list: "Label: message" linking to the
+// field's control, or the bare message for an error naming no field.
+templ errorDetails(items []errorItem) {
+	<ul class="list-disc space-y-1 pl-5">
+		for _, it := range items {
+			<li>
+				if it.Href != "" {
+					<a href={ it.Href } class="underline underline-offset-2 hover:text-foreground">{ it.Label }: { it.Message }</a>
+				} else {
+					{ it.Message }
+				}
+			</li>
+		}
+	</ul>
+}
+
+// submitRow is the right-aligned action row: Cancel (if any) then the
+// submit button. Not sticky; a sticky bar is settingspage's job.
+templ submitRow(p Props) {
+	@layout.Inline(layout.InlineProps{Justify: layout.JustifyEnd, Gap: layout.GapS}) {
+		if p.Cancel != nil {
+			@action.Button(*p.Cancel)
+		}
+		@button.Button(p.submitButtonProps()) {
+			{{ a := p.submit() }}
+			if a.Icon != nil {
+				@a.Icon
+			}
+			<span>{ a.Label }</span>
+		}
+	}
+}

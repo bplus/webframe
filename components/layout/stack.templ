@@ -2,17 +2,23 @@ package layout
 
 import "github.com/bplus/webframe/utils"
 
-// StackProps configures a Stack.
+// StackProps configures a Stack. Justify distributes children along the
+// column; it only has a visible effect when the Stack is taller than its
+// content (a fixed height, or stretched by a flex or grid parent), since a
+// Stack that hugs its content has no free space to distribute.
 type StackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 	Gap        Gap
 	Align      Align
+	Justify    Justify
 }
 
 // InlineProps configures an Inline row. A zero Align centers items
-// vertically.
+// vertically. An Inline always wraps below the md breakpoint (768px) so a
+// row of controls never forces horizontal scroll on a phone; Wrap makes it
+// wrap at every width.
 type InlineProps struct {
 	ID         string
 	Class      string
@@ -30,14 +36,18 @@ func inlineAlign(a Align) string {
 	return alignClass(a)
 }
 
+// wrapClass wraps at every width when w is set and below md otherwise.
 func wrapClass(w bool) string {
 	if w {
 		return "flex-wrap"
 	}
-	return ""
+	return "max-md:flex-wrap"
 }
 
-// Stack lays children out vertically with a uniform gap.
+// Stack lays children out vertically with a uniform gap. Justify spreads
+// children along the column when the Stack has room to spare (see
+// StackProps). On phones it renders unchanged: a column is already the
+// narrow-width layout.
 //
 // @pure
 templ Stack(props ...StackProps) {
@@ -49,7 +59,7 @@ templ Stack(props ...StackProps) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), p.Class) }
+		class={ utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), justifyClass(p.Justify), p.Class) }
 		{ p.Attributes... }
 	>
 		{ children... }
@@ -57,7 +67,8 @@ templ Stack(props ...StackProps) {
 }
 
 // Inline lays children out horizontally with a uniform gap, centered
-// vertically by default.
+// vertically by default. Below md (phone width) the row always wraps;
+// Wrap makes it wrap at every width.
 //
 // @pure
 templ Inline(props ...InlineProps) {

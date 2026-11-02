@@ -39,7 +39,7 @@ func TestLint_Elements(t *testing.T) {
 	}{
 		{4, 2, "div", "layout.Stack or layout.Inline"},
 		{5, 3, "h1", "pageheader"},
-		{6, 3, "table", "datatable (batch 2) or table"},
+		{6, 3, "table", "datatable"},
 		{7, 3, "button", "action.Button"},
 	}
 	if len(vs) != len(want) {
@@ -315,14 +315,17 @@ func TestLint_GoFiles(t *testing.T) {
 	}
 }
 
-// TestLint_HTMLFromGoString: a Go string literal holding a class= or
-// style= attribute or a forbidden element's opening tag is reported at the
-// literal, in .go files and in the Go sections of .templ files; comments,
-// rune literals, allowed elements and look-alikes are not.
+// TestLint_HTMLFromGoString: a Go string literal holding a quoted class= or
+// style= attribute, or a forbidden element's opening tag with markup around
+// it (a closing tag, a quoted attribute, or an adjacent tag), is reported at
+// the literal, in .go files and in the Go sections of .templ files; comments,
+// rune literals, allowed elements and look-alikes are not. A bare mention of
+// a tag ("<div>" on htmlstring.go:13) and an upper-case look-alike ("<H2>" on
+// htmlstring.templ.txt:14) are not markup and are no longer reported.
 func TestLint_HTMLFromGoString(t *testing.T) {
 	for file, wantLines := range map[string][]int{
-		"testdata/htmlstring.templ.txt": {3, 6, 12, 14},
-		"testdata/htmlstring.go":        {7, 13},
+		"testdata/htmlstring.templ.txt": {3, 6, 12},
+		"testdata/htmlstring.go":        {7},
 	} {
 		vs := lintOne(t, file)
 		var got []int
@@ -338,6 +341,128 @@ func TestLint_HTMLFromGoString(t *testing.T) {
 		}
 		if !slices.Equal(got, wantLines) {
 			t.Errorf("%s: html-from-go-string at lines %v, want %v", file, got, wantLines)
+		}
+	}
+}
+
+// TestLint_HTMLFromGoString_Mentions: a string literal that merely mentions
+// a tag or an attribute name is not markup. A log format ("class=%s"), SQL
+// ("style= ?"), usage text ("<input> is not allowed; <Label> neither") and a
+// hint ("<div> → layout.Stack") all pass; a quoted class, a tag directly
+// inside another tag (<table><tr>) and a quoted style all fail.
+func TestLint_HTMLFromGoString_Mentions(t *testing.T) {
+	if vs := lintOne(t, "testdata/strings_ok.go"); len(vs) != 0 {
+		t.Errorf("strings_ok.go: got %d violations, want 0: %+v", len(vs), vs)
+	}
+	vs := lintOne(t, "testdata/strings_bad.go")
+	var got []int
+	for _, v := range vs {
+		if v.Rule != "html-from-go-string" {
+			t.Errorf("strings_bad.go: unexpected %+v", v)
+			continue
+		}
+		got = append(got, v.Line)
+	}
+	if want := []int{7, 8, 9, 10}; !slices.Equal(got, want) {
+		t.Errorf("strings_bad.go: html-from-go-string at lines %v, want %v: %+v", got, want, vs)
+	}
+}
+
+// TestAllowedAttrs_Download: download is allowed on a link (downloading is
+// behavior, not design); role and tabindex stay forbidden (something focusable
+// with a role is an interactive thing, and interactive things are
+// components); <img> is no longer an allowed element and points at the image
+// component, so its width is not reported separately.
+func TestAllowedAttrs_Download(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "download.templ")
+	src := "package x\n\ntempl X() {\n" +
+		"\t<a href=\"/f.pak\" download>get</a>\n" + // line 4: clean
+		"\t<span role=\"status\" tabindex=\"0\">s</span>\n" + // line 5: two attr-unknown
+		"\t<img src=\"/x.png\" width=\"400\"/>\n" + // line 6: element → image
+		"}\n"
+	if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	vs := lintOne(t, f)
+	want := []struct {
+		line int
+		rule string
+		hint string
+	}{
+		{5, "attr-unknown", ""},
+		{5, "attr-unknown", ""},
+		{6, "element", "image"},
+	}
+	if len(vs) != len(want) {
+		t.Fatalf("got %d violations, want %d: %+v", len(vs), len(want), vs)
+	}
+	for i, w := range want {
+		v := vs[i]
+		if v.Line != w.line || v.Rule != w.rule {
+			t.Errorf("[%d] got %s at line %d, want %s at line %d", i, v.Rule, v.Line, w.rule, w.line)
+		}
+		if w.hint != "" && v.Hint != w.hint {
+			t.Errorf("[%d] Hint = %q, want %q", i, v.Hint, w.hint)
+		}
+	}
+	for _, v := range vs {
+		if v.Line == 4 {
+			t.Errorf("line 4 (<a download>) should be clean, got %+v", v)
+		}
+	}
+	if !strings.Contains(vs[0].Message, "role") || !strings.Contains(vs[1].Message, "tabindex") {
+		t.Errorf("attr-unknown messages %q, %q should name role and tabindex", vs[0].Message, vs[1].Message)
+	}
+	if !strings.Contains(vs[2].Message, "<img>") {
+		t.Errorf("element message %q should name <img>", vs[2].Message)
+	}
+	if slices.Contains(AllowedElements, "img") {
+		t.Errorf("AllowedElements still lists img")
+	}
+	for _, a := range []string{"role", "tabindex", "width", "height", "loading"} {
+		if slices.Contains(AllowedAttrs, a) {
+			t.Errorf("AllowedAttrs lists %q, which stays forbidden", a)
+		}
+	}
+}
+
+// TestHints_Batch2Components: the hints point at the batch 2 components.
+func TestHints_Batch2Components(t *testing.T) {
+	for elem, want := range map[string]string{
+		"form":       "form.Form",
+		"table":      "datatable",
+		"input":      "formfield",
+		"img":        "image",
+		"figure":     "figure",
+		"figcaption": "figure",
+		"dl":         "descriptionlist",
+		"dt":         "descriptionlist",
+		"dd":         "descriptionlist",
+	} {
+		if h := Hints[elem]; !strings.Contains(h, want) {
+			t.Errorf("Hints[%q] = %q, want it to contain %q", elem, h, want)
+		}
+	}
+	if Hints["form"] != "form.Form or formpage" {
+		t.Errorf("Hints[form] = %q, want %q", Hints["form"], "form.Form or formpage")
+	}
+	dir := t.TempDir()
+	f := filepath.Join(dir, "hints.templ")
+	src := "package x\n\ntempl X() {\n\t<form></form>\n\t<dl><dt>a</dt><dd>b</dd></dl>\n}\n"
+	if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	vs := lintOne(t, f)
+	if len(vs) != 4 {
+		t.Fatalf("got %d violations, want 4 (form, dl, dt, dd): %+v", len(vs), vs)
+	}
+	if !strings.Contains(vs[0].Hint, "form.Form") {
+		t.Errorf("<form> hint = %q, want it to contain form.Form", vs[0].Hint)
+	}
+	for _, v := range vs[1:] {
+		if v.Hint != "descriptionlist" {
+			t.Errorf("%s hint = %q, want descriptionlist", v.Message, v.Hint)
 		}
 	}
 }

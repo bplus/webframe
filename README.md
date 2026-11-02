@@ -25,9 +25,14 @@ make dev
 make generate
 make css
 make check-ui
+make ui-check   # Playwright measurement of /items and / at phone and desktop width; needs `make dev` running
 ```
 
-The demo app runs on `http://localhost:3333`.
+The demo app runs on `http://localhost:3333`. `make ui-check` loads it in
+Playwright's own Chromium (one-time `npx playwright install chromium`) at 390
+and 1280 px, writes screenshots to `tools/shots/` (git-ignored) and fails on
+horizontal overflow or console errors; see `tools/README.md`. It is not part
+of `make check` because it needs the dev server.
 
 Run `make check` before pushing. It composes four sub-targets, in order:
 
@@ -44,6 +49,10 @@ byte-stable `output.css` instead of floating to whatever is latest.
 ## Page layer
 
 The page layer (`appshell`, `pageheader`, `breadcrumbs`, `layout`, `panel`, `action`, `formfield`, `autocomplete`, and the `custompage`/`customblock` fences) lets an app build whole pages by composing components. `assets` embeds `static/` for serving. `wflint` enforces the rule below; `make check-ui` runs it and `make check` includes it. `tabs` takes a `Sizing` (default `SizingTallest`, so switching never moves the page), `layout.Section` and `panel` take a `Level` (h2 to h4) so nesting reads as nesting, and `hovercard` takes a `Placement` (default bottom-start).
+
+Batch 2 (lists and forms) adds the three page types `listpage`, `detailpage` and `formpage`, each with a `Respond(w, r, title, props)`; the pieces they compose, `datatable`, `pagination`, `toolbar`, `descriptionlist`, `stattile`, `banner`, `toggle`, `image`, `figure` and `form.Form` (the `<form>` element itself; a raw one is forbidden); `badge.Status(kind)` so apps never pick status colors; and `listquery` at the module root, the sort/filter/page query-string contract (`sort`, `dir`, `page`, `per`, `q`, filter keys) that table headers, filter bars and pagination emit and handlers parse. A list page is `listquery.Parse` → declare `listpage.Props` → `listpage.Respond`; sort, filter and page links swap only the results region over htmx and push the URL. A form page re-renders with `Values` and `Errors` by field name on a failed POST (status 200, because htmx does not swap 4xx) and redirects on success (`HX-Redirect` for an htmx submit); `formfield.Field.Validate` wires blur validation to a handler whose body is `formfield.RespondFeedback`. The demo's Items app (`/items`) is the acceptance scenario.
+
+**Changed defaults in batch 2:** `layout.Inline` wraps below `md` by default; a bare `?sort=key` without `dir` parses ascending; `appshell` adds `HX-Target` to `Vary`; `statcomparison`, `copybutton` and `form.Message` colors come from the theme tokens `text-success`/`text-destructive`/`text-info`; `avatar.Image` sanitizes `src`; new tokens `--color-success`, `--color-warning`, `--color-info`. wflint no longer allows a raw `<img>` (use `image`) and now allows the `download` attribute; the `html-from-go-string` rule only fires on a quoted attribute value or a tag with markup around it.
 
 **Changed defaults in batch 1b:** `tabs` are now as tall as their tallest panel by default (set `Sizing: tabs.SizingFit` for the old grow-and-shrink behavior), hover cards open below by default (set `Placement` to choose), `layout.Section` Level 2 headings are `text-2xl` and the page title is `text-3xl`. Consumers pinned to v0.1.0 (one app uses tabs and hovercard) will see these changes when they upgrade.
 

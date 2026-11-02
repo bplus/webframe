@@ -1,0 +1,103 @@
+package listpage
+
+import (
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/filterbar"
+	"github.com/bplus/webframe/components/form"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/pagination"
+	"github.com/bplus/webframe/components/toolbar"
+	"github.com/bplus/webframe/utils"
+)
+
+// Page renders the whole list page body (no shell): the page header, then,
+// inside a layout.TwoColumn when Aside is set, the intro line, the filter
+// bar, the toolbar and Results. See the package doc for the wiring and the
+// phone collapse. The root is <div id={ID}>; Class and Attributes land on
+// it.
+//
+// Base "" resolves to the request path stored by appshell.Middleware for
+// the filter bar's GET; datatable and pagination resolve it the same way
+// themselves.
+templ Page(p Props) {
+	{{ base := p.base(appshell.PathFromContext(ctx)) }}
+	<div
+		id={ p.id() }
+		class={ utils.TwMerge(p.Class) }
+		{ p.Attributes... }
+	>
+		@pageheader.PageHeader(p.Header)
+		if p.Aside != nil {
+			@layout.TwoColumn(layout.TwoColumnProps{Aside: p.Aside}) {
+				@body(p, base)
+			}
+		} else {
+			@body(p, base)
+		}
+	</div>
+}
+
+// body is everything under the header: intro, filter bar, toolbar, results.
+templ body(p Props, base string) {
+	<div class="space-y-4">
+		if p.Intro != "" {
+			<p id={ p.introID() } class={ introClass }>{ p.Intro }</p>
+		}
+		if p.hasFilterBar() {
+			@filterbar.FilterBar(p.filterbarProps(base))
+		}
+		if p.hasToolbar() {
+			@toolbar.Toolbar(toolbar.Props{Left: p.Toolbar, Right: p.createActions()}) {
+				if p.hasBulk() {
+					@bulkForm(p)
+				}
+			}
+		}
+		@Results(p)
+	</div>
+}
+
+// bulkForm is the bulk-actions form: one button per action; row
+// checkboxes join it through their form attribute (see the package doc).
+templ bulkForm(p Props) {
+	@form.Form(form.Props{ID: p.bulkFormID(), Class: "flex flex-wrap items-center gap-2"}) {
+		for _, a := range p.BulkActions {
+			@action.Button(p.bulkAction(a))
+		}
+	}
+}
+
+// Results renders the swap region: <div id={ResultsID()}> holding the
+// datatable and the pagination, and nothing else (no header, no filter
+// bar, no out-of-band elements, so it can sit inside Page), so sort,
+// filter and page requests can replace it in place. The pagination
+// summary line is always present and the table header stays when there
+// are no rows, so only the rows change the region's height.
+templ Results(p Props) {
+	{{ base := p.base(appshell.PathFromContext(ctx)) }}
+	<div id={ p.ResultsID() } class="space-y-3">
+		@datatable.DataTable(p.tableProps(base))
+		@pagination.Pagination(p.paginationProps())
+	</div>
+}
+
+// resultsPart is what a results-only response carries (Respond for a
+// request targeting the results, RespondResults for a mutation): Results,
+// then the out-of-band updates htmx applies elsewhere on the page before
+// swapping the region: the filter bar's hidden sort/dir/per inputs (so a
+// sort chosen from a table header is what the next filter change sends)
+// and the intro line (so its counts follow a delete or publish). Each
+// replaces an element of the same id and shape, so nothing on the page
+// moves. Never rendered inside Page, where the originals already are.
+templ resultsPart(p Props) {
+	@Results(p)
+	if p.hasFilterBar() {
+		@filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs())
+	}
+	if p.Intro != "" {
+		<p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>
+	}
+}

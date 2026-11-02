@@ -13,7 +13,7 @@ import (
 )
 
 // main wires all demo routes — /static/ serving from embedded assets, the showcase and traffic
-// pages, and the HTMX/SSE API endpoints — onto a ServeMux and serves them on
+// pages, the Items app, and the HTMX/SSE API endpoints — onto a ServeMux and serves them on
 // the hard-coded address :3333. It blocks forever; log.Fatal exits the process
 // if the listener cannot bind (e.g. port already in use).
 //
@@ -28,7 +28,12 @@ func main() {
 	// Pages
 	mux.HandleFunc("GET /{$}", demo.HandleShowcase)
 	mux.HandleFunc("GET /traffic", demo.HandleTraffic)
-	mux.HandleFunc("GET /sidebar", demo.HandleSidebar)
+
+	// The Items app (list, detail, create/edit form) on the sidebar shell:
+	// GET /items, /items/new, /items/{id}, /items/{id}/edit,
+	// /items/{id}/history; POST /items, /items/{id}, /items/validate,
+	// /items/publish; DELETE /items/{id}; GET /sidebar → /items.
+	demo.RegisterItemRoutes(mux)
 
 	// HTMX demo endpoints
 	mux.HandleFunc("GET /api/traffic/stream", demo.HandleTrafficStream)

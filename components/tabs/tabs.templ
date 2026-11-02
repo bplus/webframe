@@ -59,7 +59,11 @@ type TriggerProps struct {
 
 // ContentProps configures a tab panel; Value, IsActive, and TabsID follow the
 // same rules as TriggerProps (Value required, one IsActive pair per group,
-// TabsID only for out-of-tree rendering).
+// TabsID only for out-of-tree rendering). Sizing is read the same way: leave
+// it zero inside a Tabs root (the group's Sizing is inherited from ctx) and
+// set it to the group's Sizing when the Content is rendered standalone (an
+// HTMX partial addressed by TabsID), where ctx has nothing to inherit. A
+// non-zero Sizing always wins over ctx.
 type ContentProps struct {
 	ID         string
 	Class      string
@@ -67,6 +71,7 @@ type ContentProps struct {
 	Value      string
 	IsActive   bool
 	TabsID     string
+	Sizing     Sizing // "" = inherit from the enclosing Tabs; set with TabsID for standalone rendering
 }
 
 // Tabs is the root container of a tab group; it renders a <div
@@ -207,11 +212,14 @@ templ Trigger(props ...TriggerProps) {
 // its data-tui-tabs-id and data-tui-tabs-value against the clicked Trigger.
 // Only props[0] is used; extras ignored. Value is required: when empty an
 // inline error <span> is rendered. All panels exist in the DOM regardless of
-// IsActive — inactive ones are only CSS-hidden. Inside a SizingFixed Tabs
-// the panel also gets tabindex="0" (it scrolls). Returns a templ.Component.
+// IsActive — inactive ones are only CSS-hidden. Under SizingFixed (from the
+// enclosing Tabs, or from ContentProps.Sizing when rendered standalone) the
+// panel also gets tabindex="0" and the focus ring (it scrolls). Returns a
+// templ.Component.
 //
-// @temporal-coupling: group ID comes from ctx (set by the enclosing Tabs)
-// unless ContentProps.TabsID overrides it.
+// @temporal-coupling: group ID and Sizing come from ctx (set by the
+// enclosing Tabs) unless ContentProps.TabsID / ContentProps.Sizing override
+// them; a standalone partial must pass both or it gets neither.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -224,7 +232,11 @@ templ Content(props ...ContentProps) {
 	if p.Value == "" {
 		<span class="text-xs text-destructive">Error: Tab Content missing required 'Value' attribute.</span>
 	}
-	{{ fixed := sizingFromContext(ctx) == SizingFixed }}
+	{{ sizing := p.Sizing }}
+	if sizing == "" {
+		{{ sizing = sizingFromContext(ctx) }}
+	}
+	{{ fixed := sizing == SizingFixed }}
 	<div
 		if p.ID != "" {
 			id={ p.ID }

@@ -1,0 +1,85 @@
+package detailpage
+
+import (
+	"github.com/bplus/webframe/components/descriptionlist"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/tabs"
+	"github.com/bplus/webframe/utils"
+)
+
+// Page renders the detail page in this order: pageheader; then the summary
+// descriptionlist (when it has items), the tabs (when there are any), and
+// the children (free content) — those three directly under the header, or,
+// when Aside is set, inside the main column of a layout.TwoColumn whose
+// aside is Aside. At phone width the summary collapses to one column and
+// the aside stacks under the main column (both are the composed
+// components' own behavior).
+//
+// Tabs: each Tab is a tabs.Trigger (label) and a tabs.Content panel with
+// id Tab.ID+"-panel". An inline tab renders Tab.Content in its panel. A
+// lazy tab (HxGet set) renders an empty panel and puts hx-get=HxGet,
+// hx-target="#<ID>-panel", hx-trigger="click once" on the Trigger; when
+// the lazy tab is the active one its trigger is "load" instead, so the
+// open panel is filled at page load rather than left blank. The lazy
+// response is swapped into the panel's innerHTML, so the handler returns
+// the panel body only.
+//
+// @pure
+templ Page(p Props) {
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("flex flex-col gap-6", p.Class) }
+		{ p.Attributes... }
+	>
+		@pageheader.PageHeader(p.Header)
+		if p.Aside != nil {
+			@layout.TwoColumn(p.twoColumnProps()) {
+				@body(p) {
+					{ children... }
+				}
+			}
+		} else {
+			@body(p) {
+				{ children... }
+			}
+		}
+	</div>
+}
+
+// body is everything under the header: summary, tabs, then children.
+templ body(p Props) {
+	<div class="flex flex-col gap-6">
+		if len(p.Summary) > 0 {
+			@descriptionlist.DescriptionList(p.summaryProps())
+		}
+		if len(p.Tabs) > 0 {
+			@tabGroup(p)
+		}
+		{ children... }
+	</div>
+}
+
+// tabGroup renders the tabs: the List of Triggers, then one Content panel
+// per tab. active is resolved once so Trigger and Content agree.
+templ tabGroup(p Props) {
+	{{ active := p.activeTab() }}
+	@tabs.Tabs(p.tabsProps()) {
+		@tabs.List() {
+			for _, t := range p.Tabs {
+				@tabs.Trigger(tabs.TriggerProps{Value: t.ID, IsActive: t.ID == active, Attributes: t.triggerAttrs(t.ID == active)}) {
+					{ t.Label }
+				}
+			}
+		}
+		for _, t := range p.Tabs {
+			@tabs.Content(tabs.ContentProps{ID: t.PanelID(), Value: t.ID, IsActive: t.ID == active}) {
+				if !t.Lazy() && t.Content != nil {
+					@t.Content
+				}
+			}
+		}
+	}
+}
