@@ -635,14 +635,6 @@ func TestItems_DiffLines(t *testing.T) {
 	}
 }
 
-func TestItems_SidebarRedirect(t *testing.T) {
-	h := itemsHandler(t)
-	rec := do(h, "GET", "/sidebar", nil, nil)
-	if rec.Code != http.StatusFound || rec.Header().Get("Location") != "/items" {
-		t.Errorf("GET /sidebar = %d Location %q, want 302 /items", rec.Code, rec.Header().Get("Location"))
-	}
-}
-
 func TestItems_RelativeTime(t *testing.T) {
 	now := time.Now()
 	for _, c := range []struct {

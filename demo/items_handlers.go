@@ -102,8 +102,7 @@ const (
 
 // RegisterItemRoutes mounts the Items app on mux. Every page handler is
 // wrapped in SidebarApp.Middleware so the pages render in the sidebar
-// shell (the innermost Middleware wins over the server-wide App), and
-// /sidebar redirects to /items.
+// shell (the innermost Middleware wins over the server-wide App).
 func RegisterItemRoutes(mux *http.ServeMux) {
 	side := func(fn http.HandlerFunc) http.Handler { return SidebarApp.Middleware(fn) }
 	mux.Handle("GET /items", side(HandleItemsList))
@@ -116,13 +115,6 @@ func RegisterItemRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /items/publish", side(HandleItemsPublish))
 	mux.Handle("POST /items/{id}", side(HandleItemUpdate))
 	mux.Handle("DELETE /items/{id}", side(HandleItemDelete))
-	mux.HandleFunc("GET /sidebar", HandleSidebarRedirect)
-}
-
-// HandleSidebarRedirect sends the old sidebar demo URL to the Items list,
-// which is now the sidebar-layout page (GET /sidebar → 302 /items).
-func HandleSidebarRedirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/items", http.StatusFound)
 }
 
 // ---- list -----------------------------------------------------------------

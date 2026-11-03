@@ -99,7 +99,7 @@ func Routes(mux *http.ServeMux) {
 	// The Items app (list, detail, create/edit form) on the sidebar shell:
 	// GET /items, /items/new, /items/{id}, /items/{id}/edit,
 	// /items/{id}/history; POST /items, /items/{id}, /items/validate,
-	// /items/publish; DELETE /items/{id}; GET /sidebar → /items.
+	// /items/publish; DELETE /items/{id}.
 	RegisterItemRoutes(mux)
 
 	// The dashboard, settings, browse and logs pages on the same shell: GET /dashboard; GET and
