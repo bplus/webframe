@@ -16,11 +16,6 @@
    component's dark:bg-... follow the OS while the tokens follow the toggle. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* ── Legacy consumer classes ── utilities that older consumer pages, written
-   before appshell, use directly; templates outside this module are never
-   scanned, so they are listed here. Remove once those pages move to appshell. */
-@source inline("divide-border divide-y font-extrabold grid-cols-2 grid-cols-3 items-end items-stretch lg:grid-cols-5 list-disc list-inside max-w-3xl max-w-5xl max-w-xl mb-10 mb-8 ml-2 mt-6 mt-8 my-6 py-10 py-6 py-8 sm:grid-cols-3 sm:grid-cols-5 sm:grid-cols-6 sm:px-10 space-y-1 space-y-3 space-y-5 space-y-6 space-y-8 text-3xl text-6xl text-red-600 text-xl underline w-40 w-56");
-
 @theme {
   /* ── Primary: Slate Blue ── */
   --color-primary-50:  #f0f4ff;
@@ -104,36 +99,6 @@
 :root {
   font-size: 17px;
   color-scheme: light; /* native controls, scrollbars and pickers draw light by default */
-}
-
-/* ── Light theme, explicit (same as the default; kept so products that
-      already set data-theme="light" stay correct) ── */
-:root[data-theme="light"] {
-  --color-background:           #F5F5F2;
-  --color-foreground:           #0B0B0B;
-  --color-card:                 #FFFFFF;
-  --color-card-foreground:      #0B0B0B;
-  --color-popover:              #FFFFFF;
-  --color-popover-foreground:   #0B0B0B;
-  --color-primary:              #4A3AA7;
-  --color-primary-foreground:   #ffffff;
-  --color-secondary:            #E9E8E4;
-  --color-secondary-foreground: #0B0B0B;
-  --color-muted:                #EFEEE9;
-  --color-muted-foreground:     #52514E;
-  --color-accent:               #EDEBFA;
-  --color-accent-foreground:    #4A3AA7;
-  --color-destructive:          #E34948;
-  --color-destructive-foreground: #ffffff;
-  --color-success:              #2F7D4F;
-  --color-success-foreground:   #ffffff;
-  --color-warning:              #B7791F;
-  --color-warning-foreground:   #0B0B0B;
-  --color-info:                 #2B6CB0;
-  --color-info-foreground:      #ffffff;
-  --color-border:               #DBDAD5;
-  --color-input:                #DBDAD5;
-  --color-ring:                 #4A3AA7;
 }
 
 /* ── Dark theme, explicit opt-in ── */
@@ -590,18 +555,6 @@
 
 .wf-section:last-child {
   border-bottom: none;
-}
-
-.wf-section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.wf-section-desc {
-  font-size: 0.875rem;
-  color: var(--color-muted-foreground);
-  margin-bottom: 1.5rem;
 }
 
 /* ── Tabs sizing ── */
