@@ -8,8 +8,8 @@ and nothing is saved.
 
 ## The code
 
-Replace `main.go` from step 3 with this. `createBook` changed, and
-`checkTitle` is new:
+Keep the same `books` directory and replace `main.go` from step 3 with this.
+`createBook` changed, and `checkTitle` is new:
 
 <!-- file: examples/04-validation/main.go -->
 ```go
@@ -201,8 +201,10 @@ request did not do what it asked. Tests, logs and monitoring can see the
 failure without reading the page. htmx normally ignores the body of an error
 response, but webframe's page shell configures it to swap HTML error
 responses like successful ones, so the form with its errors still replaces
-the old form. Your browser's developer console lists the 422 as a failed
-request; that is expected.
+the old form. Your browser's developer console shows two lines for each
+refused form, and both are expected: the browser's own line for the failed
+request, and a second one from htmx, "Response Status Error Code 422 from
+/books".
 
 **Why the typed value is kept.** The new page is built from `bookForm`, which
 has empty fields. Without `Values`, typing `Hi` and pressing Save would bring
@@ -223,8 +225,10 @@ typing spaces. The server is the one place every request passes through.
 - Type `Emma` and press **Save**. It is long enough, so it is saved.
 - Delete the `form.Values = ...` line, run again and submit `Hi`. The box
   comes back empty. Put the line back.
-- Add `Required: true` to the `title` field in `bookForm`. The label gets a
-  marker and the browser now refuses an empty field before it sends
-  anything. Spaces still get through, which is why the server check stays.
+- In `bookForm`, change the `title` field to
+  `{Name: "title", Label: "Title", Required: true}`. Two things change: the
+  label gets a red `*` marker, and the browser refuses to send the form while
+  the field is empty. A title of only spaces is not empty to the browser, so
+  it still reaches the server, which is why the server check stays.
 
 Next: [Step 5: A detail page](05-detail.md)

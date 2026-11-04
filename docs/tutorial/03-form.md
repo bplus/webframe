@@ -7,7 +7,7 @@ back to the list, and shows "Saved" once.
 
 ## The code
 
-Replace `main.go` from step 2 with this:
+Keep the same `books` directory and replace `main.go` from step 2 with this:
 
 <!-- file: examples/03-form/main.go -->
 ```go
@@ -200,7 +200,8 @@ page.
   it appears at the top of page 1. Other titles land in their alphabetical
   place, maybe on another page.
 - Reload the list after saving. The banner is gone: it shows once.
-- Press **Save** with the field empty. A book with no title appears in the
-  list. Step 4 stops that.
+- Press **Save** with the field empty. It saves anyway: the banner reads
+  "Saved" over "was added." with no title in front, and a blank row appears
+  at the top of the list (an empty title sorts first). Step 4 stops that.
 
 Next: [Step 4: Bad input](04-validation.md)

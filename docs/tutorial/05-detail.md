@@ -8,9 +8,9 @@ answers with a "Page not found" page.
 
 ## The code
 
-Replace `main.go` from step 4 with this. `Book` has an `ID`, the list's
-title cells link, `createBook` gives new books an id, and `findBook` and
-`showBook` are new:
+Keep the same `books` directory and replace `main.go` from step 4 with this.
+`Book` has an `ID`, the list's title cells link, `createBook` gives new
+books an id, and `findBook` and `showBook` are new:
 
 <!-- file: examples/05-detail/main.go -->
 ```go
