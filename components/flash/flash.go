@@ -111,9 +111,6 @@ func Take(w http.ResponseWriter, r *http.Request) templ.Component {
 // secure reports whether cookies for r should carry the Secure attribute:
 // the request itself was TLS, or a reverse proxy terminated TLS and said so.
 func secure(r *http.Request) bool {
-	if r == nil {
-		return false
-	}
 	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 

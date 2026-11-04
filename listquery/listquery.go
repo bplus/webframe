@@ -95,29 +95,19 @@ type Options struct {
 
 // Parse reads the list state from r's query string. See ParseValues.
 func Parse(r *http.Request, o Options) Spec {
-	if r == nil || r.URL == nil {
-		return ParseValues(nil, o)
-	}
 	return ParseValues(r.URL.Query(), o)
 }
 
 // CurrentURL returns the URL the user is looking at: the HX-Current-URL
 // header htmx sends with every request, parsed, or a copy of r.URL when the
-// header is absent or does not parse. It is never nil (a nil request yields
-// an empty URL). A mutation issued from inside a list (a row's DELETE, a
-// bulk POST) has a request URL that says nothing about the list's state;
-// the page's URL holds it.
+// header is absent or does not parse. It is never nil. A mutation issued
+// from inside a list (a row's DELETE, a bulk POST) has a request URL that
+// says nothing about the list's state; the page's URL holds it.
 func CurrentURL(r *http.Request) *url.URL {
-	if r == nil {
-		return &url.URL{}
-	}
 	if cur := r.Header.Get("HX-Current-URL"); cur != "" {
 		if u, err := url.Parse(cur); err == nil {
 			return u
 		}
-	}
-	if r.URL == nil {
-		return &url.URL{}
 	}
 	u := *r.URL
 	return &u

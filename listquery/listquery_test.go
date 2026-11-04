@@ -624,14 +624,6 @@ func TestParseCurrent(t *testing.T) {
 	if u := CurrentURL(r); u.Path != "/items" {
 		t.Errorf("CurrentURL with a bad header = %q", u.String())
 	}
-
-	// A nil request: defaults, no panic.
-	if got = ParseCurrent(nil, itemOpts); got.Sort != "name" || got.Page != 1 {
-		t.Errorf("ParseCurrent(nil) = %+v", got)
-	}
-	if u := CurrentURL(nil); u == nil || u.Path != "" {
-		t.Errorf("CurrentURL(nil) = %v", u)
-	}
 }
 
 // TestURL_OmitsDefaultSort: a parsed Spec in its Options' default order
