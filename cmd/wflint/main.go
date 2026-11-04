@@ -1,6 +1,8 @@
-// Command wflint runs the webframe UI lint over templ, Go, and CSS sources and
-// reports code that bypasses the component library. Consumers run it from
-// `make check`.
+// Command wflint lints an app's templ, Go and CSS sources and reports code
+// that bypasses the component library: raw block HTML, class and style
+// attributes, templ.Raw and the like. Run it over the app's directories (for
+// example "go run github.com/bplus/webframe/cmd/wflint ./internal/web") as part
+// of the app's checks; it exits 1 when it finds a violation.
 package main
 
 import (

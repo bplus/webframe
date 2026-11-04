@@ -1,4 +1,6 @@
-// Package assets serves webframe's embedded static/ directory.
+// Package assets serves webframe's embedded CSS, JavaScript, fonts and
+// icons. Every app calls Mount once on its mux so the pages appshell renders
+// can load them from /static/.
 package assets
 
 import (

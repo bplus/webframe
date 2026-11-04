@@ -4,7 +4,7 @@ build: generate css
 	go build -o bin/demo ./cmd/demo
 
 generate:
-	templ generate
+	templ generate -include-version=false
 
 # Node tooling (Tailwind CLI, Playwright) is pinned in tools/package.json.
 # TAILWIND can be overridden from the environment (the Dockerfile does).
@@ -28,7 +28,7 @@ check: check-generate check-vet check-test check-ui
 check-generate:
 	@command -v templ >/dev/null 2>&1 || { echo "error: templ not found on PATH; install with: go install github.com/a-h/templ/cmd/templ@latest"; exit 1; }
 	@command -v node >/dev/null 2>&1 || { echo "error: node not found on PATH; install Node.js to run the Tailwind CLI"; exit 1; }
-	templ generate
+	templ generate -include-version=false
 	$(MAKE) css
 	git diff --exit-code -I '^// templ: version' -- '*_templ.go' static/css/output.css
 
