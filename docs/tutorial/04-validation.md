@@ -226,3 +226,5 @@ typing spaces. The server is the one place every request passes through.
 - Add `Required: true` to the `title` field in `bookForm`. The label gets a
   marker and the browser now refuses an empty field before it sends
   anything. Spaces still get through, which is why the server check stays.
+
+Next: [Step 5: A detail page](05-detail.md)
