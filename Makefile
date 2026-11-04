@@ -39,7 +39,7 @@ check-test:
 	go test ./...
 
 check-ui:
-	go run ./cmd/wflint ./demo
+	go run ./cmd/wflint ./demo ./examples
 
 # Phone/desktop measurement with Playwright's Chromium. Not part of `check`:
 # needs `make dev` running on :3333. One-time: `npx --prefix tools playwright install chromium`.
