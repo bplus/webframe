@@ -37,7 +37,9 @@ type Section struct {
 // Props configures a form page. Only Sections and Action are needed for a
 // working page; everything else has a usable zero value.
 type Props struct {
-	// ID is the <form> id and the htmx swap target; "" means "form".
+	// ID is the <form> id and the htmx swap target; "" means "form". Any
+	// id works: Respond files the form under this id, so a submit aimed at
+	// it gets the form back alone with no extra handler code.
 	ID     string
 	Header pageheader.Props
 	// Action is the submit URL (plain; templ sanitizes it).
@@ -235,7 +237,8 @@ func (p Props) submit() action.Action {
 // Respond writes the form page through the appshell App installed by
 // (*App).Middleware: the whole document for a normal request, the page body
 // for an htmx request, and the <form> alone (Body) for an htmx request
-// whose HX-Target is the form, which is what an HxPost submit sends.
+// whose HX-Target is the form's id (Props.ID, or "form"), which is what an
+// HxPost submit sends.
 //
 // Respond never redirects. On validation errors the POST handler sets
 // p.Values and p.Errors and calls Respond, which answers 422 (appshell

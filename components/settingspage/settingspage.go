@@ -46,6 +46,7 @@ type Group struct {
 // a working page; everything else has a usable zero value.
 type Props struct {
 	// ID is the <form> id and the htmx swap target; "" means "settings".
+	// Any id works: Respond and the save bar's submit button both use it.
 	// The save bar's submit button names it in its form attribute.
 	ID string
 	// Class merges into the <form>'s classes; Attributes spread on it.

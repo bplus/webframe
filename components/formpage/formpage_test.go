@@ -390,3 +390,35 @@ func TestBody_UntitledSectionHasNoSectionPadding(t *testing.T) {
 	}
 	mustOrder(t, out, "Please fix", `name="title"`, "<section", "More", `name="author"`, `type="submit"`)
 }
+
+// TestRespond_CustomIDTargetedBody: with Props.ID set, an htmx submit
+// aimed at that id gets the form alone with 422, and the form carries the
+// id and the matching hx-target.
+func TestRespond_CustomIDTargetedBody(t *testing.T) {
+	a := &appshell.App{Name: "Demo"}
+	p := itemProps()
+	p.ID = "edit-item"
+	p.HxPost = true
+	p.Errors = map[string]string{"name": "Name is required"}
+	for name, target := range map[string]string{"bare": "edit-item", "hashed": "#edit-item"} {
+		h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := Respond(w, r, "Edit item", p); err != nil {
+				t.Errorf("Respond: %v", err)
+			}
+		}))
+		req := httptest.NewRequest("POST", "/items/1", nil)
+		req.Header.Set("HX-Request", "true")
+		req.Header.Set("HX-Target", target)
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Errorf("%s: status %d, want 422", name, rec.Code)
+		}
+		out := rec.Body.String()
+		if !strings.HasPrefix(out, `<form id="edit-item"`) || !strings.HasSuffix(strings.TrimSpace(out), "</form>") {
+			t.Errorf("%s: body is not the form alone:\n%s", name, out)
+		}
+		mustContain(t, out, `hx-target="#edit-item"`, "Please fix the error below.")
+		mustNotContain(t, out, "<h1", "<html", "wf-topbar")
+	}
+}

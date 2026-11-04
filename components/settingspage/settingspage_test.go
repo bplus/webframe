@@ -424,3 +424,26 @@ func TestBody_Multipart(t *testing.T) {
 	p.Multipart = true
 	mustContain(t, render(t, Body(p)), `enctype="multipart/form-data"`)
 }
+
+// TestRespond_CustomIDTargetedForm422: with Props.ID set, an htmx submit
+// aimed at that id gets the form alone with 422, and the save bar's submit
+// on the full page names the same id in its form attribute.
+func TestRespond_CustomIDTargetedForm422(t *testing.T) {
+	p := withErrors()
+	p.ID = "profile"
+	p.HxPost = true
+	for name, target := range map[string]string{"bare": "profile", "hashed": "#profile"} {
+		rec := serveRespond(t, p, map[string]string{"HX-Request": "true", "HX-Target": target})
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Errorf("%s: status %d, want 422", name, rec.Code)
+		}
+		out := rec.Body.String()
+		if !strings.HasPrefix(out, `<form id="profile"`) || !strings.HasSuffix(strings.TrimSpace(out), "</form>") {
+			t.Errorf("%s: body is not the form alone:\n%s", name, out)
+		}
+		mustContain(t, out, `hx-target="#profile"`, "Please fix the error below.")
+		mustNotContain(t, out, "<h1", "wf-settings-bar")
+	}
+	full := serveRespond(t, p, nil).Body.String()
+	mustContain(t, full, `form="profile"`)
+}
