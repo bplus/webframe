@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check splitpane-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check splitpane-check fetch-errors-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -67,3 +67,10 @@ palette-check: tools/node_modules/.bin/tailwindcss
 # item from the running demo. Needs `make dev` running, like ui-check.
 splitpane-check: tools/node_modules/.bin/tailwindcss
 	node tools/splitpane-check.mjs --url http://localhost:3333/browse
+
+# Failed htmx requests in a real browser: a self-targeting GET answered 404
+# shows the "Could not load that" toast and leaves the button alone, a
+# plain-text 500 shows the same toast, and an action error on the sign-in
+# page lands in its <main id="wf-main">. Needs `make dev` running, like ui-check.
+fetch-errors-check: tools/node_modules/.bin/tailwindcss
+	node tools/fetch-errors-check.mjs --url http://localhost:3333

@@ -15,13 +15,35 @@ import vm from "node:vm";
 
 const script = readFileSync(fileURLToPath(new URL("../static/js/htmx-errors.js", import.meta.url)), "utf8");
 
-// load runs the script in a fresh context and returns its listener.
+// notices holds the LoadFailed toasts the script has put in the fake
+// #toast-container (one at most: a new one replaces the old).
+let notices = [];
+
+// load runs the script in a fresh context and returns its listener. The
+// fake document has the <template data-wf-load-failed> and the
+// #toast-container appshell.Document renders.
 function load() {
   let listener = null;
+  const box = {
+    querySelectorAll: () => notices.slice(),
+    appendChild: (el) => notices.push(el),
+  };
+  const toastEl = {
+    cloneNode() {
+      const el = {
+        attrs: {},
+        setAttribute(k, v) { el.attrs[k] = v; },
+        remove() { notices = notices.filter((n) => n !== el); },
+      };
+      return el;
+    },
+  };
   const document = {
     addEventListener(type, fn) {
       if (type === "htmx:beforeSwap") listener = fn;
     },
+    querySelector: (sel) => (sel === "template[data-wf-load-failed]" ? { content: { firstElementChild: toastEl } } : null),
+    getElementById: (id) => (id === "toast-container" ? box : null),
   };
   const context = { document };
   context.window = context;
@@ -72,18 +94,33 @@ const cases = [
 const listener = load();
 let failed = 0;
 for (const [name, ct, body, want] of cases) {
+  notices = [];
   const got = swaps(listener, ct, body);
-  const ok = got === want;
+  // A refused answer is never silent: the LoadFailed toast shows.
+  const toasts = notices.length;
+  const ok = got === want && toasts === (want ? 0 : 1);
   if (!ok) failed++;
-  process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}: swaps=${got}, want ${want}\n`);
+  process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}: swaps=${got}, want ${want}; toasts=${toasts}\n`);
 }
-// A data-wf-swallow-errors target never swaps an error, even HTML; a
-// success is never touched.
-for (const [name, got, want] of [
-  ["HTML error into a swallowing target", swaps(listener, html, "<div>x</div>", { swallow: true }), false],
-  ["success response left to htmx", swaps(listener, plain, "ok", { isError: false }), true],
+// Two refused answers in a row leave one toast, not a stack.
+notices = [];
+swaps(listener, plain, "Internal Server Error\n");
+swaps(listener, plain, "Internal Server Error\n");
+{
+  const ok = notices.length === 1;
+  if (!ok) failed++;
+  process.stdout.write(`${ok ? "ok  " : "FAIL"} two refused answers: toasts=${notices.length}, want 1\n`);
+}
+// A data-wf-swallow-errors target never swaps an error, even HTML, and
+// shows no toast (the next poll repairs it); a success is never touched.
+for (const [name, run, want] of [
+  ["HTML error into a swallowing target", () => swaps(listener, html, "<div>x</div>", { swallow: true }), false],
+  ["text error into a swallowing target", () => swaps(listener, plain, "Internal Server Error\n", { swallow: true }), false],
+  ["success response left to htmx", () => swaps(listener, plain, "ok", { isError: false }), true],
 ]) {
-  const ok = got === want;
+  notices = [];
+  const got = run();
+  const ok = got === want && notices.length === 0;
   if (!ok) failed++;
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}: swaps=${got}, want ${want}\n`);
 }

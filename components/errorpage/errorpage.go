@@ -33,25 +33,43 @@ import (
 	"strings"
 
 	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/toast"
 )
 
 // Respond writes the error page for r with p.Code as the status (500 when
 // 0). With an appshell.App in the request context it renders inside the
 // shell; without one (say, a failure in middleware that runs before
 // App.Middleware) it renders a bare document. A plain htmx request gets
-// the body only. When that request is an action whose target is the
-// element that sent it (a Delete button with no hx-target, a form that
-// swaps itself; see answersTrigger), the page is sent to the shell's main
-// content region (appshell.App.RenderContentStatus, or the body with no
-// App) instead of landing inside the button. A render error is returned,
-// not written, since the status line has already gone out.
+// the body only, with two exceptions for a request whose target is the
+// element that sent it (see targetsTrigger):
+//
+//   - An action (POST, PUT, PATCH, DELETE: a Delete button with no
+//     hx-target, a form that swaps itself) gets the page sent to the main
+//     content region, <main id="wf-main"> (appshell.App.RenderContentStatus,
+//     or the body with no App), instead of inside the button.
+//   - A GET (a "Refresh" button with hx-get and no hx-target) gets the
+//     appshell.LoadFailed toast and nothing else (toast.Respond, with the
+//     error status): the button and the page stay as they were. An
+//     element marked data-wf-swallow-errors, such as a polled badge, shows
+//     no toast, because htmx-errors.js drops the answer; the next poll
+//     repairs it.
+//
+// A GET aimed at a named region (a list's results, a split pane's detail,
+// a lazy tab's panel) gets the page in that region as before. A render
+// error is returned, not written, since the status line has already gone
+// out.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	status := p.Code
 	if status == 0 {
 		status = http.StatusInternalServerError
 	}
 	title, _ := defaults(p)
-	onTrigger := answersTrigger(r)
+	onTrigger := targetsTrigger(r)
+	if onTrigger && r.Method == http.MethodGet {
+		appshell.SetHeaders(w) // Vary: the answer depends on the htmx headers
+		return toast.Respond(w, r, status, appshell.LoadFailed)
+	}
+	onTrigger = onTrigger && r.Method != http.MethodHead
 	if app, ok := appshell.FromContext(r.Context()); ok {
 		// Both run App.Flash and set the headers before writing the
 		// status, so a pending flash is still cleared.
@@ -74,18 +92,15 @@ func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	return appshell.RenderBare(w, r, "", title, ErrorPage(p))
 }
 
-// answersTrigger reports whether r is an htmx action whose swap target is
-// the element that sent it: a plain htmx request (not boosted, not a
-// history restore) with a method other than GET or HEAD, and either no
-// HX-Target header (the target has no id; htmx's default target is the
-// triggering element itself) or an HX-Target equal to HX-Trigger. Swapped
-// there, an error page would land inside a Delete button or a form; the
-// caller sends it to the page's content region instead. A request aimed at
-// a named region (a list's results, a split pane's detail) keeps its
-// target, and GETs (lazy tabs, polls, which data-wf-swallow-errors guards)
-// are left alone.
-func answersTrigger(r *http.Request) bool {
-	if !appshell.WantsFragment(r) || r.Method == http.MethodGet || r.Method == http.MethodHead {
+// targetsTrigger reports whether r is a plain htmx request (not boosted,
+// not a history restore) whose swap target is the element that sent it:
+// either no HX-Target header (the target has no id; htmx's default target
+// is the triggering element itself) or an HX-Target equal to HX-Trigger.
+// Swapped there, an error page would land inside a button or a form. A
+// request aimed at a named region (a list's results, a split pane's
+// detail) is not one.
+func targetsTrigger(r *http.Request) bool {
+	if !appshell.WantsFragment(r) {
 		return false
 	}
 	target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#")

@@ -4,8 +4,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-
-	"github.com/bplus/webframe/components/appshell"
 )
 
 // Send appends OOB(p) to the response for an htmx request. For a non-htmx
@@ -16,7 +14,7 @@ import (
 // response body. It sets Content-Type only when none is set yet. For a
 // toast-only error response use Respond.
 func Send(w http.ResponseWriter, r *http.Request, p Props) error {
-	if !appshell.IsHX(r) {
+	if !isHX(r) {
 		return nil
 	}
 	if h := w.Header(); h.Get("Content-Type") == "" {
@@ -34,7 +32,7 @@ func Respond(w http.ResponseWriter, r *http.Request, status int, p Props) error 
 	if status == 0 {
 		status = http.StatusOK
 	}
-	if !appshell.IsHX(r) {
+	if !isHX(r) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(status)
 		_, err := io.WriteString(w, strings.TrimSpace(p.Title+"\n"+p.Body)+"\n")
@@ -64,4 +62,11 @@ func Info(title, body string) Props {
 // Success builds the Props for a success toast.
 func Success(title, body string) Props {
 	return Props{Kind: KindSuccess, Title: title, Body: body}
+}
+
+// isHX reports whether r was sent by htmx. It is appshell.IsHX, repeated
+// here so that appshell can import toast (Document renders the toast that
+// htmx-errors.js shows for a failed request).
+func isHX(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true"
 }

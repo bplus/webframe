@@ -41,6 +41,17 @@
 // an HTML error answer to an ordinary target. htmx still fires
 // htmx:responseError after a refused swap, so an app that listens for it is
 // unaffected.
+//
+// No error is silent, except on a swallowing target. When the answer is
+// refused because it is not HTML (and the target does not swallow errors),
+// this script shows the "could not load" toast: appshell.Document renders
+// it, already worded (appshell.LoadFailed), inside
+// <template data-wf-load-failed>, and the copy goes into #toast-container,
+// where Alpine starts it like any toast. A toast an earlier refused answer
+// left there is replaced, so repeated failures show one toast, not a
+// stack. An HTML error answer to a GET that targets the element that sent
+// it is handled on the server: errorpage.Respond answers it with the same
+// toast and HX-Reswap none.
 (function () {
   'use strict';
   // htmx re-runs <script src> tags that arrive in swapped content (a boosted
@@ -100,9 +111,29 @@
     return !!(target && typeof target.closest === 'function' && target.closest('[data-wf-swallow-errors]'));
   }
 
+  // notify copies the page's LoadFailed toast into #toast-container,
+  // replacing one an earlier refused answer left there.
+  function notify() {
+    if (typeof document.querySelector !== 'function') return;
+    var tpl = document.querySelector('template[data-wf-load-failed]');
+    if (!tpl || !tpl.content || !tpl.content.firstElementChild) return;
+    var box = document.getElementById('toast-container') || document.body;
+    if (!box) return;
+    var old = box.querySelectorAll('[data-wf-load-failed-notice]');
+    for (var i = 0; i < old.length; i++) old[i].remove();
+    var el = tpl.content.firstElementChild.cloneNode(true);
+    el.setAttribute('data-wf-load-failed-notice', '');
+    box.appendChild(el);
+  }
+
   document.addEventListener('htmx:beforeSwap', function (evt) {
     var d = evt.detail;
     if (!d || !d.isError) return;             // success and 204: htmx's own decision stands
-    if (!isHTML(d.xhr) || swallows(d.target)) d.shouldSwap = false;
+    if (swallows(d.target)) {
+      d.shouldSwap = false;                   // a live element: the next poll repairs it
+    } else if (!isHTML(d.xhr)) {
+      d.shouldSwap = false;
+      notify();
+    }
   });
 })();

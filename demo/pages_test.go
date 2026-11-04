@@ -226,7 +226,7 @@ func TestPages_SettingsSaveRedirects(t *testing.T) {
 	// matches" line, which every page carries (the no-JavaScript notice in
 	// <noscript> is left out of the count: it shows only without JavaScript).
 	wantAll(t, body, `<div id="wf-flash"></div>`)
-	wantNone(t, body, "Please fix", `role="alert"`, "Settings saved")
+	wantNone(t, visible(body), "Please fix", `role="alert"`, "Settings saved")
 	before, rest, _ := strings.Cut(body, "<noscript>")
 	_, after, _ := strings.Cut(rest, "</noscript>")
 	if n := strings.Count(before+after, `role="status"`); n != 1 {
@@ -426,6 +426,26 @@ func TestPages_BoomIsPlainText(t *testing.T) {
 	body := rec.Body.String()
 	wantAll(t, body, "boom")
 	wantNone(t, body, "<", "wf-topbar")
+}
+
+// TestPages_RefreshStatsToast: the showcase's "Refresh stats" button
+// (hx-get, no hx-target, so htmx sends HX-Trigger and no HX-Target) is
+// answered 404 with the "Could not load that" toast alone and HX-Reswap
+// none, so the button keeps its label.
+func TestPages_RefreshStatsToast(t *testing.T) {
+	h := pagesHandler(t)
+	rec := do(h, "GET", "/api/stats", nil, map[string]string{"HX-Request": "true", "HX-Trigger": "refresh-stats"})
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("GET /api/stats = %d, want 404", rec.Code)
+	}
+	if got := rec.Header().Get("HX-Reswap"); got != "none" {
+		t.Errorf("HX-Reswap = %q, want none", got)
+	}
+	body := rec.Body.String()
+	wantAll(t, body, `hx-swap-oob="beforeend:#toast-container"`, "Could not load that")
+	wantNone(t, body, "Page not found", "wf-topbar")
+	page := do(h, "GET", "/", nil, nil).Body.String()
+	wantAll(t, page, `id="refresh-stats"`, `hx-get="/api/stats"`)
 }
 
 // TestPages_ShowcaseSections pins each page-type section's id and the markup

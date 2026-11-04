@@ -14,6 +14,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/bplus/webframe/components/autocomplete"
+	"github.com/bplus/webframe/components/errorpage"
 	"github.com/bplus/webframe/components/flash"
 	"github.com/bplus/webframe/components/formfield"
 	"github.com/bplus/webframe/components/toast"
@@ -193,6 +194,18 @@ func HandleSlow(w http.ResponseWriter, r *http.Request) {
 // was; without the guard the words would land inside the page.
 func HandleBoom(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "boom: the demo's deliberate plain-text 500", http.StatusInternalServerError)
+}
+
+// HandleStatsGone answers the showcase's "Refresh stats" button (GET
+// /api/stats) with errorpage.NotFound, as a handler does when the thing it
+// was asked to reload no longer exists. The button has hx-get and no
+// hx-target, so it is its own target: errorpage answers with the
+// appshell.LoadFailed toast and HX-Reswap none, and the button keeps its
+// label instead of filling with the 404 page.
+func HandleStatsGone(w http.ResponseWriter, r *http.Request) {
+	if err := errorpage.NotFound(w, r); err != nil {
+		renderFailed(err, "demo: render stats 404")
+	}
 }
 
 // HandlePanic is the showcase's deliberate panic (GET /api/panic): the

@@ -120,6 +120,27 @@ func wantNone(t *testing.T, body string, nots ...string) {
 	}
 }
 
+// visible returns body without its inert <template> elements (the
+// appshell.LoadFailed toast every page carries for htmx-errors.js), so a
+// check for a toast or a banner sees only what the page shows.
+func visible(body string) string {
+	var b strings.Builder
+	for {
+		start := strings.Index(body, "<template")
+		if start < 0 {
+			break
+		}
+		end := strings.Index(body[start:], "</template>")
+		if end < 0 {
+			break
+		}
+		b.WriteString(body[:start])
+		body = body[start+end+len("</template>"):]
+	}
+	b.WriteString(body)
+	return b.String()
+}
+
 // inOrder fails unless each needle appears after the previous one.
 func inOrder(t *testing.T, body string, needles ...string) {
 	t.Helper()

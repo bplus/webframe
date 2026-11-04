@@ -2274,12 +2274,18 @@ templ methodnotallowedSection() {
 }
 
 templ errorswapSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "errorswap", Title: "Error-swap guard", Description: "Click the button: the server answers a plain-text 500 (a bare http.Error) and the sentence beside the button must not change, because an error body that is not HTML is never swapped into a target."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "errorswap", Title: "Error-swap guard", Description: "Click the button: the server answers a plain-text 500 (a bare http.Error) and the sentence beside the button must not change, because an error body that is not HTML is never swapped into a target; a \"Could not load that\" toast says the request failed."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS, Align: layout.AlignCenter}) {
 			@button.Button(button.Props{Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-get": "/api/boom", "hx-target": "#boom-result", "hx-swap": "innerHTML"}}) {
 				Request a plain 500
 			}
 			<span id="boom-result">Nothing here has changed.</span>
+		}
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapS, Align: layout.AlignCenter}) {
+			@button.Button(button.Props{ID: "refresh-stats", Variant: button.VariantOutline, Attributes: templ.Attributes{"hx-get": "/api/stats"}}) {
+				Refresh stats
+			}
+			<span>This button is its own target and the server answers 404: the button keeps its label and a toast says the stats could not be loaded.</span>
 		}
 		<p>htmx is configured to swap error responses so a 422 form, a 409 toast and a 404 page reach the user; htmx-errors.js refuses the swap only when the body is not HTML or the target is marked <code>data-wf-swallow-errors</code>, as the shell's live badges are.</p>
 		@panel.Panel(panel.Props{ID: "panic", Level: 4, Title: "A handler panic", Subtitle: "Follow the link: the handler panics on purpose, the shell's middleware recovers it, and the styled 500 page renders in the shell with the request id the server log carries; the Back button returns here with nothing changed."}) {

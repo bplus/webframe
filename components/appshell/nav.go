@@ -195,7 +195,8 @@ func initials(name string) string {
 const sidebarOpenData = "{ open: false, init() { const mq = window.matchMedia('(min-width: 768px)'); this.open = mq.matches; mq.addEventListener('change', e => { this.open = e.matches }) } }"
 
 // MainID is the id of the shell's <main> element, the page's content
-// region. errorpage retargets an error answered to an htmx action that
+// region; a RenderBare page has a <main> with the same id. errorpage
+// retargets an error answered to an htmx action that
 // would otherwise land inside the button that sent it (see
 // errorpage.Respond).
 const MainID = "wf-main"

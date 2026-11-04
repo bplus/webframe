@@ -316,12 +316,12 @@ func TestRenderBare_FullDocumentWithoutShell(t *testing.T) {
 		if !strings.Contains(strings.ToLower(got), "<!doctype html>") {
 			t.Errorf("%s: missing doctype in:\n%s", name, got)
 		}
-		for _, want := range []string{"<title>Sign in — Demo</title>", "bare page", "output.css", "confirm.js", `id="wf-confirm"`} {
+		for _, want := range []string{"<title>Sign in — Demo</title>", `<main id="wf-main"><p>bare page</p></main>`, "output.css", "confirm.js", `id="wf-confirm"`, "<template data-wf-load-failed>"} {
 			if !strings.Contains(got, want) {
 				t.Errorf("%s: missing %q in:\n%s", name, want, got)
 			}
 		}
-		for _, bad := range []string{"wf-topbar", "wf-shell", `id="wf-flash"`, "<nav", "<main"} {
+		for _, bad := range []string{"wf-topbar", "wf-shell", `id="wf-flash"`, "<nav", "wf-content"} {
 			if strings.Contains(got, bad) {
 				t.Errorf("%s: unexpected %q (shell leaked into bare render) in:\n%s", name, bad, got)
 			}

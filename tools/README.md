@@ -114,13 +114,33 @@ make splitpane-check   # needs `make dev`; checks /browse
 node tools/splitpane-check.mjs --url http://localhost:3333/browse --shot tools/shots/splitpane
 ```
 
+## fetch-errors-check
+
+`fetch-errors-check.mjs` loads the demo's showcase at 1280px and at 390px and
+clicks "Refresh stats", a button with `hx-get` and no `hx-target` that the
+server answers with `errorpage.NotFound`: the "Could not load that" toast must
+show, the button must keep its label and the page its content. It then clicks
+"Request a plain 500" (a text/plain error that `htmx-errors.js` refuses): the
+same toast must show, once even after a second click, and the sentence beside
+the button must not change. Last, on the sign-in page it adds an htmx POST
+button with no `hx-target` aimed at an address the demo does not serve: the
+404 page must replace the page's `<main id="wf-main">`. Exit 1 on any failure,
+2 for a usage error.
+
+```bash
+make fetch-errors-check   # needs `make dev`
+node tools/fetch-errors-check.mjs --url http://localhost:3333 --shot tools/shots/fetch-errors
+```
+
 ## htmx-errors-check
 
 `htmx-errors-check.mjs` runs `static/js/htmx-errors.js` in a bare Node
 context (no browser, no npm packages) and hands its `htmx:beforeSwap`
 listener a list of error answers: an XML body, Go's `<nil>` as text/plain,
 an HTML fragment Go sniffed as text/plain, a full document, a JSON error and
-more. Each must be swapped or refused as the script's header comment says.
+more. Each must be swapped or refused as the script's header comment says,
+and each refused answer must put one "Could not load that" toast in
+`#toast-container` (none for a `data-wf-swallow-errors` target).
 `go test ./components/appshell/` runs it when `node` is on PATH.
 
 ```bash

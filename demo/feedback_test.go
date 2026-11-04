@@ -194,7 +194,7 @@ func TestFeedback_AuthPages(t *testing.T) {
 		`name="email"`, `type="email"`, `name="password"`, `type="password"`,
 		`type="submit"`, "the demo has no accounts",
 	)
-	wantNone(t, body, "wf-topbar", "wf-sidebar", "wf-flash", `role="alert"`, "Demo: sign-in is not wired")
+	wantNone(t, visible(body), "wf-topbar", "wf-sidebar", "wf-flash", `role="alert"`, "Demo: sign-in is not wired")
 
 	// Every submission is refused: the error banner, the typed email kept,
 	// the password never echoed, status 422 (htmx is configured to swap it).

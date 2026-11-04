@@ -6,6 +6,7 @@ import (
 	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/confirmdialog"
+	"github.com/bplus/webframe/components/toast"
 )
 
 // DocProps configures Document.
@@ -60,7 +61,7 @@ func docLang(p DocProps) string {
 // Document renders the full HTML document around its children: head with
 // stylesheet, htmx, Alpine and an inline theme init (localStorage
 // "wf-theme", default light, applied before paint), and a body ending in
-// the optional palette, #toast-container, the confirm dialog, the Scripts
+// the optional palette, the LoadFailed toast template, #toast-container, the confirm dialog, the Scripts
 // bundle, and a listener that initializes Alpine on htmx-swapped content.
 templ Document(p DocProps) {
 	<!DOCTYPE html>
@@ -95,11 +96,36 @@ templ Document(p DocProps) {
 			if p.Palette != nil {
 				@commandpalette.Palette(*p.Palette)
 			}
+			@loadFailedNotice()
 			<div id="toast-container" class="wf-toast-container"></div>
 			@confirmdialog.Host()
 			@Scripts()
 		</body>
 	</html>
+}
+
+// LoadFailed is the toast shown when an htmx request that updates the
+// element that sent it (a "Refresh" button with hx-get and no hx-target)
+// fails: the element and the page stay as they were and this toast says
+// so. errorpage.Respond sends it as the answer to such a request, and
+// htmx-errors.js shows the copy Document renders when an error answer is
+// not HTML and so cannot be swapped. An app changes the wording by
+// assigning to it before serving, for example:
+//
+//	appshell.LoadFailed = toast.Error("Not loaded", "Check your connection and try again.")
+var LoadFailed = toast.Props{
+	Kind:  toast.KindError,
+	Title: "Could not load that",
+	Body:  "Nothing on the page changed. Try again in a moment.",
+}
+
+// loadFailedNotice renders LoadFailed inside an inert <template> (not
+// shown, not read by screen readers, not started by Alpine) for
+// htmx-errors.js to copy into #toast-container.
+templ loadFailedNotice() {
+	<template data-wf-load-failed>
+		@toast.Toast(LoadFailed)
+	</template>
 }
 
 // noscriptTitle and noscriptBody are the words of the notice a browser

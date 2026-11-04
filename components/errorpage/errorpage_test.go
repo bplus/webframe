@@ -3,6 +3,7 @@ package errorpage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/toast"
 )
 
 func render(t *testing.T, ctx context.Context, p Props) string {
@@ -209,7 +211,7 @@ func TestRespondWithoutApp(t *testing.T) {
 }
 
 func TestRespondFragmentForHX(t *testing.T) {
-	rec := serve(t, nil, Props{Code: 403}, map[string]string{"HX-Request": "true"})
+	rec := serve(t, nil, Props{Code: 403}, map[string]string{"HX-Request": "true", "HX-Target": "panel"})
 	assertHeaders(t, rec, http.StatusForbidden)
 	if strings.Contains(strings.ToLower(rec.Body.String()), "<!doctype") {
 		t.Errorf("plain htmx request should get the body only")
@@ -532,8 +534,7 @@ func TestRespond_ActionOnItselfLandsInMain(t *testing.T) {
 
 // TestRespond_RegionTargetsKeepTheirTarget: an htmx request aimed at a
 // named region other than the trigger (a list's results, a split pane's
-// detail), any GET (lazy tabs, polls, which data-wf-swallow-errors covers)
-// and a full-page request are answered exactly as before: no retarget.
+// detail, a lazy tab's panel) and a full-page request are answered exactly as before: no retarget.
 func TestRespond_RegionTargetsKeepTheirTarget(t *testing.T) {
 	cases := map[string]struct {
 		method  string
@@ -541,7 +542,7 @@ func TestRespond_RegionTargetsKeepTheirTarget(t *testing.T) {
 	}{
 		"delete into results region": {"DELETE", map[string]string{"HX-Request": "true", "HX-Trigger": "row-menu", "HX-Target": "items-results"}},
 		"delete, region, no trigger": {"DELETE", map[string]string{"HX-Request": "true", "HX-Target": "items-results"}},
-		"get on itself":              {"GET", map[string]string{"HX-Request": "true"}},
+		"lazy tab into its panel":    {"GET", map[string]string{"HX-Request": "true", "HX-Trigger": "tab-2", "HX-Target": "tab-2-panel"}},
 		"get into detail region":     {"GET", map[string]string{"HX-Request": "true", "HX-Target": "mail-detail"}},
 		"plain delete":               {"DELETE", nil},
 		"boosted post":               {"POST", map[string]string{"HX-Request": "true", "HX-Boosted": "true"}},
@@ -568,5 +569,53 @@ func TestRespond_ActionOnItselfWithoutApp(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Page not found") {
 		t.Errorf("page missing: %s", rec.Body.String())
+	}
+}
+
+// TestRespond_GetOnItselfShowsToast: an htmx GET whose target is the
+// element that sent it (a "Refresh" button with hx-get and no hx-target)
+// gets the appshell.LoadFailed toast alone, with HX-Reswap none and the
+// error status, so the button and the page stay as they were. The old
+// code pasted the whole error page inside the button.
+func TestRespond_GetOnItselfShowsToast(t *testing.T) {
+	cases := map[string]map[string]string{
+		"no target":          {"HX-Request": "true", "HX-Trigger": "refresh"},
+		"no target, no id":   {"HX-Request": "true"},
+		"target is trigger":  {"HX-Request": "true", "HX-Trigger": "refresh", "HX-Target": "refresh"},
+		"#target is trigger": {"HX-Request": "true", "HX-Trigger": "refresh", "HX-Target": "#refresh"},
+	}
+	for _, withApp := range []bool{true, false} {
+		for name, headers := range cases {
+			name = fmt.Sprintf("%s (app %v)", name, withApp)
+			rec := serveMethod(t, withApp, "GET", headers)
+			assertHeaders(t, rec, http.StatusNotFound)
+			h := rec.Result().Header
+			if h.Get("HX-Reswap") != "none" || h.Get("HX-Retarget") != "" {
+				t.Errorf("%s: HX-Reswap %q, HX-Retarget %q; want none and no retarget", name, h.Get("HX-Reswap"), h.Get("HX-Retarget"))
+			}
+			body := rec.Body.String()
+			for _, want := range []string{`hx-swap-oob="beforeend:#toast-container"`, appshell.LoadFailed.Title, appshell.LoadFailed.Body} {
+				if !strings.Contains(body, want) {
+					t.Errorf("%s: missing %q in:\n%s", name, want, body)
+				}
+			}
+			for _, bad := range []string{"Page not found", "FLASHBANNER", "<main"} {
+				if strings.Contains(body, bad) {
+					t.Errorf("%s: unexpected %q in:\n%s", name, bad, body)
+				}
+			}
+		}
+	}
+}
+
+// TestRespond_LoadFailedWording: an app changes the toast's words by
+// assigning appshell.LoadFailed.
+func TestRespond_LoadFailedWording(t *testing.T) {
+	saved := appshell.LoadFailed
+	t.Cleanup(func() { appshell.LoadFailed = saved })
+	appshell.LoadFailed = toast.Warning("Stats are out of reach", "Reload later.")
+	body := serveMethod(t, true, "GET", map[string]string{"HX-Request": "true"}).Body.String()
+	if !strings.Contains(body, "Stats are out of reach") || !strings.Contains(body, "Reload later.") || strings.Contains(body, saved.Title) {
+		t.Errorf("want the app's wording in:\n%s", body)
 	}
 }

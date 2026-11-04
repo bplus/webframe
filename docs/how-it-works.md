@@ -105,7 +105,7 @@ same shape. Its one named part is the `<form>` itself, and it adds a status code
 
 ### Step 4: the three kinds of request
 
-`RenderPartsStatus` ([app.go:505](../components/appshell/app.go#L505-L533)) is where every page
+`RenderPartsStatus` ([app.go:523](../components/appshell/app.go#L523-L551)) is where every page
 is written. It sorts requests into three kinds:
 
 | Request | How it is recognized | What is sent |
@@ -130,7 +130,7 @@ you press Back and htmx no longer has the old page in its own cache, so it asks 
 again.)
 
 The second question, "which piece?", is answered at
-[app.go:515-517](../components/appshell/app.go#L515-L517):
+[app.go:533-535](../components/appshell/app.go#L533-L535):
 
 ```go
 if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
@@ -159,7 +159,7 @@ to `/books`: the user would see an unstyled table with no page around it.
 
 The `Vary` response header is that hint. It tells caches "this response also depends on these
 request headers; store them separately". Every render sets it through `SetHeaders`
-([app.go:391](../components/appshell/app.go#L391-L400)), listing `HX-Request, HX-Boosted,
+([app.go:394](../components/appshell/app.go#L394-L403)), listing `HX-Request, HX-Boosted,
 HX-History-Restore-Request, HX-Target` ([app.go:318](../components/appshell/app.go#L318)):
 exactly the four headers the two questions above read.
 
@@ -320,8 +320,8 @@ that the submit failed, without reading the page.
 **Why htmx must be told to swap it.** By default, htmx 2 ignores the body of any 4xx or 5xx
 response: the form would just sit there, unchanged, with no error shown. So `Document` puts a
 configuration into every page's `<head>`
-([components/appshell/document.templ:30](../components/appshell/document.templ#L30) and
-[:85](../components/appshell/document.templ#L85)):
+([components/appshell/document.templ:31](../components/appshell/document.templ#L31) and
+[:86](../components/appshell/document.templ#L86)):
 
 ```go
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
@@ -334,23 +334,51 @@ still count as errors (htmx still fires its `htmx:responseError` event); anythin
 answer: a plain-text error. If a handler calls Go's `http.Error(w, "Internal Server Error",
 500)`, swapping that would put the raw words "Internal Server Error" where the form was.
 `static/js/htmx-errors.js` listens just before each swap
-([htmx-errors.js:103-107](../static/js/htmx-errors.js#L103-L107)):
+([htmx-errors.js:129-138](../static/js/htmx-errors.js#L129-L138)):
 
 ```js
 if (!d || !d.isError) return;
-if (!isHTML(d.xhr) || swallows(d.target)) d.shouldSwap = false;
+if (swallows(d.target)) {
+  d.shouldSwap = false;
+} else if (!isHTML(d.xhr)) {
+  d.shouldSwap = false;
+  notify();
+}
 ```
 
-In plain words: leave successful responses alone; for an error, cancel the swap if the body is
-not HTML, or if the target is marked `data-wf-swallow-errors`. "HTML" means the `Content-Type`
+In plain words: leave successful responses alone; for an error, cancel the swap if the target is
+marked `data-wf-swallow-errors`, or if the body is not HTML. In the second case the user also gets
+a toast, "Could not load that. Nothing on the page changed. Try again in a moment.", so no failure
+is silent. "HTML" means the `Content-Type`
 says `text/html`, or the body starts like HTML: `<!doctype html`, a comment, or a known HTML
-element such as `<form` or `<tr` ([htmx-errors.js:53-95](../static/js/htmx-errors.js#L53-L95)).
+element such as `<form` or `<tr` ([htmx-errors.js:64-106](../static/js/htmx-errors.js#L64-L106)).
 That rescues a fragment whose handler forgot the header, while an XML error (`<?xml`,
 `<error>`) or text such as `<nil>` is still refused. The `data-wf-swallow-errors` mark
 is on small polled elements, such as a nav badge count or a `logviewer`'s polled lines, where a
 full error page would be garbage and the next poll repairs things anyway, and on a `splitpane`'s
 detail region unless its `ShowErrors` is set. The practical rule: answer errors with `errorpage` or
 `toast`, which send HTML, and never with `http.Error`.
+
+**Why an error page sometimes moves, and sometimes becomes a toast.** htmx swaps an answer into
+the request's target, and an element with `hx-get` or `hx-post` but no `hx-target` is its own
+target. A 404 page pasted inside a "Refresh" or "Delete" button is garbage. `errorpage.Respond`
+can tell this case apart: htmx sends no `HX-Target` header (or one equal to `HX-Trigger`, the id
+of the element that sent the request). Then
+([errorpage.go:61-79](../components/errorpage/errorpage.go#L61-L79)):
+
+- for a GET, which only asked to load something, the answer is a toast and nothing else
+  (`toast.Respond`, with the error status and `HX-Reswap: none`): the button and the page stay
+  as they were. Its words are `appshell.LoadFailed`
+  ([document.templ:116-120](../components/appshell/document.templ#L116-L120)), the same toast
+  `htmx-errors.js` copies from a hidden `<template>` that `Document` renders, so an app changes
+  them in one place, in Go. A polled element marked `data-wf-swallow-errors` still shows nothing.
+- for an action (POST, PUT, PATCH, DELETE), the error page replaces the page content: the answer
+  carries `HX-Retarget: #wf-main`, the id of the page's `<main>`. A `RenderBare` page, such as
+  the sign-in page, has a plain `<main id="wf-main">` too
+  ([app.go:418](../components/appshell/app.go#L418-L429)), so the error lands there as well.
+
+A request aimed at a named region (a list's results, a split pane's detail, a lazy tab's panel)
+gets the error page in that region, as before.
 
 A refused swap must not leave the user wondering why nothing happened. A failed `logviewer` poll is
 dropped without a word, which is fine: the next poll a few seconds later repairs it. A `splitpane`
@@ -395,7 +423,7 @@ because the redirect is a brand-new request and the server keeps no memory betwe
   message into the `wf_flash` cookie: JSON, base64-encoded, under 2 KB, expiring after 5
   minutes, unreadable from JavaScript (`HttpOnly`).
 - On the next render, `RenderPartsStatus` calls `App.Flash` *before writing anything*
-  ([app.go:523-526](../components/appshell/app.go#L523-L526)), because a cookie is a header and
+  ([app.go:541-544](../components/appshell/app.go#L541-L544)), because a cookie is a header and
   headers cannot change once the body starts. Your app set `App.Flash = flash.Take`.
 - `flash.Take` ([flash.go:90](../components/flash/flash.go#L90-L109)) reads the cookie,
   immediately tells the browser to delete it, and returns a banner.
@@ -408,7 +436,7 @@ banner is gone.
 If the next render is a fragment instead of a full page (a flash set by an htmx action that does
 not redirect), `RenderPartsStatus` still takes the flash and appends it as an out-of-band `<div
 id="wf-flash">`, so it appears on the page the user is looking at
-([app.go:431-446](../components/appshell/app.go#L431-L446)).
+([app.go:449-464](../components/appshell/app.go#L449-L464)).
 
 ## 4. When things go wrong
 
@@ -452,7 +480,7 @@ Notes:
 - The default answer is a bare page with no nav, showing the request id and a plain
   "Go home" link to `App.HomeHref` ([app.go:201](../components/appshell/app.go#L201-L207)). Set `App.OnPanic =
   errorpage.PanicHandler` for the styled 500 inside the shell
-  ([components/errorpage/errorpage.go:122](../components/errorpage/errorpage.go#L122-L126)). If
+  ([components/errorpage/errorpage.go:137](../components/errorpage/errorpage.go#L137-L141)). If
   your `OnPanic` itself panics, the default answers instead
   ([app.go:140-161](../components/appshell/app.go#L140-L161)).
 - Most panics happen in your handler before rendering starts, so the 500 page is the usual
@@ -467,7 +495,7 @@ GET-only route (405). Both come back as one line of plain text, and there is no 
 them.
 
 `errorpage.Handler` wraps the router
-([errorpage.go:137](../components/errorpage/errorpage.go#L137-L162)):
+([errorpage.go:152](../components/errorpage/errorpage.go#L152-L177)):
 
 ```go
 h, pattern := mux.Handler(r)
@@ -480,7 +508,7 @@ if pattern != "" {
 In plain words: ask the router which handler it would use. If a real route matched, run it
 normally. If not, the router has picked its own fallback. Run that fallback into a dummy
 response that keeps only the status and headers (`verdict`,
-[errorpage.go:166-189](../components/errorpage/errorpage.go#L166-L189)), then: 405 becomes the
+[errorpage.go:181-204](../components/errorpage/errorpage.go#L181-L204)), then: 405 becomes the
 styled "Not allowed here" page (copying the router's `Allow` header, which lists the methods
 that would work); 404 becomes the styled "not found" page; anything else, such as the redirect
 the router uses to tidy up a path, goes through untouched.
@@ -550,7 +578,7 @@ component puts its defaults first and the caller's `Class` last, and the caller 
   `bg-purple-700`. The dark theme only redefines the tokens under `:root[data-theme="dark"]`
   ([input.css:105](../static/css/input.css#L105)), so switching themes is one attribute on
   `<html>`, set by a small script in the page's `<head>`
-  ([document.templ:73-81](../components/appshell/document.templ#L73-L81)).
+  ([document.templ:74-82](../components/appshell/document.templ#L74-L82)).
 - **`dark:` follows the toggle.** Tailwind's `dark:` prefix normally follows the operating
   system setting. [input.css:17](../static/css/input.css#L17) points it at the `data-theme`
   attribute instead, so it agrees with the tokens.
@@ -568,9 +596,9 @@ as Delete, which sends a DELETE request), the filter bar and its search box, tab
 menus, the command palette, the theme toggle, `selectbox` and `tagsinput` pickers in forms,
 toasts, confirm dialogs and anything that polls. So `Document` opens every page's `<body>` with
 a warning banner inside `<noscript>`
-([document.templ:93](../components/appshell/document.templ#L93), wording at
-[:110-113](../components/appshell/document.templ#L110-L113), markup at
-[:117-123](../components/appshell/document.templ#L117-L123)). A browser running JavaScript
+([document.templ:94](../components/appshell/document.templ#L94), wording at
+[:136-139](../components/appshell/document.templ#L136-L139), markup at
+[:143-149](../components/appshell/document.templ#L143-L149)). A browser running JavaScript
 ignores the contents of `<noscript>`, so the notice costs nothing there. The wording names
 kinds of control rather than one app's buttons, so it stays true for any webframe app.
 

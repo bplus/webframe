@@ -126,6 +126,7 @@ func Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/flash", HandleFlash)
 	mux.HandleFunc("GET /api/slow", HandleSlow)
 	mux.HandleFunc("GET /api/boom", HandleBoom)
+	mux.HandleFunc("GET /api/stats", HandleStatsGone)
 	mux.HandleFunc("GET /api/panic", HandlePanic)
 }
 

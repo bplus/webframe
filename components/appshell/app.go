@@ -374,7 +374,10 @@ func (a *App) Render(w http.ResponseWriter, r *http.Request, title string, body 
 }
 
 // RenderBare is Render without the Shell: no nav, no flash slot, and
-// App.Flash is not called. Use it for sign-in and similar pages.
+// App.Flash is not called. Use it for sign-in and similar pages. The body
+// still sits in a <main id="wf-main"> (MainID, with no classes, so it adds
+// no layout), so an error page that errorpage sends to the content region
+// lands on a bare page too.
 func (a *App) RenderBare(w http.ResponseWriter, r *http.Request, title string, body templ.Component) error {
 	return renderDocument(w, r, DocProps{Title: title, AppName: a.Name, Head: a.Head}, body)
 }
@@ -400,14 +403,29 @@ func SetHeaders(w http.ResponseWriter) {
 }
 
 // renderDocument writes body alone when WantsFragment(r), otherwise the
-// Document described by p holding body as its only child.
+// Document described by p holding body inside <main id="wf-main">.
 func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body templ.Component) error {
 	SetHeaders(w)
 	ctx := r.Context()
 	if WantsFragment(r) {
 		return body.Render(ctx, w)
 	}
-	return Document(p).Render(templ.WithChildren(ctx, body), w)
+	return Document(p).Render(templ.WithChildren(ctx, bareMain(body)), w)
+}
+
+// bareMain wraps body in the content region a bare page has: the <main>
+// with MainID, unstyled.
+func bareMain(body templ.Component) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if _, err := io.WriteString(w, `<main id="`+MainID+`">`); err != nil {
+			return err
+		}
+		if err := body.Render(ctx, w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, `</main>`)
+		return err
+	})
 }
 
 // RenderFragment writes frag alone as an htmx fragment response, the way
