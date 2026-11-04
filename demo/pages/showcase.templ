@@ -6,6 +6,11 @@ import (
 	"time"
 
 	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/areachart"
+	"github.com/bplus/webframe/components/barchart"
+	"github.com/bplus/webframe/components/lifecyclestepper"
+	"github.com/bplus/webframe/components/piechart"
+	"github.com/bplus/webframe/components/progressbar"
 	"github.com/bplus/webframe/components/aspectratio"
 	"github.com/bplus/webframe/components/autocomplete"
 	"github.com/bplus/webframe/components/avatar"
@@ -101,6 +106,15 @@ templ Showcase() {
 				<a href="#avatar">Avatar</a>
 			}
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
+				<strong>Charts and progress</strong>
+				<a href="#areachart">Area chart</a>
+				<a href="#barchart">Bar chart</a>
+				<a href="#piechart">Pie chart</a>
+				<a href="#progressbar">Progress bar</a>
+				<a href="#lifecyclestepper">Lifecycle stepper</a>
+				<a href="#statcomparison">Stat comparison</a>
+			}
+			@layout.Inline(layout.InlineProps{Wrap: true}) {
 				<strong>Forms</strong>
 				<a href="#form-elements">Form Elements</a>
 				<a href="#formfields">Form Fields</a>
@@ -172,6 +186,7 @@ templ Showcase() {
 		}
 	}
 	@buildingBlocksGroup()
+	@chartsGroup()
 	@formsGroup()
 	@contentGroup()
 	@overlaysGroup()
@@ -181,7 +196,7 @@ templ Showcase() {
 }
 
 // ═══════════════════════════════════════
-// Groups: the seven top-level sections (h2), each holding per-topic
+// Groups: the eight top-level sections (h2), each holding per-topic
 // sections (h3) whose panels are h4.
 // ═══════════════════════════════════════
 templ buildingBlocksGroup() {
@@ -2239,7 +2254,7 @@ templ splitpaneSection() {
 }
 
 templ dashboardpageSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "dashboardpage", Title: "Dashboard page", Description: "Four tiles on one row at 1280px, then Recent changes beside Newest items (4 and 8 of 12 columns); below 900px every tile and section stacks one per row with nothing wider than the screen."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dashboardpage", Title: "Dashboard page", Description: "Four tiles on one row at 1280px, then Recent changes beside Newest items (4 and 8 of 12 columns); below the md breakpoint (768px at the default root size) every tile and section stacks one per row with nothing wider than the screen."}) {
 		<p><a href="/dashboard">Dashboard</a>: the tiles count the Items store, the timeline lists its last eight updates and the card grid shows the four newest items; create or publish an item and come back.</p>
 	}
 }
@@ -2551,6 +2566,181 @@ templ commandpaletteSection() {
 					Open the palette
 				}
 				<span>or press <kbd>⌘K</kbd>; the shell renders the dialog once per page and its trigger in the top bar.</span>
+			}
+		}
+	}
+}
+
+// ═══════════════════════════════════════
+// Charts and progress: the SVG charts, the progress bar, the lifecycle
+// stepper and the stat comparison.
+// ═══════════════════════════════════════
+
+// chartsGroup holds the components that draw numbers and stages: three
+// SVG charts, a progress bar, a stepper and a before/after stat.
+templ chartsGroup() {
+	@layout.Section(layout.SectionProps{Level: 2, ID: "charts", Title: "Charts and progress"}) {
+		@areachartSection()
+		@barchartSection()
+		@piechartSection()
+		@progressbarSection()
+		@lifecyclestepperSection()
+		@statcomparisonSection()
+	}
+}
+
+// weekDays labels the seven points of the area chart sample.
+var weekDays = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+
+// weekSeries pairs weekDays with values, one point per day.
+func weekSeries(label string, values ...float64) areachart.Series {
+	data := make([]areachart.DataPoint, len(values))
+	for i, v := range values {
+		data[i] = areachart.DataPoint{Label: weekDays[i%len(weekDays)], Value: v}
+	}
+	return areachart.Series{Label: label, Data: data}
+}
+
+templ areachartSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "areachart", Title: "Area chart", Description: "One or more series over the same labels, drawn as lines with a filled area under each; every series shares one Y scale so they compare directly."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Views and downloads, last 7 days", Subtitle: "Two series, so the legend shows; ShowGrid draws the horizontal lines and ShowLabels the day names."}) {
+			@areachart.AreaChart(areachart.Props{
+				ID:         "showcase-area",
+				Width:      320,
+				Height:     180,
+				ShowLabels: true,
+				ShowLegend: true,
+				ShowGrid:   true,
+				Series: []areachart.Series{
+					weekSeries("Views", 120, 180, 150, 210, 260, 190, 240),
+					weekSeries("Downloads", 40, 65, 55, 80, 110, 70, 95),
+				},
+			})
+		}
+	}
+}
+
+templ barchartSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "barchart", Title: "Bar chart", Description: "One value per label as bars, horizontal by default; MaxBars keeps the largest and folds the rest into one \"Other\" bar."}) {
+		@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Items by type", Subtitle: "Horizontal, with a label beside each bar."}) {
+					@barchart.BarChart(barchart.Props{
+						ID:         "showcase-bars",
+						ShowLabels: true,
+						Bars: []barchart.Bar{
+							{Label: "Weapon", Value: 42},
+							{Label: "Armor", Value: 31},
+							{Label: "Accessory", Value: 18},
+							{Label: "Consumable", Value: 9},
+						},
+					})
+				}
+			}
+			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Downloads by pack, top four", Subtitle: "Vertical; six packs with MaxBars 4, so the two smallest become \"Other (2)\" and the bars run largest first."}) {
+					@barchart.BarChart(barchart.Props{
+						ID:          "showcase-bars-vertical",
+						Orientation: barchart.Vertical,
+						ShowLabels:  true,
+						MaxBars:     4,
+						Bars: []barchart.Bar{
+							{Label: "Starfall", Value: 240},
+							{Label: "Ember", Value: 190},
+							{Label: "Tide", Value: 70},
+							{Label: "Frost", Value: 160},
+							{Label: "Dusk", Value: 50},
+							{Label: "Thorn", Value: 120},
+						},
+					})
+				}
+			}
+		}
+	}
+}
+
+templ piechartSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "piechart", Title: "Pie chart", Description: "Parts of one whole as slices, a donut by default; colors come from a built-in palette when a slice sets none."}) {
+		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL, Align: layout.AlignStart}) {
+			@panel.Panel(panel.Props{Level: 4, Title: "Donut", Subtitle: "The default inner size, with a legend."}) {
+				@piechart.PieChart(piechart.Props{
+					ID:         "showcase-donut",
+					ShowLegend: true,
+					Slices: []piechart.Slice{
+						{Label: "Published", Value: 11},
+						{Label: "Draft", Value: 3},
+						{Label: "Archived", Value: 2},
+					},
+				})
+			}
+			@panel.Panel(panel.Props{Level: 4, Title: "Full pie", Subtitle: "InnerSize 0 fills the center."}) {
+				@piechart.PieChart(piechart.Props{
+					ID:         "showcase-pie",
+					InnerSize:  intPtr(0),
+					ShowLegend: true,
+					Slices: []piechart.Slice{
+						{Label: "Desktop", Value: 64},
+						{Label: "Phone", Value: 29},
+						{Label: "Tablet", Value: 7},
+					},
+				})
+			}
+		}
+	}
+}
+
+// intPtr returns a pointer to n, for the optional int props.
+func intPtr(n int) *int { return &n }
+
+templ progressbarSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "progressbar", Title: "Progress bar", Description: "How far along one task is, as a filled track with an optional label and percentage."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Three tasks", Subtitle: "Max sets the total, so 37 of 50 shows 74%; a bar with no label is the track alone."}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-upload", Label: "Uploading textures", Value: 37, Max: 50, ShowValue: true})
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-build", Label: "Build finished", Value: 100, ShowValue: true})
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-bare", Value: 20})
+			}
+		}
+	}
+}
+
+templ lifecyclestepperSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "lifecyclestepper", Title: "Lifecycle stepper", Description: "The stages of one job in a row, each marked done, active, needing attention, failed, skipped or not started; the row wraps on a narrow screen."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Compact", Subtitle: "A release half way through: two stages done, one active, two to come."}) {
+			@lifecyclestepper.LifecycleStepper(lifecyclestepper.Props{
+				ID: "showcase-stepper",
+				Steps: []lifecyclestepper.Step{
+					{Label: "Draft", State: lifecyclestepper.StateDone},
+					{Label: "Review", State: lifecyclestepper.StateDone},
+					{Label: "Build", State: lifecyclestepper.StateActive},
+					{Label: "Publish", State: lifecyclestepper.StateFuture},
+					{Label: "Announce", State: lifecyclestepper.StateFuture},
+				},
+			})
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Large, every state", Subtitle: "Large is the bigger size; the Title on each stage shows as a tooltip on hover."}) {
+			@lifecyclestepper.LifecycleStepper(lifecyclestepper.Props{
+				ID:    "showcase-stepper-large",
+				Large: true,
+				Steps: []lifecyclestepper.Step{
+					{Label: "Fetch", State: lifecyclestepper.StateDone, Title: "Done"},
+					{Label: "Lint", State: lifecyclestepper.StateSkipped, Title: "Skipped"},
+					{Label: "Test", State: lifecyclestepper.StateAttn, Title: "Needs attention"},
+					{Label: "Package", State: lifecyclestepper.StateFailed, Title: "Failed"},
+					{Label: "Deploy", State: lifecyclestepper.StateFuture, Title: "Not started"},
+				},
+			})
+		}
+	}
+}
+
+templ statcomparisonSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "statcomparison", Title: "Stat comparison", Description: "A number beside its previous value, with the change and an arrow toned by direction; stat tiles draw the same arrow."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Up, down and flat", Subtitle: "Up is green and down is red; flat is muted."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}) {
+				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-up", Label: "Downloads", Value: "1,234", PrevValue: "1,100", Delta: "+12.2%", Direction: statcomparison.DirectionUp})
+				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-down", Label: "Active users", Value: "812", PrevValue: "905", Delta: "-10.3%", Direction: statcomparison.DirectionDown})
+				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-flat", Label: "Contributors", Value: "6", PrevValue: "6", Delta: "no change", Direction: statcomparison.DirectionFlat})
 			}
 		}
 	}

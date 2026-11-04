@@ -219,3 +219,30 @@ func TestWidgets_ShowcaseSections(t *testing.T) {
 		t.Errorf("an unescaped script tag reached the page %d times", n)
 	}
 }
+
+// TestWidgets_ShowcaseCharts pins the charts and progress group: its
+// contents links, each section's id and the markup each sample relies on,
+// the Graph nav link and the md wording of the dashboard section.
+func TestWidgets_ShowcaseCharts(t *testing.T) {
+	h := widgetsHandler(t)
+	body := do(h, "GET", "/", nil, nil).Body.String()
+	wantAll(t, body,
+		// Contents links and the group.
+		`id="charts"`, `href="#areachart"`, `href="#barchart"`, `href="#piechart"`, `href="#progressbar"`, `href="#lifecyclestepper"`, `href="#statcomparison"`,
+		// Area chart: two series, so the legend shows; day labels.
+		`id="areachart"`, `id="showcase-area"`, `viewBox="0 0 320 180"`, ">Views<", ">Downloads<", ">Mon<",
+		// Bar chart: horizontal, and the vertical one folded to four bars.
+		`id="barchart"`, `id="showcase-bars"`, ">Weapon<", `id="showcase-bars-vertical"`, ">Starfall<", "Other (2)",
+		// Pie chart: the donut and the full pie with their legends.
+		`id="piechart"`, `id="showcase-donut"`, "<span>Archived (", `id="showcase-pie"`, "<span>Desktop (64%)</span>",
+		// Progress bar: 37 of 50 is 74%, the finished one is full.
+		`id="progressbar"`, `id="showcase-progress-upload"`, "Uploading textures", "74%", "width: 74%", `id="showcase-progress-build"`, "width: 100%", `id="showcase-progress-bare"`,
+		// Lifecycle stepper: compact and large, every state's tooltip.
+		`id="lifecyclestepper"`, `id="showcase-stepper"`, ">Build<", `id="showcase-stepper-large"`, `title="Needs attention"`, `title="Failed"`, `title="Skipped"`,
+		// Stat comparison: three directions.
+		`id="statcomparison"`, `id="showcase-compare-up"`, "from 1,100", "+12.2%", `id="showcase-compare-down"`, `id="showcase-compare-flat"`, "no change",
+		// The Graph nav link and the dashboard section's breakpoint.
+		`href="/graph"`, "below the md breakpoint (768px at the default root size)",
+	)
+	wantNone(t, body, "below 900px")
+}
