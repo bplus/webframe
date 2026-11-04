@@ -498,6 +498,9 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
+	if err := p.validateActions(); err != nil {
+		return err
+	}
 	parts := map[string]templ.Component{p.ResultsID(): resultsPart(p)}
 	return app.RenderParts(w, r, title, Page(p), parts)
 }
@@ -512,9 +515,22 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 // Vary and, inside App.Middleware, sends a pending flash out of band. No
 // appshell.App is needed. Render errors are returned.
 func RespondResults(w http.ResponseWriter, r *http.Request, p Props) error {
+	if err := p.validateActions(); err != nil {
+		return err
+	}
 	if p.Base == "" {
 		p.Base = listquery.CurrentURL(r).Path
 	}
 	w.Header().Set("HX-Replace-Url", p.Spec.URL(p.Base))
 	return appshell.RenderFragment(w, r, resultsPart(p))
+}
+
+// validateActions runs action.ValidateAll on every action the page
+// declares: header, toolbar, Create, bulk actions and row actions.
+func (p Props) validateActions() error {
+	groups := [][]action.Action{p.Header.Actions(), p.Toolbar, p.createActions(), p.BulkActions}
+	for _, row := range p.Rows {
+		groups = append(groups, row.Actions)
+	}
+	return action.ValidateAll(groups...)
 }

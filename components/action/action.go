@@ -48,10 +48,12 @@ type Action struct {
 
 	// Submit renders <button type="submit">. It wins over Href. Don't
 	// combine it with an Hx* field: the button would both submit and send
-	// the request; let the form carry hx-post instead. MenuAttrs ignores it.
+	// the request; let the form carry hx-post instead (Validate reports
+	// the combination). MenuAttrs ignores it.
 	Submit bool
 	// Form is the button's form attribute, so it can sit outside its
-	// form. Ignored for a plain link.
+	// form. A plain link has no form attribute, so Form is dropped there
+	// and Validate reports it.
 	Form string
 	// FullWidth makes the button or link span its container.
 	FullWidth bool

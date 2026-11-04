@@ -193,9 +193,22 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
+	if err := p.validateActions(); err != nil {
+		return err
+	}
 	status := 0
 	if len(p.Errors) > 0 {
 		status = http.StatusUnprocessableEntity
 	}
 	return app.RenderPartsStatus(w, r, status, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
+}
+
+// validateActions runs action.ValidateAll on the header, the resolved
+// submit button and Cancel.
+func (p Props) validateActions() error {
+	groups := [][]action.Action{p.Header.Actions(), {p.submit()}}
+	if c, ok := p.cancel(); ok {
+		groups = append(groups, []action.Action{c})
+	}
+	return action.ValidateAll(groups...)
 }

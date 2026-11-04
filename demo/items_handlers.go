@@ -126,7 +126,7 @@ func RegisterItemRoutes(mux *http.ServeMux) {
 func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 	spec := listquery.Parse(r, itemsQuery)
 	if err := listpage.Respond(w, r, "Items", itemsListProps(spec)); err != nil {
-		log.Printf("demo: render items: %v", err)
+		renderFailed(err, "demo: render items")
 	}
 }
 
@@ -223,7 +223,7 @@ func plural(n int, noun string) string {
 func respondResults(w http.ResponseWriter, r *http.Request) {
 	spec := listquery.ParseCurrent(r, itemsQuery)
 	if err := listpage.RespondResults(w, r, itemsListProps(spec)); err != nil {
-		log.Printf("demo: render items results: %v", err)
+		renderFailed(err, "demo: render items results")
 	}
 }
 
@@ -319,7 +319,7 @@ func HandleItemDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := detailpage.Respond(w, r, it.Name, itemDetailProps(it)); err != nil {
-		log.Printf("demo: render item %s: %v", it.ID, err)
+		renderFailed(err, "demo: render item %s", it.ID)
 	}
 }
 
@@ -648,7 +648,7 @@ func applyValues(it Item, vals map[string]string) Item {
 // HandleItemNew renders the empty create form (GET /items/new).
 func HandleItemNew(w http.ResponseWriter, r *http.Request) {
 	if err := formpage.Respond(w, r, "New item", itemFormProps(nil)); err != nil {
-		log.Printf("demo: render new item: %v", err)
+		renderFailed(err, "demo: render new item")
 	}
 }
 
@@ -662,7 +662,7 @@ func HandleItemEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := formpage.Respond(w, r, "Edit "+it.Name, itemFormProps(&it)); err != nil {
-		log.Printf("demo: render edit item %s: %v", it.ID, err)
+		renderFailed(err, "demo: render edit item %s", it.ID)
 	}
 }
 
@@ -688,7 +688,7 @@ func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 	if len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
 		if err := formpage.Respond(w, r, "New item", p); err != nil {
-			log.Printf("demo: render new item errors: %v", err)
+			renderFailed(err, "demo: render new item errors")
 		}
 		return
 	}
@@ -725,7 +725,7 @@ func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	if len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
 		if err := formpage.Respond(w, r, "Edit "+it.Name, p); err != nil {
-			log.Printf("demo: render edit item %s errors: %v", it.ID, err)
+			renderFailed(err, "demo: render edit item %s errors", it.ID)
 		}
 		return
 	}

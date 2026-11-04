@@ -1,7 +1,6 @@
 package demo
 
 import (
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -37,7 +36,7 @@ const (
 // a card grid of the newest items, through dashboardpage.Respond.
 func HandleDashboard(w http.ResponseWriter, r *http.Request) {
 	if err := dashboardpage.Respond(w, r, "Dashboard", dashboardProps(time.Now())); err != nil {
-		log.Printf("demo: render dashboard: %v", err)
+		renderFailed(err, "demo: render dashboard")
 	}
 }
 

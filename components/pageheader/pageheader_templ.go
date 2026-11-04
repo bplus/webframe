@@ -36,7 +36,9 @@ type Props struct {
 
 func (p Props) hasActions() bool { return p.Primary != nil || len(p.Secondary) > 0 }
 
-func (p Props) allActions() []action.Action {
+// Actions returns the header's actions in render order: Secondary, then
+// Primary. Page types pass them to action.ValidateAll.
+func (p Props) Actions() []action.Action {
 	out := make([]action.Action, 0, len(p.Secondary)+1)
 	out = append(out, p.Secondary...)
 	if p.Primary != nil {
@@ -90,7 +92,7 @@ func PageHeader(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 51, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 53, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -148,7 +150,7 @@ func PageHeader(props ...Props) templ.Component {
 			var templ_7745c5c3_Var5 templ.SafeURL
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(p.Back.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 62, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 64, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -161,7 +163,7 @@ func PageHeader(props ...Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Back.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 62, Col: 120}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 64, Col: 120}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -179,7 +181,7 @@ func PageHeader(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 67, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 69, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -205,7 +207,7 @@ func PageHeader(props ...Props) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.StatusText)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 70, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 72, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -230,7 +232,7 @@ func PageHeader(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 75, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 77, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -250,7 +252,7 @@ func PageHeader(props ...Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = action.Group(p.allActions()).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = action.Group(p.Actions()).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

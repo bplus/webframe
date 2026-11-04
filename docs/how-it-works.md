@@ -83,7 +83,7 @@ is sent back in the response's `X-Request-Id` header
 ### Steps 2 and 3: your handler and Respond
 
 Your handler builds a declaration and calls a `Respond`. Here is `listpage.Respond` in full
-([components/listpage/listpage.go:496](../components/listpage/listpage.go#L496-L503)):
+([components/listpage/listpage.go:496](../components/listpage/listpage.go#L496-L506)):
 
 ```go
 app, err := appshell.Must(r.Context())
@@ -92,12 +92,13 @@ parts := map[string]templ.Component{p.ResultsID(): resultsPart(p)}
 return app.RenderParts(w, r, title, Page(p), parts)
 ```
 
-In plain words: find the `App`; offer two ways to draw this page, the whole page body
-(`Page(p)`) and the results region alone, filed under that region's id (`list-results` by
-default); let the `App` pick one.
+In plain words: find the `App`; check the declared actions (`action.ValidateAll`, which
+rejects a `Submit` button that also sends its own request, or a `Form` on a plain link); offer
+two ways to draw this page, the whole page body (`Page(p)`) and the results region alone, filed
+under that region's id (`list-results` by default); let the `App` pick one.
 
 `formpage.Respond`
-([components/formpage/formpage.go:235](../components/formpage/formpage.go#L235-L245)) has the
+([components/formpage/formpage.go:235](../components/formpage/formpage.go#L235-L248)) has the
 same shape. Its one named part is the `<form>` itself, and it adds a status code, which [section
 3](#3-a-form-round-trip) explains.
 
@@ -259,7 +260,7 @@ A row's Delete button sends `DELETE /books/7`. That URL says nothing about which
 the user is looking at. htmx also sends `HX-Current-URL`, the address bar's URL.
 `listquery.ParseCurrent` reads the `Spec` from that
 ([listquery.go:106-122](../listquery/listquery.go#L106-L122)), and `listpage.RespondResults`
-([listpage.go:512](../components/listpage/listpage.go#L512-L519)) sends just the results part,
+([listpage.go:517](../components/listpage/listpage.go#L517-L526)) sends just the results part,
 plus an `HX-Replace-Url` header so the address bar shows the state that was actually served (for
 example page 3 became page 2 because its last row is gone).
 
@@ -298,7 +299,7 @@ submit over htmx, and replace the whole `<form>` element with the answer. The pl
 Your handler (see `createBook` in
 [examples/04-validation/main.go:110](../examples/04-validation/main.go#L110-L128)) copies what
 was typed into `Values`, puts messages into `Errors`, and calls `Respond` again. `Respond`
-notices the errors ([formpage.go:240-244](../components/formpage/formpage.go#L240-L244)):
+notices the errors ([formpage.go:243-247](../components/formpage/formpage.go#L243-L247)):
 
 ```go
 status := 0

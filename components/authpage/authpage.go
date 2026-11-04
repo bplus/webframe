@@ -311,6 +311,9 @@ func provider(a action.Action) action.Action {
 // it) and appshell.RenderBare otherwise. The status is 200, or 422 when
 // Error or Errors is set.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
+	if err := action.ValidateAll([]action.Action{p.submit()}, p.Providers); err != nil {
+		return err
+	}
 	if p.Error != "" || len(p.Errors) > 0 {
 		appshell.SetHeaders(w)
 		w.WriteHeader(http.StatusUnprocessableEntity)
