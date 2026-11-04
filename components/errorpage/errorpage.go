@@ -30,6 +30,7 @@ package errorpage
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/bplus/webframe/components/appshell"
 )
@@ -38,25 +39,57 @@ import (
 // 0). With an appshell.App in the request context it renders inside the
 // shell; without one (say, a failure in middleware that runs before
 // App.Middleware) it renders a bare document. A plain htmx request gets
-// the body only. A render error is returned, not written, since the status
-// line has already gone out.
+// the body only. When that request is an action whose target is the
+// element that sent it (a Delete button with no hx-target, a form that
+// swaps itself; see answersTrigger), the page is sent to the shell's main
+// content region (appshell.App.RenderContentStatus, or the body with no
+// App) instead of landing inside the button. A render error is returned,
+// not written, since the status line has already gone out.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 	status := p.Code
 	if status == 0 {
 		status = http.StatusInternalServerError
 	}
 	title, _ := defaults(p)
+	onTrigger := answersTrigger(r)
 	if app, ok := appshell.FromContext(r.Context()); ok {
-		// RenderStatus runs App.Flash and sets the headers before writing
-		// the status, so a pending flash is still cleared.
+		// Both run App.Flash and set the headers before writing the
+		// status, so a pending flash is still cleared.
+		if onTrigger {
+			return app.RenderContentStatus(w, r, status, title, ErrorPage(p))
+		}
 		return app.RenderStatus(w, r, status, title, ErrorPage(p))
 	}
 	// No App (and no flash): no app name, so the document title is the
 	// page title alone. SetHeaders must run before WriteHeader freezes
-	// the headers; RenderBare's own call comes too late.
+	// the headers; RenderBare's own call comes too late. With no shell
+	// there is no main region; an action that targets itself gets the
+	// page in place of the whole body.
 	appshell.SetHeaders(w)
+	if onTrigger {
+		w.Header().Set("HX-Retarget", "body")
+		w.Header().Set("HX-Reswap", appshell.ContentReswap)
+	}
 	w.WriteHeader(status)
 	return appshell.RenderBare(w, r, "", title, ErrorPage(p))
+}
+
+// answersTrigger reports whether r is an htmx action whose swap target is
+// the element that sent it: a plain htmx request (not boosted, not a
+// history restore) with a method other than GET or HEAD, and either no
+// HX-Target header (the target has no id; htmx's default target is the
+// triggering element itself) or an HX-Target equal to HX-Trigger. Swapped
+// there, an error page would land inside a Delete button or a form; the
+// caller sends it to the page's content region instead. A request aimed at
+// a named region (a list's results, a split pane's detail) keeps its
+// target, and GETs (lazy tabs, polls, which data-wf-swallow-errors guards)
+// are left alone.
+func answersTrigger(r *http.Request) bool {
+	if !appshell.WantsFragment(r) || r.Method == http.MethodGet || r.Method == http.MethodHead {
+		return false
+	}
+	target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#")
+	return target == "" || target == r.Header.Get("HX-Trigger")
 }
 
 // NotFound answers r with the default 404 page.

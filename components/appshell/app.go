@@ -456,6 +456,47 @@ func (a *App) RenderStatus(w http.ResponseWriter, r *http.Request, status int, t
 	return a.RenderPartsStatus(w, r, status, title, body, nil)
 }
 
+// ContentReswap is the HX-Reswap value RenderContentStatus sends: replace
+// the inside of the content region and scroll the window to the top.
+const ContentReswap = "innerHTML show:window:top"
+
+// RenderContentStatus is RenderStatus for an answer that replaces the
+// whole page content, whatever element sent the request. A full-page
+// request renders exactly as RenderStatus does. A plain htmx request gets
+// HX-Retarget "#wf-main" (the shell's <main>, MainID) and HX-Reswap
+// ContentReswap, and its body is what <main> holds in a full render: the
+// #wf-flash slot, with a pending flash inside it, then body. No URL is
+// pushed. errorpage uses it so an error answered to a button that targets
+// itself replaces the page instead of landing inside the button.
+func (a *App) RenderContentStatus(w http.ResponseWriter, r *http.Request, status int, title string, body templ.Component) error {
+	if !WantsFragment(r) {
+		return a.RenderStatus(w, r, status, title, body)
+	}
+	SetHeaders(w)
+	w.Header().Set("HX-Retarget", "#"+MainID)
+	w.Header().Set("HX-Reswap", ContentReswap)
+	var f templ.Component
+	if a.Flash != nil {
+		f = a.Flash(w, r) // before the status: Flash may set or clear a cookie
+	}
+	if status != 0 {
+		w.WriteHeader(status)
+	}
+	ctx := r.Context()
+	if _, err := io.WriteString(w, `<div id="wf-flash">`); err != nil {
+		return err
+	}
+	if f != nil {
+		if err := f.Render(ctx, w); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(w, `</div>`); err != nil {
+		return err
+	}
+	return body.Render(ctx, w)
+}
+
 // RenderPartsStatus is RenderParts with a status code, as in RenderStatus.
 func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status int, title string, full templ.Component, parts map[string]templ.Component) error {
 	SetHeaders(w)

@@ -238,11 +238,14 @@ const protectedItemID = "1"
 // the results region) it re-renders the results for the current URL so the
 // row disappears and the summary and intro update; from anywhere else over
 // htmx (the detail page) it answers HX-Redirect to /items; a plain request
-// gets a 303 to /items. Unknown ids are 404.
+// gets a 303 to /items. An unknown id (deleted in another tab, say) gets
+// the 404 page: from the list it fills the results region, and from the
+// detail page's Delete button, which has no hx-target, errorpage sends it
+// to the page content rather than into the button.
 func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 	it, ok := Items.Get(r.PathValue("id"))
 	if !ok {
-		http.NotFound(w, r)
+		notFound(w, r)
 		return
 	}
 	if it.ID == protectedItemID {
