@@ -194,8 +194,10 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 func deleteBook(w http.ResponseWriter, r *http.Request) {
 	book, found := findBook(r.PathValue("id"))
 	if !found {
-		// Deleted already, in another tab say. The user wanted it gone,
-		// and it is, so this is not an error page.
+		// Already gone, deleted in another tab perhaps. The user wanted it gone,
+		// and it is, so a short notice fits better than an error page.
+		// errorpage.NotFound(w, r) also works here: webframe shows it in the
+		// page content, not in the button.
 		flash.Info(w, r, "Already deleted", "That book was not in the list any more.")
 		appshell.Redirect(w, r, "/books")
 		return

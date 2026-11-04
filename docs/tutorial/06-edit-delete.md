@@ -210,8 +210,10 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 func deleteBook(w http.ResponseWriter, r *http.Request) {
 	book, found := findBook(r.PathValue("id"))
 	if !found {
-		// Deleted already, in another tab say. The user wanted it gone,
-		// and it is, so this is not an error page.
+		// Already gone, deleted in another tab perhaps. The user wanted it gone,
+		// and it is, so a short notice fits better than an error page.
+		// errorpage.NotFound(w, r) also works here: webframe shows it in the
+		// page content, not in the button.
 		flash.Info(w, r, "Already deleted", "That book was not in the list any more.")
 		appshell.Redirect(w, r, "/books")
 		return
@@ -347,8 +349,9 @@ calls `appshell.Redirect` to go to the list. Delete is sent by htmx, so
 `appshell.Redirect` answers with an `HX-Redirect` header, and htmx then
 loads the list as a full page, where the flash shows once. A book that is
 already gone (deleted in another tab, say) gets an "Already deleted" notice
-instead. It is not an error page because the user wanted the book gone, and
-it is.
+instead. That is a choice, not a limit: `errorpage.NotFound(w, r)` works here
+too, and webframe shows the 404 in the page content. A notice fits better
+because the user wanted the book gone, and it is.
 
 **The Delete action** has three fields that matter:
 
