@@ -112,3 +112,41 @@ func TestEmptyTitleIsRefused(t *testing.T) {
 		t.Errorf("a refused POST saved a book: %d books before, %d after", before, after)
 	}
 }
+
+func TestShortTitleIsRefusedAndKept(t *testing.T) {
+	booksLock.Lock()
+	before := len(books)
+	booksLock.Unlock()
+
+	for _, htmx := range []bool{false, true} {
+		rec := post(t, "Hi", htmx)
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("POST short title (htmx %v) = %d, want 422", htmx, rec.Code)
+		}
+		if rec.Header().Get("Location") != "" || rec.Header().Get("HX-Redirect") != "" {
+			t.Errorf("refused POST (htmx %v) still redirects", htmx)
+		}
+		body := rec.Body.String()
+		for _, want := range []string{"Enter at least 3 characters.", `aria-invalid="true"`, `value="Hi"`} {
+			if !strings.Contains(body, want) {
+				t.Errorf("refused form (htmx %v) is missing %q", htmx, want)
+			}
+		}
+	}
+
+	booksLock.Lock()
+	after := len(books)
+	booksLock.Unlock()
+	if after != before {
+		t.Errorf("a refused POST saved a book: %d books before, %d after", before, after)
+	}
+}
+
+func TestThreeCharacterTitleIsSaved(t *testing.T) {
+	// Three characters after trimming is enough, counted as characters:
+	// "Ève" is four bytes.
+	rec := post(t, "  Ève ", false)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("POST three-character title = %d, want 303", rec.Code)
+	}
+}

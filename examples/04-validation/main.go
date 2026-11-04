@@ -1,4 +1,4 @@
-// Command books is tutorial step 4: the form refuses an empty title.
+// Command books is tutorial step 4: the form refuses a missing or too short title.
 package main
 
 import (
@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/bplus/webframe/assets"
 	"github.com/bplus/webframe/components/action"
@@ -108,12 +109,12 @@ func newBook(w http.ResponseWriter, r *http.Request) {
 
 func createBook(w http.ResponseWriter, r *http.Request) {
 	book := Book{Title: strings.TrimSpace(r.FormValue("title"))}
-	if book.Title == "" {
+	if problem := checkTitle(book.Title); problem != "" {
 		// Show the form again: what was typed back in the field, the
 		// error under it. Respond answers 422 because Errors is set.
 		form := bookForm
 		form.Values = map[string]string{"title": r.FormValue("title")}
-		form.Errors = map[string]string{"title": "Enter a title."}
+		form.Errors = map[string]string{"title": problem}
 		if err := formpage.Respond(w, r, "New book", form); err != nil {
 			log.Print(err)
 		}
@@ -124,6 +125,19 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	booksLock.Unlock()
 	flash.Success(w, r, "Saved", book.Title+" was added.")
 	appshell.Redirect(w, r, "/books")
+}
+
+// checkTitle says what is wrong with a title, or returns "" when it is fine.
+// utf8.RuneCountInString counts characters; len would count bytes, and "é"
+// is two of those.
+func checkTitle(title string) string {
+	if title == "" {
+		return "Enter a title."
+	}
+	if utf8.RuneCountInString(title) < 3 {
+		return "Enter at least 3 characters."
+	}
+	return ""
 }
 
 func routes() http.Handler {

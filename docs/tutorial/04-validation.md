@@ -1,17 +1,19 @@
 # Step 4: Bad input
 
-The form now refuses an empty title. It comes back with the error under the
-field, and nothing is saved.
+The form now refuses a title that is empty or shorter than 3 characters. It
+comes back with what you typed still in the field and the error under it,
+and nothing is saved.
 
-![The form showing "Enter a title." under the field](img/04-validation.png)
+![The form with "Hi" still in the field and "Enter at least 3 characters." under it](img/04-validation.png)
 
 ## The code
 
-Replace `main.go` from step 3 with this. Only `createBook` changed:
+Replace `main.go` from step 3 with this. `createBook` changed, and
+`checkTitle` is new:
 
 <!-- file: examples/04-validation/main.go -->
 ```go
-// Command books is tutorial step 4: the form refuses an empty title.
+// Command books is tutorial step 4: the form refuses a missing or too short title.
 package main
 
 import (
@@ -19,6 +21,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/bplus/webframe/assets"
 	"github.com/bplus/webframe/components/action"
@@ -121,12 +124,12 @@ func newBook(w http.ResponseWriter, r *http.Request) {
 
 func createBook(w http.ResponseWriter, r *http.Request) {
 	book := Book{Title: strings.TrimSpace(r.FormValue("title"))}
-	if book.Title == "" {
+	if problem := checkTitle(book.Title); problem != "" {
 		// Show the form again: what was typed back in the field, the
 		// error under it. Respond answers 422 because Errors is set.
 		form := bookForm
 		form.Values = map[string]string{"title": r.FormValue("title")}
-		form.Errors = map[string]string{"title": "Enter a title."}
+		form.Errors = map[string]string{"title": problem}
 		if err := formpage.Respond(w, r, "New book", form); err != nil {
 			log.Print(err)
 		}
@@ -137,6 +140,19 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	booksLock.Unlock()
 	flash.Success(w, r, "Saved", book.Title+" was added.")
 	appshell.Redirect(w, r, "/books")
+}
+
+// checkTitle says what is wrong with a title, or returns "" when it is fine.
+// utf8.RuneCountInString counts characters; len would count bytes, and "é"
+// is two of those.
+func checkTitle(title string) string {
+	if title == "" {
+		return "Enter a title."
+	}
+	if utf8.RuneCountInString(title) < 3 {
+		return "Enter at least 3 characters."
+	}
+	return ""
 }
 
 func routes() http.Handler {
@@ -157,18 +173,24 @@ func main() {
 
 ## Run it
 
-Run `go run .`, open http://localhost:8080/books/new and press **Save** with
-the field empty, or with only spaces in it.
+Run `go run .`, open http://localhost:8080/books/new, type `Hi` and press
+**Save**. Then try it with the field empty.
 
 ## What each piece does
 
-**The `if book.Title == ""` block** in `createBook` runs when the title is
-empty after trimming spaces. It shows the form again instead of saving:
+**`checkTitle`** holds the rules. It returns the message to show, or `""`
+when the title is fine: "Enter a title." for an empty one, "Enter at least
+3 characters." for a short one. `createBook` trims spaces before calling it,
+so `"  Hi  "` counts as 2 characters.
+
+**The `if problem := checkTitle(book.Title); problem != ""` block** in
+`createBook` runs when a rule failed. It shows the form again instead of
+saving:
 
 - `form := bookForm` copies the form declaration, so the shared one stays
   clean for the next visitor.
 - `form.Values` puts back what the user sent, keyed by field name.
-- `form.Errors` sets the message for the `title` field. The message shows
+- `form.Errors` sets `problem` as the message for the `title` field. The message shows
   under the field, the field gets a red border, and a banner at the top
   lists every error with a link to its field.
 - `formpage.Respond` writes the form, and `return` stops before the save.
@@ -183,10 +205,12 @@ the old form. Your browser's developer console lists the 422 as a failed
 request; that is expected.
 
 **Why the typed value is kept.** The new page is built from `bookForm`, which
-has empty fields. Without `Values`, the user would lose what they typed and
-have to start over. With one field that costs little; with ten fields it
-would be the whole form. `Values` holds the value exactly as sent, so the
-user sees what they typed and can fix it.
+has empty fields. Without `Values`, typing `Hi` and pressing Save would bring
+back an empty box with "Enter at least 3 characters." under it, and the user
+would have to retype the title to fix it. With `Values`, `Hi` is still in the
+box, so they add a word and save. With ten fields, losing them all over one
+mistake would be much worse. `Values` holds the value exactly as sent,
+spaces included.
 
 **Why check on the server.** A check in the browser can be skipped: by
 turning JavaScript off, by sending the request with another tool, or by
@@ -194,8 +218,11 @@ typing spaces. The server is the one place every request passes through.
 
 ## Try it
 
-- Type only spaces and press **Save**. The error appears and the spaces are
-  still in the field.
+- Type only spaces and press **Save**. "Enter a title." appears and the
+  spaces are still in the field.
+- Type `Emma` and press **Save**. It is long enough, so it is saved.
+- Delete the `form.Values = ...` line, run again and submit `Hi`. The box
+  comes back empty. Put the line back.
 - Add `Required: true` to the `title` field in `bookForm`. The label gets a
   marker and the browser now refuses an empty field before it sends
   anything. Spaces still get through, which is why the server check stays.
