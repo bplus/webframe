@@ -223,10 +223,13 @@ func TestPages_SettingsSaveRedirects(t *testing.T) {
 	wantAll(t, body, `value="Morgan Reyes"`, `value="k@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`)
 	// No success message anywhere: the flash slot is empty, no banner. The
 	// one role="status" on the page is the command palette's own "No
-	// matches" line, which every page carries.
+	// matches" line, which every page carries (the no-JavaScript notice in
+	// <noscript> is left out of the count: it shows only without JavaScript).
 	wantAll(t, body, `<div id="wf-flash"></div>`)
 	wantNone(t, body, "Please fix", `role="alert"`, "Settings saved")
-	if n := strings.Count(body, `role="status"`); n != 1 {
+	before, rest, _ := strings.Cut(body, "<noscript>")
+	_, after, _ := strings.Cut(rest, "</noscript>")
+	if n := strings.Count(before+after, `role="status"`); n != 1 {
 		t.Errorf("%d role=status regions, want 1 (the palette's)", n)
 	}
 
