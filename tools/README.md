@@ -97,6 +97,23 @@ make palette-check   # needs `make dev`; checks /items
 node tools/palette-check.mjs --url http://localhost:3333/items --shot tools/shots/palette
 ```
 
+## splitpane-check
+
+`splitpane-check.mjs` loads the demo's `/browse` split pane at 1280px. It opens
+one item, deletes another behind the page's back (`DELETE /items/{id}`) and
+clicks it: the "That item is no longer here" toast must show, a second click
+must not stack a second toast, and the detail region and the address bar must
+still show the first item. A click answered 500 and a click that gets no answer
+must show the "Could not load that item" toast the same way. At 390px the click
+on the deleted item is a plain page load and must show the 404 page. It deletes
+one item from the running demo (restart the demo to get it back). Exit 1 on any
+failure, 2 for a usage error.
+
+```bash
+make splitpane-check   # needs `make dev`; checks /browse
+node tools/splitpane-check.mjs --url http://localhost:3333/browse --shot tools/shots/splitpane
+```
+
 ## htmx-errors-check
 
 `htmx-errors-check.mjs` runs `static/js/htmx-errors.js` in a bare Node

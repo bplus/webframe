@@ -5,6 +5,7 @@ import (
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/icon"
+	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -48,6 +49,7 @@ templ SplitPane(p Props) {
 	<div
 		id={ p.id() }
 		class={ utils.TwMerge("md:flex md:items-start md:gap-6", p.Class) }
+		data-wf-splitpane
 		{ p.Attributes... }
 	>
 		<div class={ listClass(p) }>
@@ -65,7 +67,21 @@ templ SplitPane(p Props) {
 		>
 			@detailContent(p)
 		</section>
+		@notices(p)
 	</div>
+}
+
+// notices renders the two toasts splitpane.js shows when a list click
+// fails, as inert <template> elements: a template's content is not part
+// of the page (not shown, not read by screen readers, not started by
+// Alpine) until the script copies it into #toast-container.
+templ notices(p Props) {
+	<template data-wf-splitpane-toast="gone">
+		@toast.Toast(p.gone())
+	</template>
+	<template data-wf-splitpane-toast="failed">
+		@toast.Toast(p.failed())
+	</template>
 }
 
 // listColumn wraps List in <div id={ID-listcol}> so a detail response can

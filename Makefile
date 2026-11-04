@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check splitpane-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -60,3 +60,10 @@ graph-check: tools/node_modules/.bin/tailwindcss
 # window.visualViewport. Needs `make dev` running, like ui-check.
 palette-check: tools/node_modules/.bin/tailwindcss
 	node tools/palette-check.mjs --url http://localhost:3333/items
+
+# splitpane in a real browser: a list click on a deleted item (404), on an
+# item answering 500 and with no answer shows a toast and leaves the detail
+# and the URL alone; on a phone the click shows the 404 page. Deletes one
+# item from the running demo. Needs `make dev` running, like ui-check.
+splitpane-check: tools/node_modules/.bin/tailwindcss
+	node tools/splitpane-check.mjs --url http://localhost:3333/browse
