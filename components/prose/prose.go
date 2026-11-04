@@ -21,10 +21,11 @@
 // Size scales the whole block; MaxWidth caps the measure (65ch by default).
 //
 // On narrow screens images never exceed the width, long words wrap, and
-// <pre> blocks and tables scroll horizontally inside their own box. Tables
-// are display: block for that, which drops their table semantics for some
-// screen readers; add role="table" (and role="row"/role="cell") in the
-// HTML when a table must stay navigable as a table.
+// <pre> blocks and tables scroll horizontally inside their own box. For a
+// table that box is a <div class="wf-prose-table"> Prose puts around every
+// top-level <table> in HTML, so the table itself keeps display: table and
+// with it its table role: a screen reader still offers row and column
+// navigation. The HTML needs nothing extra for this.
 package prose
 
 import (
@@ -155,4 +156,86 @@ func paragraphHTML(lines []string) string {
 		esc[i] = templ.EscapeString(l)
 	}
 	return strings.Join(esc, "<br>")
+}
+
+// tableWrapOpen and tableWrapClose surround each top-level table in HTML.
+// The .wf-prose-table rules in input.css make the div the horizontal
+// scroller, so the table can stay display: table.
+const (
+	tableWrapOpen  = `<div class="wf-prose-table">`
+	tableWrapClose = `</div>`
+)
+
+// wrapTables returns html with every top-level <table>...</table> wrapped
+// in tableWrapOpen/tableWrapClose. A table nested in another table's cell
+// is left alone (the outer wrapper already scrolls). Tag names match
+// case-insensitively, text inside <!-- --> comments is skipped, and a table
+// with no closing tag is wrapped up to the end of html. Everything else is
+// copied byte for byte.
+func wrapTables(html string) string {
+	lower := strings.ToLower(html)
+	if !strings.Contains(lower, "<table") {
+		return html
+	}
+	var b strings.Builder
+	b.Grow(len(html) + 64)
+	depth := 0
+	for i := 0; i < len(html); {
+		switch {
+		case strings.HasPrefix(lower[i:], "<!--"):
+			end := strings.Index(lower[i+4:], "-->")
+			if end < 0 {
+				b.WriteString(html[i:])
+				i = len(html)
+				continue
+			}
+			end = i + 4 + end + 3
+			b.WriteString(html[i:end])
+			i = end
+		case isTag(lower, i, "<table"):
+			if depth == 0 {
+				b.WriteString(tableWrapOpen)
+			}
+			depth++
+			b.WriteByte(html[i])
+			i++
+		case depth > 0 && isTag(lower, i, "</table"):
+			end := strings.IndexByte(html[i:], '>')
+			if end < 0 {
+				end = len(html) - 1 - i
+			}
+			end = i + end + 1
+			b.WriteString(html[i:end])
+			i = end
+			depth--
+			if depth == 0 {
+				b.WriteString(tableWrapClose)
+			}
+		default:
+			b.WriteByte(html[i])
+			i++
+		}
+	}
+	if depth > 0 {
+		b.WriteString(tableWrapClose)
+	}
+	return b.String()
+}
+
+// isTag reports whether lower[i:] starts with name (such as "<table") as a
+// whole tag name: followed by whitespace, ">" or "/", or the end of input,
+// so "<tablet>" is not a table.
+func isTag(lower string, i int, name string) bool {
+	if !strings.HasPrefix(lower[i:], name) {
+		return false
+	}
+	j := i + len(name)
+	if j == len(lower) {
+		return true
+	}
+	switch lower[j] {
+	case ' ', '\t', '\n', '\r', '\f', '>', '/':
+		return true
+	}
+	return false
 }

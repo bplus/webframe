@@ -194,6 +194,11 @@ func TestEscapesScriptLine(t *testing.T) {
 	}
 }
 
+// TestSideBySidePairing checks how deletions pair with the additions after
+// them. It was reported flaky once during the batch 5 merge; that run's
+// failure was the class-order assertion fixed in 7e7c2aa (TwMerge emits
+// classes in any order). Since then go test -count=200 -race on this
+// package is clean, and nothing here depends on map order or timing.
 func TestSideBySidePairing(t *testing.T) {
 	f := diffview.File{Path: "p.go", Hunks: []diffview.Hunk{{Header: "@@ -1,4 +1,4 @@", Lines: []diffview.Line{
 		{Kind: diffview.KindContext, OldNo: 1, NewNo: 1, Text: "same"},
@@ -276,5 +281,33 @@ func TestZeroValue(t *testing.T) {
 	html := render(t, diffview.Props{})
 	if !strings.HasPrefix(html, "<div") || strings.Contains(html, "<details") {
 		t.Errorf("zero value renders an empty root:\n%s", html)
+	}
+}
+
+// TestSideBySideFixedLayout checks that the paired table is table-fixed with
+// colgroup widths that split what the gutters leave in two, and that the
+// text cells scroll a long line inside themselves, so one long line cannot
+// make one side wider than the other.
+func TestSideBySideFixedLayout(t *testing.T) {
+	f := diffview.File{Path: "p.go", Hunks: []diffview.Hunk{{Lines: []diffview.Line{
+		{Kind: diffview.KindDel, OldNo: 1, Text: strings.Repeat("x", 300)},
+		{Kind: diffview.KindAdd, NewNo: 1, Text: "short"},
+	}}}}
+	html := render(t, diffview.Props{Files: []diffview.File{f}, Mode: diffview.ModeSideBySide})
+	side := html[strings.Index(html, `data-layout="side-by-side"`):]
+	tableTag := html[strings.LastIndex(html[:strings.Index(html, `data-layout="side-by-side"`)], "<table"):]
+	tableTag = tableTag[:strings.Index(tableTag, ">")]
+	if !strings.Contains(tableTag, "table-fixed") {
+		t.Errorf("paired table is not table-fixed: %s", tableTag)
+	}
+	if got := strings.Count(side, `<col class="w-[calc(50%-3rem)]">`); got != 2 {
+		t.Errorf("want two half-width text columns, got %d:\n%s", got, side)
+	}
+	for _, s := range []string{"old", "new"} {
+		i := strings.Index(side, `data-side="`+s+`"`)
+		td := side[strings.LastIndex(side[:i], "<td"):i]
+		if !strings.Contains(td, "overflow-x-auto") {
+			t.Errorf("%s text cell does not scroll: %s", s, td)
+		}
 	}
 }

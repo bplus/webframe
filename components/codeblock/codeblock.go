@@ -43,6 +43,8 @@ type Props struct {
 	Language string
 	// LineNumbers numbers every line with a CSS counter (no JS); the
 	// numbers are not selectable, so copying by selection copies code only.
+	// Without Wrap the number gutter is sticky: it stays in view while a
+	// long line is scrolled sideways (data-wf-code-scroll on the figure).
 	LineNumbers bool
 	// Copy adds a copybutton in the header that copies Code.
 	Copy bool

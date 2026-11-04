@@ -11,6 +11,9 @@ const (
 	gutterClass = "w-8 md:w-12 shrink-0 select-none px-1 text-right align-top text-muted-foreground"
 	markerCell  = "w-4 select-none px-1 text-center align-top"
 	textClass   = "whitespace-pre px-2 align-top"
+	// sideTextClass is a side-by-side text cell: a long line scrolls
+	// inside the cell, so both halves keep their width.
+	sideTextClass = "whitespace-pre px-2 align-top overflow-x-auto"
 	tableClass  = "min-w-full border-collapse font-mono text-xs leading-5"
 	hunkHeader  = "bg-muted/60 px-2 py-1 font-mono text-xs text-muted-foreground whitespace-pre overflow-x-auto"
 )
@@ -106,21 +109,25 @@ templ inlineTable(lines []Line) {
 
 // sideBySideTable pairs deletions with the additions that follow them: old
 // number and text left, new number and text right; a gap cell is muted.
+// The table is table-fixed, so the column widths come from the colgroup
+// alone: each text column is half of what the two 3rem gutters leave, and
+// a line longer than its half scrolls inside its own cell (sideTextClass)
+// instead of widening its column and squeezing the other side.
 templ sideBySideTable(lines []Line) {
-	<table class={ utils.TwMerge(tableClass, "w-full") } data-layout="side-by-side">
+	<table class={ utils.TwMerge(tableClass, "w-full table-fixed") } data-layout="side-by-side">
 		<colgroup>
 			<col class="w-12"/>
-			<col class="w-1/2"/>
+			<col class="w-[calc(50%-3rem)]"/>
 			<col class="w-12"/>
-			<col class="w-1/2"/>
+			<col class="w-[calc(50%-3rem)]"/>
 		</colgroup>
 		<tbody>
 			for _, pr := range pairLines(lines) {
 				<tr>
 					<td class={ utils.TwMerge(gutterClass, sideClass(pr.Left)) }>{ gutterNo(pr.Left, true) }</td>
-					<td class={ utils.TwMerge(textClass, "border-r border-border", sideClass(pr.Left)) } data-side="old">{ text(pr.Left) }</td>
+					<td class={ utils.TwMerge(sideTextClass, "border-r border-border", sideClass(pr.Left)) } data-side="old">{ text(pr.Left) }</td>
 					<td class={ utils.TwMerge(gutterClass, sideClass(pr.Right)) }>{ gutterNo(pr.Right, false) }</td>
-					<td class={ utils.TwMerge(textClass, sideClass(pr.Right)) } data-side="new">{ text(pr.Right) }</td>
+					<td class={ utils.TwMerge(sideTextClass, sideClass(pr.Right)) } data-side="new">{ text(pr.Right) }</td>
 				</tr>
 			}
 		</tbody>

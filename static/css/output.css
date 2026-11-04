@@ -691,6 +691,9 @@
   .w-\[800px\] {
     width: 800px;
   }
+  .w-\[calc\(50\%-3rem\)\] {
+    width: calc(50% - 3rem);
+  }
   .w-\[var\(--popover-trigger-width\)\] {
     width: var(--popover-trigger-width);
   }
@@ -762,6 +765,9 @@
   }
   .basis-full {
     flex-basis: 100%;
+  }
+  .table-fixed {
+    table-layout: fixed;
   }
   .caption-bottom {
     caption-side: bottom;
@@ -1690,6 +1696,28 @@
   .group-open\/json\:rotate-90:is(:where(.group\/json):is([open], :popover-open, :open) *) {
     rotate: 90deg;
   }
+  .group-focus-within\/row\:not-sr-only:is(:where(.group\/row):focus-within *) {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+  @media (hover: hover) {
+    .group-hover\/row\:not-sr-only:is(:where(.group\/row):hover *) {
+      position: static;
+      width: auto;
+      height: auto;
+      padding: 0;
+      margin: 0;
+      overflow: visible;
+      clip-path: none;
+      white-space: normal;
+    }
+  }
   .peer-checked\:bg-primary:is(:where(.peer):checked ~ *) {
     background-color: var(--color-primary);
   }
@@ -1879,6 +1907,16 @@
   }
   .empty\:hidden:empty {
     display: none;
+  }
+  .focus-within\:not-sr-only:focus-within {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
   .focus-within\:border-ring:focus-within {
     border-color: var(--color-ring);
@@ -3127,12 +3165,13 @@
   font-size: inherit;
   border-radius: 0;
 }
-.wf-prose table {
-  display: block;
-  width: max-content;
+.wf-prose .wf-prose-table {
   max-width: 100%;
   overflow-x: auto;
   margin: 0 0 1em;
+}
+.wf-prose table {
+  width: max-content;
   border-collapse: collapse;
   font-size: 0.9375em;
   line-height: 1.5;
@@ -3206,6 +3245,24 @@
   color: var(--color-muted-foreground);
   user-select: none;
   -webkit-user-select: none;
+}
+.wf-code[data-wf-code-scroll] code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+.wf-code[data-wf-code-scroll] .wf-code-line {
+  display: block;
+}
+.wf-code[data-wf-code-scroll] .wf-code-line::before {
+  display: inline-block;
+  box-sizing: content-box;
+  width: calc(var(--wf-code-digits, 3) * 1ch + 0.5ch);
+  padding-right: 1.5ch;
+  position: sticky;
+  left: 0;
+  background: var(--color-muted);
+  box-shadow: -1rem 0 0 var(--color-muted);
 }
 .htmx-indicator {
   opacity: 0;

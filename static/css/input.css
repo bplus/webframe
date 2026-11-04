@@ -512,15 +512,19 @@
   overflow-wrap: normal;
 }
 .wf-prose pre code { background: none; padding: 0; font-size: inherit; border-radius: 0; }
-/* Tables: display: block with width: max-content lets a wide table scroll
-   horizontally inside its own box (max-width 100%) instead of widening the
-   page at 390px; a narrow table stays as wide as its content. */
-.wf-prose table {
-  display: block;
-  width: max-content;
+/* Tables: prose.Prose wraps every top-level table in a div.wf-prose-table,
+   and that div scrolls horizontally (max-width 100%) so a wide table never
+   widens the page at 390px. The table itself stays display: table, which
+   keeps its table role for screen readers (display: block drops it in every
+   major engine); width: max-content keeps a narrow table as wide as its
+   content and lets a wide one overflow into the wrapper's scroll. */
+.wf-prose .wf-prose-table {
   max-width: 100%;
   overflow-x: auto;
   margin: 0 0 1em;
+}
+.wf-prose table {
+  width: max-content;
   border-collapse: collapse;
   font-size: 0.9375em;
   line-height: 1.5;
@@ -591,6 +595,33 @@
   color: var(--color-muted-foreground);
   user-select: none;
   -webkit-user-select: none;
+}
+/* Without Wrap the <pre> scrolls sideways (figure[data-wf-code-scroll]).
+   The gutter must stay in view while it does, so the number is a sticky
+   inline-block at left: 0, which pins it to the <pre>'s content edge (the
+   sticky reference box is inside the p-3 padding). A sticky element only
+   moves inside its containing block, so a grid cell (the Wrap layout)
+   would hold it in place: here every line is a plain block, and the <code>
+   is a block as wide as the longest line (at least the box), so every
+   line, short ones included, spans the whole scroll width and its number
+   can travel with the scroll. The gutter has the opaque muted background,
+   a shadow over the padding strip to its left, and the 1.5ch gap as
+   padding inside it, so text scrolled under it is hidden. */
+.wf-code[data-wf-code-scroll] code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+.wf-code[data-wf-code-scroll] .wf-code-line { display: block; }
+.wf-code[data-wf-code-scroll] .wf-code-line::before {
+  display: inline-block;
+  box-sizing: content-box;
+  width: calc(var(--wf-code-digits, 3) * 1ch + 0.5ch);
+  padding-right: 1.5ch;
+  position: sticky;
+  left: 0;
+  background: var(--color-muted);
+  box-shadow: -1rem 0 0 var(--color-muted); /* past the 0.75rem padding: no subpixel sliver */
 }
 
 /* ── HTMX indicator ── */

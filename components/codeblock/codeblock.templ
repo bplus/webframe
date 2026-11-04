@@ -20,6 +20,9 @@ templ CodeBlock(props ...Props) {
 			data-wf-code-numbered
 			style={ p.digitsStyle() }
 		}
+		if p.LineNumbers && !p.Wrap {
+			data-wf-code-scroll
+		}
 		{ p.Attributes... }
 	>
 		if p.hasHeader() {

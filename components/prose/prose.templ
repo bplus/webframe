@@ -1,6 +1,7 @@
 package prose
 
-// Prose renders a .wf-prose block holding either p.HTML verbatim or p.Text
+// Prose renders a .wf-prose block holding either p.HTML verbatim (each
+// top-level table wrapped in a scrolling div, see wrapTables) or p.Text
 // escaped as paragraphs. With both set, HTML wins. Typography comes from the
 // stylesheet, so the content needs no classes.
 templ Prose(p Props) {
@@ -12,7 +13,7 @@ templ Prose(p Props) {
 		{ p.Attributes... }
 	>
 		if p.HTML != "" {
-			@templ.Raw(string(p.HTML))
+			@templ.Raw(wrapTables(string(p.HTML)))
 		} else {
 			for _, para := range p.paragraphs() {
 				@paragraph(para)

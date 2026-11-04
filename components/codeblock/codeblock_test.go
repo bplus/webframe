@@ -162,3 +162,22 @@ func TestCodeBlock_GutterDigits(t *testing.T) {
 		t.Errorf("no line numbers, no digits property:\n%s", none[:min(len(none), 400)])
 	}
 }
+
+// TestCodeBlock_StickyGutterOnlyWhenScrolling checks the marker the sticky
+// gutter rules in input.css key on: present for numbered lines that scroll
+// sideways, absent with Wrap (whose rendering is unchanged) and without
+// line numbers.
+func TestCodeBlock_StickyGutterOnlyWhenScrolling(t *testing.T) {
+	scrolling := render(t, codeblock.CodeBlock(codeblock.Props{Code: "a\nb", LineNumbers: true}))
+	if !strings.Contains(scrolling, "data-wf-code-scroll") {
+		t.Errorf("numbered, unwrapped block: want data-wf-code-scroll:\n%s", scrolling)
+	}
+	for name, p := range map[string]codeblock.Props{
+		"wrap":       {Code: "a\nb", LineNumbers: true, Wrap: true},
+		"no numbers": {Code: "a\nb"},
+	} {
+		if out := render(t, codeblock.CodeBlock(p)); strings.Contains(out, "data-wf-code-scroll") {
+			t.Errorf("%s: unexpected data-wf-code-scroll:\n%s", name, out)
+		}
+	}
+}
