@@ -4,7 +4,8 @@ The [tutorial](tutorial/README.md) shows what to write. This guide shows what ha
 write it: which code runs when a browser asks for a page, and why it is built that way.
 
 Each section explains the idea in plain English first, then points at the code. Links go to
-exact lines. Quotes are short, and each one is followed by what it says in plain words. You do
+exact lines; a link right after a name in backticks, as in `Respond` (file.go:12), shows that
+name's code. Quotes are short, and each one is followed by what it says in plain words. You do
 not need to read Go fluently to follow along.
 
 A few words used throughout:
@@ -64,7 +65,7 @@ ctx = context.WithValue(ctx, requestIDKey, id)
 
 In plain words: attach the `App`, the request path and the request id to this request
 ([app.go:96-98](../components/appshell/app.go#L96-L98)). Later code reads them back with
-`appshell.Must` (the `App`, [app.go:270](../components/appshell/app.go#L270-L276)),
+`appshell.Must` ([app.go:270](../components/appshell/app.go#L270-L276), the `App`),
 `PathFromContext` (the path, used to highlight the current nav item and to build list links,
 [app.go:279](../components/appshell/app.go#L279-L282)) and `RequestID`
 ([app.go:166](../components/appshell/app.go#L166-L169)). That is why handlers never pass the
@@ -98,13 +99,13 @@ two ways to draw this page, the whole page body (`Page(p)`) and the results regi
 under that region's id (`list-results` by default); let the `App` pick one.
 
 `formpage.Respond`
-([components/formpage/formpage.go:237](../components/formpage/formpage.go#L237-L250)) has the
+([components/formpage/formpage.go:247](../components/formpage/formpage.go#L247-L260)) has the
 same shape. Its one named part is the `<form>` itself, and it adds a status code, which [section
 3](#3-a-form-round-trip) explains.
 
 ### Step 4: the three kinds of request
 
-`RenderPartsStatus` ([app.go:429](../components/appshell/app.go#L429-L470)) is where every page
+`RenderPartsStatus` ([app.go:505](../components/appshell/app.go#L505-L533)) is where every page
 is written. It sorts requests into three kinds:
 
 | Request | How it is recognized | What is sent |
@@ -129,7 +130,7 @@ you press Back and htmx no longer has the old page in its own cache, so it asks 
 again.)
 
 The second question, "which piece?", is answered at
-[app.go:448-452](../components/appshell/app.go#L448-L452):
+[app.go:515-517](../components/appshell/app.go#L515-L517):
 
 ```go
 if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
@@ -198,7 +199,7 @@ sequenceDiagram
 ```
 
 Each sortable header is a link with both a normal `href` and htmx attributes
-([components/datatable/datatable.go:254](../components/datatable/datatable.go#L254-L262)):
+([components/datatable/datatable.go:257](../components/datatable/datatable.go#L257-L265)):
 
 ```go
 attrs := templ.Attributes{"href": url}
@@ -290,7 +291,7 @@ sequenceDiagram
 
 `formpage.Respond` is called with the declaration and no errors. It is a normal visit, so the
 whole page is sent. With `HxPost: true`, the form gets `hx-post`, `hx-target="#form"` and
-`hx-swap="outerHTML"` ([formpage.go:131-145](../components/formpage/formpage.go#L131-L145)):
+`hx-swap="outerHTML"` ([formpage.go:148-152](../components/formpage/formpage.go#L148-L152)):
 submit over htmx, and replace the whole `<form>` element with the answer. The plain `action` and
 `method` stay on the form, so it still works without JavaScript.
 
@@ -299,7 +300,7 @@ submit over htmx, and replace the whole `<form>` element with the answer. The pl
 Your handler (see `createBook` in
 [examples/04-validation/main.go:110](../examples/04-validation/main.go#L110-L128)) copies what
 was typed into `Values`, puts messages into `Errors`, and calls `Respond` again. `Respond`
-notices the errors ([formpage.go:245-249](../components/formpage/formpage.go#L245-L249)):
+notices the errors ([formpage.go:255-259](../components/formpage/formpage.go#L255-L259)):
 
 ```go
 status := 0
@@ -394,7 +395,7 @@ because the redirect is a brand-new request and the server keeps no memory betwe
   message into the `wf_flash` cookie: JSON, base64-encoded, under 2 KB, expiring after 5
   minutes, unreadable from JavaScript (`HttpOnly`).
 - On the next render, `RenderPartsStatus` calls `App.Flash` *before writing anything*
-  ([app.go:460-463](../components/appshell/app.go#L460-L463)), because a cookie is a header and
+  ([app.go:523-526](../components/appshell/app.go#L523-L526)), because a cookie is a header and
   headers cannot change once the body starts. Your app set `App.Flash = flash.Take`.
 - `flash.Take` ([flash.go:90](../components/flash/flash.go#L90-L109)) reads the cookie,
   immediately tells the browser to delete it, and returns a banner.
@@ -407,7 +408,7 @@ banner is gone.
 If the next render is a fragment instead of a full page (a flash set by an htmx action that does
 not redirect), `RenderPartsStatus` still takes the flash and appends it as an out-of-band `<div
 id="wf-flash">`, so it appears on the page the user is looking at
-([app.go:441-457](../components/appshell/app.go#L441-L457)).
+([app.go:431-446](../components/appshell/app.go#L431-L446)).
 
 ## 4. When things go wrong
 
@@ -451,7 +452,7 @@ Notes:
 - The default answer is a bare page with no nav, showing the request id and a plain
   "Go home" link to `App.HomeHref` ([app.go:201](../components/appshell/app.go#L201-L207)). Set `App.OnPanic =
   errorpage.PanicHandler` for the styled 500 inside the shell
-  ([components/errorpage/errorpage.go:89](../components/errorpage/errorpage.go#L89-L93)). If
+  ([components/errorpage/errorpage.go:122](../components/errorpage/errorpage.go#L122-L126)). If
   your `OnPanic` itself panics, the default answers instead
   ([app.go:140-161](../components/appshell/app.go#L140-L161)).
 - Most panics happen in your handler before rendering starts, so the 500 page is the usual
@@ -466,7 +467,7 @@ GET-only route (405). Both come back as one line of plain text, and there is no 
 them.
 
 `errorpage.Handler` wraps the router
-([errorpage.go:104](../components/errorpage/errorpage.go#L104-L129)):
+([errorpage.go:137](../components/errorpage/errorpage.go#L137-L162)):
 
 ```go
 h, pattern := mux.Handler(r)
@@ -479,7 +480,7 @@ if pattern != "" {
 In plain words: ask the router which handler it would use. If a real route matched, run it
 normally. If not, the router has picked its own fallback. Run that fallback into a dummy
 response that keeps only the status and headers (`verdict`,
-[errorpage.go:133-156](../components/errorpage/errorpage.go#L133-L156)), then: 405 becomes the
+[errorpage.go:166-189](../components/errorpage/errorpage.go#L166-L189)), then: 405 becomes the
 styled "Not allowed here" page (copying the router's `Allow` header, which lists the methods
 that would work); 404 becomes the styled "not found" page; anything else, such as the redirect
 the router uses to tidy up a path, goes through untouched.
@@ -548,7 +549,7 @@ component puts its defaults first and the caller's `Class` last, and the caller 
   [input.css:62](../static/css/input.css#L62)). Components write `bg-primary`, never
   `bg-purple-700`. The dark theme only redefines the tokens under `:root[data-theme="dark"]`
   ([input.css:105](../static/css/input.css#L105)), so switching themes is one attribute on
-  `<html>`, set by a small script in `Document`
+  `<html>`, set by a small script in the page's `<head>`
   ([document.templ:73-81](../components/appshell/document.templ#L73-L81)).
 - **`dark:` follows the toggle.** Tailwind's `dark:` prefix normally follows the operating
   system setting. [input.css:17](../static/css/input.css#L17) points it at the `data-theme`
@@ -576,7 +577,7 @@ kinds of control rather than one app's buttons, so it stays true for any webfram
 ### Assets: the static folder inside the binary
 
 The CSS, JavaScript and fonts in `static/` are compiled into your program, so deploying is
-copying one file. The line that does it is in [embed.go:9-10](../embed.go#L9-L10):
+copying one file. The line that does it is in [embed.go:11-12](../embed.go#L11-L12):
 
 ```go
 //go:embed static
@@ -587,7 +588,7 @@ In plain words: at build time, take the `static` folder and store it inside the 
 read-only file system named `Static`. (It sits at the module root because Go's embed cannot
 reach up into a parent folder.)
 
-`assets.Mount(mux)` ([assets/assets.go:27](../assets/assets.go#L27-L29)) serves that file system
+`assets.Mount(mux)` ([assets/assets.go:29](../assets/assets.go#L29-L31)) serves that file system
 at `GET /static/`. Mount it at exactly that path: `Document` refers to `/static/...` URLs
 directly. `assets.URL` adds `?v=<number>` to a file's URL; the number is the time the program
 started ([utils/templui.go:134](../utils/templui.go#L134)), so every restart makes browsers fetch
