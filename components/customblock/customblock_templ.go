@@ -14,8 +14,10 @@ type Props struct {
 }
 
 // CustomBlock fences hand-written markup that the design-system lint would
-// otherwise reject; the lint recognizes the call and the data-wf-custom
-// attribute. An empty Reason renders data-wf-missing-reason="true" so the
+// otherwise reject. The lint recognizes the fence by its call in the app's
+// source (under whatever name the file imports this package as); the
+// data-wf-custom="block" attribute only marks the fence in the rendered
+// page. An empty Reason renders data-wf-missing-reason="true" so the
 // omission shows on the page.
 func CustomBlock(props ...Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -54,7 +56,7 @@ func CustomBlock(props ...Props) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/customblock/customblock.templ`, Line: 20, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/customblock/customblock.templ`, Line: 22, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -72,7 +74,7 @@ func CustomBlock(props ...Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Reason)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/customblock/customblock.templ`, Line: 23, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/customblock/customblock.templ`, Line: 25, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
