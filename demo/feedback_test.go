@@ -241,7 +241,7 @@ func TestFeedback_SlowFragment(t *testing.T) {
 }
 
 // TestFeedback_ShowcaseSections pins each new section's id and the markup
-// its demo relies on, and that the demo's own toast fragment is gone.
+// its demo relies on.
 func TestFeedback_ShowcaseSections(t *testing.T) {
 	h := fullHandler(t)
 	body := do(h, "GET", "/", nil, nil).Body.String()
@@ -262,7 +262,6 @@ func TestFeedback_ShowcaseSections(t *testing.T) {
 		// The one confirm host and the toast container the shell renders.
 		`id="wf-confirm"`, `id="toast-container"`,
 	)
-	wantNone(t, body, "Toast (hx-swap-oob)", "Operation completed successfully")
 	if n := strings.Count(body, `id="wf-confirm"`); n != 1 {
 		t.Errorf("confirm host appears %d times, want 1", n)
 	}

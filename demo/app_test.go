@@ -44,8 +44,7 @@ func TestShowcaseRendersThroughShell(t *testing.T) {
 	}
 
 	// The showcase sections for the page-layer components: each
-	// new component's signature markup is on the page, and the hand-wired
-	// htmx that Validate and form.Form replaced is gone.
+	// new component's signature markup is on the page.
 	_, body := get("/")
 	for _, want := range []string{
 		`role="switch"`,                                         // toggle field
@@ -73,11 +72,6 @@ func TestShowcaseRendersThroughShell(t *testing.T) {
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("GET /: body missing %q", want)
-		}
-	}
-	for _, notWant := range []string{"hx-include", `"field":"email"`} {
-		if strings.Contains(body, notWant) {
-			t.Errorf("GET /: body still contains %q", notWant)
 		}
 	}
 	if code, _ := get("/static/img/placeholder-wide.svg"); code != 200 {

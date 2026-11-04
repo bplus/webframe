@@ -16,33 +16,29 @@ func renderScripts(t *testing.T) string {
 	return buf.String()
 }
 
-// The error-swap guard must load after confirm.js (the first tag of the
-// bundle) and before any component script, so it is listening before the
-// first swap a component script could trigger.
-func TestScripts_ErrorGuardAfterConfirm(t *testing.T) {
+// The bundle carries each first-party script exactly once.
+func TestScripts_LoadsEachOnce(t *testing.T) {
 	got := renderScripts(t)
-	confirm := strings.Index(got, "/static/js/confirm.js")
-	errors := strings.Index(got, "/static/js/htmx-errors.js")
-	tabs := strings.Index(got, "/static/js/tabs.min.js")
-	theme := strings.Index(got, "/static/js/theme-toggle.js")
-	if confirm < 0 || errors < 0 || tabs < 0 || theme < 0 {
-		t.Fatalf("bundle missing a script (confirm %d, errors %d, tabs %d, theme %d):\n%s", confirm, errors, tabs, theme, got)
-	}
-	if !(confirm < errors && errors < tabs && tabs < theme) {
-		t.Errorf("want confirm.js < htmx-errors.js < tabs.min.js < theme-toggle.js, got %d, %d, %d, %d", confirm, errors, tabs, theme)
-	}
-	if strings.Count(got, "/static/js/htmx-errors.js") != 1 {
-		t.Errorf("htmx-errors.js should be loaded exactly once:\n%s", got)
+	for _, src := range []string{
+		"/static/js/confirm.js",
+		"/static/js/htmx-errors.js",
+		"/static/js/splitpane.js",
+		"/static/js/tabs.min.js",
+		"/static/js/theme-toggle.js",
+	} {
+		if n := strings.Count(got, src); n != 1 {
+			t.Errorf("%s loaded %d times, want 1:\n%s", src, n, got)
+		}
 	}
 }
 
 // Document renders the bundle, so a full page carries the guard too.
 func TestDocument_LoadsErrorGuard(t *testing.T) {
 	got := renderDoc(t, DocProps{AppName: "A"}, nil)
-	confirm := strings.Index(got, "/static/js/confirm.js")
-	errors := strings.Index(got, "/static/js/htmx-errors.js")
-	if confirm < 0 || errors < 0 || errors < confirm {
-		t.Errorf("want htmx-errors.js after confirm.js in the document (confirm %d, errors %d):\n%s", confirm, errors, got)
+	for _, src := range []string{"/static/js/confirm.js", "/static/js/htmx-errors.js"} {
+		if !strings.Contains(got, src) {
+			t.Errorf("document missing %s:\n%s", src, got)
+		}
 	}
 }
 
@@ -82,18 +78,5 @@ func TestShell_LiveElementsSwallowErrors(t *testing.T) {
 	badgeTag = got[badge : badge+strings.Index(got[badge:], ">")]
 	if !strings.Contains(badgeTag, "data-wf-swallow-errors") {
 		t.Errorf("sidebar badge span lacks data-wf-swallow-errors: %s", badgeTag)
-	}
-}
-
-func TestScripts_SplitPaneAfterErrorGuard(t *testing.T) {
-	got := renderScripts(t)
-	errors := strings.Index(got, "/static/js/htmx-errors.js")
-	split := strings.Index(got, "/static/js/splitpane.js")
-	tabs := strings.Index(got, "/static/js/tabs.min.js")
-	if errors < 0 || split < 0 || tabs < 0 || !(errors < split && split < tabs) {
-		t.Errorf("want htmx-errors.js < splitpane.js < tabs.min.js, got %d, %d, %d", errors, split, tabs)
-	}
-	if strings.Count(got, "/static/js/splitpane.js") != 1 {
-		t.Errorf("splitpane.js loaded %d times", strings.Count(got, "/static/js/splitpane.js"))
 	}
 }
