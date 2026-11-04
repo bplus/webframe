@@ -36,7 +36,6 @@ import (
 	"github.com/bplus/webframe/components/customblock"
 	"github.com/bplus/webframe/components/custompage"
 	"github.com/bplus/webframe/components/dashboardgrid"
-	"github.com/bplus/webframe/components/dashboardheader"
 	"github.com/bplus/webframe/components/dashboardpage"
 	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/datetimepicker"
@@ -116,11 +115,6 @@ type componentCase struct {
 	expectEmpty bool
 	// expectEmptyReason explains why, so this isn't a silent skip.
 	expectEmptyReason string
-
-	// knownIssue names a tracked bug that makes this row's output contain a
-	// banned substring. The row is skipped while the bug exists, and fails
-	// (asking for knownIssue to be removed) once the output is clean.
-	knownIssue string
 }
 
 var componentCases = []componentCase{
@@ -150,7 +144,6 @@ var componentCases = []componentCase{
 	{name: "customblock", constructor: func() templ.Component { return customblock.CustomBlock() }},
 	{name: "custompage", constructor: func() templ.Component { return custompage.CustomPage() }},
 	{name: "dashboardgrid", constructor: func() templ.Component { return dashboardgrid.Grid() }},
-	{name: "dashboardheader", constructor: func() templ.Component { return dashboardheader.Header() }},
 	{name: "dashboardpage", constructor: func() templ.Component { return dashboardpage.Page(dashboardpage.Props{}) }},
 	{name: "datatable", constructor: func() templ.Component { return datatable.DataTable() }},
 	{name: "datetimepicker", constructor: func() templ.Component { return datetimepicker.DateTimePicker() }},
@@ -269,13 +262,7 @@ func TestComponentRenderSmoke(t *testing.T) {
 			}
 
 			if bad != "" {
-				if tc.knownIssue != "" {
-					t.Skipf("known issue (%s); output contains banned substring %q — remove the knownIssue annotation once fixed", tc.knownIssue, bad)
-				}
 				t.Fatalf("output contains banned substring %q:\n%s", bad, out)
-			}
-			if tc.knownIssue != "" {
-				t.Fatalf("knownIssue %q set but output no longer contains a banned substring — the underlying bug appears fixed; remove the knownIssue annotation for %q", tc.knownIssue, tc.name)
 			}
 
 			if tc.expectEmpty {

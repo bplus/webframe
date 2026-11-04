@@ -6,8 +6,7 @@
 //
 // The header is a pageheader.Props, the same header detailpage, listpage
 // and formpage render, so a dashboard's title bar reads like every other
-// page's. dashboardheader remains for dashboards rendered outside the page
-// layer.
+// page's.
 package dashboardpage
 
 import (
