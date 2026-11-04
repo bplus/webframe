@@ -80,3 +80,19 @@ must be logged. Exit 1 on any failure, 2 for a usage error.
 make graph-check   # needs `make dev`; checks /graph against /api/graph
 node tools/graph-check.mjs --url http://localhost:3333/graph --data /api/graph
 ```
+
+## palette-check
+
+`palette-check.mjs` loads a page whose shell shows the command palette
+trigger. It fakes the platform three times (Mac, Windows, Linux): the
+trigger's hint must read `⌘K` on the Mac and `Ctrl+K` elsewhere, and that
+chord must open the palette. Then, at 390px, it replaces
+`window.visualViewport` with a stand-in it can resize (headless Chromium has
+no on-screen keyboard) and checks that the open sheet's height cap and top
+follow it: the whole screen with no keyboard, the visible part and its
+offset with one. Exit 1 on any failure, 2 for a usage error.
+
+```bash
+make palette-check   # needs `make dev`; checks /items
+node tools/palette-check.mjs --url http://localhost:3333/items --shot tools/shots/palette
+```

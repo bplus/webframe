@@ -343,7 +343,8 @@ func Palette(p Props) templ.Component {
 }
 
 // Trigger renders a small ghost button that opens the palette. From md up it
-// shows "Search" and the shortcut hint; below md, just the icon. Opening and
+// shows "Search" and the shortcut hint, spelled for the visitor's platform
+// (⌘K on a Mac, Ctrl+K elsewhere); below md, just the icon. Opening and
 // focusing the input happen in the same click, so a phone keyboard opens too.
 func Trigger(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -383,20 +384,28 @@ func Trigger(p Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " <span class=\"hidden md:inline\">Search</span> <kbd class=\"hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground md:inline-flex\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " <span class=\"hidden md:inline\">Search</span> <kbd class=\"hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground md:inline-flex\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, hintAttrs(p.Shortcut))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, ">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(Hint(p.Shortcut))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 130, Col: 133}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/commandpalette/commandpalette.templ`, Line: 131, Col: 162}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</kbd>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</kbd>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

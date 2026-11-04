@@ -115,7 +115,7 @@ func TestPalette_EscapesLabelsAndKeywords(t *testing.T) {
 
 func TestPalette_PhoneTopSheetAndDesktopPanel(t *testing.T) {
 	got := render(t, Palette(sample()))
-	for _, want := range []string{"left-0", "right-0", "top-0", "rounded-b-xl", "max-h-[60dvh]", "sm:max-w-lg", "sm:left-[50%]", "sm:top-[50%]", "sm:rounded-lg", "sm:max-h-[60vh]", "overflow-y-auto"} {
+	for _, want := range []string{"left-0", "right-0", "top-[var(--wf-palette-top,0px)]", "rounded-b-xl", "max-h-[var(--wf-palette-vh,60dvh)]", "sm:max-w-lg", "sm:left-[50%]", "sm:top-[50%]", "sm:rounded-lg", "sm:max-h-[60vh]", "overflow-y-auto"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}
@@ -159,7 +159,10 @@ func TestTrigger(t *testing.T) {
 		`aria-keyshortcuts="Meta+K Control+K"`,
 		`aria-label="Search"`,
 		`<span class="hidden md:inline">Search</span>`,
-		`md:inline-flex">⌘K</kbd>`,
+		`>⌘K</kbd>`,
+		`data-wf-hint-mac="⌘K"`,
+		`data-wf-hint-other="Ctrl+K"`,
+		`? $el.dataset.wfHintMac : $el.dataset.wfHintOther`,
 		"window.wf.palette.open($el.dataset.wfPaletteTrigger)",
 		`<svg`,
 	} {
@@ -168,7 +171,7 @@ func TestTrigger(t *testing.T) {
 		}
 	}
 	got = render(t, Trigger(Props{ID: "jump", Shortcut: "ctrl+shift+p"}))
-	for _, want := range []string{`data-wf-palette-trigger="jump"`, `aria-keyshortcuts="Control+Shift+P"`, `>Ctrl+⇧P</kbd>`} {
+	for _, want := range []string{`data-wf-palette-trigger="jump"`, `aria-keyshortcuts="Control+Shift+P"`, `>Ctrl+⇧P</kbd>`, `data-wf-hint-other="Ctrl+Shift+P"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}
@@ -179,6 +182,40 @@ func TestHint(t *testing.T) {
 	for in, want := range map[string]string{"mod+k": "⌘K", "ctrl+k": "Ctrl+K", "shift+alt+p": "⇧⌥P", "k": "K"} {
 		if got := Hint(in); got != want {
 			t.Errorf("Hint(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestHintFor_OtherPlatforms(t *testing.T) {
+	for in, want := range map[string]string{"mod+k": "Ctrl+K", "ctrl+k": "Ctrl+K", "shift+alt+p": "Shift+Alt+P", "meta+j": "Meta+J", "k": "K"} {
+		if got := HintFor(in, false); got != want {
+			t.Errorf("HintFor(%q, false) = %q, want %q", in, got, want)
+		}
+	}
+	if HintFor("mod+k", true) != Hint("mod+k") {
+		t.Errorf("HintFor(mod+k, true) = %q, want Hint's %q", HintFor("mod+k", true), Hint("mod+k"))
+	}
+}
+
+// The hint and the listener share one platform test, so the hint names the
+// chord the listener wants.
+func TestTrigger_HintUsesTheListenersPlatformTest(t *testing.T) {
+	trig := render(t, Trigger(Props{}))
+	pal := render(t, Palette(sample()))
+	esc := templ.EscapeString(isMacJS)
+	if !strings.Contains(trig, esc) || !strings.Contains(pal, "isMac: "+esc) {
+		t.Errorf("isMacJS missing from the trigger hint or the palette listener")
+	}
+}
+
+// The phone sheet follows window.visualViewport: the x-data sets the two
+// custom properties the sheet's classes read, and drops its listeners once
+// the palette leaves the page.
+func TestPalette_SheetFollowsVisualViewport(t *testing.T) {
+	got := render(t, Palette(sample()))
+	for _, want := range []string{"window.visualViewport", "--wf-palette-vh", "--wf-palette-top", "vv.offsetTop", "removeEventListener(&#39;resize&#39;, fit)"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q", want)
 		}
 	}
 }

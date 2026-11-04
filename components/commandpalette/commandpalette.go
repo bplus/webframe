@@ -106,11 +106,18 @@ func listID(id string) string          { return id + "-list" }
 func optionID(id string, n int) string { return id + "-option-" + strconv.Itoa(n) }
 func groupID(id string, n int) string  { return id + "-group-" + strconv.Itoa(n) }
 
-// Hint renders a shortcut spec as the text shown in Trigger: "mod+k" is
-// "⌘K" (the Mac spelling; the listener itself uses Ctrl on other
-// platforms), symbol modifiers (mod/meta ⌘, shift ⇧, alt ⌥) attach to the
-// key with no separator, and a word modifier (Ctrl) joins with "+".
-func Hint(shortcut string) string {
+// Hint renders a shortcut spec in the Mac spelling: "mod+k" is "⌘K".
+// Symbol modifiers (mod/meta ⌘, shift ⇧, alt ⌥) attach to the key with no
+// separator, and a word modifier (Ctrl) joins with "+". It is
+// HintFor(shortcut, true); Trigger renders both spellings and shows the one
+// for the visitor's platform.
+func Hint(shortcut string) string { return HintFor(shortcut, true) }
+
+// HintFor renders a shortcut spec for one platform. With mac true it is the
+// Mac spelling (see Hint). With mac false every modifier is a word joined
+// with "+": "mod+k" is "Ctrl+K" (mod is Ctrl off a Mac, as the listener
+// reads it), "shift+alt+p" is "Shift+Alt+P", and "meta" is "Meta".
+func HintFor(shortcut string, mac bool) string {
 	parts := strings.Split(strings.ToLower(shortcut), "+")
 	if len(parts) == 0 {
 		return ""
@@ -118,19 +125,41 @@ func Hint(shortcut string) string {
 	key := strings.ToUpper(parts[len(parts)-1])
 	var b strings.Builder
 	for _, m := range parts[:len(parts)-1] {
-		switch m {
-		case "mod", "meta", "cmd":
+		switch {
+		case mac && (m == "mod" || m == "meta" || m == "cmd"):
 			b.WriteString("⌘")
-		case "shift":
+		case mac && m == "shift":
 			b.WriteString("⇧")
-		case "alt", "option":
+		case mac && (m == "alt" || m == "option"):
 			b.WriteString("⌥")
-		case "ctrl", "control":
+		case m == "ctrl" || m == "control" || (!mac && m == "mod"):
 			b.WriteString("Ctrl+")
+		case !mac && (m == "meta" || m == "cmd"):
+			b.WriteString("Meta+")
+		case !mac && m == "shift":
+			b.WriteString("Shift+")
+		case !mac && (m == "alt" || m == "option"):
+			b.WriteString("Alt+")
 		}
 	}
 	b.WriteString(key)
 	return b.String()
+}
+
+// isMacJS is the browser-side platform test shared by the shortcut
+// listener (which reads mod as Cmd on a Mac, Ctrl elsewhere) and Trigger's
+// hint, so the hint always names the chord the listener wants.
+const isMacJS = `/Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '')`
+
+// hintAttrs returns the Trigger kbd's attributes: both spellings as data
+// attributes and an x-text that picks one by platform. The server renders
+// the Mac spelling; Alpine swaps in the other where it applies.
+func hintAttrs(shortcut string) templ.Attributes {
+	return templ.Attributes{
+		"data-wf-hint-mac":   HintFor(shortcut, true),
+		"data-wf-hint-other": HintFor(shortcut, false),
+		"x-text":             "(" + isMacJS + ") ? $el.dataset.wfHintMac : $el.dataset.wfHintOther",
+	}
 }
 
 // keyShortcuts renders the spec as aria-keyshortcuts: "mod" expands to
@@ -183,11 +212,15 @@ func rootAttrs(p Props) templ.Attributes {
 }
 
 // contentClass reshapes dialog.Content's centered panel. Below sm it is a
-// full-width sheet at the top edge, at most 60dvh tall so the list stays
-// above a phone keyboard (which dvh does not account for). From sm up it is
-// the usual centered panel at max-w-lg.
+// full-width sheet at the top of the visible area: paletteData sets
+// --wf-palette-vh and --wf-palette-top from window.visualViewport (the part
+// of the screen a phone keyboard leaves free, and where it starts), so the
+// sheet can use the whole screen with the keyboard down and stops above it
+// when the keyboard is up. Without visualViewport the sheet is capped at
+// 60dvh, a keyboard allowance, because dvh ignores the keyboard. From sm up
+// it is the usual centered panel at max-w-lg.
 const contentClass = "flex flex-col gap-0 p-0 overflow-hidden " +
-	"left-0 right-0 top-0 translate-x-0 translate-y-0 w-full max-w-none rounded-none rounded-b-xl max-h-[60dvh] pt-[env(safe-area-inset-top,0px)] " +
+	"left-0 right-0 top-[var(--wf-palette-top,0px)] translate-x-0 translate-y-0 w-full max-w-none rounded-none rounded-b-xl max-h-[var(--wf-palette-vh,60dvh)] pt-[env(safe-area-inset-top,0px)] " +
 	"sm:left-[50%] sm:right-auto sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:rounded-lg sm:max-h-[80vh] sm:pt-0"
 
 // paletteData is the Alpine x-data on the dialog root. It filters items by
@@ -207,7 +240,7 @@ const paletteData = `{
 			window.wf = window.wf || {};
 			const api = window.wf.palette = {
 				opener: null,
-				isMac: /Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''),
+				isMac: ` + isMacJS + `,
 				find(id) { return id ? document.getElementById(id) : document.querySelector('[data-wf-palette]') },
 				dialog() { return window.tui && window.tui.dialog },
 				open(id) {
@@ -237,7 +270,23 @@ const paletteData = `{
 			})
 		}
 		const content = root.querySelector('[data-tui-dialog-content]');
-		if (content) new MutationObserver(() => { if (content.getAttribute('data-tui-dialog-open') === 'false') this.closed() }).observe(content, { attributes: true, attributeFilter: ['data-tui-dialog-open'] });
+		// The phone sheet follows the visible area (see contentClass): sized on
+		// every visualViewport resize or scroll and on each open. The listeners
+		// go away with the palette, e.g. after a boosted navigation.
+		const vv = window.visualViewport;
+		const fit = () => {
+			if (!content || !vv) return;
+			if (!content.isConnected) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); return }
+			content.style.setProperty('--wf-palette-vh', vv.height + 'px');
+			content.style.setProperty('--wf-palette-top', vv.offsetTop + 'px')
+		};
+		if (content && vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit) }
+		if (content) new MutationObserver(() => {
+			const open = content.getAttribute('data-tui-dialog-open');
+			if (open === 'true') fit();
+			if (open === 'false') this.closed()
+		}).observe(content, { attributes: true, attributeFilter: ['data-tui-dialog-open'] });
+		fit();
 		this.update()
 	},
 	items() { return Array.from(this.$root.querySelectorAll('[data-wf-palette-item]')) },

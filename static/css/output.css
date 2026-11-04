@@ -310,6 +310,9 @@
   .top-\[50\%\] {
     top: 50%;
   }
+  .top-\[var\(--wf-palette-top\,0px\)\] {
+    top: var(--wf-palette-top,0px);
+  }
   .top-\[var\(--wf-sticky-top\,0px\)\] {
     top: var(--wf-sticky-top,0px);
   }
@@ -598,6 +601,9 @@
   .max-h-\[600px\] {
     max-height: 600px;
   }
+  .max-h-\[var\(--wf-palette-vh\,60dvh\)\] {
+    max-height: var(--wf-palette-vh,60dvh);
+  }
   .min-h-0 {
     min-height: 0px;
   }
@@ -824,6 +830,9 @@
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .resize {
+    resize: both;
   }
   .resize-none {
     resize: none;
