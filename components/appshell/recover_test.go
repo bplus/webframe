@@ -2,6 +2,7 @@ package appshell
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -521,5 +522,82 @@ func TestMiddleware_RequestIDRejectsUnsafeHeader(t *testing.T) {
 		if id := serve(ok); id != ok {
 			t.Errorf("header %q: id = %q, want it kept", ok, id)
 		}
+	}
+}
+
+// TestMiddleware_EchoesRequestID: the response carries X-Request-Id with
+// the id the handler saw in its context: the request's own header when it
+// is valid, a generated id when it is missing or rejected.
+func TestMiddleware_EchoesRequestID(t *testing.T) {
+	var seen string
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = RequestID(r.Context())
+		_, _ = io.WriteString(w, "ok")
+	}))
+	hex16 := regexp.MustCompile(`^[0-9a-f]{16}$`)
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if got := rec.Header().Get("X-Request-Id"); !hex16.MatchString(got) || got != seen {
+		t.Errorf("no header sent: response id %q, context id %q, want the same generated id", got, seen)
+	}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Request-Id", "from-proxy")
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if got := rec.Header().Get("X-Request-Id"); got != "from-proxy" || seen != "from-proxy" {
+		t.Errorf("header sent: response id %q, context id %q, want from-proxy", got, seen)
+	}
+
+	req = httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Request-Id", "has space")
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if got := rec.Header().Get("X-Request-Id"); got == "has space" || !hex16.MatchString(got) || got != seen {
+		t.Errorf("rejected header: response id %q, context id %q, want the same generated id", got, seen)
+	}
+}
+
+// TestMiddleware_PanicKeepsRequestIDHeader: the default 500 still carries
+// the X-Request-Id header, matching the id printed on the page.
+func TestMiddleware_PanicKeepsRequestIDHeader(t *testing.T) {
+	captureLog(t)
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("boom")
+	}))
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Request-Id", "rid-echo")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusInternalServerError || rec.Header().Get("X-Request-Id") != "rid-echo" {
+		t.Errorf("code %d, X-Request-Id %q", rec.Code, rec.Header().Get("X-Request-Id"))
+	}
+	if !strings.Contains(rec.Body.String(), "Request id: rid-echo") {
+		t.Errorf("page lacks the id: %s", rec.Body.String())
+	}
+}
+
+// TestPanicPage_HomeLink: the bare 500 page links home to App.HomeHref,
+// and to "/" when there is no home href (no App).
+func TestPanicPage_HomeLink(t *testing.T) {
+	captureLog(t)
+	a := testApp()
+	a.HomeHref = "/app/"
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("boom")
+	}))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(rec.Body.String(), `<a href="/app/"`) || !strings.Contains(rec.Body.String(), "Go home</a>") {
+		t.Errorf("default 500 lacks the App.HomeHref link: %s", rec.Body.String())
+	}
+
+	var buf bytes.Buffer
+	if err := PanicPage("rid", "").Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), `<a href="/"`) || !strings.Contains(buf.String(), "Go home</a>") {
+		t.Errorf("PanicPage without a home href lacks the / link: %s", buf.String())
 	}
 }

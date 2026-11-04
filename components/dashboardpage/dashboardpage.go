@@ -124,5 +124,18 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
+	if err := p.validateActions(); err != nil {
+		return err
+	}
 	return app.Render(w, r, title, Page(p))
+}
+
+// validateActions runs action.ValidateAll on the header's and every
+// section's actions.
+func (p Props) validateActions() error {
+	groups := [][]action.Action{p.Header.Actions()}
+	for _, s := range p.Sections {
+		groups = append(groups, s.Actions)
+	}
+	return action.ValidateAll(groups...)
 }

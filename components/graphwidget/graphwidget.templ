@@ -9,10 +9,10 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// NodeColorEntry maps one node type to a CSS color. Entries are
-// JSON-encoded into a data attribute for the client script, so any string
-// is safe in the markup; unlike the SVG charts, colors are not passed
-// through utils.SanitizeColor.
+// NodeColorEntry maps one node type to a CSS color. Color passes through
+// utils.SanitizeColor, as the chart components' colors do, because the
+// client script hands it to the canvas as a style; a color with any other
+// character becomes the gray fallback "#888".
 type NodeColorEntry struct {
 	Type  string
 	Color string
@@ -28,7 +28,7 @@ type Props struct {
 	DataURL         string           // endpoint for initial graph JSON
 	Width           int              // px, 0 = fill container
 	Height          int              // px, 0 = fill container
-	BackgroundColor string           // default "transparent"
+	BackgroundColor string           // default "transparent"; passes through utils.SanitizeColor
 	NodeColorMap    []NodeColorEntry // type->color; built-in palette if empty
 	EnableExpand    bool
 	ExpandURL       string // prefix for neighbor expansion endpoint
@@ -47,7 +47,7 @@ func colorMapJSON(entries []NodeColorEntry) string {
 			b.WriteByte(',')
 		}
 		k, _ := json.Marshal(e.Type)
-		v, _ := json.Marshal(e.Color)
+		v, _ := json.Marshal(utils.SanitizeColor(e.Color))
 		b.Write(k)
 		b.WriteByte(':')
 		b.Write(v)
@@ -90,7 +90,7 @@ templ GraphWidget(props ...Props) {
 		data-tui-graph
 		data-tui-graph-data-url={ p.DataURL }
 		if p.BackgroundColor != "" {
-			data-tui-graph-bg={ p.BackgroundColor }
+			data-tui-graph-bg={ utils.SanitizeColor(p.BackgroundColor) }
 		}
 		data-tui-graph-color-map={ colorMapJSON(p.NodeColorMap) }
 		if p.EnableExpand {

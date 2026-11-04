@@ -6,13 +6,14 @@ import (
 )
 
 // Props configures EmptyState. Icon, Title and Description each render
-// only when non-empty. Icon is text (an emoji or glyph), not an icon
-// component.
+// only when set. Icon is a templ.Component like every other icon prop, for
+// example icon.Search(); it is drawn 40px wide in the muted text color and
+// hidden from screen readers, since the title says what it means.
 type Props struct {
 	ID          string
 	Class       string
 	Attributes  templ.Attributes
-	Icon        string
+	Icon        templ.Component
 	Title       string // e.g. "No results"
 	Description string // e.g. "Try adjusting your search filters"
 	// Action, when non-nil, renders as an action.Button before any
@@ -41,9 +42,9 @@ templ EmptyState(props ...Props) {
 		}
 		{ p.Attributes... }
 	>
-		if p.Icon != "" {
-			<div class="mb-3 text-4xl text-muted-foreground">
-				{ p.Icon }
+		if p.Icon != nil {
+			<div class="mb-3 text-muted-foreground [&_svg]:size-10" aria-hidden="true">
+				@p.Icon
 			</div>
 		}
 		if p.Title != "" {

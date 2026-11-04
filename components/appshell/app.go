@@ -72,7 +72,9 @@ const (
 //
 // The request id is reused from an enclosing Middleware, else taken from
 // the X-Request-Id header if it is at most 64 bytes of [A-Za-z0-9._-],
-// else generated.
+// else generated. The id used is echoed in the response's X-Request-Id
+// header (set before next runs), so a browser's network panel or a proxy
+// log can be matched to the server log and to the id an error page shows.
 //
 // A recovered panic is logged with the request id and stack. If nothing
 // has been written yet, any redirect or htmx redirect/retarget headers are
@@ -95,6 +97,7 @@ func (a *App) Middleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, pathKey, r.URL.Path)
 		ctx = context.WithValue(ctx, requestIDKey, id)
 		r = r.WithContext(ctx)
+		w.Header().Set("X-Request-Id", id)
 		rw := &recordingWriter{ResponseWriter: w}
 		defer func() {
 			v := recover()
@@ -193,11 +196,12 @@ func newRequestID() string {
 	return hex.EncodeToString(b[:])
 }
 
-// defaultOnPanic answers a panic with a 500 and a bare PanicPage.
+// defaultOnPanic answers a panic with a 500 and a bare PanicPage that
+// links home to App.HomeHref.
 func (a *App) defaultOnPanic(w http.ResponseWriter, r *http.Request, requestID string, _ any) {
 	SetHeaders(w)
 	w.WriteHeader(http.StatusInternalServerError)
-	if err := renderDocument(w, r, DocProps{Title: "Something went wrong", AppName: a.Name, Head: a.Head}, PanicPage(requestID)); err != nil {
+	if err := renderDocument(w, r, DocProps{Title: "Something went wrong", AppName: a.Name, Head: a.Head}, PanicPage(requestID, a.HomeHref)); err != nil {
 		log.Printf("appshell: render default 500 for %s %s (request %s): %v", r.Method, r.URL.Path, requestID, err)
 	}
 }
@@ -526,4 +530,12 @@ func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status i
 	})
 	doc := Document(DocProps{Title: title, AppName: a.Name, Head: a.Head, Palette: props.Palette})
 	return doc.Render(templ.WithChildren(ctx, page), w)
+}
+
+// panicHome is the panic page's home link: href, or "/" when empty.
+func panicHome(href string) string {
+	if href == "" {
+		return "/"
+	}
+	return href
 }

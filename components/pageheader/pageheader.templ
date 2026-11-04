@@ -29,7 +29,9 @@ type Props struct {
 
 func (p Props) hasActions() bool { return p.Primary != nil || len(p.Secondary) > 0 }
 
-func (p Props) allActions() []action.Action {
+// Actions returns the header's actions in render order: Secondary, then
+// Primary. Page types pass them to action.ValidateAll.
+func (p Props) Actions() []action.Action {
 	out := make([]action.Action, 0, len(p.Secondary)+1)
 	out = append(out, p.Secondary...)
 	if p.Primary != nil {
@@ -77,7 +79,7 @@ templ PageHeader(props ...Props) {
 			</div>
 			if p.hasActions() {
 				<div class="min-w-0 max-w-full">
-					@action.Group(p.allActions())
+					@action.Group(p.Actions())
 				</div>
 			}
 		</div>

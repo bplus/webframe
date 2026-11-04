@@ -200,9 +200,11 @@ func errorItems(fields []formfield.Field, errors map[string]string) []errorItem 
 	return items
 }
 
-// bannerTitle is the summary line: "Please fix the error below." for one
-// error, "Please fix the N errors below." for more.
-func bannerTitle(n int) string {
+// ErrorBannerTitle is the error banner's summary line for n errors:
+// "Please fix the error below." for one, "Please fix the N errors below."
+// for more. formpage, settingspage (through ErrorBanner) and authpage all
+// use it, so the wording lives in one place.
+func ErrorBannerTitle(n int) string {
 	if n == 1 {
 		return "Please fix the error below."
 	}
@@ -244,9 +246,22 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 	if err != nil {
 		return err
 	}
+	if err := p.validateActions(); err != nil {
+		return err
+	}
 	status := 0
 	if len(p.Errors) > 0 {
 		status = http.StatusUnprocessableEntity
 	}
 	return app.RenderPartsStatus(w, r, status, title, Page(p), map[string]templ.Component{p.id(): Body(p)})
+}
+
+// validateActions runs action.ValidateAll on the header, the resolved
+// submit button and Cancel.
+func (p Props) validateActions() error {
+	groups := [][]action.Action{p.Header.Actions(), {p.submit()}}
+	if p.Cancel != nil {
+		groups = append(groups, []action.Action{*p.Cancel})
+	}
+	return action.ValidateAll(groups...)
 }

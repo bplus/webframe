@@ -2,17 +2,14 @@ package layout
 
 import "github.com/bplus/webframe/utils"
 
-// StackProps configures a Stack. Justify distributes children along the
-// column; it only has a visible effect when the Stack is taller than its
-// content (a fixed height, or stretched by a flex or grid parent), since a
-// Stack that hugs its content has no free space to distribute.
+// StackProps configures a Stack. A Stack hugs its content, so it has no
+// main-axis distribution option: there is never free space to spread.
 type StackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 	Gap        Gap
 	Align      Align
-	Justify    Justify
 }
 
 // InlineProps configures an Inline row. A zero Align centers items
@@ -44,9 +41,7 @@ func wrapClass(w bool) string {
 	return "max-md:flex-wrap"
 }
 
-// Stack lays children out vertically with a uniform gap. Justify spreads
-// children along the column when the Stack has room to spare (see
-// StackProps). On phones it renders unchanged: a column is already the
+// Stack lays children out vertically with a uniform gap. On phones it renders unchanged: a column is already the
 // narrow-width layout.
 templ Stack(props ...StackProps) {
 	{{ var p StackProps }}
@@ -57,7 +52,7 @@ templ Stack(props ...StackProps) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), justifyClass(p.Justify), p.Class) }
+		class={ utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), p.Class) }
 		{ p.Attributes... }
 	>
 		{ children... }

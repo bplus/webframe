@@ -10,6 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 
+	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/descriptionlist"
 	"github.com/bplus/webframe/components/layout"
@@ -122,6 +123,9 @@ func (p Props) twoColumnProps() layout.TwoColumnProps {
 func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) error {
 	app, err := appshell.Must(r.Context())
 	if err != nil {
+		return err
+	}
+	if err := action.ValidateAll(p.Header.Actions()); err != nil {
 		return err
 	}
 	return app.Render(w, r, title, Page(p))

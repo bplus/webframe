@@ -9,17 +9,14 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/bplus/webframe/utils"
 
-// StackProps configures a Stack. Justify distributes children along the
-// column; it only has a visible effect when the Stack is taller than its
-// content (a fixed height, or stretched by a flex or grid parent), since a
-// Stack that hugs its content has no free space to distribute.
+// StackProps configures a Stack. A Stack hugs its content, so it has no
+// main-axis distribution option: there is never free space to spread.
 type StackProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
 	Gap        Gap
 	Align      Align
-	Justify    Justify
 }
 
 // InlineProps configures an Inline row. A zero Align centers items
@@ -51,9 +48,7 @@ func wrapClass(w bool) string {
 	return "max-md:flex-wrap"
 }
 
-// Stack lays children out vertically with a uniform gap. Justify spreads
-// children along the column when the Stack has room to spare (see
-// StackProps). On phones it renders unchanged: a column is already the
+// Stack lays children out vertically with a uniform gap. On phones it renders unchanged: a column is already the
 // narrow-width layout.
 func Stack(props ...StackProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -80,7 +75,7 @@ func Stack(props ...StackProps) templ.Component {
 		if len(props) > 0 {
 			p = props[0]
 		}
-		var templ_7745c5c3_Var2 = []any{utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), justifyClass(p.Justify), p.Class)}
+		var templ_7745c5c3_Var2 = []any{utils.TwMerge("flex flex-col", gapClass(p.Gap), alignClass(p.Align), p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -97,7 +92,7 @@ func Stack(props ...StackProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 58, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 53, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -198,7 +193,7 @@ func Inline(props ...InlineProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 77, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/stack.templ`, Line: 72, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {

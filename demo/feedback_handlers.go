@@ -55,7 +55,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		p.Error = "Demo: sign-in is not wired"
 	}
 	if err := authpage.Respond(w, r, p); err != nil {
-		log.Printf("demo: render sign in: %v", err)
+		renderFailed(err, "demo: render sign in")
 	}
 }
 
@@ -64,7 +64,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 func HandleSignedOut(w http.ResponseWriter, r *http.Request) {
 	p := authpage.Props{ID: "signed-out", Mode: authpage.ModeSignedOut, Action: "/signin"}
 	if err := authpage.Respond(w, r, p); err != nil {
-		log.Printf("demo: render signed out: %v", err)
+		renderFailed(err, "demo: render signed out")
 	}
 }
 
@@ -75,7 +75,7 @@ func HandleSignedOut(w http.ResponseWriter, r *http.Request) {
 func HandleForbidden(w http.ResponseWriter, r *http.Request) {
 	p := authpage.Props{ID: "forbidden", Mode: authpage.ModeForbidden}
 	if err := authpage.Respond(w, r, p); err != nil {
-		log.Printf("demo: render forbidden: %v", err)
+		renderFailed(err, "demo: render forbidden")
 	}
 }
 

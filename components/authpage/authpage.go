@@ -7,7 +7,6 @@ package authpage
 import (
 	"net/http"
 	"sort"
-	"strconv"
 
 	"github.com/a-h/templ"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/formpage"
 )
 
 // Mode selects which of the three pages renders. The zero value is
@@ -207,18 +207,13 @@ func (p Props) hasBanner() bool {
 	return p.Error != "" || len(p.Errors) > 0
 }
 
-// bannerTitle is Error when set, otherwise "Please fix the
-// error below." for one error and "Please fix the N errors below." for
-// more.
+// bannerTitle is Error when set, otherwise formpage's summary line for
+// the number of field errors.
 func (p Props) bannerTitle() string {
 	if p.Error != "" {
 		return p.Error
 	}
-	n := len(p.Errors)
-	if n == 1 {
-		return "Please fix the error below."
-	}
-	return "Please fix the " + strconv.Itoa(n) + " errors below."
+	return formpage.ErrorBannerTitle(len(p.Errors))
 }
 
 // errorItem is one line of the summary banner.
@@ -311,6 +306,9 @@ func provider(a action.Action) action.Action {
 // it) and appshell.RenderBare otherwise. The status is 200, or 422 when
 // Error or Errors is set.
 func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
+	if err := action.ValidateAll([]action.Action{p.submit()}, p.Providers); err != nil {
+		return err
+	}
 	if p.Error != "" || len(p.Errors) > 0 {
 		appshell.SetHeaders(w)
 		w.WriteHeader(http.StatusUnprocessableEntity)

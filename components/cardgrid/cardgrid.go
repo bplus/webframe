@@ -121,7 +121,7 @@ func (p Props) padding() string {
 // empty resolves the zero-value Empty props to the default title.
 func (p Props) empty() emptystate.Props {
 	e := p.Empty
-	if e.Title == "" && e.Description == "" && e.Icon == "" && e.Action == nil {
+	if e.Title == "" && e.Description == "" && e.Icon == nil && e.Action == nil {
 		e.Title = "Nothing here yet"
 	}
 	return e

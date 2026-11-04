@@ -190,7 +190,7 @@ func validateSettings(vals map[string]string) map[string]string {
 // /settings).
 func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	if err := settingspage.Respond(w, r, "Settings", settingsProps(Settings.Values(), Settings.Env())); err != nil {
-		log.Printf("demo: render settings: %v", err)
+		renderFailed(err, "demo: render settings")
 	}
 }
 
@@ -216,7 +216,7 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 	if errs := validateSettings(vals); len(errs) > 0 {
 		p.Values, p.Errors = vals, errs
 		if err := settingspage.Respond(w, r, "Settings", p); err != nil {
-			log.Printf("demo: render settings errors: %v", err)
+			renderFailed(err, "demo: render settings errors")
 		}
 		return
 	}

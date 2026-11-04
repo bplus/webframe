@@ -16,10 +16,10 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// NodeColorEntry maps one node type to a CSS color. Entries are
-// JSON-encoded into a data attribute for the client script, so any string
-// is safe in the markup; unlike the SVG charts, colors are not passed
-// through utils.SanitizeColor.
+// NodeColorEntry maps one node type to a CSS color. Color passes through
+// utils.SanitizeColor, as the chart components' colors do, because the
+// client script hands it to the canvas as a style; a color with any other
+// character becomes the gray fallback "#888".
 type NodeColorEntry struct {
 	Type  string
 	Color string
@@ -35,7 +35,7 @@ type Props struct {
 	DataURL         string           // endpoint for initial graph JSON
 	Width           int              // px, 0 = fill container
 	Height          int              // px, 0 = fill container
-	BackgroundColor string           // default "transparent"
+	BackgroundColor string           // default "transparent"; passes through utils.SanitizeColor
 	NodeColorMap    []NodeColorEntry // type->color; built-in palette if empty
 	EnableExpand    bool
 	ExpandURL       string // prefix for neighbor expansion endpoint
@@ -54,7 +54,7 @@ func colorMapJSON(entries []NodeColorEntry) string {
 			b.WriteByte(',')
 		}
 		k, _ := json.Marshal(e.Type)
-		v, _ := json.Marshal(e.Color)
+		v, _ := json.Marshal(utils.SanitizeColor(e.Color))
 		b.Write(k)
 		b.WriteByte(':')
 		b.Write(v)
@@ -153,9 +153,9 @@ func GraphWidget(props ...Props) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.BackgroundColor)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(utils.SanitizeColor(p.BackgroundColor))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 93, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/graphwidget/graphwidget.templ`, Line: 93, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
