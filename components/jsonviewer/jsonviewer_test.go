@@ -202,3 +202,30 @@ func TestZeroValue(t *testing.T) {
 		t.Errorf("nil Value renders as null:\n%s", html)
 	}
 }
+
+// TestCopyPathHiddenUntilRowFocus checks the reveal wiring: every copy
+// button sits in an sr-only wrapper that the row's hover or focus (or the
+// button's own focus) undoes, and leaf rows are tap-focusable without
+// becoming Tab stops.
+func TestCopyPathHiddenUntilRowFocus(t *testing.T) {
+	v := map[string]any{"a": []any{1}, "e": map[string]any{}}
+	html := render(t, jsonviewer.Props{Value: v, CopyPath: true})
+	buttons := strings.Count(html, `aria-label="Copy path `)
+	wrappers := strings.Count(html, `<span class="sr-only shrink-0 group-hover/row:not-sr-only group-focus-within/row:not-sr-only focus-within:not-sr-only">`)
+	if buttons == 0 || wrappers != buttons {
+		t.Errorf("want one hidden wrapper per copy button, got %d wrappers for %d buttons:\n%s", wrappers, buttons, html)
+	}
+	for _, want := range []string{
+		`<summary class="group/row `,       // a summary row reveals its button on focus
+		`data-path="$.a[0]" tabindex="-1"`, // a scalar row is tap-focusable
+		`data-path="$.e" tabindex="-1"`,    // so is an empty container row
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in:\n%s", want, html)
+		}
+	}
+	plain := render(t, jsonviewer.Props{Value: v})
+	if strings.Contains(plain, "tabindex") || strings.Contains(plain, "group/row focus") {
+		t.Errorf("without CopyPath rows are not focusable:\n%s", plain)
+	}
+}

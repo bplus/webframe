@@ -36,13 +36,13 @@ templ JSONViewer(p Props) {
 templ (p Props) nodeView(n *node, path string, key string, isMember bool, depth int) {
 	if n.isContainer() {
 		if n.size() == 0 {
-			<div class="flex items-center gap-1" data-path={ path }>
+			<div class={ p.rowClass("flex items-center gap-1") } data-path={ path } { p.rowAttrs()... }>
 				@p.keyView(key, isMember)
 				<span class="text-muted-foreground">{ n.emptyLabel() }</span>
 				@p.copyPath(path)
 			</div>
 		} else if p.isElided(depth) {
-			<div class="flex items-center gap-1" data-path={ path }>
+			<div class={ p.rowClass("flex items-center gap-1") } data-path={ path } { p.rowAttrs()... }>
 				@p.keyView(key, isMember)
 				<span class="text-muted-foreground" title="elided: deeper than MaxDepth">… { n.sizeLabel() }</span>
 				@p.copyPath(path)
@@ -55,7 +55,7 @@ templ (p Props) nodeView(n *node, path string, key string, isMember bool, depth 
 					open
 				}
 			>
-				<summary class="flex cursor-pointer list-none items-center gap-1 rounded-sm hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+				<summary class="group/row flex cursor-pointer list-none items-center gap-1 rounded-sm hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
 					<span class="inline-block w-3 shrink-0 select-none text-muted-foreground transition-transform group-open/json:rotate-90" aria-hidden="true">▸</span>
 					@p.keyView(key, isMember)
 					<span class="text-muted-foreground">{ n.sizeLabel() }</span>
@@ -77,7 +77,7 @@ templ (p Props) nodeView(n *node, path string, key string, isMember bool, depth 
 			</details>
 		}
 	} else {
-		<div class="flex items-start gap-1 pl-4" data-path={ path }>
+		<div class={ p.rowClass("flex items-start gap-1 pl-4") } data-path={ path } { p.rowAttrs()... }>
 			@p.keyView(key, isMember)
 			<span class={ n.scalarClass() }>{ n.scalarText() }</span>
 			@p.copyPath(path)
@@ -95,16 +95,24 @@ templ (p Props) keyView(key string, isMember bool) {
 // copyPath renders the copy-path button when CopyPath is set. Inside a
 // <summary> the caller wraps it in an element that calls preventDefault on
 // the click, so copying a path does not also toggle the node.
+//
+// The button is visually hidden (sr-only, so it takes no room and stays in
+// the tab order) until its row is hovered or holds focus: Tab onto the
+// button reveals it, and on a phone a tap focuses the row (a summary is
+// focusable; a leaf row has tabindex="-1") and reveals that row's button
+// only.
 templ (p Props) copyPath(path string) {
 	if p.CopyPath {
-		@copybutton.CopyButton(copybutton.Props{
-			Value: path,
-			Size:  copybutton.SizeSm,
-			Class: "ml-1 h-5 w-5 shrink-0",
-			Attributes: templ.Attributes{
-				"aria-label": "Copy path " + path,
-				"title":      path,
-			},
-		})
+		<span class="sr-only shrink-0 group-hover/row:not-sr-only group-focus-within/row:not-sr-only focus-within:not-sr-only">
+			@copybutton.CopyButton(copybutton.Props{
+				Value: path,
+				Size:  copybutton.SizeSm,
+				Class: "ml-1 h-5 w-5 shrink-0",
+				Attributes: templ.Attributes{
+					"aria-label": "Copy path " + path,
+					"title":      path,
+				},
+			})
+		</span>
 	}
 }

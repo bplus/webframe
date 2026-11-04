@@ -50,7 +50,9 @@ type Props struct {
 	// deepest rendered container are still printed.
 	MaxDepth int
 	// CopyPath adds a copy button to every node that copies its JSON path
-	// (for example $.items[0].name) to the clipboard.
+	// (for example $.items[0].name) to the clipboard. The buttons stay
+	// hidden until their row is hovered, tapped or reached with Tab, so a
+	// large tree on a phone is not a column of buttons.
 	CopyPath bool
 	// Sort orders every object's keys alphabetically instead of keeping
 	// the order the marshaller wrote them in.
@@ -293,4 +295,24 @@ func keyLabel(key string, isMember bool) string {
 // errorText is the message rendered when the value cannot be marshalled.
 func errorText(err error) string {
 	return "cannot render value: " + strings.TrimSpace(err.Error())
+}
+
+// rowClass is the class list of a leaf row (a scalar, an empty or an elided
+// container). With CopyPath the row is the group the copy button's reveal
+// keys on and drops the focus outline a tap would otherwise draw.
+func (p Props) rowClass(base string) string {
+	if !p.CopyPath {
+		return base
+	}
+	return base + " group/row focus:outline-none"
+}
+
+// rowAttrs makes a leaf row focusable by pointer only (tabindex="-1", so it
+// is not a Tab stop) when CopyPath is set: on a phone a tap focuses the row
+// and that reveals its copy button.
+func (p Props) rowAttrs() templ.Attributes {
+	if !p.CopyPath {
+		return nil
+	}
+	return templ.Attributes{"tabindex": "-1"}
 }
