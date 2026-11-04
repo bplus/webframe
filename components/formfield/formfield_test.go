@@ -400,8 +400,8 @@ func TestField_Rating(t *testing.T) {
 
 func TestField_RatingDefaultsAndError(t *testing.T) {
 	out := render(t, FormField(Field{Name: "stars", Label: "Stars", Type: TypeRating, Value: "junk", Error: "Pick one"}))
-	if n := strings.Count(out, `type="radio"`); n != DefaultRatingMax {
-		t.Errorf("got %d radios, want %d: %s", n, DefaultRatingMax, out)
+	if n := strings.Count(out, `type="radio" data-star`); n != DefaultRatingMax {
+		t.Errorf("got %d star radios, want %d: %s", n, DefaultRatingMax, out)
 	}
 	if checkedAttr.MatchString(out) {
 		t.Errorf("a non-numeric Value must check nothing: %s", out)
@@ -450,18 +450,25 @@ func TestField_DateError(t *testing.T) {
 }
 
 func TestField_File(t *testing.T) {
-	out := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Accept: "image/*", Multiple: true, Preview: true, Required: true, Help: "PNG", Value: "ignored.png"}))
-	// The root is f.ControlID(); the hidden file input is the labelled control.
-	mustContain(t, out, `id="field-art"`, `for="field-art-input"`)
+	out := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Accept: "image/*", Multiple: true, Preview: true, Required: true, Help: "PNG"}))
+	// f.ControlID() is the hidden file input, the labelled control; the
+	// Alpine root is ControlID()+"-root".
+	mustContain(t, out, `id="field-art-root"`, `for="field-art"`)
+	if strings.Contains(out, "Choose the files again") {
+		t.Errorf("no ChooseAgain line without Value or Error: %s", out)
+	}
 	in := tag(t, out, `<input type="file"[^>]*>`)
-	mustContain(t, in, `id="field-art-input"`, `name="art"`, `accept="image/*"`, " multiple",
+	mustContain(t, in, `id="field-art"`, `name="art"`, `accept="image/*"`, " multiple",
 		`aria-describedby="field-art-help field-art-feedback"`)
 	if n := len(requiredAttr.FindAllString(in, -1)); n != 1 {
 		t.Errorf("got %d required, want 1: %s", n, in)
 	}
-	if strings.Contains(in, "value=") || strings.Contains(out, "ignored.png") {
-		t.Errorf("a file input cannot carry a value: %s", out)
+	// A Value cannot refill the input; it asks for the file again.
+	withValue := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Value: "ignored.png"}))
+	if strings.Contains(tag(t, withValue, `<input type="file"[^>]*>`), "value=") || strings.Contains(withValue, "ignored.png") {
+		t.Errorf("a file input cannot carry a value: %s", withValue)
 	}
+	mustContain(t, withValue, "Choose the file again")
 	if strings.Contains(in, `aria-invalid="true"`) {
 		t.Errorf("unexpected aria-invalid without Error: %s", in)
 	}
@@ -483,6 +490,21 @@ func TestField_FileError(t *testing.T) {
 	}
 	// The zone styles itself from the input's aria-invalid.
 	mustContain(t, out, "has-aria-invalid:border-destructive", "Too big", `role="alert"`)
+	// The file the user chose is gone after the failed POST: say so.
+	mustContain(t, out, "Choose the file again")
+	mustContain(t, in, `aria-describedby="field-art-again field-art-feedback"`)
+}
+
+// TestField_FileControlIDIsInput: Field.ControlID() resolves to the
+// <input type="file">, so a caller's "#"+ControlID() link or label lands
+// on the control, not on a wrapper.
+func TestField_FileControlIDIsInput(t *testing.T) {
+	f := Field{Name: "art", Label: "Artwork", Type: TypeFile}
+	out := render(t, FormField(f))
+	el := tag(t, out, `<[a-z]+ [^>]*id="`+f.ControlID()+`"[^>]*>`)
+	if !strings.HasPrefix(el, `<input type="file"`) {
+		t.Errorf("id %q is on %s, want the file input", f.ControlID(), el)
+	}
 }
 
 func TestField_WidgetValidateUsesChange(t *testing.T) {

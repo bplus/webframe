@@ -22,8 +22,11 @@
 //     parses with datetimepicker.Parse;
 //   - TypeFile (filedrop): Accept, Multiple and Preview configure the
 //     zone; the form must be multipart (formpage.Props.Multipart); a file
-//     input cannot be refilled, so Value is ignored and a re-rendered page
-//     shows the zone empty.
+//     input cannot be refilled, so a re-rendered page shows the zone
+//     empty. A non-empty Value or Error, or ChooseAgain (which formpage
+//     and settingspage set when the form has Errors), adds the line
+//     "Choose the file again" under the zone. ControlID is the
+//     <input type="file">.
 //
 // The wiring is the same for every Type: the label points at the control
 // that receives focus, that control carries aria-describedby naming the
@@ -119,6 +122,10 @@ type Field struct {
 	Multiple bool
 	// Preview shows image thumbnails in a TypeFile field's file list.
 	Preview bool
+	// ChooseAgain asks the user to pick a TypeFile field's file again
+	// after a failed POST (the browser cannot refill it). formpage and
+	// settingspage set it when the form has Errors. Other types ignore it.
+	ChooseAgain bool
 	// Required marks the label with * and puts `required` on the control.
 	// For TypeSelect the submitting control is a hidden input the browser
 	// never validates, so enforce it with Validate or a server-side Error.
