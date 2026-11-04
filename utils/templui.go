@@ -4,6 +4,8 @@ package utils
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"crypto/rand"
@@ -20,8 +22,43 @@ import (
 // puts its caller-supplied props.Class last — consumers can override component
 // defaults. Always use this instead of string concatenation, which would emit
 // both conflicting classes and leave the outcome to CSS order.
+//
+// The result keeps the input order: each surviving class sits where its last
+// occurrence was. The upstream merge decides which classes survive, but it
+// writes them out by ranging over a Go map (and puts every non-Tailwind class
+// first), so its order changes from one process to the next. inputOrder puts
+// the survivors back in place, so the same props render the same HTML on
+// every run.
 func TwMerge(classes ...string) string {
-	return twmerge.Merge(classes...)
+	return inputOrder(classes, twmerge.Merge(classes...))
+}
+
+// inputOrder returns the classes in merged, ordered by the position of their
+// last occurrence in parts. merged is always drawn from parts, so every class
+// in it is found. Counting handles a class the merge kept more than once
+// (upstream keeps repeated non-Tailwind classes).
+func inputOrder(parts []string, merged string) string {
+	keep := strings.Fields(merged)
+	if len(keep) < 2 {
+		return merged
+	}
+	left := make(map[string]int, len(keep))
+	for _, c := range keep {
+		left[c]++
+	}
+	var all []string
+	for _, p := range parts {
+		all = append(all, strings.Fields(p)...)
+	}
+	out := make([]string, 0, len(keep))
+	for i := len(all) - 1; i >= 0; i-- {
+		if c := all[i]; left[c] > 0 {
+			left[c]--
+			out = append(out, c)
+		}
+	}
+	slices.Reverse(out)
+	return strings.Join(out, " ")
 }
 
 // If returns value if condition is true, otherwise the zero value of type T.
