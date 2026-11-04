@@ -46,14 +46,14 @@ func Respond(w http.ResponseWriter, r *http.Request, p Props) error {
 		status = http.StatusInternalServerError
 	}
 	title, _ := defaults(p)
-	appshell.SetHeaders(w)
 	if app, ok := appshell.FromContext(r.Context()); ok {
 		// RenderStatus runs App.Flash and sets the headers before writing
 		// the status, so a pending flash is still cleared.
 		return app.RenderStatus(w, r, status, title, ErrorPage(p))
 	}
 	// No App (and no flash): no app name, so the document title is the
-	// page title alone.
+	// page title alone. SetHeaders must run before WriteHeader freezes
+	// the headers; RenderBare's own call comes too late.
 	appshell.SetHeaders(w)
 	w.WriteHeader(status)
 	return appshell.RenderBare(w, r, "", title, ErrorPage(p))
