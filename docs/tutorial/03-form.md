@@ -125,18 +125,7 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	books = append(books, book)
 	booksLock.Unlock()
 	flash.Success(w, r, "Saved", book.Title+" was added.")
-	redirect(w, r, "/books")
-}
-
-// redirect sends the browser to url after a POST. An htmx request gets an
-// HX-Redirect header instead of a 303, because htmx would follow the 303
-// itself and put the whole list page inside the form.
-func redirect(w http.ResponseWriter, r *http.Request, url string) {
-	if appshell.IsHX(r) {
-		w.Header().Set("HX-Redirect", url)
-		return
-	}
-	http.Redirect(w, r, url, http.StatusSeeOther)
+	appshell.Redirect(w, r, "/books")
 }
 
 func routes() http.Handler {
@@ -194,14 +183,13 @@ to `/books/new`. `action.VariantPrimary` makes it the filled button.
 2. It appends the book to `books`, holding the lock.
 3. `flash.Success(w, r, "Saved", ...)` stores the message in a short-lived
    cookie.
-4. `redirect` sends the browser back to the list, which reads the cookie,
-   shows the banner and deletes the cookie.
+4. `appshell.Redirect` sends the browser back to the list, which reads the
+   cookie, shows the banner and deletes the cookie.
 
-**`redirect`** handles the two kinds of submit. A normal form post gets a
-303 redirect, the usual answer to a POST: the browser loads the list, and
-pressing reload there does not post the form again. An htmx submit gets an
-`HX-Redirect` header instead, which tells htmx to load the list as a full
-page. `appshell.IsHX(r)` tells the two apart.
+**`appshell.Redirect`** answers a normal form post with a 303 redirect, so
+pressing reload on the list does not post the form again, and an htmx submit
+with an `HX-Redirect` header, which tells htmx to load the list as a full
+page.
 
 **`routes`** adds the two new routes: `GET /books/new` for the form and
 `POST /books` for the save.

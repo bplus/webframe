@@ -222,7 +222,7 @@ func HandleSettingsSave(w http.ResponseWriter, r *http.Request) {
 	}
 	vals["display_name"] = strings.TrimSpace(vals["display_name"])
 	Settings.Save(vals, rows)
-	redirectTo(w, r, "/settings")
+	appshell.Redirect(w, r, "/settings")
 }
 
 // HandleDeleteAccount answers the Danger zone's confirmed action (POST

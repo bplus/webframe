@@ -136,18 +136,7 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	books = append(books, book)
 	booksLock.Unlock()
 	flash.Success(w, r, "Saved", book.Title+" was added.")
-	redirect(w, r, "/books")
-}
-
-// redirect sends the browser to url after a POST. An htmx request gets an
-// HX-Redirect header instead of a 303, because htmx would follow the 303
-// itself and put the whole list page inside the form.
-func redirect(w http.ResponseWriter, r *http.Request, url string) {
-	if appshell.IsHX(r) {
-		w.Header().Set("HX-Redirect", url)
-		return
-	}
-	http.Redirect(w, r, url, http.StatusSeeOther)
+	appshell.Redirect(w, r, "/books")
 }
 
 func routes() http.Handler {

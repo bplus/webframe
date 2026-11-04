@@ -283,6 +283,21 @@ func IsHX(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"
 }
 
+// Redirect sends the browser to url, typically after a successful POST.
+// A plain request gets 303 See Other with a Location header, so a reload
+// on the new page does not submit the form again. An htmx request gets an
+// empty 200 with an HX-Redirect header instead: htmx follows a 3xx itself
+// and would swap the whole new page into the form, while HX-Redirect makes
+// it load url as a full page. Set any flash cookie before calling it.
+func Redirect(w http.ResponseWriter, r *http.Request, url string) {
+	if IsHX(r) {
+		w.Header().Set("HX-Redirect", url)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
 // WantsFragment reports whether r wants only the page body. htmx 2 sends
 // HX-Request for boosted links (HX-Boosted) and history restores
 // (HX-History-Restore-Request) too, and swaps those responses into <body>,

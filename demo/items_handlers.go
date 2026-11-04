@@ -255,7 +255,7 @@ func HandleItemDelete(w http.ResponseWriter, r *http.Request) {
 		respondResults(w, r)
 		return
 	}
-	redirectTo(w, r, "/items")
+	appshell.Redirect(w, r, "/items")
 }
 
 // refuseDelete answers a delete of the protected item: the action failed
@@ -301,18 +301,6 @@ func HandleItemsPublish(w http.ResponseWriter, r *http.Request) {
 	n := Items.Publish(r.Form["ids"])
 	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("published %s (%d selected)", plural(n, "item"), len(r.Form["ids"])))
 	respondResults(w, r)
-}
-
-// redirectTo sends the browser to location: HX-Redirect with an empty 200
-// for an htmx request (htmx ignores a 3xx body and would swap the target
-// page in place), 303 See Other otherwise.
-func redirectTo(w http.ResponseWriter, r *http.Request, location string) {
-	if appshell.IsHX(r) {
-		w.Header().Set("HX-Redirect", location)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	http.Redirect(w, r, location, http.StatusSeeOther)
 }
 
 // ---- detail ---------------------------------------------------------------
@@ -706,7 +694,7 @@ func HandleItemCreate(w http.ResponseWriter, r *http.Request) {
 	it = Items.Create(it)
 	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("created item #%s %s (%s, %s)", it.ID, it.Name, it.Type, it.Status))
 	flash.Success(w, r, "Saved", it.Name+" was created.")
-	redirectTo(w, r, "/items/"+it.ID)
+	appshell.Redirect(w, r, "/items/"+it.ID)
 }
 
 // HandleItemUpdate handles the edit form's submit (POST /items/{id}), with
@@ -747,7 +735,7 @@ func HandleItemUpdate(w http.ResponseWriter, r *http.Request) {
 	Items.Update(updated)
 	Logs.Append(logviewer.LevelInfo, fmt.Sprintf("updated item #%s %s (%s, %s)", updated.ID, updated.Name, updated.Type, updated.Status))
 	flash.Success(w, r, "Saved", updated.Name+" was updated.")
-	redirectTo(w, r, "/items/"+updated.ID)
+	appshell.Redirect(w, r, "/items/"+updated.ID)
 }
 
 // HandleItemValidate answers one field's blur validation (POST

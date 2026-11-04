@@ -63,7 +63,7 @@ Behavior worth knowing before you change a handler or a page type:
 
 - **Partial responses.** `Respond` serves only the named region when `HX-Target` names it (for example `listpage.Results`, id `ID+"-results"`), the page body for other htmx requests and the full document otherwise. Handlers acting from inside a list use `listquery.ParseCurrent` (the `HX-Current-URL` query) and `listpage.RespondResults`.
 - **Errors swap.** `appshell.Document` configures htmx to swap 4xx/5xx responses like 2xx, so a failed form POST re-renders with status 422, and `errorpage` or `toast.Respond` answer other errors. `htmx-errors.js` refuses a non-HTML error body (a plain `http.Error` 500) and anything targeting an element marked `data-wf-swallow-errors`.
-- **Feedback.** `toast.Send` for htmx responses (out of band into `#toast-container`); `flash.Set`/`flash.Success` before a redirect (rendered once in `#wf-flash`); `action.Confirm` for a styled confirmation dialog handled by `confirm.js`.
+- **Feedback.** `toast.Send` for htmx responses (out of band into `#toast-container`); `flash.Set`/`flash.Success` before a redirect (rendered once in `#wf-flash`); `appshell.Redirect(w, r, url)` for that redirect (303, or `HX-Redirect` with an empty 200 for an htmx submit; never hand-write it); `action.Confirm` for a styled confirmation dialog handled by `confirm.js`.
 - **Field validation.** `Field.Validate` is a URL; the handler's whole body is `formfield.RespondFeedback(w, r, field, msg)`, status 200 either way.
 - **Panics.** `appshell.Middleware` recovers, logs with the request id (`appshell.RequestID(ctx)`) and answers through `App.OnPanic` when nothing has been written yet.
 
