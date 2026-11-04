@@ -193,11 +193,11 @@ func errorItems(fields []formfield.Field, errors map[string]string) []errorItem 
 	return items
 }
 
-// bannerTitle is the summary line: "Please fix the N errors below."
-// (singular for one).
+// bannerTitle is the summary line: "Please fix the error below." for one
+// error, "Please fix the N errors below." for more.
 func bannerTitle(n int) string {
 	if n == 1 {
-		return "Please fix the 1 error below."
+		return "Please fix the error below."
 	}
 	return "Please fix the " + strconv.Itoa(n) + " errors below."
 }

@@ -166,7 +166,7 @@ func TestSignIn_ValuesAndErrors(t *testing.T) {
 	mustContain(t, out,
 		`value="a@b.c"`,
 		`aria-invalid="true"`, "Required",
-		`role="alert"`, "Please fix the 1 error below.",
+		`role="alert"`, "Please fix the error below.",
 		`href="#field-password"`, "Password: Required",
 	)
 	// The password field is the invalid one, not the email field.

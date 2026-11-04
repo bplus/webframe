@@ -207,15 +207,16 @@ func (p Props) hasBanner() bool {
 	return p.Error != "" || len(p.Errors) > 0
 }
 
-// bannerTitle is Error when set, otherwise "Please fix the N errors
-// below."
+// bannerTitle is Error when set, otherwise "Please fix the
+// error below." for one error and "Please fix the N errors below." for
+// more.
 func (p Props) bannerTitle() string {
 	if p.Error != "" {
 		return p.Error
 	}
 	n := len(p.Errors)
 	if n == 1 {
-		return "Please fix the 1 error below."
+		return "Please fix the error below."
 	}
 	return "Please fix the " + strconv.Itoa(n) + " errors below."
 }
