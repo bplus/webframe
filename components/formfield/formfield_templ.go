@@ -879,7 +879,7 @@ func dateControl(f Field) templ.Component {
 func fileProps(f Field) filedrop.Props {
 	return filedrop.Props{
 		ID:          f.ControlID(),
-		ChooseAgain: f.ChooseAgain || f.Value != "" || f.Error != "",
+		ChooseAgain: f.ChooseAgain || f.Error != "",
 		Name:        f.Name,
 		Accept:      f.Accept,
 		Multiple:    f.Multiple,

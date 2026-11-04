@@ -23,9 +23,10 @@
 //   - TypeFile (filedrop): Accept, Multiple and Preview configure the
 //     zone; the form must be multipart (formpage.Props.Multipart); a file
 //     input cannot be refilled, so a re-rendered page shows the zone
-//     empty. A non-empty Value or Error, or ChooseAgain (which formpage
-//     and settingspage set when the form has Errors), adds the line
-//     "Choose the file again" under the zone. ControlID is the
+//     empty. An Error, or ChooseAgain (which formpage and settingspage
+//     set when the form has Errors), adds the line "Choose the file
+//     again" under the zone. Value alone does not: an edit page may put
+//     the current file name there, and the first load is not a retry. ControlID is the
 //     <input type="file">.
 //
 // The wiring is the same for every Type: the label points at the control
