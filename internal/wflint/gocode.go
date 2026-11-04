@@ -36,11 +36,30 @@ var goRuleText = map[string][2]string{
 // content markup (its HTML type is the one templ.Raw in the library).
 const proseImportPath = "github.com/bplus/webframe/components/prose"
 
-// proseImportRe finds the file's import of prose, with its alias when it
-// has one: a one-line import statement or a line of an import block. The
-// import keyword is tried before the line start so it is never read as the
-// alias.
-var proseImportRe = regexp.MustCompile(`(?m)(?:\bimport|^)[ \t]*(?:([A-Za-z_]\w*)[ \t]+)?"` + regexp.QuoteMeta(proseImportPath) + `"`)
+// importNameRe matches a file's import of one package path, with its alias
+// when it has one: a one-line import statement or a line of an import
+// block. The import keyword is tried before the line start so it is never
+// read as the alias.
+func importNameRe(path string) *regexp.Regexp {
+	return regexp.MustCompile(`(?m)(?:\bimport|^)[ \t]*(?:([A-Za-z_]\w*)[ \t]+)?"` + regexp.QuoteMeta(path) + `"`)
+}
+
+// importName reports the name src uses for the package imported by re (an
+// importNameRe): the alias, or def when the import has none. ok is false
+// when src does not import the package, or imports it blank. A dot import
+// does not match: the callers need a selector.
+func importName(src string, re *regexp.Regexp, def string) (name string, ok bool) {
+	m := re.FindStringSubmatch(src)
+	if m == nil || m[1] == "_" {
+		return "", false
+	}
+	if m[1] == "" {
+		return def, true
+	}
+	return m[1], true
+}
+
+var proseImportRe = importNameRe(proseImportPath)
 
 // htmlKeyRe finds the HTML: key of a prose.Props literal.
 var htmlKeyRe = regexp.MustCompile(`\bHTML:\s*`)
@@ -60,15 +79,8 @@ type proseScope struct {
 // (a .go file, or a .templ file whose import block is one of its Go
 // sections). A dot import is not resolved: the exemption needs a selector.
 func proseScopeOf(src string) *proseScope {
-	m := proseImportRe.FindStringSubmatch(src)
-	if m == nil {
-		return nil
-	}
-	alias := m[1]
-	switch alias {
-	case "":
-		alias = "prose"
-	case "_":
+	alias, ok := importName(src, proseImportRe, "prose")
+	if !ok {
 		return nil
 	}
 	q := `\b` + regexp.QuoteMeta(alias)

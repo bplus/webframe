@@ -14,6 +14,9 @@ type walker struct {
 	// prose is how the file names the prose package (nil when it does not
 	// import it); html-from-go-string leaves prose's content literals alone.
 	prose *proseScope
+	// fencePrefixes are the call texts that open a CustomPage or
+	// CustomBlock fence in this file, under its import names.
+	fencePrefixes []fencePrefix
 }
 
 func (w *walker) report(r parser.Range, rule, msg, hint string) {
@@ -53,7 +56,7 @@ func (w *walker) node(n parser.Node, inFence bool) {
 			w.checkAttrs(n.Range, n.Attributes, true)
 		}
 	case *parser.TemplElementExpression:
-		if kind, ok := fenceOf(n.Expression.Value); ok {
+		if kind, ok := fenceOf(n.Expression.Value, w.fencePrefixes); ok {
 			w.fence(n, kind)
 			w.nodes(n.Children, true)
 			return
