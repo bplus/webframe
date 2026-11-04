@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
+	"github.com/bplus/webframe/components/datatable"
 )
 
 func render(t *testing.T, c templ.Component) string {
@@ -78,8 +79,8 @@ func TestTable_RowsAndCols(t *testing.T) {
 	if got := bars(out); got != 16 {
 		t.Errorf("bars = %d, want 16", got)
 	}
-	// datatable's non-dense paddings: table.Head h-10 px-3, table.Cell p-3, max-md:px-2.
-	mustContain(t, out, `id="tbl"`, `aria-busy="true"`, `data-x="1"`, "h-10", "px-3", "p-3", "max-md:px-2", "h-5", "<caption class=\"sr-only\">Loading…</caption>", "hover:bg-transparent")
+	// datatable's non-dense paddings: table.Head h-10 px-3, table.Cell p-3, and datatable.PhoneCellPad below md.
+	mustContain(t, out, `id="tbl"`, `aria-busy="true"`, `data-x="1"`, "h-10", "px-3", "p-3", datatable.PhoneCellPad, "h-5", "<caption class=\"sr-only\">Loading…</caption>", "hover:bg-transparent")
 	if got := strings.Count(out, "Loading…"); got != 1 {
 		t.Errorf("Loading… count = %d, want 1", got)
 	}

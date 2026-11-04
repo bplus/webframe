@@ -107,7 +107,8 @@ templ Palette(p Props) {
 }
 
 // Trigger renders a small ghost button that opens the palette. From md up it
-// shows "Search" and the shortcut hint; below md, just the icon. Opening and
+// shows "Search" and the shortcut hint, spelled for the visitor's platform
+// (⌘K on a Mac, Ctrl+K elsewhere); below md, just the icon. Opening and
 // focusing the input happen in the same click, so a phone keyboard opens too.
 templ Trigger(p Props) {
 	{{ p = p.withDefaults() }}
@@ -127,6 +128,6 @@ templ Trigger(p Props) {
 	}) {
 		@icon.Search(icon.Props{Size: 16})
 		<span class="hidden md:inline">Search</span>
-		<kbd class="hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground md:inline-flex">{ Hint(p.Shortcut) }</kbd>
+		<kbd class="hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground md:inline-flex" { hintAttrs(p.Shortcut)... }>{ Hint(p.Shortcut) }</kbd>
 	}
 }

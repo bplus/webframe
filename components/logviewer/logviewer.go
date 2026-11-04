@@ -8,6 +8,13 @@
 // case-insensitively. MaxLines drops the oldest lines after each poll
 // without moving what the user is reading.
 //
+// A failed poll shows nothing: the polling container carries
+// data-wf-swallow-errors, so htmx-errors.js drops an error answer (an
+// error page, a toast-only 409) instead of appending it to the log. The
+// lines already shown stay, and the next poll carries on. htmx still fires
+// htmx:responseError, so an app that wants to tell the user can listen for
+// it.
+//
 // The box has a fixed height and scrolls inside, so it never grows the
 // page. Long lines wrap when Wrap is set and otherwise scroll horizontally.
 package logviewer

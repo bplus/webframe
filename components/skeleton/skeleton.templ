@@ -12,6 +12,7 @@
 package skeleton
 
 import (
+	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/utils"
 )
@@ -28,9 +29,6 @@ type Props struct {
 // from it. It is aria-hidden because it carries no information.
 const bar = "rounded bg-muted animate-pulse"
 
-// tablePad mirrors datatable's non-dense cell padding; keep the two in
-// step.
-const tablePad = "max-md:px-2"
 
 // loading is the one sr-only text every skeleton root contains.
 templ loading() {
@@ -115,7 +113,7 @@ templ Table(rows, cols int, props ...Props) {
 		@table.Header(table.Props{Attributes: templ.Attributes{"aria-hidden": "true"}}) {
 			@table.Row(table.RowProps{Class: "hover:bg-transparent"}) {
 				for c := 0; c < cols; c++ {
-					@table.Head(table.CellProps{Class: tablePad}) {
+					@table.Head(table.CellProps{Class: datatable.PhoneCellPad}) {
 						<div class={ utils.TwMerge("h-4 w-20 max-w-full", bar) }></div>
 					}
 				}
@@ -125,7 +123,7 @@ templ Table(rows, cols int, props ...Props) {
 			for r := 0; r < rows; r++ {
 				@table.Row(table.RowProps{Class: "hover:bg-transparent"}) {
 					for c := 0; c < cols; c++ {
-						@table.Cell(table.CellProps{Class: tablePad}) {
+						@table.Cell(table.CellProps{Class: datatable.PhoneCellPad}) {
 							<div class={ utils.TwMerge("h-5", bar, utils.IfElse(c == 0, "w-3/4", "w-1/2")) }></div>
 						}
 					}

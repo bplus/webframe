@@ -235,38 +235,54 @@ func headAttrs(spec listquery.Spec, col Column) templ.Attributes {
 	return templ.Attributes{"aria-sort": ariaSort(spec, col.Key)}
 }
 
-// cellPad tightens td padding when dense, and below md drops horizontal
-// padding to px-2 so a five-column row fits a 390px phone.
+// PhoneCellPad is the horizontal padding every th and td takes below md:
+// px-2 instead of table's px-3, so a five-column row fits a 390px phone.
+// skeleton.Table uses it too, so a loading table and the real one line up.
+const PhoneCellPad = "max-md:px-2"
+
+// cellPad tightens td padding when dense, and below md uses PhoneCellPad.
 func cellPad(dense bool) string {
-	return utils.TwMerge("max-md:px-2", utils.If(dense, "py-1.5"))
+	return utils.TwMerge(PhoneCellPad, utils.If(dense, "py-1.5"))
 }
 
 // headPad is cellPad's counterpart for th.
 func headPad(dense bool) string {
-	return utils.TwMerge("max-md:px-2", utils.If(dense, "h-9"))
+	return utils.TwMerge(PhoneCellPad, utils.If(dense, "h-9"))
+}
+
+// pageSticky reports whether the header sticks to the page (StickyHeader
+// with no MaxHeight) rather than to a capped scroll box.
+func (p Props) pageSticky() bool {
+	return p.StickyHeader && p.MaxHeight == HeightNone
 }
 
 // stickyClass pins the thead when StickyHeader is set. Sticking to the
 // page, it offsets by --wf-sticky-top, which the shell sets to its topbar's
-// height, so the header is never hidden under the bar. The class literals
-// live here for Tailwind's source scan.
+// height, so the header is never hidden under the bar.
+//
+// A header stuck to the page leaves the wrapper's rounded top border behind
+// as the page scrolls, so the header itself draws the top border (on its
+// cells) and the wrapper drops its top border and its rounding: the header
+// looks the same at rest and stuck, square at both ends with a top edge.
+// The class literals live here for Tailwind's source scan.
 func stickyClass(p Props) string {
 	if !p.StickyHeader {
 		return ""
 	}
-	if p.MaxHeight != HeightNone {
+	if !p.pageSticky() {
 		return "sticky top-0 z-10 bg-card"
 	}
-	return "sticky top-[var(--wf-sticky-top,0px)] z-10 bg-card"
+	return "sticky top-[var(--wf-sticky-top,0px)] z-10 bg-card [&_th]:border-t [&_th]:border-border"
 }
 
-// wrapperClass adds the MaxHeight cap to table.Table's wrapper and, for an
-// uncapped sticky header, md:overflow-visible so the page becomes the
-// scrolling ancestor on md and up.
+// wrapperClass adds the MaxHeight cap to table.Table's wrapper and, for a
+// header stuck to the page, md:overflow-visible so the page becomes the
+// scrolling ancestor on md and up, with the top border and rounding moved
+// to the header (see stickyClass).
 func wrapperClass(p Props) string {
 	return utils.TwMerge(
 		maxHeightClass(p.MaxHeight),
-		utils.If(p.StickyHeader && p.MaxHeight == HeightNone, "md:overflow-visible"),
+		utils.If(p.pageSticky(), "md:overflow-visible rounded-none border-t-0"),
 		p.Class,
 	)
 }

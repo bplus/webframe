@@ -59,6 +59,9 @@ templ SplitPane(p Props) {
 			if p.Title != "" {
 				aria-label={ p.Title }
 			}
+			if !p.ShowErrors {
+				data-wf-swallow-errors
+			}
 		>
 			@detailContent(p)
 		</section>

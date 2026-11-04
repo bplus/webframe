@@ -92,6 +92,14 @@ func TestLogViewer_PollAttributes(t *testing.T) {
 			t.Errorf("missing %q:\n%s", want, out)
 		}
 	}
+	// A failed poll is dropped, not appended: the polling container is
+	// marked for htmx-errors.js.
+	if !strings.Contains(out, `hx-swap="beforeend" data-wf-swallow-errors`) {
+		t.Errorf("the polling container must carry data-wf-swallow-errors:\n%s", out)
+	}
+	if static := render(t, logviewer.LogViewer(logviewer.Props{Lines: []logviewer.Line{{Text: "a"}}})); strings.Contains(static, "data-wf-swallow-errors") {
+		t.Errorf("a log with no Src polls nothing and needs no mark:\n%s", static)
+	}
 	// The poll lives on the lines container, not the scroll box.
 	if !strings.Contains(out, `<div x-ref="lines" class="whitespace-pre" hx-get=`) {
 		t.Errorf("hx-get must be on the lines container:\n%s", out)

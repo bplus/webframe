@@ -13,7 +13,10 @@
 // header sticks to its top at every width. Without MaxHeight, on md and up
 // the wrapper stops clipping so the header sticks to the page (offset by
 // the shell's --wf-sticky-top); below md the wrapper keeps its horizontal
-// scroll, so the header sticks only within that box.
+// scroll, so the header sticks only within that box. A header stuck to the
+// page draws the table's top border itself and the wrapper is square, so
+// the header looks the same at rest and once stuck (a rounded wrapper's top
+// edge would scroll away and leave a borderless strip).
 package datatable
 
 import (

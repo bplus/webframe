@@ -7,17 +7,22 @@
 // by status alone:
 //
 //   1. A body that is not HTML: a plain Go http.Error 500 ("Internal Server
-//      Error" as text/plain), a JSON error, an empty body with no
-//      Content-Type. Swapped, it would land as raw text inside the target.
-//      A body that IS HTML but was never labelled is still swapped: a
-//      handler that calls WriteHeader(422) and renders a fragment without
-//      appshell.SetHeaders gets Go's content sniffer, which does not know
-//      fragments starting with <form, <section, <nav, <span, <ul or <tr and
-//      labels them text/plain. So a missing or non-HTML Content-Type is
-//      overruled when the body's first non-whitespace character is "<".
-//      A JSON or plain-text error never starts with "<"; an XML
-//      error body would, and would swap as markup (label it, or answer it
-//      through errorpage).
+//      Error" as text/plain), a JSON error, an XML error, an empty body with
+//      no Content-Type. Swapped, it would land as raw text or stray markup
+//      inside the target. A body that IS HTML but was never labelled is
+//      still swapped: a handler that calls WriteHeader(422) and renders a
+//      fragment without appshell.SetHeaders gets Go's content sniffer,
+//      which does not know fragments starting with <form, <section, <nav,
+//      <span, <ul or <tr and labels them text/plain. So a missing or
+//      non-HTML Content-Type is overruled when the body starts with a known
+//      HTML opening: <!doctype html, an HTML comment, an HTML element name
+//      (<form, <div, <tr, ...) or a custom element (a name with a hyphen).
+//      Anything else that starts with "<" is not HTML: an XML declaration
+//      (<?xml), an XML element such as <error>, or text that merely starts
+//      with a bracket, like Go printing <nil>. A declared text/plain body
+//      gets the same test, because the browser cannot tell Go's sniffed
+//      text/plain from a handler's own; to be sure an error swaps, label it
+//      text/html (appshell.SetHeaders, or answer it through errorpage).
 //   2. A target that is one of the page's live elements: the shell's nav
 //      badge poll span, a polled status dot, anything an app marks with
 //      data-wf-swallow-errors. An error page is a centered column; inside a
@@ -29,7 +34,8 @@
 // evt.detail.target and evt.detail.shouldSwap (what htmx decided). This
 // listener sets shouldSwap = false when isError is true AND either the
 // response is not HTML (its Content-Type header is not text/html, missing
-// counts as not HTML, and its body does not start with "<") OR the target
+// counts as not HTML, and its body does not start with a known HTML
+// opening) OR the target
 // or one of its ancestors carries data-wf-swallow-errors. In every other case shouldSwap is left exactly as
 // htmx computed it, so the default (swap the error body) stands for
 // an HTML error answer to an ordinary target. htmx still fires
@@ -55,17 +61,35 @@
     return /^\s*text\/html\s*(;|$)/i.test(ct);
   }
 
-  // looksLikeHTML reports whether the body's first non-whitespace character
-  // is "<": a fragment the handler forgot to label. responseText throws for
-  // a non-text responseType; htmx uses the default, but guard anyway.
+  // htmlStart matches the openings looksLikeHTML accepts, after leading
+  // whitespace and case-insensitively: <!doctype html, <!--, or "<" and an
+  // HTML element name (or a custom element name, which has a hyphen)
+  // followed by whitespace, "/" or ">". <?xml, <error> and <nil> fail.
+  var htmlStart = new RegExp(
+    '^\\s*(?:<!doctype\\s+html|<!--|<(?:' +
+    'a|abbr|article|aside|audio|b|blockquote|body|br|button|canvas|caption|code|col|colgroup|' +
+    'dd|details|dialog|div|dl|dt|em|fieldset|figcaption|figure|footer|form|' +
+    'h[1-6]|head|header|hr|html|i|iframe|img|input|kbd|label|legend|li|link|main|mark|' +
+    'meta|meter|nav|noscript|ol|optgroup|option|output|p|picture|pre|progress|' +
+    's|script|section|select|small|span|strong|style|sub|summary|sup|svg|' +
+    'table|tbody|td|template|textarea|tfoot|th|thead|time|title|tr|u|ul|video|' +
+    '[a-z][a-z0-9]*-[a-z0-9-]*' +
+    ')(?=[\\s/>]))',
+    'i'
+  );
+
+  // looksLikeHTML reports whether the body starts with a known HTML
+  // opening: a fragment the handler forgot to label. responseText throws
+  // for a non-text responseType; htmx uses the default, but guard anyway.
   function looksLikeHTML(xhr) {
     if (!xhr) return false;
     var text;
     try { text = xhr.responseText; } catch (e) { return false; }
-    return typeof text === 'string' && /^\s*</.test(text);
+    return typeof text === 'string' && htmlStart.test(text);
   }
 
-  // isHTML: declared text/html, or an unlabelled body that starts with "<".
+  // isHTML: declared text/html, or a body that starts with a known HTML
+  // opening whatever its label.
   function isHTML(xhr) {
     return declaredHTML(xhr) || looksLikeHTML(xhr);
   }

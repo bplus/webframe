@@ -104,6 +104,21 @@ func TestSplitPane_WithDetail(t *testing.T) {
 	wantAll(t, out[strings.Index(out, `id="mail-detail"`):back], "md:hidden")
 }
 
+// By default an error answer to a list click is dropped (the region keeps
+// what it showed); ShowErrors lets it swap in.
+func TestSplitPane_DetailSwallowsErrorsUnlessShowErrors(t *testing.T) {
+	for _, p := range []Props{listProps, detailProps()} {
+		wantAll(t, region(t, render(t, p), "mail-detail"), "data-wf-swallow-errors")
+		p.ShowErrors = true
+		wantNone(t, render(t, p), "data-wf-swallow-errors")
+	}
+	// Only the detail region is marked, not the list column or the root.
+	out := render(t, listProps)
+	if n := strings.Count(out, "data-wf-swallow-errors"); n != 1 {
+		t.Errorf("data-wf-swallow-errors count = %d, want 1:\n%s", n, out)
+	}
+}
+
 func TestSplitPane_BackLabelAndTitle(t *testing.T) {
 	p := detailProps()
 	p.BackLabel = "All mail"

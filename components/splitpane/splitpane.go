@@ -57,6 +57,14 @@
 // Lg 440px), sticky under the shell's sticky chrome and scrolling on its
 // own; the detail is the flexible column, showing Placeholder while
 // nothing is selected. There is no drag-to-resize.
+//
+// # Errors
+//
+// When a list click's request fails (the item was deleted, the server
+// answers 404 or 500), the detail region keeps what it showed: it carries
+// data-wf-swallow-errors, so htmx-errors.js drops the error answer instead
+// of swapping it in. Set Props.ShowErrors to swap it in instead, so the
+// region shows the app's error page.
 package splitpane
 
 import (
@@ -113,6 +121,14 @@ type Props struct {
 	Placeholder templ.Component
 
 	Title string
+
+	// ShowErrors lets an error answer to a list click (from md up) replace
+	// the detail region, so an item that has gone shows the app's 404 page
+	// there. By default the region carries data-wf-swallow-errors and
+	// htmx-errors.js drops the error: the region keeps what it showed and
+	// htmx still fires htmx:responseError. A phone's click is a full page
+	// load either way and shows the error page.
+	ShowErrors bool
 }
 
 // id returns ID or the default root id.

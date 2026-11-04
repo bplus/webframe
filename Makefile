@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -54,3 +54,9 @@ ui-check: tools/node_modules/.bin/tailwindcss
 # the graph JSON is missing. Needs `make dev` running, like ui-check.
 graph-check: tools/node_modules/.bin/tailwindcss
 	node tools/graph-check.mjs --url http://localhost:3333/graph --data /api/graph
+
+# commandpalette in a real browser: the trigger's shortcut hint per platform
+# (⌘K on a Mac, Ctrl+K elsewhere) and the phone sheet following
+# window.visualViewport. Needs `make dev` running, like ui-check.
+palette-check: tools/node_modules/.bin/tailwindcss
+	node tools/palette-check.mjs --url http://localhost:3333/items

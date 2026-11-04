@@ -276,6 +276,27 @@ func TestDataTable_StickyHeaderWithoutMaxHeightSticksToPage(t *testing.T) {
 	wantNone(t, w, "max-h-")
 }
 
+// A header stuck to the page leaves the wrapper's top edge behind, so the
+// header draws the top border itself and the wrapper drops its top border
+// and its rounding: the header looks the same at rest and once stuck.
+func TestDataTable_PageStickyHeaderOwnsTheTopEdge(t *testing.T) {
+	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", StickyHeader: true})
+	w := wrapper(t, out)
+	wantAll(t, w, "rounded-none", "border-t-0")
+	wantNone(t, w, "rounded-lg")
+	head := out[strings.Index(out, "<thead"):]
+	wantAll(t, head[:strings.Index(head, ">")], "[&amp;_th]:border-t")
+
+	// A capped table keeps its rounded wrapper: the header sticks inside it.
+	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items", StickyHeader: true, MaxHeight: HeightMd})
+	wantAll(t, wrapper(t, out), "rounded-lg")
+	wantNone(t, out, "border-t-0", "_th]:border-t")
+	// So does a table with no sticky header.
+	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Base: "/items"})
+	wantAll(t, wrapper(t, out), "rounded-lg")
+	wantNone(t, out, "border-t-0", "_th]:border-t")
+}
+
 func TestDataTable_MaxHeight(t *testing.T) {
 	cases := []struct {
 		h    Height

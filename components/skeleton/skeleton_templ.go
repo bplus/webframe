@@ -30,6 +30,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/table"
 	"github.com/bplus/webframe/utils"
 )
@@ -45,10 +46,6 @@ type Props struct {
 // bar is the single decorative placeholder bar; every skeleton is built
 // from it. It is aria-hidden because it carries no information.
 const bar = "rounded bg-muted animate-pulse"
-
-// tablePad mirrors datatable's non-dense cell padding; keep the two in
-// step.
-const tablePad = "max-md:px-2"
 
 // loading is the one sr-only text every skeleton root contains.
 func loading() templ.Component {
@@ -132,7 +129,7 @@ func Lines(n int, props ...Props) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 59, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 57, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -245,7 +242,7 @@ func Card(props ...Props) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 78, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 76, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -493,7 +490,7 @@ func Table(rows, cols int, props ...Props) templ.Component {
 							}
 							return nil
 						})
-						templ_7745c5c3_Err = table.Head(table.CellProps{Class: tablePad}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = table.Head(table.CellProps{Class: datatable.PhoneCellPad}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -576,7 +573,7 @@ func Table(rows, cols int, props ...Props) templ.Component {
 								}
 								return nil
 							})
-							templ_7745c5c3_Err = table.Cell(table.CellProps{Class: tablePad}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
+							templ_7745c5c3_Err = table.Cell(table.CellProps{Class: datatable.PhoneCellPad}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -645,7 +642,7 @@ func Tile(props ...Props) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 144, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/skeleton/skeleton.templ`, Line: 142, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
