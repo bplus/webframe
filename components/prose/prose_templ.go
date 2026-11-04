@@ -7,7 +7,8 @@ package prose
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// Prose renders a .wf-prose block holding either p.HTML verbatim or p.Text
+// Prose renders a .wf-prose block holding either p.HTML verbatim (each
+// top-level table wrapped in a scrolling div, see wrapTables) or p.Text
 // escaped as paragraphs. With both set, HTML wins. Typography comes from the
 // stylesheet, so the content needs no classes.
 func Prose(p Props) templ.Component {
@@ -48,7 +49,7 @@ func Prose(p Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/prose/prose.templ`, Line: 9, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/prose/prose.templ`, Line: 10, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -85,7 +86,7 @@ func Prose(p Props) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.HTML != "" {
-			templ_7745c5c3_Err = templ.Raw(string(p.HTML)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templ.Raw(wrapTables(string(p.HTML))).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

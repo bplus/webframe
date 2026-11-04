@@ -209,9 +209,15 @@ func TestWidgets_ShowcaseSections(t *testing.T) {
 		`id="commandpalette"`, "window.wf.palette.open()", "<kbd>⌘K</kbd>",
 		`id="panic"`, `href="/api/panic"`, "Panic in a handler",
 	)
-	// The specimen's elements carry no class, and the only script tag in
-	// the Text sample is escaped text.
+	// The specimen's elements carry no class (prose adds the one
+	// div.wf-prose-table scroller around its table, which is the library's
+	// markup, not the app's), and the only script tag in the Text sample is
+	// escaped text.
 	specimen := body[strings.Index(body, `id="prose-specimen"`):strings.Index(body, `id="prose-text"`)]
+	if strings.Count(specimen, `<div class="wf-prose-table"><table>`) != 1 {
+		t.Errorf("prose specimen table lacks its scrolling wrapper:\n%s", specimen)
+	}
+	specimen = strings.ReplaceAll(specimen, `<div class="wf-prose-table">`, "")
 	if strings.Contains(specimen[strings.Index(specimen, ">")+1:], " class=") {
 		t.Errorf("prose specimen content carries a class:\n%s", specimen)
 	}

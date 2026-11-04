@@ -3,6 +3,8 @@ package prose
 import (
 	"bytes"
 	"context"
+	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -89,4 +91,40 @@ func TestProse_SizesAndMaxWidths(t *testing.T) {
 func TestProse_ClassAndAttributes(t *testing.T) {
 	out := render(t, Prose(Props{Class: "mt-4", Attributes: templ.Attributes{"data-x": "1"}, Text: "x"}))
 	mustContain(t, out, "mt-4", `data-x="1"`)
+}
+
+// TestProse_TablesGetAScrollingWrapper checks that every top-level table in
+// HTML comes out inside a div.wf-prose-table (the horizontal scroller) and
+// that the stylesheet leaves the table itself display: table, so it keeps
+// its table role for screen readers.
+func TestProse_TablesGetAScrollingWrapper(t *testing.T) {
+	in := `<p>Before</p><TABLE class="x"><tr><td><table><tr><td>inner</td></tr></table></td></tr></TABLE>` +
+		`<!-- <table> in a comment --><p><tablet></p><table><tr><td>second</td></tr></table>`
+	out := render(t, Prose(Props{HTML: HTML(in)}))
+	want := `<p>Before</p><div class="wf-prose-table"><TABLE class="x"><tr><td><table><tr><td>inner</td></tr></table></td></tr></TABLE></div>` +
+		`<!-- <table> in a comment --><p><tablet></p><div class="wf-prose-table"><table><tr><td>second</td></tr></table></div>`
+	mustContain(t, out, want)
+	if got := strings.Count(out, "wf-prose-table"); got != 2 {
+		t.Errorf("want 2 wrappers (the nested table and the comment are not wrapped), got %d: %s", got, out)
+	}
+	if got := wrapTables("<table><tr><td>open"); got != `<div class="wf-prose-table"><table><tr><td>open</div>` {
+		t.Errorf("an unclosed table is wrapped to the end: %s", got)
+	}
+	if got := wrapTables("<p>no tables</p>"); got != "<p>no tables</p>" {
+		t.Errorf("html without a table is unchanged: %s", got)
+	}
+	css, err := os.ReadFile("../../static/css/input.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rule := regexp.MustCompile(`(?s)\.wf-prose table \{(.*?)\}`).FindSubmatch(css)
+	if rule == nil {
+		t.Fatal("no .wf-prose table rule in input.css")
+	}
+	if strings.Contains(string(rule[1]), "display") || strings.Contains(string(rule[1]), "overflow") {
+		t.Errorf(".wf-prose table must keep display: table and leave scrolling to the wrapper: %s", rule[1])
+	}
+	if !regexp.MustCompile(`(?s)\.wf-prose \.wf-prose-table \{[^}]*overflow-x: auto`).Match(css) {
+		t.Errorf(".wf-prose-table must scroll horizontally")
+	}
 }
