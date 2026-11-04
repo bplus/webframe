@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/bplus/webframe/utils"
 )
 
 // --- globalMinMax ---
@@ -227,13 +229,14 @@ func TestAreaDefaultColors_Length(t *testing.T) {
 	}
 }
 
-func TestAreaDefaultColors_ValidHex(t *testing.T) {
+// Default colors are theme tokens that survive SanitizeColor unchanged.
+func TestAreaDefaultColors_ThemeTokens(t *testing.T) {
 	for i, c := range areaDefaultColors {
-		if !strings.HasPrefix(c, "#") {
-			t.Errorf("areaDefaultColors[%d] = %q, expected hex color starting with #", i, c)
+		if !strings.HasPrefix(c, "var(--color-") {
+			t.Errorf("areaDefaultColors[%d] = %q, expected a var(--color-...) theme token", i, c)
 		}
-		if len(c) != 7 {
-			t.Errorf("areaDefaultColors[%d] = %q, expected 7-char hex (#rrggbb)", i, c)
+		if got := utils.SanitizeColor(c); got != c {
+			t.Errorf("areaDefaultColors[%d] = %q is rewritten to %q by SanitizeColor", i, c, got)
 		}
 	}
 }

@@ -12,18 +12,46 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Variant selects the fill color from the theme tokens. The zero value and
+// any unrecognized value are VariantDefault.
+type Variant string
+
+const (
+	VariantDefault     Variant = ""            // primary
+	VariantSuccess     Variant = "success"     // a finished or healthy task
+	VariantWarning     Variant = "warning"     // nearly full, slow, needs a look
+	VariantDestructive Variant = "destructive" // failed or over a limit
+	VariantInfo        Variant = "info"        // neutral, informational
+)
+
+// fillClass is the background class for a variant's fill.
+func fillClass(v Variant) string {
+	switch v {
+	case VariantSuccess:
+		return "bg-success"
+	case VariantWarning:
+		return "bg-warning"
+	case VariantDestructive:
+		return "bg-destructive"
+	case VariantInfo:
+		return "bg-info"
+	default:
+		return "bg-primary"
+	}
+}
+
 // Props configures a ProgressBar. The fill is Value*100/Max, truncated and
-// clamped to [0, 100], with Max <= 0 treated as 100. Color is a Tailwind
-// background class ("bg-primary" when empty), not a CSS color.
+// clamped to [0, 100], with Max <= 0 treated as 100. Variant picks the fill
+// color (primary when empty).
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Value      int    // 0-100
-	Max        int    // default 100
-	Color      string // Tailwind bg class, e.g. "bg-primary"
-	Label      string // optional text label
-	ShowValue  bool   // show percentage text
+	Value      int     // 0-100
+	Max        int     // default 100
+	Variant    Variant // fill color; default primary
+	Label      string  // optional text label
+	ShowValue  bool    // show percentage text
 }
 
 // ProgressBar renders a horizontal progress track with a colored fill and
@@ -71,7 +99,7 @@ func ProgressBar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 32, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 60, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -120,7 +148,7 @@ func ProgressBar(props ...Props) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 40, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 68, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -139,7 +167,7 @@ func ProgressBar(props ...Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d%%", clampPercent(p.Value, p.Max)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 43, Col: 106}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 71, Col: 106}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -159,7 +187,7 @@ func ProgressBar(props ...Props) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var7 = []any{utils.TwMerge("h-full rounded-full transition-all", utils.IfElse(p.Color != "", p.Color, "bg-primary"))}
+		var templ_7745c5c3_Var7 = []any{"h-full rounded-full transition-all " + fillClass(p.Variant)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var7...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -184,7 +212,7 @@ func ProgressBar(props ...Props) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width: %d%%", clampPercent(p.Value, p.Max)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 50, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/progressbar/progressbar.templ`, Line: 78, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {

@@ -5,18 +5,46 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
+// Variant selects the fill color from the theme tokens. The zero value and
+// any unrecognized value are VariantDefault.
+type Variant string
+
+const (
+	VariantDefault     Variant = ""            // primary
+	VariantSuccess     Variant = "success"     // a finished or healthy task
+	VariantWarning     Variant = "warning"     // nearly full, slow, needs a look
+	VariantDestructive Variant = "destructive" // failed or over a limit
+	VariantInfo        Variant = "info"        // neutral, informational
+)
+
+// fillClass is the background class for a variant's fill.
+func fillClass(v Variant) string {
+	switch v {
+	case VariantSuccess:
+		return "bg-success"
+	case VariantWarning:
+		return "bg-warning"
+	case VariantDestructive:
+		return "bg-destructive"
+	case VariantInfo:
+		return "bg-info"
+	default:
+		return "bg-primary"
+	}
+}
+
 // Props configures a ProgressBar. The fill is Value*100/Max, truncated and
-// clamped to [0, 100], with Max <= 0 treated as 100. Color is a Tailwind
-// background class ("bg-primary" when empty), not a CSS color.
+// clamped to [0, 100], with Max <= 0 treated as 100. Variant picks the fill
+// color (primary when empty).
 type Props struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	Value      int    // 0-100
-	Max        int    // default 100
-	Color      string // Tailwind bg class, e.g. "bg-primary"
-	Label      string // optional text label
-	ShowValue  bool   // show percentage text
+	Value      int     // 0-100
+	Max        int     // default 100
+	Variant    Variant // fill color; default primary
+	Label      string  // optional text label
+	ShowValue  bool    // show percentage text
 }
 
 // ProgressBar renders a horizontal progress track with a colored fill and
@@ -46,7 +74,7 @@ templ ProgressBar(props ...Props) {
 		}
 		<div class="w-full bg-muted rounded-full h-2.5 overflow-hidden">
 			<div
-				class={ utils.TwMerge("h-full rounded-full transition-all", utils.IfElse(p.Color != "", p.Color, "bg-primary")) }
+				class={ "h-full rounded-full transition-all " + fillClass(p.Variant) }
 				style={ fmt.Sprintf("width: %d%%", clampPercent(p.Value, p.Max)) }
 			></div>
 		</div>

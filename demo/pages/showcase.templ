@@ -2603,10 +2603,9 @@ func weekSeries(label string, values ...float64) areachart.Series {
 
 templ areachartSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "areachart", Title: "Area chart", Description: "One or more series over the same labels, drawn as lines with a filled area under each; every series shares one Y scale so they compare directly."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Views and downloads, last 7 days", Subtitle: "Two series, so the legend shows; ShowGrid draws the horizontal lines and ShowLabels the day names."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Views and downloads, last 7 days", Subtitle: "Two series, so the legend shows; ShowGrid draws the horizontal lines and ShowLabels the day names. The chart shrinks to fit a phone."}) {
 			@areachart.AreaChart(areachart.Props{
 				ID:         "showcase-area",
-				Width:      320,
 				Height:     180,
 				ShowLabels: true,
 				ShowLegend: true,
@@ -2621,13 +2620,14 @@ templ areachartSection() {
 }
 
 templ barchartSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "barchart", Title: "Bar chart", Description: "One value per label as bars, horizontal by default; MaxBars keeps the largest and folds the rest into one \"Other\" bar."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "barchart", Title: "Bar chart", Description: "One value per label as bars, horizontal by default, in the order given; ShowValues prints each value at the end of its bar, and MaxBars folds the smallest bars into one \"Other\" bar."}) {
 		@dashboardgrid.Grid(dashboardgrid.Props{Flush: true}) {
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@panel.Panel(panel.Props{Level: 4, Title: "Items by type", Subtitle: "Horizontal, with a label beside each bar."}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Items by type", Subtitle: "Horizontal, with a label beside each bar and its value after it."}) {
 					@barchart.BarChart(barchart.Props{
 						ID:         "showcase-bars",
 						ShowLabels: true,
+						ShowValues: true,
 						Bars: []barchart.Bar{
 							{Label: "Weapon", Value: 42},
 							{Label: "Armor", Value: 31},
@@ -2638,11 +2638,12 @@ templ barchartSection() {
 				}
 			}
 			@dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: 6}) {
-				@panel.Panel(panel.Props{Level: 4, Title: "Downloads by pack, top four", Subtitle: "Vertical; six packs with MaxBars 4, so the two smallest become \"Other (2)\" and the bars run largest first."}) {
+				@panel.Panel(panel.Props{Level: 4, Title: "Downloads by pack, in release order", Subtitle: "Vertical; six packs with MaxBars 4, so the two smallest become \"Other (2)\" at the end and the rest keep their release order."}) {
 					@barchart.BarChart(barchart.Props{
 						ID:          "showcase-bars-vertical",
 						Orientation: barchart.Vertical,
 						ShowLabels:  true,
+						ShowValues:  true,
 						MaxBars:     4,
 						Bars: []barchart.Bar{
 							{Label: "Starfall", Value: 240},
@@ -2697,15 +2698,22 @@ templ progressbarSection() {
 		@panel.Panel(panel.Props{Level: 4, Title: "Three tasks", Subtitle: "Max sets the total, so 37 of 50 shows 74%; a bar with no label is the track alone."}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
 				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-upload", Label: "Uploading textures", Value: 37, Max: 50, ShowValue: true})
-				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-build", Label: "Build finished", Value: 100, ShowValue: true})
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-build", Label: "Build finished", Value: 100, ShowValue: true, Variant: progressbar.VariantSuccess})
 				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-bare", Value: 20})
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Variants", Subtitle: "Variant picks the fill from the theme: default (primary), success, warning, destructive and info."}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-disk", Label: "Disk used", Value: 87, ShowValue: true, Variant: progressbar.VariantWarning})
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-quota", Label: "API quota", Value: 100, ShowValue: true, Variant: progressbar.VariantDestructive})
+				@progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-sync", Label: "Syncing mirrors", Value: 45, ShowValue: true, Variant: progressbar.VariantInfo})
 			}
 		}
 	}
 }
 
 templ lifecyclestepperSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "lifecyclestepper", Title: "Lifecycle stepper", Description: "The stages of one job in a row, each marked done, active, needing attention, failed, skipped or not started; the row wraps on a narrow screen."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "lifecyclestepper", Title: "Lifecycle stepper", Description: "The stages of one job in a row, each marked done, active, needing attention, failed, skipped or not started; on a narrow screen the row wraps between stages and each new row starts with a stage, not a line."}) {
 		@panel.Panel(panel.Props{Level: 4, Title: "Compact", Subtitle: "A release half way through: two stages done, one active, two to come."}) {
 			@lifecyclestepper.LifecycleStepper(lifecyclestepper.Props{
 				ID: "showcase-stepper",
@@ -2735,12 +2743,19 @@ templ lifecyclestepperSection() {
 }
 
 templ statcomparisonSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "statcomparison", Title: "Stat comparison", Description: "A number beside its previous value, with the change and an arrow toned by direction; stat tiles draw the same arrow."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Up, down and flat", Subtitle: "Up is green and down is red; flat is muted."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "statcomparison", Title: "Stat comparison", Description: "A number beside its previous value, with the change and an arrow; the arrow follows the direction and the color says whether that is good. Stat tiles use the same rule."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Up, down and flat", Subtitle: "By default up is green and down is red; flat is muted."}) {
 			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}) {
 				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-up", Label: "Downloads", Value: "1,234", PrevValue: "1,100", Delta: "+12.2%", Direction: statcomparison.DirectionUp})
 				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-down", Label: "Active users", Value: "812", PrevValue: "905", Delta: "-10.3%", Direction: statcomparison.DirectionDown})
 				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-flat", Label: "Contributors", Value: "6", PrevValue: "6", Delta: "no change", Direction: statcomparison.DirectionFlat})
+			}
+		}
+		@panel.Panel(panel.Props{Level: 4, Title: "Lower is better", Subtitle: "LowerIsBetter flips the colors for a metric where a fall is good news; the arrows still point the way the number moved. A stat tile's Delta takes the same flag."}) {
+			@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}) {
+				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-bugs", Label: "Open bugs", Value: "14", PrevValue: "23", Delta: "-9", Direction: statcomparison.DirectionDown, LowerIsBetter: true})
+				@statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-errors", Label: "Error rate", Value: "2.4%", PrevValue: "1.1%", Delta: "+1.3 pts", Direction: statcomparison.DirectionUp, LowerIsBetter: true})
+				@stattile.StatTile(stattile.Props{ID: "showcase-compare-tile", Label: "Build time", Value: "4m 10s", Delta: &stattile.Delta{Value: "-38s", Direction: statcomparison.DirectionDown, LowerIsBetter: true}, Caption: "Versus last week"})
 			}
 		}
 	}

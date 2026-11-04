@@ -230,17 +230,22 @@ func TestWidgets_ShowcaseCharts(t *testing.T) {
 		// Contents links and the group.
 		`id="charts"`, `href="#areachart"`, `href="#barchart"`, `href="#piechart"`, `href="#progressbar"`, `href="#lifecyclestepper"`, `href="#statcomparison"`,
 		// Area chart: two series, so the legend shows; day labels.
-		`id="areachart"`, `id="showcase-area"`, `viewBox="0 0 320 180"`, ">Views<", ">Downloads<", ">Mon<",
-		// Bar chart: horizontal, and the vertical one folded to four bars.
-		`id="barchart"`, `id="showcase-bars"`, ">Weapon<", `id="showcase-bars-vertical"`, ">Starfall<", "Other (2)",
+		`id="areachart"`, `id="showcase-area"`, `viewBox="0 0 400 180"`, `style="max-width:100%;height:auto;"`, ">Views<", ">Downloads<", ">Mon<",
+		// Bar chart: horizontal with values, and the vertical one folded to
+		// four bars in release order (Thorn 120 and Frost 160 kept, Tide and
+		// Dusk folded into Other 120).
+		`id="barchart"`, `id="showcase-bars"`, ">Weapon<", ">42<", `id="showcase-bars-vertical"`, ">Starfall<", "Other (2)", ">240<",
 		// Pie chart: the donut and the full pie with their legends.
 		`id="piechart"`, `id="showcase-donut"`, "<span>Archived (", `id="showcase-pie"`, "<span>Desktop (64%)</span>",
 		// Progress bar: 37 of 50 is 74%, the finished one is full.
 		`id="progressbar"`, `id="showcase-progress-upload"`, "Uploading textures", "74%", "width: 74%", `id="showcase-progress-build"`, "width: 100%", `id="showcase-progress-bare"`,
+		"bg-success", `id="showcase-progress-disk"`, "bg-warning", `id="showcase-progress-quota"`, "bg-destructive", `id="showcase-progress-sync"`, "bg-info",
 		// Lifecycle stepper: compact and large, every state's tooltip.
 		`id="lifecyclestepper"`, `id="showcase-stepper"`, ">Build<", `id="showcase-stepper-large"`, `title="Needs attention"`, `title="Failed"`, `title="Skipped"`,
 		// Stat comparison: three directions.
 		`id="statcomparison"`, `id="showcase-compare-up"`, "from 1,100", "+12.2%", `id="showcase-compare-down"`, `id="showcase-compare-flat"`, "no change",
+		// Lower is better: open bugs falling and a tile's build time falling are green.
+		`id="showcase-compare-bugs"`, "-9", `id="showcase-compare-errors"`, `id="showcase-compare-tile"`, "-38s",
 		// The Graph nav link and the dashboard section's breakpoint.
 		`href="/graph"`, "below the md breakpoint (768px at the default root size)",
 	)

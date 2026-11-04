@@ -79,8 +79,8 @@ func TestToneClassAndArrow(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(string(tc.dir), func(t *testing.T) {
-			if got := ToneClass(tc.dir); got != tc.class {
-				t.Errorf("ToneClass(%q) = %q, want %q", tc.dir, got, tc.class)
+			if got := ToneClass(tc.dir, false); got != tc.class {
+				t.Errorf("ToneClass(%q, false) = %q, want %q", tc.dir, got, tc.class)
 			}
 			out := render(t, Arrow(tc.dir))
 			for _, want := range []string{"<svg", `aria-hidden="true"`, `stroke="currentColor"`, tc.path} {

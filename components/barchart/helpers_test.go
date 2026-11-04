@@ -36,7 +36,7 @@ func TestCapBars_UnderLimitUnchanged(t *testing.T) {
 }
 
 func TestCapBars_CapsAndAggregates(t *testing.T) {
-	// 54 bars: values 1..54 in ascending input order (to prove we sort desc).
+	// 54 bars: values 1..54 in ascending input order.
 	bars := make([]Bar, 0, 54)
 	for v := 1; v <= 54; v++ {
 		bars = append(bars, Bar{Label: "src", Value: float64(v)})
@@ -46,16 +46,10 @@ func TestCapBars_CapsAndAggregates(t *testing.T) {
 	if len(got) != 13 {
 		t.Fatalf("expected 13 bars (12 kept + Other), got %d", len(got))
 	}
-	if got[0].Value != 54 {
-		t.Errorf("top bar should be largest (54), got %v", got[0].Value)
-	}
-	if got[11].Value != 43 {
-		t.Errorf("12th kept bar should be 43, got %v", got[11].Value)
-	}
-	// Descending order across kept bars.
-	for i := 1; i < 12; i++ {
-		if got[i].Value > got[i-1].Value {
-			t.Errorf("kept bars not sorted desc at %d: %v > %v", i, got[i].Value, got[i-1].Value)
+	// The 12 largest (43..54) are kept, in input order.
+	for i := 0; i < 12; i++ {
+		if want := float64(43 + i); got[i].Value != want {
+			t.Errorf("kept bar %d = %v, want %v (input order)", i, got[i].Value, want)
 		}
 	}
 	other := got[12]
@@ -65,6 +59,28 @@ func TestCapBars_CapsAndAggregates(t *testing.T) {
 	// sum 1..42 == 903
 	if other.Value != 903 {
 		t.Errorf("Other should sum the folded remainder (903), got %v", other.Value)
+	}
+}
+
+// Ordered data such as months keeps its order: only the smallest bars fold
+// into "Other", and the kept bars are not re-sorted.
+func TestCapBars_KeepsInputOrder(t *testing.T) {
+	bars := []Bar{
+		{Label: "Jan", Value: 5}, {Label: "Feb", Value: 9}, {Label: "Mar", Value: 1},
+		{Label: "Apr", Value: 7}, {Label: "May", Value: 2}, {Label: "Jun", Value: 8},
+	}
+	got := capBars(bars, 4)
+	want := []string{"Jan", "Feb", "Apr", "Jun", "Other (2)"}
+	if len(got) != len(want) {
+		t.Fatalf("got %d bars, want %d", len(got), len(want))
+	}
+	for i, w := range want {
+		if got[i].Label != w {
+			t.Errorf("bar %d = %q, want %q (full result %v)", i, got[i].Label, w, got)
+		}
+	}
+	if got[4].Value != 3 {
+		t.Errorf("Other = %v, want 3 (Mar 1 + May 2)", got[4].Value)
 	}
 }
 

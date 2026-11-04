@@ -83,5 +83,6 @@ Known gaps: `p.Class = ...` and `attrs["class"] = ...` assignments are not caugh
 - Keep Props changes additive where possible.
 - Tests are render-focused: render to a `bytes.Buffer` and assert on the HTML.
 - `components/render_smoke_test.go` has one row per `components/` directory; a new package without a row fails the test.
-- Chart components (barchart, piechart, areachart, sparkline, metricring) are SVG, take `float64` values and sanitize colors through `SanitizeColor`.
+- Chart components (barchart, piechart, areachart, sparkline, metricring) are SVG, take `float64` values and sanitize colors through `SanitizeColor`. barchart and areachart scale down to their container (`max-width:100%`); areachart's default series colors are theme tokens. barchart keeps bar order (`MaxBars` folds only the smallest into "Other") and `ShowValues` reserves room for the labels.
+- Tone and color are never class names in Props: `progressbar.Props.Variant` (`VariantDefault`/`Success`/`Warning`/`Destructive`/`Info`) picks the fill; `statcomparison.ToneClass(dir, lowerIsBetter)` is the delta color rule shared by `statcomparison.Props.LowerIsBetter` and `stattile.Delta.LowerIsBetter` (the arrow always follows the direction).
 - Doc comments follow Go convention: start with the identifier, say what it does and what is non-obvious, briefly.

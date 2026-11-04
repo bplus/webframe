@@ -207,24 +207,38 @@ templ stepperConnector(color string, width int) {
 	<span style={ fmt.Sprintf("width:%dpx;height:1.5px;background-color:%s;display:block;flex-shrink:0", width, color) }></span>
 }
 
-// stepper renders the shared markup for both size variants: a
-// flex-wrap row of stepperNode/stepperConnector pairs, rooted at the
-// <div> that carries the caller's id/class/attributes.
+// columnGap is the space in px between a connector and the nodes beside it.
+const columnGap = 8
+
+// stepper renders the shared markup for both size variants. Each step is one
+// unit, the connector from the previous step followed by the node, so a
+// connector always wraps together with the node it leads to. The row is
+// shifted left by one connector plus its gap and the root clips that
+// margin: the connector that would start a wrapped row is hidden there, and
+// the first step carries an empty placeholder of the same width so the
+// first row lines up with the others. The root's 3px padding keeps a
+// focused node's ring visible.
 templ stepper(p Props, sz sizeConfig) {
 	<div
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("inline-flex flex-wrap items-center", p.Class) }
-		style="gap:12px 8px"
+		class={ utils.TwMerge("inline-block max-w-full", p.Class) }
+		style="overflow:hidden;padding:3px"
 		{ p.Attributes... }
 	>
-		for i, step := range p.Steps {
-			@stepperNode(step, i+1, sz)
-			if i < len(p.Steps)-1 {
-				@stepperConnector(connectorColor(step.State, p.Steps[i+1].State), sz.connector)
+		<div style={ fmt.Sprintf("display:flex;flex-wrap:wrap;align-items:center;gap:12px %dpx;margin-left:-%dpx", columnGap, sz.connector+columnGap) }>
+			for i, step := range p.Steps {
+				<div data-wf-step style={ fmt.Sprintf("display:flex;align-items:center;gap:%dpx;flex-shrink:0", columnGap) }>
+					if i == 0 {
+						<span aria-hidden="true" style={ fmt.Sprintf("width:%dpx;flex-shrink:0", sz.connector) }></span>
+					} else {
+						@stepperConnector(connectorColor(p.Steps[i-1].State, step.State), sz.connector)
+					}
+					@stepperNode(step, i+1, sz)
+				</div>
 			}
-		}
+		</div>
 	</div>
 }
 
@@ -240,7 +254,9 @@ type Props struct {
 }
 
 // LifecycleStepper renders a horizontal row of stage nodes joined by
-// connector lines. It takes no children and emits no script.
+// connector lines. On a narrow screen the row wraps between steps, and a
+// wrapped row starts with a node, never with a connector. It takes no
+// children and emits no script.
 templ LifecycleStepper(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
