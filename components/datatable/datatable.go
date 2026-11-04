@@ -266,7 +266,7 @@ func (p Props) sortAttrs(url string) templ.Attributes {
 
 // rowAction fills the defaults for an inline row action: ghost, small.
 func rowAction(a action.Action) action.Action {
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantGhost
 	}
 	if a.Size == "" {

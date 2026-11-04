@@ -219,7 +219,7 @@ func (p Props) bannerTitle() string {
 // Href and Hx* are cleared so it renders as a plain submit button.
 func (p Props) submit() action.Action {
 	a := p.Submit
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantPrimary
 	}
 	a.FullWidth = true
@@ -254,7 +254,7 @@ func (p Props) submit() action.Action {
 // provider returns a Provider as a full-width action, outline unless it
 // set a Variant.
 func provider(a action.Action) action.Action {
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantOutline
 	}
 	a.FullWidth = true

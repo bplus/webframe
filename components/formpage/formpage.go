@@ -63,7 +63,8 @@ type Props struct {
 	Validate string
 	// Hidden renders as hidden inputs at the top of the form (form.Form).
 	Hidden map[string]string
-	// Submit is the submit button; the zero value is a primary "Save".
+	// Submit is the submit button; the zero value is a primary "Save"
+	// (VariantDefault renders primary, any other Variant as named).
 	// Href and Hx* on it are ignored.
 	Submit action.Action
 	// Cancel, when set, renders before Submit (secondary unless given a
@@ -214,13 +215,13 @@ func ErrorBannerTitle(n int) string {
 }
 
 // Submit returns a as a submit button: Label defaults to defaultLabel,
-// Variant to primary, and Href and the Hx* fields are cleared because the
+// VariantDefault to primary, and Href and the Hx* fields are cleared because the
 // form, not the button, issues the request. settingspage uses it too.
 func Submit(a action.Action, defaultLabel string) action.Action {
 	if a.Label == "" {
 		a.Label = defaultLabel
 	}
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantPrimary
 	}
 	a.Submit = true
