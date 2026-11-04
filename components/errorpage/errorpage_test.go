@@ -497,9 +497,9 @@ func TestRespond_ActionOnItselfLandsInMain(t *testing.T) {
 		method  string
 		headers map[string]string
 	}{
-		"delete, target has no id":      {"DELETE", map[string]string{"HX-Request": "true"}},
-		"delete, trigger has an id":     {"DELETE", map[string]string{"HX-Request": "true", "HX-Trigger": "del"}},
-		"post, form targets itself":     {"POST", map[string]string{"HX-Request": "true", "HX-Trigger": "edit", "HX-Target": "edit"}},
+		"delete, target has no id":  {"DELETE", map[string]string{"HX-Request": "true"}},
+		"delete, trigger has an id": {"DELETE", map[string]string{"HX-Request": "true", "HX-Trigger": "del"}},
+		"post, form targets itself": {"POST", map[string]string{"HX-Request": "true", "HX-Trigger": "edit", "HX-Target": "edit"}},
 		"patch, row targets itself": {"PATCH", map[string]string{"HX-Request": "true", "HX-Trigger": "row-3", "HX-Target": "row-3"}},
 	}
 	for name, c := range cases {
