@@ -142,8 +142,8 @@ type Props struct {
 
 	// Toolbar actions render in the toolbar's left group.
 	Toolbar []action.Action
-	// Create renders alone in the toolbar's right group; a zero Variant
-	// becomes VariantPrimary.
+	// Create renders alone in the toolbar's right group; VariantDefault
+	// (the zero value) becomes VariantPrimary.
 	Create *action.Action
 
 	Columns []datatable.Column
@@ -399,7 +399,7 @@ func (p Props) createActions() []action.Action {
 		return nil
 	}
 	a := *p.Create
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantPrimary
 	}
 	return []action.Action{a}

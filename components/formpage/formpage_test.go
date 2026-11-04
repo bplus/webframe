@@ -426,3 +426,26 @@ func TestRespond_CustomIDTargetedBody(t *testing.T) {
 		mustNotContain(t, out, "<h1", "<html", "wf-topbar")
 	}
 }
+
+// TestBody_SubmitExplicitSecondary: a Submit that asks for Secondary
+// renders secondary; an unset Variant still renders primary.
+func TestBody_SubmitExplicitSecondary(t *testing.T) {
+	submitTag := func(out string) string {
+		t.Helper()
+		i := strings.Index(out, `type="submit"`)
+		if i < 0 {
+			t.Fatalf("no submit button:\n%s", out)
+		}
+		return out[strings.LastIndex(out[:i], "<button"):i]
+	}
+	p := itemProps()
+	p.Submit = action.Action{Label: "Save draft", Variant: action.VariantSecondary}
+	if tag := submitTag(render(t, Body(p))); !strings.Contains(tag, "bg-secondary") || strings.Contains(tag, "bg-primary") {
+		t.Errorf("secondary submit should render secondary: %s", tag)
+	}
+
+	p.Submit = action.Action{Label: "Save draft"}
+	if tag := submitTag(render(t, Body(p))); !strings.Contains(tag, "bg-primary") {
+		t.Errorf("unset submit should render primary: %s", tag)
+	}
+}

@@ -225,3 +225,17 @@ func TestButton_VariantOutline(t *testing.T) {
 		}
 	}
 }
+
+// TestButton_DefaultAndSecondaryRenderSecondary: a plain Button renders
+// both the unset Variant and an explicit VariantSecondary secondary.
+func TestButton_DefaultAndSecondaryRenderSecondary(t *testing.T) {
+	if VariantDefault == VariantSecondary {
+		t.Fatal("VariantSecondary must differ from the zero value")
+	}
+	for _, v := range []Variant{VariantDefault, VariantSecondary} {
+		out := render(t, Button(Action{Label: "Go", Variant: v}))
+		if !strings.Contains(out, "bg-secondary") {
+			t.Errorf("Variant %q: want secondary:\n%s", v, out)
+		}
+	}
+}

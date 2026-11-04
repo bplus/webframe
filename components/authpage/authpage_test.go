@@ -374,3 +374,50 @@ func TestSignIn_AutocompleteDefaults(t *testing.T) {
 		t.Errorf("autocomplete appears %d times, want 3 (not on the text field):\n%s", n, out)
 	}
 }
+
+// TestSignIn_ExplicitSecondary: a Provider or Submit set to Secondary
+// renders secondary; unset ones keep their defaults (outline provider,
+// primary submit).
+func TestSignIn_ExplicitSecondary(t *testing.T) {
+	p := signInProps()
+	p.Providers = []action.Action{
+		{Label: "Continue with Google", Href: "/auth/google", Variant: action.VariantSecondary},
+		{Label: "Continue with GitHub", Href: "/auth/github"},
+	}
+	out := render(t, AuthPage(p))
+	tag := func(href string) string {
+		t.Helper()
+		i := strings.Index(out, `href="`+href+`"`)
+		if i < 0 {
+			t.Fatalf("no link to %s:\n%s", href, out)
+		}
+		start := strings.LastIndex(out[:i], "<a")
+		return out[start : i+strings.Index(out[i:], ">")]
+	}
+	google, github := tag("/auth/google"), tag("/auth/github")
+	if !strings.Contains(google, "bg-secondary") || strings.Contains(google, "bg-background") {
+		t.Errorf("secondary provider should render secondary: %s", google)
+	}
+	if !strings.Contains(github, "bg-background") {
+		t.Errorf("unset provider should render outline: %s", github)
+	}
+
+	p.Submit = action.Action{Label: "Let me in", Variant: action.VariantSecondary}
+	out = render(t, AuthPage(p))
+	i := strings.Index(out, `type="submit"`)
+	if i < 0 {
+		t.Fatalf("no submit button:\n%s", out)
+	}
+	submit := out[strings.LastIndex(out[:i], "<button"):i]
+	if !strings.Contains(submit, "bg-secondary") || strings.Contains(submit, "bg-primary") {
+		t.Errorf("secondary submit should render secondary: %s", out[strings.LastIndex(out[:i], "<button"):i+200])
+	}
+
+	p.Submit = action.Action{Label: "Let me in"}
+	out = render(t, AuthPage(p))
+	mustContain(t, out, "<span>Let me in</span>")
+	i = strings.Index(out, `type="submit"`)
+	if j := strings.LastIndex(out[:i], "<button"); !strings.Contains(out[j:i+300], "bg-primary") {
+		t.Errorf("unset submit should render primary: %s", out[j:i+300])
+	}
+}

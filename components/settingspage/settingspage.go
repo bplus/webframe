@@ -171,7 +171,7 @@ func (p Props) cancel() (action.Action, bool) {
 		return action.Action{}, false
 	}
 	a := *p.Cancel
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantGhost
 	}
 	return a, true

@@ -9,13 +9,19 @@ import (
 	"github.com/bplus/webframe/utils"
 )
 
-// Variant is the visual emphasis of an Action. The zero value is the
-// secondary style.
+// Variant is the visual emphasis of an Action. The zero value,
+// VariantDefault, means "not chosen": each component that renders the
+// action picks its own default for it (a page's Submit is primary, a
+// table row action ghost, a plain action.Button secondary). Any other
+// value is always rendered as named.
 type Variant string
 
 const (
-	// VariantSecondary is the muted style (zero value).
-	VariantSecondary Variant = ""
+	// VariantDefault is the zero value: the rendering component's default.
+	// action.Button and action.Group render it secondary.
+	VariantDefault Variant = ""
+	// VariantSecondary is the muted style.
+	VariantSecondary Variant = "secondary"
 	// VariantPrimary is the filled primary style.
 	VariantPrimary Variant = "primary"
 	// VariantDestructive is for dangerous actions.
@@ -83,7 +89,7 @@ func buttonVariant(v Variant) button.Variant {
 		return button.VariantGhost
 	case VariantOutline:
 		return button.VariantOutline
-	default:
+	default: // VariantSecondary, VariantDefault
 		return button.VariantSecondary
 	}
 }

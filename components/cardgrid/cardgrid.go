@@ -148,7 +148,7 @@ func (c Card) hasFooter() bool {
 // footerAction returns the action as rendered in the footer: ghost and
 // small unless the caller chose a Variant or Size.
 func footerAction(a action.Action) action.Action {
-	if a.Variant == "" {
+	if a.Variant == action.VariantDefault {
 		a.Variant = action.VariantGhost
 	}
 	if a.Size == "" {
