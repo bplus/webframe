@@ -25,6 +25,7 @@ package toast
 
 import (
 	"fmt"
+	"hash/fnv"
 	"time"
 
 	"github.com/bplus/webframe/components/banner"
@@ -64,6 +65,25 @@ type Props struct {
 	Timeout time.Duration
 	// Sticky keeps the toast until the user dismisses it.
 	Sticky bool
+	// Key names the toast for duplicate suppression: when a toast arrives
+	// in a container that already holds one with the same key, the older
+	// one is removed, so ten failed clicks show one toast, not ten. Empty
+	// means a key made from Kind, Title and Body, so identical toasts
+	// replace each other and different ones stack. Set it when toasts
+	// with changing words should still replace each other ("3 items
+	// saved", then "4 items saved").
+	Key string
+}
+
+// key is the value of the toast's data-wf-key attribute: Key when
+// set, otherwise a short hash of Kind, Title and Body.
+func (p Props) key() string {
+	if p.Key != "" {
+		return p.Key
+	}
+	h := fnv.New64a()
+	h.Write([]byte(string(p.Kind) + "\x00" + p.Title + "\x00" + p.Body))
+	return fmt.Sprintf("%016x", h.Sum64())
 }
 
 // hasContent reports whether there is anything to show.
@@ -95,11 +115,21 @@ func (p Props) timeoutMS() int64 {
 	return p.Timeout.Milliseconds()
 }
 
-// initExpr is the Alpine x-init expression that hides the toast after the
-// timeout. show=false runs the leave transition and then display:none, so
-// the stack collapses around it; effectExpr then removes the element.
+// dedupeExpr removes every other toast with the same data-wf-key
+// from the toast's container, so a repeated toast replaces the earlier
+// copy instead of stacking under it. It reads the key from the element's
+// own attribute, so no value is spliced into the script.
+const dedupeExpr = "$el.parentElement && $el.parentElement.querySelectorAll(':scope > [data-wf-key]').forEach((t) => { if (t !== $el && t.dataset.wfKey === $el.dataset.wfKey) t.remove() })"
+
+// initExpr is the Alpine x-init expression: it removes an earlier copy of
+// the same toast (dedupeExpr) and, unless Sticky, hides the toast after
+// the timeout. show=false runs the leave transition and then display:none,
+// so the stack collapses around it; effectExpr then removes the element.
 func (p Props) initExpr() string {
-	return fmt.Sprintf("setTimeout(() => show = false, %d)", p.timeoutMS())
+	if p.Sticky {
+		return dedupeExpr
+	}
+	return fmt.Sprintf("%s; setTimeout(() => show = false, %d)", dedupeExpr, p.timeoutMS())
 }
 
 // removeDelayMS is how long after show=false the toast element is removed:
@@ -147,7 +177,8 @@ templ kindIcon(k Kind) {
 
 // Toast renders one toast: role="alert" for errors, role="status"
 // otherwise. The dismiss button and (unless Sticky) a timer hide it, and it
-// is then removed from the DOM. Rendered on its own it appears where it is
+// is then removed from the DOM. A toast replaces an earlier one with the
+// same key in the same container (see Props.Key). Rendered on its own it appears where it is
 // placed; OOB and Send route it to #toast-container. It renders nothing
 // when Title and Body are both empty.
 templ Toast(p Props) {
@@ -162,9 +193,8 @@ templ Toast(p Props) {
 			x-show="show"
 			x-transition
 			x-effect={ effectExpr() }
-			if !p.Sticky {
-				x-init={ p.initExpr() }
-			}
+			data-wf-key={ p.key() }
+			x-init={ p.initExpr() }
 			{ p.Attributes... }
 		>
 			<div class={ p.bodyClass() }>

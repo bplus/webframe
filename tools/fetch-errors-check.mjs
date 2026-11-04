@@ -9,6 +9,14 @@
 //   boom     click "Request a plain 500" (a text/plain error that
 //            htmx-errors.js refuses to swap): the same toast shows and the
 //            sentence beside the button does not change.
+//   noanswer click "Refresh stats" while its request gets no answer
+//            (Playwright aborts it, as a stopped server would: htmx fires
+//            htmx:sendError), then while it hangs past htmx.config.timeout
+//            (htmx:timeout): each time the same toast shows, and only one.
+//   repeat   on /settings, a refused "Delete account" (a 409 answered by
+//            toast.Respond) twice leaves one toast; on the showcase the
+//            Error toast button twice leaves one, and the Warning button
+//            then adds a second (different toasts still stack).
 //   signin   on the sign-in page (a RenderBare page), an htmx POST button
 //            added to the page whose target is itself gets the 404 page,
 //            and the page lands in the page's <main id="wf-main">, not
@@ -22,7 +30,7 @@ import { chromium } from "playwright";
 
 const USAGE = `usage: node tools/fetch-errors-check.mjs --url <base> [--shot <prefix>]
   --url <base>     the demo's base URL, such as http://localhost:3333 (required)
-  --shot <prefix>  also save <prefix>-1280.png, <prefix>-390.png and <prefix>-signin.png`;
+  --shot <prefix>  also save <prefix>-1280.png, <prefix>-390.png, <prefix>-noanswer.png, <prefix>-repeat.png and <prefix>-signin.png`;
 
 function usage(msg) {
   process.stderr.write(`fetch-errors-check: ${msg}\n${USAGE}\n`);
@@ -58,11 +66,12 @@ const NOTICE = "#toast-container [data-wf-load-failed-notice], #toast-container 
 
 // watchConsole collects console errors other than the ones a failed
 // request logs by itself (the browser's "Failed to load resource" and
-// htmx's "Response Status Error Code"): those are the point of the check.
+// htmx's "Response Status Error Code", and its own htmx:sendError and
+// htmx:timeout log lines): those are the point of the check.
 function watchConsole(page) {
   const errors = [];
   page.on("console", (m) => {
-    if (m.type() === "error" && !/Failed to load resource|Response Status Error Code (404|500)|^htmx:afterRequest$/.test(m.text())) errors.push(m.text());
+    if (m.type() === "error" && !/Failed to load resource|Response Status Error Code (404|409|500)|^htmx:(afterRequest|sendError|timeout)$/.test(m.text())) errors.push(m.text());
   });
   return errors;
 }
@@ -116,6 +125,34 @@ try {
   await page.getByRole("button", { name: "Request a plain 500" }).click();
   await page.waitForTimeout(300);
   check((await page.locator("#toast-container [data-wf-load-failed-notice]").count()) === 1, "boom: a second click keeps one toast");
+
+  // No answer at all: the request is aborted, then it times out.
+  await clearToasts(page);
+  await page.route("**/api/stats", (route) => route.abort("connectionrefused"));
+  const refreshButton = page.locator("#refresh-stats");
+  await refreshButton.click();
+  const sent = await toastText(page);
+  check(/Could not load that/.test(sent), `noanswer: aborted request, toast reads "${sent}"`);
+  await refreshButton.click();
+  await page.waitForTimeout(300);
+  check((await page.locator("#toast-container > *").count()) === 1, "noanswer: a second aborted click keeps one toast");
+  check((await refreshButton.innerText()).trim() === "Refresh stats", "noanswer: the button keeps its label");
+  await page.unroute("**/api/stats");
+  await clearToasts(page);
+  await page.evaluate(() => { window.htmx.config.timeout = 200; });
+  await page.route("**/api/stats", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    try { await route.abort(); } catch { /* htmx gave up first */ }
+  });
+  await refreshButton.click();
+  const timedOut = await toastText(page);
+  check(/Could not load that/.test(timedOut), `noanswer: timed-out request, toast reads "${timedOut}"`);
+  await page.waitForTimeout(1600);
+  check((await page.locator("#toast-container > *").count()) === 1, "noanswer: a timeout shows one toast");
+  if (opts.shot) await page.screenshot({ path: `${opts.shot}-noanswer.png` });
+  await page.evaluate(() => { window.htmx.config.timeout = 0; });
+  await page.unroute("**/api/stats");
+
   check(errors.length === 0, `desktop: no other console errors ${JSON.stringify(errors)}`);
   await page.close();
 
@@ -127,6 +164,32 @@ try {
   if (opts.shot) await phone.screenshot({ path: `${opts.shot}-390.png` });
   check(phoneErrors.length === 0, `phone: no other console errors ${JSON.stringify(phoneErrors)}`);
   await phone.close();
+
+  // --- repeat: an identical server toast replaces the earlier copy ---
+  const rep = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const repErrors = watchConsole(rep);
+  const toastCount = async () => { await rep.waitForTimeout(400); return rep.locator("#toast-container > *").count(); };
+  await rep.goto(opts.url + "/settings");
+  for (let i = 0; i < 2; i++) {
+    await rep.locator("#wf-main").getByRole("button", { name: "Delete account" }).click();
+    await rep.waitForTimeout(300); // the dialog's open transition
+    const confirm = rep.locator("#wf-confirm [data-wf-confirm-part=confirm-destructive]");
+    await confirm.click({ timeout: 5000 });
+    await confirm.waitFor({ state: "hidden", timeout: 3000 });
+    await rep.locator("#toast-container").getByText("Could not delete the account").first().waitFor({ timeout: 3000 });
+    await rep.waitForTimeout(300); // the dialog's close transition
+  }
+  check((await toastCount()) === 1, "repeat: two refused deletes leave one toast");
+  if (opts.shot) await rep.screenshot({ path: `${opts.shot}-repeat.png` });
+  await rep.goto(opts.url + "/");
+  const toastSection = rep.locator("#toast");
+  await toastSection.getByRole("button", { name: "Error", exact: true }).click();
+  await toastSection.getByRole("button", { name: "Error", exact: true }).click();
+  check((await toastCount()) === 1, "repeat: the Error toast button twice leaves one toast");
+  await toastSection.getByRole("button", { name: "Warning", exact: true }).click();
+  check((await toastCount()) === 2, "repeat: a different toast still stacks");
+  check(repErrors.length === 0, `repeat: no other console errors ${JSON.stringify(repErrors)}`);
+  await rep.close();
 
   // --- sign-in page: an action that targets itself lands in #wf-main ---
   const bare = await browser.newPage({ viewport: { width: 1280, height: 800 } });

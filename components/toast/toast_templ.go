@@ -55,6 +55,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"hash/fnv"
 	"time"
 
 	"github.com/bplus/webframe/components/banner"
@@ -94,6 +95,25 @@ type Props struct {
 	Timeout time.Duration
 	// Sticky keeps the toast until the user dismisses it.
 	Sticky bool
+	// Key names the toast for duplicate suppression: when a toast arrives
+	// in a container that already holds one with the same key, the older
+	// one is removed, so ten failed clicks show one toast, not ten. Empty
+	// means a key made from Kind, Title and Body, so identical toasts
+	// replace each other and different ones stack. Set it when toasts
+	// with changing words should still replace each other ("3 items
+	// saved", then "4 items saved").
+	Key string
+}
+
+// key is the value of the toast's data-wf-key attribute: Key when
+// set, otherwise a short hash of Kind, Title and Body.
+func (p Props) key() string {
+	if p.Key != "" {
+		return p.Key
+	}
+	h := fnv.New64a()
+	h.Write([]byte(string(p.Kind) + "\x00" + p.Title + "\x00" + p.Body))
+	return fmt.Sprintf("%016x", h.Sum64())
 }
 
 // hasContent reports whether there is anything to show.
@@ -125,11 +145,21 @@ func (p Props) timeoutMS() int64 {
 	return p.Timeout.Milliseconds()
 }
 
-// initExpr is the Alpine x-init expression that hides the toast after the
-// timeout. show=false runs the leave transition and then display:none, so
-// the stack collapses around it; effectExpr then removes the element.
+// dedupeExpr removes every other toast with the same data-wf-key
+// from the toast's container, so a repeated toast replaces the earlier
+// copy instead of stacking under it. It reads the key from the element's
+// own attribute, so no value is spliced into the script.
+const dedupeExpr = "$el.parentElement && $el.parentElement.querySelectorAll(':scope > [data-wf-key]').forEach((t) => { if (t !== $el && t.dataset.wfKey === $el.dataset.wfKey) t.remove() })"
+
+// initExpr is the Alpine x-init expression: it removes an earlier copy of
+// the same toast (dedupeExpr) and, unless Sticky, hides the toast after
+// the timeout. show=false runs the leave transition and then display:none,
+// so the stack collapses around it; effectExpr then removes the element.
 func (p Props) initExpr() string {
-	return fmt.Sprintf("setTimeout(() => show = false, %d)", p.timeoutMS())
+	if p.Sticky {
+		return dedupeExpr
+	}
+	return fmt.Sprintf("%s; setTimeout(() => show = false, %d)", dedupeExpr, p.timeoutMS())
 }
 
 // removeDelayMS is how long after show=false the toast element is removed:
@@ -211,7 +241,8 @@ func kindIcon(k Kind) templ.Component {
 
 // Toast renders one toast: role="alert" for errors, role="status"
 // otherwise. The dismiss button and (unless Sticky) a timer hide it, and it
-// is then removed from the DOM. Rendered on its own it appears where it is
+// is then removed from the DOM. A toast replaces an earlier one with the
+// same key in the same container (see Props.Key). Rendered on its own it appears where it is
 // placed; OOB and Send route it to #toast-container. It renders nothing
 // when Title and Body are both empty.
 func Toast(p Props) templ.Component {
@@ -253,7 +284,7 @@ func Toast(p Props) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 157, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 188, Col: 13}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -284,7 +315,7 @@ func Toast(p Props) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(banner.Role(p.variant()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 160, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 191, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -297,34 +328,41 @@ func Toast(p Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(effectExpr())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 164, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 195, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-wf-key=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if !p.Sticky {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " x-init=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var8 string
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.initExpr())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 166, Col: 25}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.key())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 196, Col: 24}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" x-init=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.initExpr())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 197, Col: 24}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, p.Attributes)
 			if templ_7745c5c3_Err != nil {
@@ -334,8 +372,8 @@ func Toast(p Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var9 = []any{p.bodyClass()}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var9...)
+			var templ_7745c5c3_Var10 = []any{p.bodyClass()}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -343,12 +381,12 @@ func Toast(p Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var9).String())
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -369,12 +407,12 @@ func Toast(p Props) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var11 string
-				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
+				var templ_7745c5c3_Var12 string
+				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 174, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 204, Col: 40}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -388,12 +426,12 @@ func Toast(p Props) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var12 string
-				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Body)
+				var templ_7745c5c3_Var13 string
+				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.Body)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 177, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/toast/toast.templ`, Line: 207, Col: 49}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -441,9 +479,9 @@ func OOB(p Props) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if p.Title != "" || p.Body != "" {

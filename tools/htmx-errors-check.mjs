@@ -2,7 +2,9 @@
 // htmx-errors-check: run static/js/htmx-errors.js in a bare Node context
 // (no browser, no npm packages) and check which error answers it lets htmx
 // swap. Each case hands the script's htmx:beforeSwap listener an error
-// response (a Content-Type and a body) and compares the swap decision.
+// response (a Content-Type and a body) and compares the swap decision and
+// the toasts shown. Further cases fire htmx:sendError and htmx:timeout (a
+// request that got no answer at all) and count the toasts.
 //
 //   node tools/htmx-errors-check.mjs
 //
@@ -19,11 +21,12 @@ const script = readFileSync(fileURLToPath(new URL("../static/js/htmx-errors.js",
 // #toast-container (one at most: a new one replaces the old).
 let notices = [];
 
-// load runs the script in a fresh context and returns its listener. The
+// load runs the script in a fresh context and returns its listeners by
+// event type. The
 // fake document has the <template data-wf-load-failed> and the
 // #toast-container appshell.Document renders.
 function load() {
-  let listener = null;
+  const listeners = {};
   const box = {
     querySelectorAll: () => notices.slice(),
     appendChild: (el) => notices.push(el),
@@ -40,7 +43,7 @@ function load() {
   };
   const document = {
     addEventListener(type, fn) {
-      if (type === "htmx:beforeSwap") listener = fn;
+      (listeners[type] = listeners[type] || []).push(fn);
     },
     querySelector: (sel) => (sel === "template[data-wf-load-failed]" ? { content: { firstElementChild: toastEl } } : null),
     getElementById: (id) => (id === "toast-container" ? box : null),
@@ -48,14 +51,26 @@ function load() {
   const context = { document };
   context.window = context;
   vm.runInNewContext(script, context);
-  if (!listener) throw new Error("htmx-errors.js registered no htmx:beforeSwap listener");
-  return listener;
+  if (!listeners["htmx:beforeSwap"]) throw new Error("htmx-errors.js registered no htmx:beforeSwap listener");
+  return listeners;
 }
+
+// fire hands detail to every listener of type (none is fine: the case
+// then fails on its toast count).
+function fire(listeners, type, detail) {
+  for (const fn of listeners[type] || []) fn({ detail });
+}
+
+// target and source build the fake elements a detail carries: a swap
+// target that may swallow errors, and a request source that may be a
+// split pane list link.
+const target = (swallow) => ({ closest: (sel) => (swallow && sel === "[data-wf-swallow-errors]" ? {} : null) });
+const source = (paneLink) => ({ closest: (sel) => (paneLink && sel === "a[data-wf-splitpane-link]" ? {} : null) });
 
 // swaps reports htmx's decision after the listener: an error response with
 // the given Content-Type (null for none) and body, aimed at a plain target
 // or, with swallow, at a data-wf-swallow-errors one.
-function swaps(listener, contentType, body, { swallow = false, isError = true } = {}) {
+function swaps(listeners, contentType, body, { swallow = false, isError = true, paneLink = false } = {}) {
   const detail = {
     isError,
     shouldSwap: true,
@@ -63,9 +78,10 @@ function swaps(listener, contentType, body, { swallow = false, isError = true } 
       responseText: body,
       getResponseHeader: (name) => (name.toLowerCase() === "content-type" ? contentType : null),
     },
-    target: { closest: (sel) => (swallow && sel === "[data-wf-swallow-errors]" ? {} : null) },
+    target: target(swallow),
+    requestConfig: { elt: source(paneLink) },
   };
-  listener({ detail });
+  fire(listeners, "htmx:beforeSwap", detail);
   return detail.shouldSwap;
 }
 
@@ -112,8 +128,10 @@ swaps(listener, plain, "Internal Server Error\n");
   process.stdout.write(`${ok ? "ok  " : "FAIL"} two refused answers: toasts=${notices.length}, want 1\n`);
 }
 // A data-wf-swallow-errors target never swaps an error, even HTML, and
-// shows no toast (the next poll repairs it); a success is never touched.
+// shows no toast (the next poll repairs it); a success is never touched;
+// a split pane link's refused answer is left to splitpane.js's own toast.
 for (const [name, run, want] of [
+  ["text error from a split pane link", () => swaps(listener, plain, "Internal Server Error\n", { paneLink: true }), false],
   ["HTML error into a swallowing target", () => swaps(listener, html, "<div>x</div>", { swallow: true }), false],
   ["text error into a swallowing target", () => swaps(listener, plain, "Internal Server Error\n", { swallow: true }), false],
   ["success response left to htmx", () => swaps(listener, plain, "ok", { isError: false }), true],
@@ -123,6 +141,27 @@ for (const [name, run, want] of [
   const ok = got === want && notices.length === 0;
   if (!ok) failed++;
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}: swaps=${got}, want ${want}\n`);
+}
+// No answer at all: htmx fires htmx:sendError (network error, server
+// down) or htmx:timeout, with no response to swap. The toast shows, once,
+// except for a swallowing target and a split pane link.
+const noAnswer = (type, { swallow = false, paneLink = false } = {}) => () =>
+  fire(listener, type, { xhr: { status: 0 }, target: target(swallow), requestConfig: { elt: source(paneLink) } });
+for (const [name, steps, want] of [
+  ["sendError on a plain target", [noAnswer("htmx:sendError")], 1],
+  ["timeout on a plain target", [noAnswer("htmx:timeout")], 1],
+  ["two sendErrors in a row", [noAnswer("htmx:sendError"), noAnswer("htmx:sendError")], 1],
+  ["sendError after a refused answer", [() => swaps(listener, plain, "x"), noAnswer("htmx:sendError")], 1],
+  ["sendError on a swallowing target", [noAnswer("htmx:sendError", { swallow: true })], 0],
+  ["timeout on a swallowing target", [noAnswer("htmx:timeout", { swallow: true })], 0],
+  ["sendError from a split pane link", [noAnswer("htmx:sendError", { paneLink: true })], 0],
+  ["timeout from a split pane link", [noAnswer("htmx:timeout", { paneLink: true })], 0],
+]) {
+  notices = [];
+  for (const step of steps) step();
+  const ok = notices.length === want;
+  if (!ok) failed++;
+  process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}: toasts=${notices.length}, want ${want}\n`);
 }
 if (failed) {
   process.stderr.write(`htmx-errors-check: ${failed} case(s) failed\n`);

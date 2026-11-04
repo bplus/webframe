@@ -334,7 +334,7 @@ still count as errors (htmx still fires its `htmx:responseError` event); anythin
 answer: a plain-text error. If a handler calls Go's `http.Error(w, "Internal Server Error",
 500)`, swapping that would put the raw words "Internal Server Error" where the form was.
 `static/js/htmx-errors.js` listens just before each swap
-([htmx-errors.js:129-138](../static/js/htmx-errors.js#L129-L138)):
+([htmx-errors.js:142-151](../static/js/htmx-errors.js#L142-L151)):
 
 ```js
 if (!d || !d.isError) return;
@@ -342,7 +342,7 @@ if (swallows(d.target)) {
   d.shouldSwap = false;
 } else if (!isHTML(d.xhr)) {
   d.shouldSwap = false;
-  notify();
+  if (!splitpaneLink(d)) notify();
 }
 ```
 
@@ -351,13 +351,25 @@ marked `data-wf-swallow-errors`, or if the body is not HTML. In the second case 
 a toast, "Could not load that. Nothing on the page changed. Try again in a moment.", so no failure
 is silent. "HTML" means the `Content-Type`
 says `text/html`, or the body starts like HTML: `<!doctype html`, a comment, or a known HTML
-element such as `<form` or `<tr` ([htmx-errors.js:64-106](../static/js/htmx-errors.js#L64-L106)).
+element such as `<form` or `<tr` ([htmx-errors.js:69-112](../static/js/htmx-errors.js#L69-L112)).
 That rescues a fragment whose handler forgot the header, while an XML error (`<?xml`,
 `<error>`) or text such as `<nil>` is still refused. The `data-wf-swallow-errors` mark
 is on small polled elements, such as a nav badge count or a `logviewer`'s polled lines, where a
 full error page would be garbage and the next poll repairs things anyway, and on a `splitpane`'s
 detail region unless its `ShowErrors` is set. The practical rule: answer errors with `errorpage` or
 `toast`, which send HTML, and never with `http.Error`.
+
+**When there is no answer at all.** A request can also fail with no response: the network is
+down, the server has stopped, or the request ran past `htmx.config.timeout`. htmx then fires
+`htmx:sendError` or `htmx:timeout` instead of a swap, and `htmx-errors.js` shows the same
+"Could not load that" toast ([htmx-errors.js:153-166](../static/js/htmx-errors.js#L153-L166)).
+The same two exceptions hold: a target marked `data-wf-swallow-errors` stays silent, and a
+`splitpane` list link is left to `splitpane.js`, which has its own toast (below). Each new
+failure replaces the toast an earlier one left, so ten failed clicks show one toast, not ten.
+Toasts sent by the server follow the same rule: each one carries a `data-wf-key` attribute (the
+toast's `Key`, or a hash of its kind, title and body), and when it arrives it removes an older toast
+with the same key. Ten refused clicks answered by `toast.Respond` show one toast; two different
+toasts still show two.
 
 **Why an error page sometimes moves, and sometimes becomes a toast.** htmx swaps an answer into
 the request's target, and an element with `hx-get` or `hx-post` but no `hx-target` is its own
@@ -384,11 +396,12 @@ A refused swap must not leave the user wondering why nothing happened. A failed 
 dropped without a word, which is fine: the next poll a few seconds later repairs it. A `splitpane`
 list click is different: the user asked for something. So when its request fails, the detail region
 and the address bar stay as they were and `static/js/splitpane.js` shows a toast
-([splitpane.js:70-77](../static/js/splitpane.js#L70-L77)): "That item is no longer here. It may have
+([splitpane.js:72-87](../static/js/splitpane.js#L72-L87)): "That item is no longer here. It may have
 been deleted." for a 404 or 410 answer, "Could not load that item. Try again." for any other error
 or for no answer at all. The pane renders both toasts, already worded, inside hidden `<template>`
 elements, so an app changes the words with the pane's `Gone` and `Failed` fields and writes no
-JavaScript.
+JavaScript. `htmx-errors.js` shows nothing for these links, so a failed click shows one toast,
+the pane's.
 
 ### POST with good input: redirect, then the flash
 
@@ -680,7 +693,7 @@ In this order. Each builds on the one before.
 7. [components/flash/flash.go](../components/flash/flash.go): the one-time message cookie.
 8. [components/errorpage/errorpage.go](../components/errorpage/errorpage.go): error pages and
    the router wrapper.
-9. [static/js/htmx-errors.js](../static/js/htmx-errors.js): 108 lines, mostly comments; the
+9. [static/js/htmx-errors.js](../static/js/htmx-errors.js): 167 lines, mostly comments; the
    browser half of section 3.
 10. [internal/wflint/rules.go](../internal/wflint/rules.go): what app code may write.
 11. [components/appshell/shell.templ](../components/appshell/shell.templ): the nav chrome. Skim

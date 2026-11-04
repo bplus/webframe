@@ -26,7 +26,9 @@
 // any toast. When the pane has ShowErrors and the error page was swapped
 // into the region, no toast is shown: the page itself says what happened.
 // This listener runs after htmx-errors.js's (appshell.Scripts loads that
-// script first), so it sees the final shouldSwap.
+// script first), so it sees the final shouldSwap. htmx-errors.js shows no
+// toast of its own for a request sent by a list link, so each failed
+// click shows exactly one toast, this script's.
 (function () {
   'use strict';
   if (window.wf && window.wf.splitpane) return;
