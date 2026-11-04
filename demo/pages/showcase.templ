@@ -1585,18 +1585,15 @@ templ layoutLeftPanel() {
 	}
 }
 
-// layoutRightPanel is the ThreeColumn's right side: a Stack with
-// JustifyBetween holding two panels. Justify only spreads them when the
-// Stack is taller than its content, and nothing in the demo can give it
-// that height without a class, so the panels sit together here; the
-// panel subtitle says so.
+// layoutRightPanel is the ThreeColumn's right side: a Stack holding two
+// panels.
 templ layoutRightPanel() {
-	@layout.Stack(layout.StackProps{Justify: layout.JustifyBetween}) {
+	@layout.Stack() {
 		@panel.Panel(panel.Props{Level: 4, Title: "Inspector"}) {
 			<p>Details or help.</p>
 		}
 		@panel.Panel(panel.Props{Level: 4, Title: "Pinned below", Variant: panel.VariantMuted}) {
-			<p>The second panel of a JustifyBetween Stack.</p>
+			<p>The second panel of the right-side Stack.</p>
 		}
 	}
 }
@@ -1643,7 +1640,7 @@ templ layoutSection() {
 				<p>The main column takes the remaining width. On narrow screens the aside stacks below it. On wide screens the aside stays pinned while this column scrolls, which suits long documents with a table of contents or a summary beside them.</p>
 			}
 		}
-		@panel.Panel(panel.Props{Level: 4, Title: "ThreeColumn with Stack Justify", Subtitle: "Below 768px the sides collapse into disclosures labelled Nav and Inspector; the right side is a Stack with JustifyBetween, which only spreads its two panels when something gives the Stack height, and nothing here does without a class, so they sit together."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "ThreeColumn", Subtitle: "Below 768px the sides collapse into disclosures labelled Nav and Inspector; the right side is a Stack of two panels."}) {
 			@layout.ThreeColumn(layout.ThreeColumnProps{Left: layoutLeftPanel(), Right: layoutRightPanel(), LeftLabel: "Nav", RightLabel: "Inspector"}) {
 				<p>The center column holds the primary content. On narrow screens the two side columns collapse into disclosures named by LeftLabel and RightLabel.</p>
 			}

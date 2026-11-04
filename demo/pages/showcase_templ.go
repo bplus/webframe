@@ -10716,11 +10716,8 @@ func layoutLeftPanel() templ.Component {
 	})
 }
 
-// layoutRightPanel is the ThreeColumn's right side: a Stack with
-// JustifyBetween holding two panels. Justify only spreads them when the
-// Stack is taller than its content, and nothing in the demo can give it
-// that height without a class, so the panels sit together here; the
-// panel subtitle says so.
+// layoutRightPanel is the ThreeColumn's right side: a Stack holding two
+// panels.
 func layoutRightPanel() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -10792,7 +10789,7 @@ func layoutRightPanel() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 406, "<p>The second panel of a JustifyBetween Stack.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 406, "<p>The second panel of the right-side Stack.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -10804,7 +10801,7 @@ func layoutRightPanel() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Stack(layout.StackProps{Justify: layout.JustifyBetween}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var446), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Stack().Render(templ.WithChildren(ctx, templ_7745c5c3_Var446), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -11231,7 +11228,7 @@ func layoutSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "ThreeColumn with Stack Justify", Subtitle: "Below 768px the sides collapse into disclosures labelled Nav and Inspector; the right side is a Stack with JustifyBetween, which only spreads its two panels when something gives the Stack height, and nothing here does without a class, so they sit together."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var466), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "ThreeColumn", Subtitle: "Below 768px the sides collapse into disclosures labelled Nav and Inspector; the right side is a Stack of two panels."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var466), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -13090,7 +13087,7 @@ func toastButton(variant, label string, v button.Variant) templ.Component {
 			var templ_7745c5c3_Var539 string
 			templ_7745c5c3_Var539, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2055, Col: 9}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2052, Col: 9}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var539))
 			if templ_7745c5c3_Err != nil {
@@ -13950,7 +13947,7 @@ func bottomsheetSection() templ.Component {
 								var templ_7745c5c3_Var575 string
 								templ_7745c5c3_Var575, templ_7745c5c3_Err = templ.JoinStringErrs(text)
 								if templ_7745c5c3_Err != nil {
-									return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2187, Col: 16}
+									return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/showcase.templ`, Line: 2184, Col: 16}
 								}
 								_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var575))
 								if templ_7745c5c3_Err != nil {

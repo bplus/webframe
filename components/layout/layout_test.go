@@ -130,20 +130,13 @@ func TestSectionLevelClamps(t *testing.T) {
 	}
 }
 
-func TestStack_Justify(t *testing.T) {
+func TestStack_PacksAtStart(t *testing.T) {
 	var buf bytes.Buffer
-	if err := Stack(StackProps{Justify: JustifyBetween}).Render(context.Background(), &buf); err != nil {
-		t.Fatalf("render: %v", err)
-	}
-	if !strings.Contains(buf.String(), "justify-between") {
-		t.Errorf("missing justify-between in %s", buf.String())
-	}
-	buf.Reset()
 	if err := Stack().Render(context.Background(), &buf); err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	if !strings.Contains(buf.String(), "justify-start") {
-		t.Errorf("default Stack should pack at the start: %s", buf.String())
+	if strings.Contains(buf.String(), "justify-") {
+		t.Errorf("a Stack has no justify option and should emit no justify class: %s", buf.String())
 	}
 }
 
