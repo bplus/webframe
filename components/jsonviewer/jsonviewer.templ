@@ -88,7 +88,7 @@ templ (p Props) nodeView(n *node, path string, key string, isMember bool, depth 
 // keyView renders the "key:" prefix of an object member; nothing otherwise.
 templ (p Props) keyView(key string, isMember bool) {
 	if isMember {
-		<span class="break-all text-muted-foreground">{ keyLabel(key, isMember) }</span>
+		<span class="max-w-full shrink-0 break-words text-muted-foreground">{ keyLabel(key, isMember) }</span>
 	}
 }
 
