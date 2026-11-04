@@ -6,30 +6,65 @@ import (
 	"sort"
 )
 
+// valueCharW is the approximate width in px of one character of a 10px
+// value label.
+const valueCharW = 6.0
+
+// valueTopRoom is the space a vertical chart keeps above its tallest bar
+// for that bar's value label when ShowValues is on.
+const valueTopRoom = 14
+
+// valueLabel is the text drawn for a bar's value.
+func valueLabel(v float64) string {
+	return fmt.Sprintf("%.4g", v)
+}
+
+// valueLabelWidth is the room in px the widest value label needs, so a
+// horizontal chart can end its longest bar early enough for it to fit.
+func valueLabelWidth(bars []Bar) int {
+	m := 0
+	for _, b := range bars {
+		if n := len([]rune(valueLabel(b.Value))); n > m {
+			m = n
+		}
+	}
+	return int(math.Ceil(float64(m) * valueCharW))
+}
+
 // labelCharW is the approximate width in px of one character of an 11px
 // horizontal axis label.
 const labelCharW = 6.5
 
 // capBars keeps the maxBars largest bars (by raw Value, so a large negative
-// sorts last) and folds the rest into one "Other (K)" bar holding their sum.
-// It returns bars unchanged when maxBars <= 0 or they already fit, and never
-// mutates the input.
+// counts as small) in their input order and folds the rest into one
+// "Other (K)" bar holding their sum, placed last. Among equal values the
+// earlier bar is kept. It returns bars unchanged when maxBars <= 0 or they
+// already fit, and never mutates the input.
 func capBars(bars []Bar, maxBars int) []Bar {
 	if maxBars <= 0 || len(bars) <= maxBars {
 		return bars
 	}
-	sorted := make([]Bar, len(bars))
-	copy(sorted, bars)
-	sort.SliceStable(sorted, func(i, j int) bool {
-		return sorted[i].Value > sorted[j].Value
-	})
-	var rest float64
-	for _, b := range sorted[maxBars:] {
-		rest += b.Value
+	idx := make([]int, len(bars))
+	for i := range idx {
+		idx[i] = i
 	}
+	sort.SliceStable(idx, func(i, j int) bool {
+		return bars[idx[i]].Value > bars[idx[j]].Value
+	})
+	keep := make([]bool, len(bars))
+	for _, i := range idx[:maxBars] {
+		keep[i] = true
+	}
+	var rest float64
 	out := make([]Bar, 0, maxBars+1)
-	out = append(out, sorted[:maxBars]...)
-	out = append(out, Bar{Label: fmt.Sprintf("Other (%d)", len(sorted)-maxBars), Value: rest})
+	for i, b := range bars {
+		if keep[i] {
+			out = append(out, b)
+		} else {
+			rest += b.Value
+		}
+	}
+	out = append(out, Bar{Label: fmt.Sprintf("Other (%d)", len(bars)-maxBars), Value: rest})
 	return out
 }
 

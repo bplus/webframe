@@ -14,16 +14,19 @@ type DataPoint struct {
 	Value float64 // Y value
 }
 
-// Series is one named line-plus-area. An empty Color is picked from a
-// built-in palette by index; a set Color is sanitized, so an invalid value
-// renders gray.
+// Series is one named line-plus-area. An empty Color is picked by index
+// from theme tokens (primary, success, warning, info, destructive), so the
+// chart follows light and dark; a set Color is sanitized, so an invalid
+// value renders gray.
 type Series struct {
 	Label string // Legend label
 	Data  []DataPoint
-	Color string // Line/fill color (hex or CSS)
+	Color string // Line/fill color (any CSS color, e.g. "var(--color-info)")
 }
 
-// Props configures AreaChart. Width and Height default to 400x200.
+// Props configures AreaChart. Width and Height (default 400x200) are the
+// natural size and set the drawing's proportions; the SVG scales down to fit
+// a narrower container.
 type Props struct {
 	ID         string
 	Class      string
@@ -50,8 +53,10 @@ func (p Props) resolveHeight() int {
 	return 200
 }
 
+// areaDefaultColors are the series colors used when a Series sets none.
 var areaDefaultColors = []string{
-	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+	"var(--color-primary)", "var(--color-success)", "var(--color-warning)",
+	"var(--color-info)", "var(--color-destructive)",
 }
 
 func globalMinMax(series []Series) (float64, float64) {
@@ -125,13 +130,14 @@ templ AreaChart(props ...Props) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("inline-block", p.Class) }
+		class={ utils.TwMerge("inline-block max-w-full", p.Class) }
 		{ p.Attributes... }
 	>
 		<svg
 			width={ fmt.Sprintf("%d", w) }
 			height={ fmt.Sprintf("%d", h) }
 			viewBox={ fmt.Sprintf("0 0 %d %d", w, h) }
+			style="max-width:100%;height:auto;"
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			if p.ShowGrid {

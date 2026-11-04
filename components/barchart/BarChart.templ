@@ -26,9 +26,12 @@ type Bar struct {
 	Color string // optional per-bar color override
 }
 
-// Props configures BarChart. When len(Bars) exceeds MaxBars > 0, the MaxBars
-// largest bars (by raw value) are kept, sorted descending, and the rest are
-// summed into one "Other (K)" bar. Otherwise bar order is kept.
+// Props configures BarChart. Bars are drawn in the order given. When
+// len(Bars) exceeds MaxBars > 0, the MaxBars largest bars (by raw value) are
+// kept in that order and the rest are summed into one "Other (K)" bar at the
+// end. To draw largest first, sort Bars before passing them. ShowValues
+// reserves room for the value labels, so the longest bar ends early enough
+// (horizontal) or the tallest sits low enough (vertical) for its label.
 type Props struct {
 	ID          string
 	Class       string
@@ -40,7 +43,7 @@ type Props struct {
 	BarColor    string      // default bar color (default "var(--color-primary)")
 	ShowValues  bool        // show value labels on bars
 	ShowLabels  bool        // show axis labels
-	MaxBars     int         // cap bar count; extra bars fold into "Other (K)" (0 = unlimited)
+	MaxBars     int         // cap bar count; the smallest fold into "Other (K)" (0 = unlimited)
 }
 
 func (p Props) resolveOrientation() Orientation {
@@ -124,7 +127,11 @@ templ BarChart(props ...Props) {
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			if orientation == Horizontal {
-				{{ plotW := w - labelW - 10 }}
+				{{ valueRoom := 0 }}
+				if p.ShowValues {
+					{{ valueRoom = valueLabelWidth(bars) }}
+				}
+				{{ plotW := max(0, w-labelW-10-valueRoom) }}
 				{{ barH := 0 }}
 				if len(bars) > 0 {
 					{{ barH = (h - 10) / len(bars) }}
@@ -170,12 +177,16 @@ templ BarChart(props ...Props) {
 							y={ fmt.Sprintf("%d", y+rectH/2+4) }
 							class="text-xs fill-foreground"
 							style="font-size: 10px"
-						>{ fmt.Sprintf("%.4g", bar.Value) }</text>
+						>{ valueLabel(bar.Value) }</text>
 					}
 				}
 			} else {
 				{{ labelH := 20 }}
-				{{ plotH := h - labelH - 10 }}
+				{{ top := 0 }}
+				if p.ShowValues {
+					{{ top = valueTopRoom }}
+				}
+				{{ plotH := max(0, h-labelH-10-top) }}
 				{{ barW := 0 }}
 				if len(bars) > 0 {
 					{{ barW = (w - 10) / len(bars) }}
@@ -194,7 +205,7 @@ templ BarChart(props ...Props) {
 					}
 					<rect
 						x={ fmt.Sprintf("%d", x) }
-						y={ fmt.Sprintf("%d", plotH-barHeight) }
+						y={ fmt.Sprintf("%d", top+plotH-barHeight) }
 						width={ fmt.Sprintf("%d", rectW) }
 						height={ fmt.Sprintf("%d", barHeight) }
 						fill={ color }
@@ -212,11 +223,11 @@ templ BarChart(props ...Props) {
 					if p.ShowValues {
 						<text
 							x={ fmt.Sprintf("%d", x+rectW/2) }
-							y={ fmt.Sprintf("%d", plotH-barHeight-4) }
+							y={ fmt.Sprintf("%d", top+plotH-barHeight-4) }
 							text-anchor="middle"
 							class="text-xs fill-foreground"
 							style="font-size: 10px"
-						>{ fmt.Sprintf("%.4g", bar.Value) }</text>
+						>{ valueLabel(bar.Value) }</text>
 					}
 				}
 			}

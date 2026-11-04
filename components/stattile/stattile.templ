@@ -8,11 +8,15 @@ import (
 )
 
 // Delta is the change shown beside the value: preformatted text ("+12%")
-// plus a statcomparison.Direction that picks the arrow and color (up success,
-// down destructive, flat/zero muted). The tile does no delta math.
+// plus a statcomparison.Direction that picks the arrow and, with
+// LowerIsBetter, the color (up success and down destructive, swapped when
+// LowerIsBetter; flat/zero muted). The tile does no delta math.
 type Delta struct {
 	Value     string
 	Direction statcomparison.Direction
+	// LowerIsBetter marks a metric where a fall is good news (open bugs,
+	// error rate), so down shows green. Same rule as statcomparison.
+	LowerIsBetter bool
 }
 
 // Ratio is the metricring shown right of the value: Value is 0-100 (clamped
@@ -82,7 +86,7 @@ func surfaceClass(p Props) string {
 // deltaRow is the delta beside the value: statcomparison's shared Arrow and
 // ToneClass, so a tile's delta reads identically to a StatComparison's.
 templ deltaRow(d Delta) {
-	<span class={ utils.TwMerge("inline-flex items-center gap-0.5 text-sm font-medium", statcomparison.ToneClass(d.Direction)) }>
+	<span class={ utils.TwMerge("inline-flex items-center gap-0.5 text-sm font-medium", statcomparison.ToneClass(d.Direction, d.LowerIsBetter)) }>
 		@statcomparison.Arrow(d.Direction)
 		<span>{ d.Value }</span>
 	</span>

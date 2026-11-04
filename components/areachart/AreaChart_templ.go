@@ -21,16 +21,19 @@ type DataPoint struct {
 	Value float64 // Y value
 }
 
-// Series is one named line-plus-area. An empty Color is picked from a
-// built-in palette by index; a set Color is sanitized, so an invalid value
-// renders gray.
+// Series is one named line-plus-area. An empty Color is picked by index
+// from theme tokens (primary, success, warning, info, destructive), so the
+// chart follows light and dark; a set Color is sanitized, so an invalid
+// value renders gray.
 type Series struct {
 	Label string // Legend label
 	Data  []DataPoint
-	Color string // Line/fill color (hex or CSS)
+	Color string // Line/fill color (any CSS color, e.g. "var(--color-info)")
 }
 
-// Props configures AreaChart. Width and Height default to 400x200.
+// Props configures AreaChart. Width and Height (default 400x200) are the
+// natural size and set the drawing's proportions; the SVG scales down to fit
+// a narrower container.
 type Props struct {
 	ID         string
 	Class      string
@@ -57,8 +60,10 @@ func (p Props) resolveHeight() int {
 	return 200
 }
 
+// areaDefaultColors are the series colors used when a Series sets none.
 var areaDefaultColors = []string{
-	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+	"var(--color-primary)", "var(--color-success)", "var(--color-warning)",
+	"var(--color-info)", "var(--color-destructive)",
 }
 
 func globalMinMax(series []Series) (float64, float64) {
@@ -148,7 +153,7 @@ func AreaChart(props ...Props) templ.Component {
 			padB = 10
 		}
 		minV, maxV := globalMinMax(p.Series)
-		var templ_7745c5c3_Var2 = []any{utils.TwMerge("inline-block", p.Class)}
+		var templ_7745c5c3_Var2 = []any{utils.TwMerge("inline-block max-w-full", p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -165,7 +170,7 @@ func AreaChart(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 126, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 131, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -204,7 +209,7 @@ func AreaChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", w))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 132, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 137, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -217,7 +222,7 @@ func AreaChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", h))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 133, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 138, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -230,13 +235,13 @@ func AreaChart(props ...Props) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("0 0 %d %d", w, h))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 134, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 139, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" xmlns=\"http://www.w3.org/2000/svg\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" style=\"max-width:100%;height:auto;\" xmlns=\"http://www.w3.org/2000/svg\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -250,7 +255,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", padL))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 141, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 147, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -263,7 +268,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", gy))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 142, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 148, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -276,7 +281,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", w-padR))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 143, Col: 36}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 149, Col: 36}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -289,7 +294,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", gy))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 144, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 150, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -321,7 +326,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(polygon)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 161, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 167, Col: 22}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -334,7 +339,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 162, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 168, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -347,7 +352,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(polyline)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 166, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 172, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -360,7 +365,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 168, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 174, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -386,7 +391,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", x))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 183, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 189, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -399,7 +404,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", h-2))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 184, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 190, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -412,7 +417,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(data[i].Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 188, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 194, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -447,7 +452,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("background-color: %s", color))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 202, Col: 110}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 208, Col: 110}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -460,7 +465,7 @@ func AreaChart(props ...Props) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(s.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 203, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/areachart/AreaChart.templ`, Line: 209, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {

@@ -160,8 +160,22 @@ func TestStatTile_DeltaSharesStatComparison(t *testing.T) {
 		if !strings.Contains(tile, arrow) {
 			t.Errorf("dir %q: tile does not contain statcomparison.Arrow output\n tile: %s\n arrow: %s", dir, tile, arrow)
 		}
-		if !strings.Contains(tile, statcomparison.ToneClass(dir)) {
-			t.Errorf("dir %q: tile missing %q: %s", dir, statcomparison.ToneClass(dir), tile)
+		if !strings.Contains(tile, statcomparison.ToneClass(dir, false)) {
+			t.Errorf("dir %q: tile missing %q: %s", dir, statcomparison.ToneClass(dir, false), tile)
 		}
+	}
+}
+
+// A tile's delta follows the same lower-is-better rule as StatComparison:
+// open bugs going down is green, with the down arrow kept.
+func TestStatTile_DeltaLowerIsBetter(t *testing.T) {
+	out := render(t, StatTile(Props{Label: "Open bugs", Value: "4", Delta: &Delta{Value: "-3", Direction: statcomparison.DirectionDown, LowerIsBetter: true}}))
+	for _, want := range []string{"text-success", "M8 13V3M8 13l4-4M8 13L4 9"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in %s", want, out)
+		}
+	}
+	if strings.Contains(out, "text-destructive") {
+		t.Errorf("lower-is-better fall must not be red: %s", out)
 	}
 }
