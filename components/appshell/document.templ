@@ -78,9 +78,9 @@ templ Document(p DocProps) {
 					document.documentElement.setAttribute('data-theme', t || 'light');
 				})();
 			</script>
-			<!-- htmx loads blocking so it can fire htmx:afterSwap before any swap
-			     occurs; alpine is deferred since it only needs to be ready before
-			     user interaction. -->
+			<!-- htmx loads blocking, before the body is parsed; alpine is
+			     deferred since it only needs to be ready before user
+			     interaction, and it initializes swapped-in [x-data] itself. -->
 			<meta name="htmx-config" content={ htmxConfig }/>
 			<script src="/static/js/htmx.min.js"></script>
 			<script defer src="/static/js/alpine.min.js"></script>
@@ -96,11 +96,6 @@ templ Document(p DocProps) {
 			<div id="toast-container" class="wf-toast-container"></div>
 			@confirmdialog.Host()
 			@Scripts()
-			<script>
-				document.addEventListener('htmx:afterSwap', function(e) {
-					if (window.Alpine) Alpine.initTree(e.detail.elt);
-				});
-			</script>
 		</body>
 	</html>
 }

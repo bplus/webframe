@@ -129,7 +129,7 @@ func Document(p DocProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\t// light is the product default; dark only applies via stored preference\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'light');\n\t\t\t\t})();\n\t\t\t</script><!-- htmx loads blocking so it can fire htmx:afterSwap before any swap\n\t\t\t     occurs; alpine is deferred since it only needs to be ready before\n\t\t\t     user interaction. --><meta name=\"htmx-config\" content=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script>\n\t\t\t\t// Flash-free theme init\n\t\t\t\t(function(){\n\t\t\t\t\tvar t;\n\t\t\t\t\ttry { t = localStorage.getItem('wf-theme'); } catch(e) {}\n\t\t\t\t\t// light is the product default; dark only applies via stored preference\n\t\t\t\t\tdocument.documentElement.setAttribute('data-theme', t || 'light');\n\t\t\t\t})();\n\t\t\t</script><!-- htmx loads blocking, before the body is parsed; alpine is\n\t\t\t     deferred since it only needs to be ready before user\n\t\t\t     interaction, and it initializes swapped-in [x-data] itself. --><meta name=\"htmx-config\" content=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -178,7 +178,7 @@ func Document(p DocProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<script>\n\t\t\t\tdocument.addEventListener('htmx:afterSwap', function(e) {\n\t\t\t\t\tif (window.Alpine) Alpine.initTree(e.detail.elt);\n\t\t\t\t});\n\t\t\t</script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

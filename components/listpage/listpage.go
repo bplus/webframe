@@ -440,7 +440,7 @@ func (p Props) empty(base string) emptystate.Props {
 	if p.hasFilterControls() {
 		// x-data makes the link an Alpine root, so the handler is live on
 		// the first page load too (Alpine starts from [x-data] elements;
-		// swapped-in content is initialized by the shell's afterSwap hook).
+		// Alpine also initializes [x-data] elements that a swap adds later).
 		e.Action.Attributes = templ.Attributes{
 			"x-data":             true,
 			"x-on:click.prevent": "window.tui.filterbar.reset(document.getElementById('" + utils.EscapeJS(p.filterbarID()) + "'))",
