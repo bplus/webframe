@@ -462,3 +462,111 @@ func TestPanicHandler_RendersInternal(t *testing.T) {
 		t.Errorf("log line missing, got:\n%s", logs.String())
 	}
 }
+
+// serveMethod is serve with a request method and an App.Flash that always
+// returns a banner.
+func serveMethod(t *testing.T, withApp bool, method string, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+	var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := NotFound(w, r); err != nil {
+			t.Errorf("NotFound: %v", err)
+		}
+	})
+	if withApp {
+		app := &appshell.App{Name: "Demo", HomeHref: "/", Flash: func(http.ResponseWriter, *http.Request) templ.Component {
+			return templ.Raw("<p>FLASHBANNER</p>")
+		}}
+		h = app.Middleware(h)
+	}
+	req := httptest.NewRequest(method, "/items/7", nil)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+// TestRespond_ActionOnItselfLandsInMain: an htmx action with no hx-target
+// (a Delete button in a page header) targets itself. The error page must
+// not be pasted inside the button: it replaces the shell's main content
+// region, with a fresh #wf-flash slot holding the pending flash inline (an
+// out-of-band copy would land in the slot the swap removes).
+func TestRespond_ActionOnItselfLandsInMain(t *testing.T) {
+	cases := map[string]struct {
+		method  string
+		headers map[string]string
+	}{
+		"delete, target has no id":      {"DELETE", map[string]string{"HX-Request": "true"}},
+		"delete, trigger has an id":     {"DELETE", map[string]string{"HX-Request": "true", "HX-Trigger": "del"}},
+		"post, form targets itself":     {"POST", map[string]string{"HX-Request": "true", "HX-Trigger": "edit", "HX-Target": "edit"}},
+		"patch, row targets itself": {"PATCH", map[string]string{"HX-Request": "true", "HX-Trigger": "row-3", "HX-Target": "row-3"}},
+	}
+	for name, c := range cases {
+		rec := serveMethod(t, true, c.method, c.headers)
+		h := rec.Result().Header
+		if rec.Code != 404 {
+			t.Errorf("%s: status %d", name, rec.Code)
+		}
+		if got := h.Get("HX-Retarget"); got != "#"+appshell.MainID {
+			t.Errorf("%s: HX-Retarget = %q, want #%s", name, got, appshell.MainID)
+		}
+		if got := h.Get("HX-Reswap"); !strings.HasPrefix(got, "innerHTML") {
+			t.Errorf("%s: HX-Reswap = %q, want innerHTML", name, got)
+		}
+		if h.Get("HX-Push-Url") != "" {
+			t.Errorf("%s: an error must push no URL", name)
+		}
+		body := rec.Body.String()
+		slot := strings.Index(body, `<div id="wf-flash">`)
+		banner := strings.Index(body, "FLASHBANNER")
+		page := strings.Index(body, "Page not found")
+		if slot != 0 || banner < slot || page < banner {
+			t.Errorf("%s: want the #wf-flash slot holding the flash, then the page:\n%s", name, body)
+		}
+		if strings.Contains(body, "hx-swap-oob") || strings.Contains(body, "<main") {
+			t.Errorf("%s: want main's inner content only, no oob flash:\n%s", name, body)
+		}
+	}
+}
+
+// TestRespond_RegionTargetsKeepTheirTarget: an htmx request aimed at a
+// named region other than the trigger (a list's results, a split pane's
+// detail), any GET (lazy tabs, polls, which data-wf-swallow-errors covers)
+// and a full-page request are answered exactly as before: no retarget.
+func TestRespond_RegionTargetsKeepTheirTarget(t *testing.T) {
+	cases := map[string]struct {
+		method  string
+		headers map[string]string
+	}{
+		"delete into results region": {"DELETE", map[string]string{"HX-Request": "true", "HX-Trigger": "row-menu", "HX-Target": "items-results"}},
+		"delete, region, no trigger": {"DELETE", map[string]string{"HX-Request": "true", "HX-Target": "items-results"}},
+		"get on itself":              {"GET", map[string]string{"HX-Request": "true"}},
+		"get into detail region":     {"GET", map[string]string{"HX-Request": "true", "HX-Target": "mail-detail"}},
+		"plain delete":               {"DELETE", nil},
+		"boosted post":               {"POST", map[string]string{"HX-Request": "true", "HX-Boosted": "true"}},
+	}
+	for name, c := range cases {
+		rec := serveMethod(t, true, c.method, c.headers)
+		h := rec.Result().Header
+		if h.Get("HX-Retarget") != "" || h.Get("HX-Reswap") != "" {
+			t.Errorf("%s: unexpected retarget %q / %q", name, h.Get("HX-Retarget"), h.Get("HX-Reswap"))
+		}
+		if !strings.Contains(rec.Body.String(), "Page not found") {
+			t.Errorf("%s: page missing", name)
+		}
+	}
+}
+
+// TestRespond_ActionOnItselfWithoutApp: outside App.Middleware there is no
+// shell and no main region, so the page replaces the body.
+func TestRespond_ActionOnItselfWithoutApp(t *testing.T) {
+	rec := serveMethod(t, false, "DELETE", map[string]string{"HX-Request": "true"})
+	h := rec.Result().Header
+	if h.Get("HX-Retarget") != "body" || !strings.HasPrefix(h.Get("HX-Reswap"), "innerHTML") {
+		t.Errorf("want body/innerHTML, got %q / %q", h.Get("HX-Retarget"), h.Get("HX-Reswap"))
+	}
+	if !strings.Contains(rec.Body.String(), "Page not found") {
+		t.Errorf("page missing: %s", rec.Body.String())
+	}
+}

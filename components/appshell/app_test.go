@@ -583,3 +583,34 @@ func TestFlash_NilResultRendersEmptySlot(t *testing.T) {
 		t.Errorf("missing empty #wf-flash slot in:\n%s", got)
 	}
 }
+
+// TestRenderContentStatus: a full-page request renders as RenderStatus does
+// (the shell's <main> carries MainID); a plain htmx request is retargeted
+// at that main and gets its inner content, flash slot first.
+func TestRenderContentStatus(t *testing.T) {
+	a := &App{Name: "Demo", Flash: func(http.ResponseWriter, *http.Request) templ.Component { return templ.Raw("<p>FLASH</p>") }}
+	body := templ.Raw("<p>BODY</p>")
+	run := func(hx bool) *httptest.ResponseRecorder {
+		req := httptest.NewRequest("DELETE", "/x", nil)
+		if hx {
+			req.Header.Set("HX-Request", "true")
+		}
+		rec := httptest.NewRecorder()
+		if err := a.RenderContentStatus(rec, req, 404, "Gone", body); err != nil {
+			t.Fatal(err)
+		}
+		return rec
+	}
+	full := run(false)
+	if full.Code != 404 || full.Header().Get("HX-Retarget") != "" || !strings.Contains(full.Body.String(), `<main id="wf-main"`) {
+		t.Errorf("full page: %d %q\n%s", full.Code, full.Header().Get("HX-Retarget"), full.Body.String())
+	}
+	frag := run(true)
+	h := frag.Result().Header
+	if frag.Code != 404 || h.Get("HX-Retarget") != "#wf-main" || h.Get("HX-Reswap") != ContentReswap {
+		t.Errorf("fragment headers: %d %v", frag.Code, h)
+	}
+	if got := frag.Body.String(); got != `<div id="wf-flash"><p>FLASH</p></div><p>BODY</p>` {
+		t.Errorf("fragment body = %q", got)
+	}
+}

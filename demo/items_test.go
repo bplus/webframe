@@ -372,6 +372,17 @@ func TestItems_Delete(t *testing.T) {
 	if rec = do(h, "DELETE", "/items/999", nil, hx("items-results")); rec.Code != 404 {
 		t.Errorf("unknown delete = %d, want 404", rec.Code)
 	}
+	if got := rec.Header().Get("HX-Retarget"); got != "" {
+		t.Errorf("unknown delete from the list: HX-Retarget = %q, want the results region kept", got)
+	}
+	wantAll(t, rec.Body.String(), "Page not found")
+	// From the detail page's Delete button (no hx-target): the styled 404
+	// goes to the page content, not into the button.
+	rec = do(h, "DELETE", "/items/999", nil, hx(""))
+	if rec.Code != 404 || rec.Header().Get("HX-Retarget") != "#wf-main" {
+		t.Errorf("unknown delete from detail = %d HX-Retarget %q", rec.Code, rec.Header().Get("HX-Retarget"))
+	}
+	wantAll(t, rec.Body.String(), `<div id="wf-flash">`, "Page not found")
 }
 
 func TestItems_Publish(t *testing.T) {
