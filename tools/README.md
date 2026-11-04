@@ -104,7 +104,9 @@ one item, deletes another behind the page's back (`DELETE /items/{id}`) and
 clicks it: the "That item is no longer here" toast must show, a second click
 must not stack a second toast, and the detail region and the address bar must
 still show the first item. A click answered 500 and a click that gets no answer
-must show the "Could not load that item" toast the same way. At 390px the click
+must show the "Could not load that item" toast the same way, and it must be
+the only toast on the page (`htmx-errors.js` leaves list links to
+`splitpane.js`). At 390px the click
 on the deleted item is a plain page load and must show the 404 page. It deletes
 one item from the running demo (restart the demo to get it back). Exit 1 on any
 failure, 2 for a usage error.
@@ -122,7 +124,11 @@ server answers with `errorpage.NotFound`: the "Could not load that" toast must
 show, the button must keep its label and the page its content. It then clicks
 "Request a plain 500" (a text/plain error that `htmx-errors.js` refuses): the
 same toast must show, once even after a second click, and the sentence beside
-the button must not change. Last, on the sign-in page it adds an htmx POST
+the button must not change. Then it clicks "Refresh stats" while Playwright
+aborts the request (no answer, as from a stopped server: htmx fires
+`htmx:sendError`) and again while the request hangs past `htmx.config.timeout`
+(`htmx:timeout`): each time the same toast must show, and only one. Last, on
+the sign-in page it adds an htmx POST
 button with no `hx-target` aimed at an address the demo does not serve: the
 404 page must replace the page's `<main id="wf-main">`. Exit 1 on any failure,
 2 for a usage error.

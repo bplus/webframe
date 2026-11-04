@@ -43,15 +43,20 @@
 // unaffected.
 //
 // No error is silent, except on a swallowing target. When the answer is
-// refused because it is not HTML (and the target does not swallow errors),
-// this script shows the "could not load" toast: appshell.Document renders
-// it, already worded (appshell.LoadFailed), inside
+// refused because it is not HTML, or when there is no answer at all (a
+// network error or a stopped server, htmx:sendError, or a request past
+// htmx.config.timeout, htmx:timeout), and the target does not swallow
+// errors, this script shows the "could not load" toast: appshell.Document
+// renders it, already worded (appshell.LoadFailed), inside
 // <template data-wf-load-failed>, and the copy goes into #toast-container,
-// where Alpine starts it like any toast. A toast an earlier refused answer
-// left there is replaced, so repeated failures show one toast, not a
-// stack. An HTML error answer to a GET that targets the element that sent
-// it is handled on the server: errorpage.Respond answers it with the same
-// toast and HX-Reswap none.
+// where Alpine starts it like any toast. A toast an earlier failure left
+// there is replaced, so repeated failures show one toast, not a stack.
+// A request sent by a split pane list link (a[data-wf-splitpane-link]) is
+// left to splitpane.js, which shows its own "failed" or "gone" toast for
+// every failure of that link; this script shows none for it, so each
+// failure gets exactly one toast. An HTML error answer to a GET that
+// targets the element that sent it is handled on the server:
+// errorpage.Respond answers it with the same toast and HX-Reswap none.
 (function () {
   'use strict';
   // htmx re-runs <script src> tags that arrive in swapped content (a boosted
@@ -111,8 +116,16 @@
     return !!(target && typeof target.closest === 'function' && target.closest('[data-wf-swallow-errors]'));
   }
 
+  // splitpaneLink reports whether a split pane list link sent the request.
+  // requestConfig.elt is the request's source in every htmx event; the
+  // detail's own elt is the swap target in htmx:beforeSwap.
+  function splitpaneLink(d) {
+    var elt = d && (d.requestConfig && d.requestConfig.elt || d.elt);
+    return !!(elt && typeof elt.closest === 'function' && elt.closest('a[data-wf-splitpane-link]'));
+  }
+
   // notify copies the page's LoadFailed toast into #toast-container,
-  // replacing one an earlier refused answer left there.
+  // replacing one an earlier failure left there.
   function notify() {
     if (typeof document.querySelector !== 'function') return;
     var tpl = document.querySelector('template[data-wf-load-failed]');
@@ -133,7 +146,22 @@
       d.shouldSwap = false;                   // a live element: the next poll repairs it
     } else if (!isHTML(d.xhr)) {
       d.shouldSwap = false;
-      notify();
+      if (!splitpaneLink(d)) notify();      // splitpane.js toasts its own links
     }
   });
+
+  // No answer at all: the network failed, the server is down (htmx fires
+  // htmx:sendError) or the request ran past htmx.config.timeout
+  // (htmx:timeout). There is no body to swap, so the toast is the only sign
+  // anything happened. detail.target is the element the request would have
+  // swapped into, so a swallowing target stays silent here too (a polled
+  // badge retries on its next poll), and a split pane link's failure gets
+  // its toast from splitpane.js.
+  function noAnswer(evt) {
+    var d = evt.detail;
+    if (d && (swallows(d.target) || splitpaneLink(d))) return;
+    notify();
+  }
+  document.addEventListener('htmx:sendError', noAnswer);
+  document.addEventListener('htmx:timeout', noAnswer);
 })();

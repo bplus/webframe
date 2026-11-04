@@ -7,7 +7,9 @@
 //           shows, the detail region and the address bar keep the first
 //           item;
 //   failed  a click answered 500, and a click that gets no answer, show
-//           the "could not load" toast, detail and address unchanged;
+//           the "could not load" toast and no other (htmx-errors.js
+//           leaves list links to splitpane.js), detail and address
+//           unchanged;
 //   phone   at 390 the same click on a deleted item is a full page load
 //           that shows the 404 page.
 //
@@ -54,6 +56,14 @@ function check(ok, what) {
 const opts = parseArgs(process.argv.slice(2));
 const LINK = "a[data-wf-splitpane-link]";
 const DETAIL = "#browse-detail";
+
+// oneToast checks that a failed click left exactly one toast of any kind
+// in #toast-container: the pane's, not also htmx-errors.js's.
+async function oneToast(page, what) {
+  await page.waitForTimeout(300);
+  const n = await page.locator("#toast-container > *").count();
+  check(n === 1, `${what}: one toast in the container, found ${n}`);
+}
 
 // toastText waits for a toast in #toast-container and returns its text, or
 // "" when none appears.
@@ -122,6 +132,7 @@ try {
   await page.locator(`${LINK}[href="${failing}"]`).click();
   const failedToast = await toastText(page);
   check(/Could not load that item/.test(failedToast) && !/no longer here/.test(failedToast), `500: toast reads "${failedToast}"`);
+  await oneToast(page, "500");
   await unchanged(page, "500", detail, url);
   await page.unroute("**" + failing);
   await clearToasts();
@@ -129,6 +140,7 @@ try {
   await page.locator(`${LINK}[href="${failing}"]`).click();
   const abortToast = await toastText(page);
   check(/Could not load that item/.test(abortToast), `no answer: toast reads "${abortToast}"`);
+  await oneToast(page, "no answer");
   await unchanged(page, "no answer", detail, url);
   check(errors.length === 0, `desktop: no other console errors ${JSON.stringify(errors)}`);
   await page.close();
