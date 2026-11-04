@@ -114,9 +114,50 @@ func TestToast_Timeout(t *testing.T) {
 		out := render(t, Toast(Props{Title: "A", Sticky: true, Timeout: time.Second}))
 		// No auto-dismiss timer; the removal effect's own setTimeout
 		// (x-effect, after show=false) is not one.
-		mustNotContain(t, out, "x-init", "show = false, ")
+		mustNotContain(t, out, "show = false, ")
 		mustContain(t, out, `aria-label="Dismiss"`, "x-effect=")
 	})
+}
+
+// keyOf returns the data-wf-key value a toast renders.
+func keyOf(t *testing.T, p Props) string {
+	t.Helper()
+	out := render(t, Toast(p))
+	_, rest, ok := strings.Cut(out, `data-wf-key="`)
+	if !ok {
+		t.Fatalf("no data-wf-key in %s", out)
+	}
+	k, _, _ := strings.Cut(rest, `"`)
+	return k
+}
+
+// A repeated toast replaces the earlier copy: every toast carries a key,
+// the same for identical toasts and different otherwise, and its x-init
+// removes a sibling with the same key, sticky or not.
+func TestToast_DuplicateKey(t *testing.T) {
+	a := Error("Could not delete", "It is in use.")
+	if keyOf(t, a) != keyOf(t, Error("Could not delete", "It is in use.")) {
+		t.Error("identical toasts must share a key")
+	}
+	for name, other := range map[string]Props{
+		"kind":  Warning("Could not delete", "It is in use."),
+		"title": Error("Could not save", "It is in use."),
+		"body":  Error("Could not delete", "It is locked."),
+	} {
+		if keyOf(t, a) == keyOf(t, other) {
+			t.Errorf("toasts differing by %s share a key", name)
+		}
+	}
+	if k := keyOf(t, Props{Title: "3 saved", Key: "saved"}); k != "saved" {
+		t.Errorf("Key = %q, want the explicit key", k)
+	}
+	if keyOf(t, Props{Title: "3 saved", Key: "saved"}) != keyOf(t, Props{Title: "4 saved", Key: "saved"}) {
+		t.Error("an explicit Key must win over the words")
+	}
+	for _, p := range []Props{a, {Title: "A", Sticky: true}} {
+		out := render(t, Toast(p))
+		mustContain(t, out, "x-init=", "t.dataset.wfKey === $el.dataset.wfKey) t.remove()")
+	}
 }
 
 func TestToast_InlineHasNoOOB(t *testing.T) {

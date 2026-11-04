@@ -127,7 +127,10 @@ same toast must show, once even after a second click, and the sentence beside
 the button must not change. Then it clicks "Refresh stats" while Playwright
 aborts the request (no answer, as from a stopped server: htmx fires
 `htmx:sendError`) and again while the request hangs past `htmx.config.timeout`
-(`htmx:timeout`): each time the same toast must show, and only one. Last, on
+(`htmx:timeout`): each time the same toast must show, and only one. It then
+refuses "Delete account" on `/settings` twice (a 409 answered by
+`toast.Respond`) and clicks the showcase's Error toast button twice: each pair
+must leave one toast, and the Warning button must then add a second. Last, on
 the sign-in page it adds an htmx POST
 button with no `hx-target` aimed at an address the demo does not serve: the
 404 page must replace the page's `<main id="wf-main">`. Exit 1 on any failure,

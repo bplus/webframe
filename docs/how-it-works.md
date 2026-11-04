@@ -366,6 +366,10 @@ down, the server has stopped, or the request ran past `htmx.config.timeout`. htm
 The same two exceptions hold: a target marked `data-wf-swallow-errors` stays silent, and a
 `splitpane` list link is left to `splitpane.js`, which has its own toast (below). Each new
 failure replaces the toast an earlier one left, so ten failed clicks show one toast, not ten.
+Toasts sent by the server follow the same rule: each one carries a `data-wf-key` attribute (the
+toast's `Key`, or a hash of its kind, title and body), and when it arrives it removes an older toast
+with the same key. Ten refused clicks answered by `toast.Respond` show one toast; two different
+toasts still show two.
 
 **Why an error page sometimes moves, and sometimes becomes a toast.** htmx swaps an answer into
 the request's target, and an element with `hx-get` or `hx-post` but no `hx-target` is its own
