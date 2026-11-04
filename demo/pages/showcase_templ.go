@@ -16112,7 +16112,6 @@ func areachartSection() templ.Component {
 				ctx = templ.InitializeContext(ctx)
 				templ_7745c5c3_Err = areachart.AreaChart(areachart.Props{
 					ID:         "showcase-area",
-					Width:      320,
 					Height:     180,
 					ShowLabels: true,
 					ShowLegend: true,
@@ -16127,7 +16126,7 @@ func areachartSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Views and downloads, last 7 days", Subtitle: "Two series, so the legend shows; ShowGrid draws the horizontal lines and ShowLabels the day names."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var660), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Views and downloads, last 7 days", Subtitle: "Two series, so the legend shows; ShowGrid draws the horizontal lines and ShowLabels the day names. The chart shrinks to fit a phone."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var660), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -16213,6 +16212,7 @@ func barchartSection() templ.Component {
 						templ_7745c5c3_Err = barchart.BarChart(barchart.Props{
 							ID:         "showcase-bars",
 							ShowLabels: true,
+							ShowValues: true,
 							Bars: []barchart.Bar{
 								{Label: "Weapon", Value: 42},
 								{Label: "Armor", Value: 31},
@@ -16225,7 +16225,7 @@ func barchartSection() templ.Component {
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Items by type", Subtitle: "Horizontal, with a label beside each bar."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var665), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Items by type", Subtitle: "Horizontal, with a label beside each bar and its value after it."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var665), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -16267,6 +16267,7 @@ func barchartSection() templ.Component {
 							ID:          "showcase-bars-vertical",
 							Orientation: barchart.Vertical,
 							ShowLabels:  true,
+							ShowValues:  true,
 							MaxBars:     4,
 							Bars: []barchart.Bar{
 								{Label: "Starfall", Value: 240},
@@ -16282,7 +16283,7 @@ func barchartSection() templ.Component {
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Downloads by pack, top four", Subtitle: "Vertical; six packs with MaxBars 4, so the two smallest become \"Other (2)\" and the bars run largest first."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var667), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Downloads by pack, in release order", Subtitle: "Vertical; six packs with MaxBars 4, so the two smallest become \"Other (2)\" at the end and the rest keep their release order."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var667), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -16300,7 +16301,7 @@ func barchartSection() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "barchart", Title: "Bar chart", Description: "One value per label as bars, horizontal by default; MaxBars keeps the largest and folds the rest into one \"Other\" bar."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var662), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "barchart", Title: "Bar chart", Description: "One value per label as bars, horizontal by default, in the order given; ShowValues prints each value at the end of its bar, and MaxBars folds the smallest bars into one \"Other\" bar."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var662), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -16502,7 +16503,7 @@ func progressbarSection() templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-build", Label: "Build finished", Value: 100, ShowValue: true}).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-build", Label: "Build finished", Value: 100, ShowValue: true, Variant: progressbar.VariantSuccess}).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -16523,6 +16524,66 @@ func progressbarSection() templ.Component {
 				return nil
 			})
 			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Three tasks", Subtitle: "Max sets the total, so 37 of 50 shows 74%; a bar with no label is the track alone."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var675), templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 549, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Var677 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Var678 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+					if !templ_7745c5c3_IsBuffer {
+						defer func() {
+							templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+							if templ_7745c5c3_Err == nil {
+								templ_7745c5c3_Err = templ_7745c5c3_BufErr
+							}
+						}()
+					}
+					ctx = templ.InitializeContext(ctx)
+					templ_7745c5c3_Err = progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-disk", Label: "Disk used", Value: 87, ShowValue: true, Variant: progressbar.VariantWarning}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 550, " ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-quota", Label: "API quota", Value: 100, ShowValue: true, Variant: progressbar.VariantDestructive}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 551, " ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = progressbar.ProgressBar(progressbar.Props{ID: "showcase-progress-sync", Label: "Syncing mirrors", Value: 45, ShowValue: true, Variant: progressbar.VariantInfo}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					return nil
+				})
+				templ_7745c5c3_Err = layout.Stack(layout.StackProps{Gap: layout.GapM}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var678), templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Variants", Subtitle: "Variant picks the fill from the theme: default (primary), success, warning, destructive and info."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var677), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -16552,12 +16613,12 @@ func lifecyclestepperSection() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var677 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var677 == nil {
-			templ_7745c5c3_Var677 = templ.NopComponent
+		templ_7745c5c3_Var679 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var679 == nil {
+			templ_7745c5c3_Var679 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var678 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var680 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -16569,7 +16630,7 @@ func lifecyclestepperSection() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Var679 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var681 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -16596,15 +16657,15 @@ func lifecyclestepperSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Compact", Subtitle: "A release half way through: two stages done, one active, two to come."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var679), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Compact", Subtitle: "A release half way through: two stages done, one active, two to come."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var681), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 549, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 552, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Var680 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var682 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -16632,13 +16693,13 @@ func lifecyclestepperSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Large, every state", Subtitle: "Large is the bigger size; the Title on each stage shows as a tooltip on hover."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var680), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Large, every state", Subtitle: "Large is the bigger size; the Title on each stage shows as a tooltip on hover."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var682), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "lifecyclestepper", Title: "Lifecycle stepper", Description: "The stages of one job in a row, each marked done, active, needing attention, failed, skipped or not started; the row wraps on a narrow screen."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var678), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "lifecyclestepper", Title: "Lifecycle stepper", Description: "The stages of one job in a row, each marked done, active, needing attention, failed, skipped or not started; on a narrow screen the row wraps between stages and each new row starts with a stage, not a line."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var680), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -16662,12 +16723,12 @@ func statcomparisonSection() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var681 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var681 == nil {
-			templ_7745c5c3_Var681 = templ.NopComponent
+		templ_7745c5c3_Var683 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var683 == nil {
+			templ_7745c5c3_Var683 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var682 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var684 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -16679,7 +16740,7 @@ func statcomparisonSection() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Var683 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var685 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -16691,7 +16752,7 @@ func statcomparisonSection() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Var684 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_Var686 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 					if !templ_7745c5c3_IsBuffer {
@@ -16707,7 +16768,7 @@ func statcomparisonSection() templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 550, " ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 553, " ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -16715,7 +16776,7 @@ func statcomparisonSection() templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 551, " ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 554, " ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -16725,19 +16786,79 @@ func statcomparisonSection() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var684), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var686), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Up, down and flat", Subtitle: "Up is green and down is red; flat is muted."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var683), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Up, down and flat", Subtitle: "By default up is green and down is red; flat is muted."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var685), templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 555, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Var687 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Var688 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+					if !templ_7745c5c3_IsBuffer {
+						defer func() {
+							templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+							if templ_7745c5c3_Err == nil {
+								templ_7745c5c3_Err = templ_7745c5c3_BufErr
+							}
+						}()
+					}
+					ctx = templ.InitializeContext(ctx)
+					templ_7745c5c3_Err = statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-bugs", Label: "Open bugs", Value: "14", PrevValue: "23", Delta: "-9", Direction: statcomparison.DirectionDown, LowerIsBetter: true}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 556, " ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = statcomparison.StatComparison(statcomparison.Props{ID: "showcase-compare-errors", Label: "Error rate", Value: "2.4%", PrevValue: "1.1%", Delta: "+1.3 pts", Direction: statcomparison.DirectionUp, LowerIsBetter: true}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 557, " ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = stattile.StatTile(stattile.Props{ID: "showcase-compare-tile", Label: "Build time", Value: "4m 10s", Delta: &stattile.Delta{Value: "-38s", Direction: statcomparison.DirectionDown, LowerIsBetter: true}, Caption: "Versus last week"}).Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					return nil
+				})
+				templ_7745c5c3_Err = layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapXL, Align: layout.AlignStart}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var688), templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Lower is better", Subtitle: "LowerIsBetter flips the colors for a metric where a fall is good news; the arrows still point the way the number moved. A stat tile's Delta takes the same flag."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var687), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "statcomparison", Title: "Stat comparison", Description: "A number beside its previous value, with the change and an arrow toned by direction; stat tiles draw the same arrow."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var682), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "statcomparison", Title: "Stat comparison", Description: "A number beside its previous value, with the change and an arrow; the arrow follows the direction and the color says whether that is good. Stat tiles use the same rule."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var684), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

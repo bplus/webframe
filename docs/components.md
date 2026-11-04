@@ -110,7 +110,7 @@ render. Use them directly only outside a page type.
 | [`cardgrid`](https://pkg.go.dev/github.com/bplus/webframe/components/cardgrid) | A grid of cards (a catalog, a library, a list of people), each with optional art, a title link, badges and footer actions. | `/#cardgrid`, `/dashboard` |
 | [`timeline`](https://pkg.go.dev/github.com/bplus/webframe/components/timeline) | Dated events on a vertical line, newest first and grouped by day: an activity history or change log. | `/#timeline`, `/dashboard` |
 | [`stattile`](https://pkg.go.dev/github.com/bplus/webframe/components/stattile) | One dashboard number in a tile, with an optional change ("+12%"), sparkline or ring. | `/#stattiles`, `/dashboard` |
-| [`statcomparison`](https://pkg.go.dev/github.com/bplus/webframe/components/statcomparison) | A tile showing a current value against a previous one with a colored up, down or flat change. `stattile` reuses its arrows. | not in demo (only its arrow, inside a tile at `/#stattiles`) |
+| [`statcomparison`](https://pkg.go.dev/github.com/bplus/webframe/components/statcomparison) | A tile showing a current value against a previous one with an up, down or flat change. The arrow follows the direction; the color says whether that is good, and `LowerIsBetter` makes a fall green (open bugs, error rate). `stattile` reuses its arrows and color rule. | `/#statcomparison` |
 | [`badge`](https://pkg.go.dev/github.com/bplus/webframe/components/badge) | A small inline label pill; `badge.Status` picks the color for a status word so apps never choose colors. | `/#badges` |
 | [`dotlabel`](https://pkg.go.dev/github.com/bplus/webframe/components/dotlabel) | A compact label with a colored dot, for naming a thing whose kind should be easy to scan, such as in a table cell. | `/#datatable` |
 | [`avatar`](https://pkg.go.dev/github.com/bplus/webframe/components/avatar) | A round picture of a person that falls back to initials or an icon. | `/#avatar` |
@@ -118,8 +118,8 @@ render. Use them directly only outside a page type.
 | [`icon`](https://pkg.go.dev/github.com/bplus/webframe/components/icon) | The Lucide icon set as Go variables, such as `icon.Activity`. | `/#icons` |
 | [`swatch`](https://pkg.go.dev/github.com/bplus/webframe/components/swatch) | A small color square with an optional label. | `/#colors` |
 | [`emptystate`](https://pkg.go.dev/github.com/bplus/webframe/components/emptystate) | A centered placeholder for an empty list or panel: icon, title, description and an optional action such as "Create item". | `/#datatable`, `/browse` |
-| [`progressbar`](https://pkg.go.dev/github.com/bplus/webframe/components/progressbar) | A horizontal progress track with a fill and an optional label and percentage. | not in demo |
-| [`lifecyclestepper`](https://pkg.go.dev/github.com/bplus/webframe/components/lifecyclestepper) | A horizontal row of stages joined by lines, each done, active, waiting on someone or still to come: a checkout flow, an approval chain, a task's lifecycle. | not in demo |
+| [`progressbar`](https://pkg.go.dev/github.com/bplus/webframe/components/progressbar) | A horizontal progress track with a fill and an optional label and percentage. `Variant` picks the fill color: default (primary), success, warning, destructive or info. | `/#progressbar` |
+| [`lifecyclestepper`](https://pkg.go.dev/github.com/bplus/webframe/components/lifecyclestepper) | A horizontal row of stages joined by lines, each done, active, waiting on someone or still to come: a checkout flow, an approval chain, a task's lifecycle. On a phone the row wraps between stages, and a new row starts with a stage, not a line. | `/#lifecyclestepper` |
 
 ### Charts
 
@@ -127,8 +127,8 @@ All charts are inline SVG drawn on the server from `float64` values.
 
 | Package | What it is and when to use it | See it |
 |---|---|---|
-| [`areachart`](https://pkg.go.dev/github.com/bplus/webframe/components/areachart) | One or more series drawn as lines with filled areas under them. | not in demo |
-| [`barchart`](https://pkg.go.dev/github.com/bplus/webframe/components/barchart) | A bar chart, horizontal or vertical. | not in demo |
+| [`areachart`](https://pkg.go.dev/github.com/bplus/webframe/components/areachart) | One or more series drawn as lines with filled areas under them, in theme colors unless a series sets its own. It shrinks to fit its container. | `/#areachart` |
+| [`barchart`](https://pkg.go.dev/github.com/bplus/webframe/components/barchart) | A bar chart, horizontal or vertical, in the order given. `ShowValues` prints each value; `MaxBars` folds the smallest bars into one "Other" bar. | `/#barchart` |
 | [`piechart`](https://pkg.go.dev/github.com/bplus/webframe/components/piechart) | A donut (the default) or full pie chart. | not in demo |
 | [`sparkline`](https://pkg.go.dev/github.com/bplus/webframe/components/sparkline) | A small trend line with no axes or labels; only the shape means anything. | inside a tile at `/#stattiles` |
 | [`metricring`](https://pkg.go.dev/github.com/bplus/webframe/components/metricring) | A circular percentage gauge. | inside a tile at `/#stattiles` |
