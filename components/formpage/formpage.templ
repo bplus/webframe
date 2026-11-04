@@ -59,25 +59,30 @@ templ ErrorBanner(fields []formfield.Field, errors map[string]string) {
 		@banner.Banner(banner.Props{
 			Variant: banner.VariantError,
 			Title:   ErrorBannerTitle(len(errors)),
-			Details: errorDetails(errorItems(fields, errors)),
+			Details: ErrorDetails(fields, errors),
 		})
 	}
 }
 
-// errorDetails is the banner's list: "Label: message" linking to the
-// field's control, or the bare message for an error naming no field.
-templ errorDetails(items []errorItem) {
-	<ul class="list-disc space-y-1 pl-5">
-		for _, it := range items {
-			<li>
-				if it.Href != "" {
-					<a href={ it.Href } class="underline underline-offset-2 hover:text-foreground">{ it.Label }: { it.Message }</a>
-				} else {
-					{ it.Message }
-				}
-			</li>
-		}
-	</ul>
+// ErrorDetails is the error banner's list, or nothing when errors is
+// empty: "Label: message" linking to the field's control, in field order,
+// then the bare message for each error naming no field, by key. formpage,
+// settingspage (through ErrorBanner) and authpage all use it, so the list
+// is built in one place.
+templ ErrorDetails(fields []formfield.Field, errors map[string]string) {
+	if items := errorItems(fields, errors); len(items) > 0 {
+		<ul class="list-disc space-y-1 pl-5">
+			for _, it := range items {
+				<li>
+					if it.Href != "" {
+						<a href={ it.Href } class="underline underline-offset-2 hover:text-foreground">{ it.Label }: { it.Message }</a>
+					} else {
+						{ it.Message }
+					}
+				</li>
+			}
+		</ul>
+	}
 }
 
 // submitRow is the right-aligned action row: Cancel (if any) then the

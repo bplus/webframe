@@ -6,6 +6,7 @@ import (
 	"github.com/bplus/webframe/components/card"
 	"github.com/bplus/webframe/components/form"
 	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/formpage"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/utils"
 )
@@ -33,7 +34,7 @@ templ AuthPage(p Props) {
 					@banner.Banner(banner.Props{
 						Variant: banner.VariantError,
 						Title:   p.bannerTitle(),
-						Details: errorDetails(p.errorItems()),
+						Details: formpage.ErrorDetails(p.Fields, p.Errors),
 					})
 				}
 				switch p.mode() {
@@ -79,20 +80,3 @@ templ messagePage(p Props) {
 	@action.Button(p.submit())
 }
 
-// errorDetails lists field errors as "Label: message" links to each
-// field, or the bare message for an error naming no field.
-templ errorDetails(items []errorItem) {
-	if len(items) > 0 {
-		<ul class="list-disc space-y-1 pl-5">
-			for _, it := range items {
-				<li>
-					if it.Href != "" {
-						<a href={ it.Href } class="underline underline-offset-2 hover:text-foreground">{ it.Label }: { it.Message }</a>
-					} else {
-						{ it.Message }
-					}
-				</li>
-			}
-		</ul>
-	}
-}

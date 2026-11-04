@@ -6,7 +6,6 @@ package authpage
 
 import (
 	"net/http"
-	"sort"
 
 	"github.com/a-h/templ"
 
@@ -214,45 +213,6 @@ func (p Props) bannerTitle() string {
 		return p.Error
 	}
 	return formpage.ErrorBannerTitle(len(p.Errors))
-}
-
-// errorItem is one line of the summary banner.
-type errorItem struct {
-	Label, Message string
-	Href           string // "#"+ControlID(), or "" for an error naming no field
-}
-
-// errorItems lists Errors in declared field order, then errors naming no
-// field (unlinked), sorted by key.
-func (p Props) errorItems() []errorItem {
-	if len(p.Errors) == 0 {
-		return nil
-	}
-	seen := make(map[string]bool, len(p.Errors))
-	var items []errorItem
-	for _, f := range p.Fields {
-		msg, ok := p.Errors[f.Name]
-		if !ok || seen[f.Name] {
-			continue
-		}
-		seen[f.Name] = true
-		label := f.Label
-		if label == "" {
-			label = f.Name
-		}
-		items = append(items, errorItem{Label: label, Message: msg, Href: "#" + f.ControlID()})
-	}
-	var rest []string
-	for k := range p.Errors {
-		if !seen[k] {
-			rest = append(rest, k)
-		}
-	}
-	sort.Strings(rest)
-	for _, k := range rest {
-		items = append(items, errorItem{Message: p.Errors[k]})
-	}
-	return items
 }
 
 // submit returns Submit with the mode's defaults applied. For ModeSignIn
