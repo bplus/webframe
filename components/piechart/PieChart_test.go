@@ -1,9 +1,14 @@
 package piechart
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
+
+	"github.com/bplus/webframe/utils"
 )
 
 // --- total() tests ---
@@ -223,5 +228,42 @@ func TestArcPath_NoInnerRadius(t *testing.T) {
 	expected := "L 80 80 Z"
 	if !strings.Contains(path, expected) {
 		t.Errorf("pie wedge should end with %q, got path: %s", expected, path)
+	}
+}
+
+// Default colors are theme tokens that survive SanitizeColor unchanged and
+// never repeat within the palette.
+func TestDefaultColors_ThemeTokens(t *testing.T) {
+	seen := map[string]bool{}
+	for i, c := range defaultColors {
+		if !strings.Contains(c, "var(--color-") || strings.Contains(c, "#") {
+			t.Errorf("defaultColors[%d] = %q, expected a var(--color-...) theme token", i, c)
+		}
+		if got := utils.SanitizeColor(c); got != c {
+			t.Errorf("defaultColors[%d] = %q is rewritten to %q by SanitizeColor", i, c, got)
+		}
+		if seen[c] {
+			t.Errorf("defaultColors[%d] = %q repeats an earlier color", i, c)
+		}
+		seen[c] = true
+	}
+}
+
+// A pie with no slice colors draws no hard-coded hex, in arcs or legend.
+func TestRender_DefaultColorsHaveNoHex(t *testing.T) {
+	slices := make([]Slice, 0, 10)
+	for i := 1; i <= 10; i++ {
+		slices = append(slices, Slice{Label: fmt.Sprintf("s%d", i), Value: float64(i)})
+	}
+	var buf bytes.Buffer
+	if err := PieChart(Props{Slices: slices, ShowLegend: true}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	html := buf.String()
+	if strings.Contains(html, `fill="#`) || strings.Contains(html, "background-color: #") {
+		t.Errorf("default pie colors should be theme tokens, got hex in:\n%s", html)
+	}
+	if !strings.Contains(html, `fill="var(--color-primary)"`) {
+		t.Errorf("first slice should be filled with var(--color-primary)")
 	}
 }

@@ -7,12 +7,12 @@ import (
 )
 
 // Slice is one wedge of a PieChart. Slices with Value <= 0 draw no arc but
-// still get a legend row. An empty Color falls back to a built-in palette
+// still get a legend row. An empty Color falls back to a theme-token palette
 // keyed by slice index; all colors pass through utils.SanitizeColor.
 type Slice struct {
 	Label string
 	Value float64
-	Color string // hex or CSS color; empty uses the default palette
+	Color string // any CSS color, e.g. "var(--color-info)"; empty uses the theme palette
 }
 
 // Props configures PieChart. A nil InnerSize means a donut with a 50px
@@ -57,10 +57,18 @@ func total(slices []Slice) float64 {
 	return t
 }
 
-// defaultColors provides fallback colors for slices without explicit color.
+// defaultColors are the slice colors used when a Slice sets none, picked by
+// index. They are theme tokens, so a default pie follows light and dark like
+// barchart and areachart. The second five are the first five mixed with the
+// page background, so a pie of up to ten slices repeats no color.
 var defaultColors = []string{
-	"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-	"#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
+	"var(--color-primary)", "var(--color-success)", "var(--color-warning)",
+	"var(--color-info)", "var(--color-destructive)",
+	"color-mix(in srgb, var(--color-primary) 55%, var(--color-background))",
+	"color-mix(in srgb, var(--color-success) 55%, var(--color-background))",
+	"color-mix(in srgb, var(--color-warning) 55%, var(--color-background))",
+	"color-mix(in srgb, var(--color-info) 55%, var(--color-background))",
+	"color-mix(in srgb, var(--color-destructive) 55%, var(--color-background))",
 }
 
 type arcData struct {

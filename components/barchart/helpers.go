@@ -128,3 +128,68 @@ func fitLabel(label string, gutterPx int) (string, bool) {
 	}
 	return string(runes[:maxChars-1]) + "…", true
 }
+
+// columnGap is the space between two columns of a vertical chart.
+const columnGap = 4
+
+// columnRect returns the x and width of column i in a vertical chart whose
+// columns are slot px apart. A column is never narrower than 2px.
+func columnRect(i, slot int) (x, width int) {
+	return i*slot + columnGap/2, max(slot-columnGap, 2)
+}
+
+// columnCenter is the x of the middle of column i, where its labels are
+// centered.
+func columnCenter(i, slot int) int {
+	x, width := columnRect(i, slot)
+	return x + width/2
+}
+
+// labelRoom is the width in px a centered 10px label of n runes needs,
+// with 2px clear on each side.
+func labelRoom(n int) int {
+	return int(math.Ceil(float64(n)*valueCharW)) + 4
+}
+
+// valuesFitColumns reports whether every value label fits inside its own
+// column slot, so labels of neighboring columns cannot touch.
+func valuesFitColumns(bars []Bar, slot int) bool {
+	return valueLabelWidth(bars)+4 <= slot
+}
+
+// axisLabelsShown decides which axis labels a vertical chart draws. When
+// the longest label fits a column slot, all of them. Otherwise every k-th
+// label, k columns being wide enough for the longest one, starting from
+// the first column whose centered label clears the left edge, and leaving
+// out any label that would run past the right edge (w). Hidden labels go
+// into each bar's hover title.
+func axisLabelsShown(bars []Bar, slot, w int) []bool {
+	shown := make([]bool, len(bars))
+	if slot <= 0 {
+		return shown
+	}
+	room := labelRoom(longestLabelRunes(bars))
+	step := 1
+	if room > slot {
+		step = (room + slot - 1) / slot
+	}
+	first := -1
+	for i, b := range bars {
+		half := float64(len([]rune(b.Label))) * valueCharW / 2
+		c := float64(columnCenter(i, slot))
+		if c-half < 0 || c+half > float64(w) {
+			continue
+		}
+		if step == 1 {
+			shown[i] = true
+			continue
+		}
+		if first < 0 {
+			first = i
+		}
+		if (i-first)%step == 0 {
+			shown[i] = true
+		}
+	}
+	return shown
+}

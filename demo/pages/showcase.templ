@@ -2658,7 +2658,7 @@ templ barchartSection() {
 }
 
 templ piechartSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "piechart", Title: "Pie chart", Description: "Parts of one whole as slices, a donut by default; colors come from a built-in palette when a slice sets none."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "piechart", Title: "Pie chart", Description: "Parts of one whole as slices, a donut by default; a slice that sets no color takes one from the theme palette, so the chart follows light and dark."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true, Gap: layout.GapL, Align: layout.AlignStart}) {
 			@panel.Panel(panel.Props{Level: 4, Title: "Donut", Subtitle: "The default inner size, with a legend."}) {
 				@piechart.PieChart(piechart.Props{
