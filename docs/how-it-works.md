@@ -99,7 +99,7 @@ two ways to draw this page, the whole page body (`Page(p)`) and the results regi
 under that region's id (`list-results` by default); let the `App` pick one.
 
 `formpage.Respond`
-([components/formpage/formpage.go:247](../components/formpage/formpage.go#L247-L260)) has the
+([components/formpage/formpage.go:248](../components/formpage/formpage.go#L248-L261)) has the
 same shape. Its one named part is the `<form>` itself, and it adds a status code, which [section
 3](#3-a-form-round-trip) explains.
 
