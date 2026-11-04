@@ -10,7 +10,8 @@ import (
 // Rating renders stars. With ReadOnly it is a <span role="img"
 // aria-label="3 of 5"> of star icons. Otherwise it is a <fieldset> of
 // visually hidden radios named Name, each followed by a star <label>, so
-// the form submits Name=<n>. No script.
+// the form submits Name=<n>. An optional rating starts with a hidden
+// Clear radio (empty value) whose label shows after the stars. No script.
 templ Rating(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -53,9 +54,25 @@ templ radios(p Props) {
 			<legend class="sr-only">Rating</legend>
 		}
 		<div class="wf-rating inline-flex flex-wrap items-center rounded-md [fieldset[aria-invalid=true]_&]:ring-2 [fieldset[aria-invalid=true]_&]:ring-destructive/40">
+			if !p.Required {
+				<input
+					type="radio"
+					id={ p.clearID() }
+					if p.Name != "" {
+						name={ p.Name }
+					}
+					value=""
+					class="sr-only"
+				/>
+				<label for={ p.clearID() } class={ p.clearLabelClass() }>
+					<span aria-hidden="true">Clear</span>
+					<span class="sr-only">Clear rating</span>
+				</label>
+			}
 			for i := 1; i <= p.max(); i++ {
 				<input
 					type="radio"
+					data-star
 					id={ p.radioID(i) }
 					if p.Name != "" {
 						name={ p.Name }

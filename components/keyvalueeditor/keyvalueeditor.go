@@ -46,7 +46,10 @@ type Row struct {
 // submit; everything else is optional with the defaults noted per field.
 type Props struct {
 	// ID is the root's id; the key input of row i is ID+"-key-"+i, the
-	// value input ID+"-value-"+i. Random when empty.
+	// value input ID+"-value-"+i, where i is the row's position in Rows.
+	// In the browser a row keeps its id when another row is removed, and
+	// a row the user adds takes the next unused number, so an id is never
+	// reused within one page. Random when empty.
 	ID         string
 	Class      string
 	Attributes templ.Attributes // spread on the root
@@ -85,8 +88,8 @@ func (p Props) resolve() Props {
 }
 
 // ControlID is the id of the first row's key input (ID+"-key-0"), the
-// control a <label for> points at. When Rows is empty no element carries
-// it until the user adds a row.
+// control a <label for> points at. When Rows is empty, or once the user
+// removes that first row, no element carries it.
 func (p Props) ControlID() string { return p.keyID(0) }
 
 // KeyName and ValueName are the submitted field names, {Name}.key and
@@ -137,7 +140,8 @@ func Parse(form url.Values, name string) []Row {
 // alpineData is the x-data of the root. init() seeds the state from the
 // server-rendered [data-row] elements and removes them, so the x-for
 // renders the same rows in the same tick with no paint in between. Each
-// row gets a stable id for :key.
+// row gets a stable id, numbered in Rows order so it matches the
+// server-rendered input ids, used for :key and for the inputs' DOM ids.
 const alpineData = `{
 	rows: [], next: 0, max: 0, disabled: false,
 	init() {

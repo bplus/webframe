@@ -64,14 +64,15 @@ func TestRating_ReadOnlyLabelAndMax(t *testing.T) {
 func TestRating_RadiosCountAndChecked(t *testing.T) {
 	out := render(t, Rating(Props{Name: "stars", Value: 3, Label: "Your rating"}))
 	mustContain(t, out, `<fieldset`, `id="rating-stars"`, `<legend class="text-sm font-medium leading-none">Your rating</legend>`, `class="wf-rating`)
-	if got := strings.Count(out, `type="radio"`); got != 5 {
-		t.Errorf("want 5 radios, got %d", got)
+	// Five star radios plus the Clear radio of an optional rating.
+	if got := strings.Count(out, `type="radio" data-star`); got != 5 {
+		t.Errorf("want 5 star radios, got %d", got)
 	}
-	if got := strings.Count(out, `name="stars"`); got != 5 {
+	if got := strings.Count(out, `name="stars"`); got != 6 {
 		t.Errorf("every radio carries the name, got %d", got)
 	}
-	if got := strings.Count(out, `class="sr-only"`); got != 10 {
-		t.Errorf("radios and star texts are visually hidden: want 10 sr-only, got %d", got)
+	if got := strings.Count(out, `class="sr-only"`); got != 12 {
+		t.Errorf("radios, star texts and the Clear text are visually hidden: want 12 sr-only, got %d", got)
 	}
 	checked := regexp.MustCompile(`<input[^>]*value="3"[^>]*\schecked[\s/>]`)
 	if !checked.MatchString(out) {
@@ -167,8 +168,8 @@ func TestRating_RandomIDPerRender(t *testing.T) {
 	}
 	in := render(t, Rating(Props{Max: 2}))
 	ids := idAttr.FindAllStringSubmatch(in, -1)
-	if len(ids) != 3 {
-		t.Fatalf("want fieldset + 2 radio ids, got %d in:\n%s", len(ids), in)
+	if len(ids) != 4 {
+		t.Fatalf("want fieldset + Clear + 2 radio ids, got %d in:\n%s", len(ids), in)
 	}
 	root := ids[0][1]
 	for _, m := range ids[1:] {
@@ -184,5 +185,28 @@ func TestRating_ErrorVisual(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
+	}
+}
+
+// TestRating_Clear: an optional rating has a Clear radio with an empty
+// value, first in the DOM (so a checked Clear lights no star) and shown
+// last; a required rating has none, since "" would satisfy required.
+func TestRating_Clear(t *testing.T) {
+	out := render(t, Rating(Props{Name: "stars", ID: "r", Value: 2}))
+	clear := regexp.MustCompile(`<input type="radio" id="r-clear" name="stars" value="" class="sr-only"`)
+	if !clear.MatchString(out) {
+		t.Fatalf("no Clear radio:\n%s", out)
+	}
+	if strings.Index(out, `id="r-clear"`) > strings.Index(out, `id="r-1"`) {
+		t.Errorf("Clear must come before the stars in the DOM:\n%s", out)
+	}
+	mustContain(t, out, `for="r-clear"`, "order-last", "[.wf-rating:has(input[data-star]:checked)_&amp;]:inline-flex", `<span class="sr-only">Clear rating</span>`)
+	req := render(t, Rating(Props{Name: "stars", ID: "r", Required: true}))
+	if strings.Contains(req, "r-clear") || strings.Contains(req, "Clear rating") {
+		t.Errorf("a required rating has no Clear:\n%s", req)
+	}
+	ro := render(t, Rating(Props{ReadOnly: true, Value: 2}))
+	if strings.Contains(ro, "Clear") {
+		t.Errorf("read-only has no Clear:\n%s", ro)
 	}
 }

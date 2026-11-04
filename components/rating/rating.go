@@ -103,6 +103,29 @@ func (p Props) resolve() Props {
 	return p
 }
 
+// clearID is the id of the Clear radio: ControlID()+"-clear".
+func (p Props) clearID() string {
+	return p.ControlID() + "-clear"
+}
+
+// clearLabelClass is the Clear label: a muted text button after the stars
+// (order-last, though it is first in the DOM), at the star target height,
+// hidden until a star is checked or the Clear radio has keyboard focus.
+// While the pointer is over it the row's hover reset unlights every star,
+// which previews the empty rating.
+func (p Props) clearLabelClass() string {
+	h := "h-8"
+	switch p.Size {
+	case SizeSm:
+		h = "h-6"
+	case SizeLg:
+		h = "h-11"
+	}
+	return "order-last ml-1 hidden cursor-pointer items-center rounded-sm px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline " + h +
+		" [.wf-rating:has(input[data-star]:checked)_&]:inline-flex" +
+		" [input:focus-visible+&]:inline-flex [input:focus-visible+&]:ring-2 [input:focus-visible+&]:ring-ring [input:focus-visible+&]:ring-offset-2 [input:focus-visible+&]:ring-offset-background"
+}
+
 // radioID is the id of the n-th radio: ControlID()+"-"+n.
 func (p Props) radioID(n int) string {
 	return p.ControlID() + "-" + strconv.Itoa(n)
