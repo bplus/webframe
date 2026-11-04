@@ -9,3 +9,6 @@ exactly the code in its example.
 2. [A list](02-list.md): a sortable, paged table from a Go slice
 3. [A form](03-form.md): one text field that submits, saves and says "Saved"
 4. [Bad input](04-validation.md): the same form refuses an empty or too short title and shows why
+5. [A detail page](05-detail.md): one book on its own page, linked from the list
+6. [Edit and delete](06-edit-delete.md): the same form edits a book; delete asks first
+7. [The templ version](07-templ.md): step 4 written with `.templ` files instead of plain Go
