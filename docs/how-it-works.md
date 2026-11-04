@@ -521,7 +521,7 @@ In plain words: start from an all-defaults `Props`; if the caller passed one, us
 ### utils.TwMerge
 
 Inside components, classes are combined with `utils.TwMerge`
-([utils/templui.go:22](../utils/templui.go#L15-L24)), never by gluing strings. Tailwind classes
+([utils/templui.go:18](../utils/templui.go#L18-L35)), never by gluing strings. Tailwind classes
 can conflict: `bg-red-500` and `bg-green-500` both set the background. With plain concatenation
 both end up in the HTML and whichever comes later in the CSS file wins, which is not the one you
 asked for. `TwMerge` understands Tailwind and drops the earlier of two conflicting classes, so a
@@ -566,7 +566,7 @@ reach up into a parent folder.)
 `assets.Mount(mux)` ([assets/assets.go:27](../assets/assets.go#L27-L29)) serves that file system
 at `GET /static/`. Mount it at exactly that path: `Document` refers to `/static/...` URLs
 directly. `assets.URL` adds `?v=<number>` to a file's URL; the number is the time the program
-started ([utils/templui.go:95](../utils/templui.go#L95)), so every restart makes browsers fetch
+started ([utils/templui.go:134](../utils/templui.go#L134)), so every restart makes browsers fetch
 fresh files instead of using a stale cached copy.
 
 ## 6. The linter
