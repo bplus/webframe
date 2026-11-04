@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
+	"github.com/bplus/webframe/utils"
 )
 
 func renderDoc(t *testing.T, p DocProps, children templ.Component) string {
@@ -112,6 +113,23 @@ func TestDocument_HTMXConfigSwapsErrors(t *testing.T) {
 	for _, want := range []string{`[45]..`, `swap`, `error`, `204`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("htmx-config lacks %q:\n%s", want, got[meta:meta+300])
+		}
+	}
+}
+
+// htmx and Alpine go through assets.URL like the stylesheet and the bundle,
+// so a mount path or cache-busting override applies to them too.
+func TestDocument_CoreScriptsUseAssetURL(t *testing.T) {
+	orig := utils.ScriptURL
+	t.Cleanup(func() { utils.ScriptURL = orig })
+	utils.ScriptURL = func(path string) string { return "/mounted" + path + "?v=TEST" }
+	got := renderDoc(t, DocProps{AppName: "A"}, nil)
+	for _, want := range []string{
+		`<script src="/mounted/static/js/htmx.min.js?v=TEST"></script>`,
+		`<script defer src="/mounted/static/js/alpine.min.js?v=TEST"></script>`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
 		}
 	}
 }
