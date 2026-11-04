@@ -319,8 +319,8 @@ that the submit failed, without reading the page.
 **Why htmx must be told to swap it.** By default, htmx 2 ignores the body of any 4xx or 5xx
 response: the form would just sit there, unchanged, with no error shown. So `Document` puts a
 configuration into every page's `<head>`
-([components/appshell/document.templ:29](../components/appshell/document.templ#L29) and
-[:84](../components/appshell/document.templ#L84)):
+([components/appshell/document.templ:30](../components/appshell/document.templ#L30) and
+[:85](../components/appshell/document.templ#L85)):
 
 ```go
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true},{"code":"...","swap":true}]}`
@@ -539,7 +539,7 @@ component puts its defaults first and the caller's `Class` last, and the caller 
   `bg-purple-700`. The dark theme only redefines the tokens under `:root[data-theme="dark"]`
   ([input.css:105](../static/css/input.css#L105)), so switching themes is one attribute on
   `<html>`, set by a small script in `Document`
-  ([document.templ:72-80](../components/appshell/document.templ#L72-L80)).
+  ([document.templ:73-81](../components/appshell/document.templ#L73-L81)).
 - **`dark:` follows the toggle.** Tailwind's `dark:` prefix normally follows the operating
   system setting. [input.css:17](../static/css/input.css#L17) points it at the `data-theme`
   attribute instead, so it agrees with the tokens.
@@ -548,6 +548,20 @@ component puts its defaults first and the caller's `Class` last, and the caller 
   scanning, and [lines 3-10](../static/css/input.css#L3-L10) list exactly what to scan:
   component `.templ` and `.go` files (not tests) and the demo's `.templ` files. Your app is not
   scanned: app code is not allowed to write classes anyway (see [section 6](#6-the-linter)).
+
+### When JavaScript is turned off
+
+Pages, links, sort headers, page links and ordinary form posts are plain HTML, so they work
+without JavaScript. The parts built on htmx or Alpine do not: buttons that act in place (such
+as Delete, which sends a DELETE request), the filter bar and its search box, tabs, dropdown
+menus, the command palette, the theme toggle, `selectbox` and `tagsinput` pickers in forms,
+toasts, confirm dialogs and anything that polls. So `Document` opens every page's `<body>` with
+a warning banner inside `<noscript>`
+([document.templ:93](../components/appshell/document.templ#L93), wording at
+[:110-113](../components/appshell/document.templ#L110-L113), markup at
+[:117-123](../components/appshell/document.templ#L117-L123)). A browser running JavaScript
+ignores the contents of `<noscript>`, so the notice costs nothing there. The wording names
+kinds of control rather than one app's buttons, so it stays true for any webframe app.
 
 ### Assets: the static folder inside the binary
 

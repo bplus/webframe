@@ -68,6 +68,7 @@ Behavior worth knowing before you change a handler or a page type:
 - **Field validation.** `Field.Validate` is a URL; the handler's whole body is `formfield.RespondFeedback(w, r, field, msg)`, status 200 either way.
 - **Request id.** `appshell.Middleware` stores a request id (`appshell.RequestID(ctx)`: the request's `X-Request-Id` when it is at most 64 bytes of `[A-Za-z0-9._-]`, else generated) and echoes the id it used in the response's `X-Request-Id` header.
 - **Panics.** `appshell.Middleware` recovers, logs with the request id and answers through `App.OnPanic` when nothing has been written yet; the default is a bare 500 (`appshell.PanicPage(requestID, homeHref)`) with a plain link to `App.HomeHref`.
+- **No JavaScript.** `appshell.Document` (so every page, `RenderBare` included) opens `<body>` with a warning `banner` inside `<noscript>`: pages, links and most forms work; in-place buttons such as Delete, filters, tabs, menus, drop-down pickers, search and live updates need JavaScript. The wording is fixed and general, so it is true for any app.
 
 ## wflint and the rule for app code
 

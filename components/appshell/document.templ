@@ -3,6 +3,7 @@ package appshell
 import (
 	"context"
 	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/confirmdialog"
 )
@@ -89,6 +90,7 @@ templ Document(p DocProps) {
 			}
 		</head>
 		<body class="wf-theme antialiased">
+			@noscriptNotice()
 			{ children... }
 			if p.Palette != nil {
 				@commandpalette.Palette(*p.Palette)
@@ -98,4 +100,24 @@ templ Document(p DocProps) {
 			@Scripts()
 		</body>
 	</html>
+}
+
+// noscriptTitle and noscriptBody are the words of the notice a browser
+// with JavaScript turned off shows at the top of every page. The list
+// names the kinds of control that need JavaScript in any webframe app
+// (htmx buttons, the filter bar, tabs, dropdown menus, the command
+// palette, selectbox pickers, polling); a given app may use only some.
+const (
+	noscriptTitle = "JavaScript is turned off"
+	noscriptBody  = "Pages, links and most forms still work. Delete and other in-place buttons, filters, tabs, menus, drop-down pickers, search and live updates need JavaScript."
+)
+
+// noscriptNotice is a warning banner inside <noscript>, so a browser
+// running JavaScript ignores it and pays nothing for it.
+templ noscriptNotice() {
+	<noscript>
+		<div class="p-3 sm:p-4">
+			@banner.Banner(banner.Props{Variant: banner.VariantWarning, Title: noscriptTitle, Body: noscriptBody})
+		</div>
+	</noscript>
 }

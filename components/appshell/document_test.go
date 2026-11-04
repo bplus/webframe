@@ -3,6 +3,7 @@ package appshell
 import (
 	"bytes"
 	"context"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -131,5 +132,43 @@ func TestDocument_CoreScriptsUseAssetURL(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}
+	}
+}
+
+// A browser with JavaScript turned off shows a warning at the top of
+// every page; the notice sits inside <noscript> so it costs nothing when
+// JavaScript runs.
+func TestDocument_NoscriptNotice(t *testing.T) {
+	got := renderDoc(t, DocProps{Title: "Movies", AppName: "Acme"}, templ.Raw("<main>page</main>"))
+	assertNoscriptNotice(t, got)
+	if strings.Index(got, "<noscript>") > strings.Index(got, "<main>page</main>") {
+		t.Errorf("noscript notice should come before the page content:\n%s", got)
+	}
+}
+
+func TestRenderBare_NoscriptNotice(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/signin", nil)
+	if err := RenderBare(rec, req, "Acme", "Sign in", templ.Raw("<main>form</main>")); err != nil {
+		t.Fatalf("RenderBare: %v", err)
+	}
+	assertNoscriptNotice(t, rec.Body.String())
+}
+
+func assertNoscriptNotice(t *testing.T, html string) {
+	t.Helper()
+	start := strings.Index(html, "<noscript>")
+	end := strings.Index(html, "</noscript>")
+	if start < 0 || end < start {
+		t.Fatalf("no <noscript> block in:\n%s", html)
+	}
+	block := html[start:end]
+	for _, want := range []string{noscriptTitle, noscriptBody, `role="status"`, "border-warning"} {
+		if !strings.Contains(block, want) {
+			t.Errorf("noscript block missing %q:\n%s", want, block)
+		}
+	}
+	if strings.Contains(noscriptBody, "—") || strings.Contains(noscriptTitle, "—") {
+		t.Errorf("notice wording holds an em dash")
 	}
 }
