@@ -3,3 +3,4 @@ tools/node_modules/
 tmp/
 .claude/worktrees/
 tools/shots/
+.idea/
