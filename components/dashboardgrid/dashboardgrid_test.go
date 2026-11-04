@@ -219,3 +219,34 @@ func TestDashboardGrid_Flush(t *testing.T) {
 		t.Errorf("without Flush the default 32px padding stays, got: %s", buf.String())
 	}
 }
+
+// Inside a Grid, a Slot's span is capped at the Grid's own column count,
+// and an unset span fills the row: 24 on a 24-column grid, 4 on a
+// 4-column one. Outside any Grid the cap and the default stay 12.
+func TestSlot_SpanCappedAtGridCols(t *testing.T) {
+	tests := []struct {
+		name    string
+		cols    int
+		colSpan int
+		want    string
+	}{
+		{"24 columns allow span 20", 24, 20, "grid-column:span 20"},
+		{"24 columns cap span 30 at 24", 24, 30, "grid-column:span 24"},
+		{"24 columns default is full width", 24, 0, "grid-column:span 24"},
+		{"4 columns cap span 12 at 4", 4, 12, "grid-column:span 4"},
+		{"4 columns default is full width", 4, 0, "grid-column:span 4"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			slot := dashboardgrid.Slot(dashboardgrid.SlotProps{ColSpan: tt.colSpan})
+			ctx := templ.WithChildren(context.Background(), slot)
+			if err := dashboardgrid.Grid(dashboardgrid.Props{Cols: tt.cols}).Render(ctx, &buf); err != nil {
+				t.Fatalf("render: %v", err)
+			}
+			if !strings.Contains(buf.String(), tt.want) {
+				t.Errorf("expected %s, got: %s", tt.want, buf.String())
+			}
+		})
+	}
+}
