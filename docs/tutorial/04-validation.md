@@ -1,0 +1,212 @@
+# Step 4: Bad input
+
+The form now refuses an empty title. It comes back with the error under the
+field, and nothing is saved.
+
+![The form showing "Enter a title." under the field](img/04-validation.png)
+
+## The code
+
+Replace `main.go` from step 3 with this. Only `createBook` changed:
+
+<!-- file: examples/04-validation/main.go -->
+```go
+// Command books is tutorial step 4: the form refuses an empty title.
+package main
+
+import (
+	"log"
+	"net/http"
+	"strings"
+	"sync"
+
+	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/appshell"
+	"github.com/bplus/webframe/components/datatable"
+	"github.com/bplus/webframe/components/flash"
+	"github.com/bplus/webframe/components/formfield"
+	"github.com/bplus/webframe/components/formpage"
+	"github.com/bplus/webframe/components/listpage"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/listquery"
+)
+
+var app = &appshell.App{Name: "Books", Flash: flash.Take}
+
+type Book struct {
+	Title  string
+	Author string
+	Year   string
+}
+
+// books is the whole database: a slice in memory. The server runs requests
+// at the same time, so every read or change of books holds booksLock.
+var booksLock sync.Mutex
+var books = []Book{
+	{Title: "Pride and Prejudice", Author: "Jane Austen", Year: "1813"},
+	{Title: "Frankenstein", Author: "Mary Shelley", Year: "1818"},
+	{Title: "Jane Eyre", Author: "Charlotte Brontë", Year: "1847"},
+	{Title: "Moby-Dick", Author: "Herman Melville", Year: "1851"},
+	{Title: "Little Women", Author: "Louisa May Alcott", Year: "1868"},
+	{Title: "Middlemarch", Author: "George Eliot", Year: "1871"},
+	{Title: "Treasure Island", Author: "Robert Louis Stevenson", Year: "1883"},
+	{Title: "The Time Machine", Author: "H. G. Wells", Year: "1895"},
+	{Title: "Dracula", Author: "Bram Stoker", Year: "1897"},
+}
+
+// bookQuery is what the list reads from the URL: ?sort=year&dir=desc&page=2.
+var bookQuery = listquery.Options{
+	DefaultSort:     "title",
+	DefaultPageSize: 4,
+	AllowedSorts:    []string{"title", "author", "year"},
+}
+
+// sorters says how to order two books for each sortable column.
+var sorters = map[string]func(a, b Book) bool{
+	"title":  func(a, b Book) bool { return a.Title < b.Title },
+	"author": func(a, b Book) bool { return a.Author < b.Author },
+	"year":   func(a, b Book) bool { return a.Year < b.Year },
+}
+
+func listBooks(w http.ResponseWriter, r *http.Request) {
+	spec := listquery.Parse(r, bookQuery)
+	booksLock.Lock()
+	page := listquery.Apply(books, spec, sorters, nil)
+	booksLock.Unlock()
+
+	var rows []datatable.Row
+	for _, book := range page.Items {
+		rows = append(rows, datatable.Row{Cells: []datatable.Cell{
+			{Text: book.Title}, {Text: book.Author}, {Text: book.Year},
+		}})
+	}
+
+	list := listpage.Props{
+		Header: pageheader.Props{
+			Title:   "Books",
+			Primary: &action.Action{Label: "New book", Href: "/books/new", Variant: action.VariantPrimary},
+		},
+		Columns: []datatable.Column{
+			{Key: "title", Label: "Title", Sortable: true},
+			{Key: "author", Label: "Author", Sortable: true},
+			{Key: "year", Label: "Year", Sortable: true},
+		},
+		Rows:  rows,
+		Spec:  page.Spec,
+		Total: page.Total,
+		Noun:  "books",
+	}
+	if err := listpage.Respond(w, r, "Books", list); err != nil {
+		log.Print(err)
+	}
+}
+
+// bookForm declares the form page: a header, one field, Cancel and Save.
+var bookForm = formpage.Props{
+	Header: pageheader.Props{Title: "New book", Back: &pageheader.Link{Label: "Books", Href: "/books"}},
+	Action: "/books",
+	HxPost: true,
+	Sections: []formpage.Section{{Fields: []formfield.Field{
+		{Name: "title", Label: "Title"},
+	}}},
+	Cancel: &action.Action{Label: "Cancel", Href: "/books"},
+}
+
+func newBook(w http.ResponseWriter, r *http.Request) {
+	if err := formpage.Respond(w, r, "New book", bookForm); err != nil {
+		log.Print(err)
+	}
+}
+
+func createBook(w http.ResponseWriter, r *http.Request) {
+	book := Book{Title: strings.TrimSpace(r.FormValue("title"))}
+	if book.Title == "" {
+		// Show the form again: what was typed back in the field, the
+		// error under it. Respond answers 422 because Errors is set.
+		form := bookForm
+		form.Values = map[string]string{"title": r.FormValue("title")}
+		form.Errors = map[string]string{"title": "Enter a title."}
+		if err := formpage.Respond(w, r, "New book", form); err != nil {
+			log.Print(err)
+		}
+		return
+	}
+	booksLock.Lock()
+	books = append(books, book)
+	booksLock.Unlock()
+	flash.Success(w, r, "Saved", book.Title+" was added.")
+	redirect(w, r, "/books")
+}
+
+// redirect sends the browser to url after a POST. An htmx request gets an
+// HX-Redirect header instead of a 303, because htmx would follow the 303
+// itself and put the whole list page inside the form.
+func redirect(w http.ResponseWriter, r *http.Request, url string) {
+	if appshell.IsHX(r) {
+		w.Header().Set("HX-Redirect", url)
+		return
+	}
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func routes() http.Handler {
+	mux := http.NewServeMux()
+	assets.Mount(mux)
+	mux.Handle("GET /{$}", http.RedirectHandler("/books", http.StatusSeeOther))
+	mux.HandleFunc("GET /books", listBooks)
+	mux.HandleFunc("GET /books/new", newBook)
+	mux.HandleFunc("POST /books", createBook)
+	return app.Middleware(mux)
+}
+
+func main() {
+	log.Print("listening on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", routes()))
+}
+```
+
+## Run it
+
+Run `go run .`, open http://localhost:8080/books/new and press **Save** with
+the field empty, or with only spaces in it.
+
+## What each piece does
+
+**The `if book.Title == ""` block** in `createBook` runs when the title is
+empty after trimming spaces. It shows the form again instead of saving:
+
+- `form := bookForm` copies the form declaration, so the shared one stays
+  clean for the next visitor.
+- `form.Values` puts back what the user sent, keyed by field name.
+- `form.Errors` sets the message for the `title` field. The message shows
+  under the field, the field gets a red border, and a banner at the top
+  lists every error with a link to its field.
+- `formpage.Respond` writes the form, and `return` stops before the save.
+
+**Why 422.** When `Errors` is set, `formpage.Respond` answers with status 422
+("Unprocessable Entity") instead of 200. The status tells the truth: the
+request did not do what it asked. Tests, logs and monitoring can see the
+failure without reading the page. htmx normally ignores the body of an error
+response, but webframe's page shell configures it to swap HTML error
+responses like successful ones, so the form with its errors still replaces
+the old form. Your browser's developer console lists the 422 as a failed
+request; that is expected.
+
+**Why the typed value is kept.** The new page is built from `bookForm`, which
+has empty fields. Without `Values`, the user would lose what they typed and
+have to start over. With one field that costs little; with ten fields it
+would be the whole form. `Values` holds the value exactly as sent, so the
+user sees what they typed and can fix it.
+
+**Why check on the server.** A check in the browser can be skipped: by
+turning JavaScript off, by sending the request with another tool, or by
+typing spaces. The server is the one place every request passes through.
+
+## Try it
+
+- Type only spaces and press **Save**. The error appears and the spaces are
+  still in the field.
+- Add `Required: true` to the `title` field in `bookForm`. The label gets a
+  marker and the browser now refuses an empty field before it sends
+  anything. Spaces still get through, which is why the server check stays.
