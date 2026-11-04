@@ -21,7 +21,7 @@
   // this script would issue every confirmed request twice.
   if (window.wf && window.wf.confirm) return;
   window.wf = window.wf || {};
-  window.wf.confirm = { version: 1 };
+  window.wf.confirm = {};
   var HOST = 'wf-confirm';
   var pending = null; // { issue: evt.detail.issueRequest, elt: the trigger }
 

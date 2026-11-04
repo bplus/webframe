@@ -51,7 +51,7 @@ Written in this repository; covered by webframe's own license.
 |---|---|---|---|
 | `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`. Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), not minifier output; only the outer `(()=>{(function(){"use strict";` wrapper copies the templUI file shape. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
 | `graphwidget.min.js` | webframe | MIT (webframe) | Added in `eaccae72` as the glue script for the vendored 3d-force-graph. |
-| `theme-toggle.js` | webframe | MIT (webframe) | Unminified; refers to this repository's own commit `cb57069`. |
+| `theme-toggle.js` | webframe | MIT (webframe) | Unminified. |
 | `autocomplete.js` | webframe | MIT (webframe) | Unminified; written with `components/autocomplete`. |
 | `confirm.js` | webframe | MIT (webframe) | Unminified; written with `components/confirmdialog`. |
 | `htmx-errors.js` | webframe | MIT (webframe) | Unminified; loaded by `appshell.Scripts`. |

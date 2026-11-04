@@ -206,7 +206,6 @@ const paletteData = `{
 		if (!(window.wf && window.wf.palette)) {
 			window.wf = window.wf || {};
 			const api = window.wf.palette = {
-				version: 1,
 				opener: null,
 				isMac: /Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''),
 				find(id) { return id ? document.getElementById(id) : document.querySelector('[data-wf-palette]') },

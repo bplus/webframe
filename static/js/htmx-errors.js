@@ -42,7 +42,7 @@
   // this script would add a second listener. Same guard as confirm.js.
   if (window.wf && window.wf.errors) return;
   window.wf = window.wf || {};
-  window.wf.errors = { version: 2 };
+  window.wf.errors = {};
 
   // declaredHTML reports whether the response declared itself text/html. A
   // missing header, or any other media type (text/plain, application/json),

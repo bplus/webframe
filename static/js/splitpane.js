@@ -17,7 +17,7 @@
   'use strict';
   if (window.wf && window.wf.splitpane) return;
   window.wf = window.wf || {};
-  window.wf.splitpane = { version: 1 };
+  window.wf.splitpane = {};
   var wide = window.matchMedia('(min-width: 48rem)');
   document.addEventListener('click', function (evt) {
     if (evt.defaultPrevented || evt.button !== 0 || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey) return;
