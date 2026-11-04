@@ -1,6 +1,9 @@
 // Package toolbar renders a row of actions (left group, right group)
 // around optional middle content such as a search field, with a phone
 // collapse that moves surplus actions into a "⋯" menu.
+//
+// Needs JavaScript: on a phone the actions moved into the "⋯" menu cannot be
+// reached, because the menu does not open.
 package toolbar
 
 import (

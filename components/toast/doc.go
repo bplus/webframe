@@ -2,4 +2,7 @@
 // an htmx request. A handler calls Send after its own response to add one, or
 // Respond when the toast is the whole answer to a failed action; for a
 // message after a redirect use flash.
+//
+// Needs JavaScript: toasts are sent only in answer to htmx requests, which
+// never happen without it.
 package toast

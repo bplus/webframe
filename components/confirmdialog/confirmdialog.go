@@ -4,6 +4,9 @@
 // trigger's data-wf-confirm-* attributes and hx-confirm text, and opens it.
 // App code sets Confirm on an action.Action rather than rendering a
 // ConfirmDialog itself.
+//
+// Needs JavaScript: the dialog never opens; the actions it guards need
+// JavaScript for their request too, so nothing runs unconfirmed.
 package confirmdialog
 
 import "github.com/a-h/templ"

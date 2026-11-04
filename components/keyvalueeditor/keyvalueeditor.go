@@ -22,6 +22,10 @@
 // rows from that markup and re-renders them from its own state. A disabled
 // editor submits nothing, as disabled inputs do. On phones each row stacks
 // key over value; from sm up a row is one line.
+//
+// Needs JavaScript: Add row and the remove buttons do nothing, so a new row
+// cannot be added; existing rows can be edited, and clearing a key drops
+// that row on save.
 package keyvalueeditor
 
 import (

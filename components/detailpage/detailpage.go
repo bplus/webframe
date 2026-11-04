@@ -3,6 +3,9 @@
 // htmx), optional free content, and an optional right rail. App code
 // declares the page as a Props value and calls Respond; it writes no
 // markup of its own.
+//
+// Needs JavaScript: when Tabs are set, only the first tab shows; the others
+// cannot be opened and a lazy tab never loads.
 package detailpage
 
 import (

@@ -17,6 +17,10 @@
 // page draws the table's top border itself and the wrapper is square, so
 // the header looks the same at rest and once stuck (a rounded wrapper's top
 // edge would scroll away and leave a borderless strip).
+//
+// Needs JavaScript: below md the row actions sit in a "⋯" menu that does not
+// open, and the select-all checkbox does nothing; sort links, row links and
+// row checkboxes work.
 package datatable
 
 import (

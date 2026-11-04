@@ -1,6 +1,10 @@
 // Package action defines the shared Action type that page-layer
 // components (headers, toolbars, panels, menus) use to describe a
 // button or link, plus renderers for it.
+//
+// Needs JavaScript: an Action with an htmx request (HxPost, HxDelete and the
+// rest) renders a button that does nothing, so deletes and other in-place
+// actions cannot run; an Action with Href is a plain link and works.
 package action
 
 import (
