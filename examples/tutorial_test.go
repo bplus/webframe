@@ -10,7 +10,9 @@ import (
 	"testing"
 )
 
-var fileBlock = regexp.MustCompile("(?s)<!-- file: (\\S+) -->\\n```go\\n(.*?)```")
+// fileBlock matches a <!-- file: path --> marker and the go or templ block
+// right after it.
+var fileBlock = regexp.MustCompile("(?s)<!-- file: (\\S+) -->\\n```(?:go|templ)\\n(.*?)```")
 
 func TestTutorialCodeMatchesExamples(t *testing.T) {
 	pages, err := filepath.Glob("../docs/tutorial/*.md")
@@ -30,7 +32,7 @@ func TestTutorialCodeMatchesExamples(t *testing.T) {
 		}
 		blocks := fileBlock.FindAllSubmatch(md, -1)
 		if len(blocks) == 0 {
-			t.Errorf("%s shows no example file (want a <!-- file: path --> marker before a go block)", page)
+			t.Errorf("%s shows no example file (want a <!-- file: path --> marker before a go or templ block)", page)
 		}
 		for _, b := range blocks {
 			want, err := os.ReadFile(filepath.Join("..", string(b[1])))

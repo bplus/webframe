@@ -1,0 +1,24 @@
+package main
+
+import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/components/panel"
+)
+
+// homePage is the body of the home page: a header, then a panel holding a
+// short paragraph. count is the number of books in the list.
+templ homePage(count int) {
+	@pageheader.PageHeader(pageheader.Props{
+		Title:   "Books",
+		Primary: &action.Action{Label: "See the books", Href: "/books", Variant: action.VariantPrimary},
+	})
+	@panel.Panel(panel.Props{Title: "About this app"}) {
+		<p>
+			The list holds <strong>{ strconv.Itoa(count) } books</strong>.
+			Open <a href="/books">the book list</a> to sort them, or <a href="/books/new">add one</a>.
+		</p>
+	}
+}
