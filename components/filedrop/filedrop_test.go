@@ -58,26 +58,26 @@ func TestFileDrop_InputAttributes(t *testing.T) {
 		Attributes: templ.Attributes{"aria-describedby": "art-help"},
 	}))
 	in := inputTag(t, out)
-	mustContain(t, in, `id="art-input"`, `name="artwork"`, `accept="image/*,.pdf"`, `class="sr-only"`, `x-ref="input"`, `x-on:change="accept($event.target.files)"`, `aria-describedby="art-help"`)
+	mustContain(t, in, `id="art"`, `name="artwork"`, `accept="image/*,.pdf"`, `class="sr-only"`, `x-ref="input"`, `x-on:change="accept($event.target.files)"`, `aria-describedby="art-help"`)
 	for _, attr := range []string{"multiple", "required", "disabled"} {
 		if !boolAttr(attr).MatchString(in) {
 			t.Errorf("input missing %s:\n%s", attr, in)
 		}
 	}
-	mustContain(t, out, `id="art"`, `for="art-input"`, "cursor-not-allowed", "disabled: true")
+	mustContain(t, out, `id="art-root"`, `for="art"`, "cursor-not-allowed", "disabled: true")
 }
 
 func TestFileDrop_Defaults(t *testing.T) {
 	out := render(t, FileDrop(Props{Name: "doc"}))
 	in := inputTag(t, out)
-	mustContain(t, in, `id="filedrop-doc-input"`, `type="file"`)
+	mustContain(t, in, `id="filedrop-doc"`, `type="file"`)
 	for _, attr := range []string{"multiple", "required", "disabled"} {
 		if boolAttr(attr).MatchString(in) {
 			t.Errorf("input has unexpected %s:\n%s", attr, in)
 		}
 	}
 	mustNotContain(t, in, "accept=")
-	mustContain(t, out, `id="filedrop-doc"`, "Drop a file here or choose", "cursor-pointer", "max: 0", "multiple: false", "preview: false", "disabled: false")
+	mustContain(t, out, `id="filedrop-doc-root"`, "Drop a file here or choose", "cursor-pointer", "max: 0", "multiple: false", "preview: false", "disabled: false")
 	mustNotContain(t, out, "Up to ")
 	multi := render(t, FileDrop(Props{Name: "docs", Multiple: true}))
 	mustContain(t, multi, "Drop files here or choose")
@@ -142,23 +142,58 @@ func TestFormatSize(t *testing.T) {
 	}
 }
 
+// TestControlID: ID names the file input itself, so ControlID is ID.
 func TestControlID(t *testing.T) {
-	if got := (Props{ID: "x", Name: "n"}).ControlID(); got != "x-input" {
+	if got := (Props{ID: "x", Name: "n"}).ControlID(); got != "x" {
 		t.Errorf("ID wins: got %q", got)
 	}
-	if got := (Props{Name: "n"}).ControlID(); got != "filedrop-n-input" {
+	if got := (Props{Name: "n"}).ControlID(); got != "filedrop-n" {
 		t.Errorf("derived from Name: got %q", got)
 	}
-	if got := (Props{}).ControlID(); !strings.HasPrefix(got, "id-") || !strings.HasSuffix(got, "-input") {
+	if got := (Props{}).ControlID(); !strings.HasPrefix(got, "id-") {
 		t.Errorf("neither: got %q", got)
 	}
+}
+
+// TestFileDrop_IDNamesInput: the element with id=ID is the
+// <input type="file">; the Alpine root is ID+"-root".
+func TestFileDrop_IDNamesInput(t *testing.T) {
+	out := render(t, FileDrop(Props{ID: "art", Name: "artwork"}))
+	mustContain(t, inputTag(t, out), `id="art"`)
+	mustContain(t, out, `<div id="art-root"`)
+	if strings.Count(out, `id="art"`) != 1 {
+		t.Errorf("id art must be on the input only:\n%s", out)
+	}
+}
+
+// TestFileDrop_ChooseAgain: the line shows only with ChooseAgain, hides
+// once files are picked, names the plural with Multiple, and the input's
+// aria-describedby names it ahead of the caller's ids.
+func TestFileDrop_ChooseAgain(t *testing.T) {
+	off := render(t, FileDrop(Props{ID: "art"}))
+	mustNotContain(t, off, "Choose the file again", `id="art-again"`)
+	on := render(t, FileDrop(Props{ID: "art", ChooseAgain: true, Attributes: templ.Attributes{"aria-describedby": "art-help"}}))
+	mustContain(t, on, `<p id="art-again"`, "Choose the file again", `x-show="files.length === 0"`)
+	mustContain(t, inputTag(t, on), `aria-describedby="art-again art-help"`)
+	many := render(t, FileDrop(Props{ID: "art", Multiple: true, ChooseAgain: true}))
+	mustContain(t, many, "Choose the files again")
+	mustContain(t, inputTag(t, many), `aria-describedby="art-again"`)
+}
+
+// TestFileDrop_RemoveTarget: the remove button is a 44px square (size-11)
+// with a negative margin so the row keeps its height.
+func TestFileDrop_RemoveTarget(t *testing.T) {
+	out := render(t, FileDrop(Props{Name: "f"}))
+	btn := regexp.MustCompile(`<button type="button" class="[^"]*"`).FindString(out)
+	mustContain(t, btn, "size-11", "-my-2.5")
+	mustNotContain(t, btn, " p-1 ")
 }
 
 // TestFileDrop_RandomIDPerRender: with neither ID nor Name, two drop zones
 // get distinct ids and, within one render, the root id and the input id
 // derive from the same stem.
 func TestFileDrop_RandomIDPerRender(t *testing.T) {
-	rootAttr := regexp.MustCompile(`<div id="(id-[^"]+)"`)
+	rootAttr := regexp.MustCompile(`<div id="(id-[^"]+)-root"`)
 	inputAttr := regexp.MustCompile(`<input type="file" id="(id-[^"]+)"`)
 	a := render(t, FileDrop(Props{}))
 	b := render(t, FileDrop(Props{}))
@@ -170,10 +205,10 @@ func TestFileDrop_RandomIDPerRender(t *testing.T) {
 	if ra[1] == rb[1] {
 		t.Errorf("two unnamed drop zones share id %q", ra[1])
 	}
-	if ia[1] != ra[1]+"-input" {
-		t.Errorf("input id %q does not derive from root id %q", ia[1], ra[1])
+	if ia[1] != ra[1] {
+		t.Errorf("input id %q and root id %q-root do not share a stem", ia[1], ra[1])
 	}
-	if !strings.Contains(a, `for="`+ra[1]+`-input"`) {
+	if !strings.Contains(a, `for="`+ra[1]+`"`) {
 		t.Errorf("label for does not point at the input:\n%s", a)
 	}
 }

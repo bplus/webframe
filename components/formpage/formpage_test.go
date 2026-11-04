@@ -110,6 +110,21 @@ func TestBody_ErrorsBannerAndFields(t *testing.T) {
 	mustOrder(t, out, "Please fix", "Name: Name is required", "Status: Pick a status", `data-wf-field="name"`)
 }
 
+// TestBody_FileFieldAfterErrors: a form re-rendered with Errors cannot
+// refill its file input, so the file field asks for the file again even
+// when the error is on another field; without Errors it says nothing. The
+// banner's link for an error on the file field lands on the file input.
+func TestBody_FileFieldAfterErrors(t *testing.T) {
+	p := itemProps()
+	p.Multipart = true
+	p.Sections[1].Fields = append(p.Sections[1].Fields, formfield.Field{Name: "art", Label: "Artwork", Type: formfield.TypeFile})
+	mustNotContain(t, render(t, Body(p)), "Choose the file again")
+	p.Errors = map[string]string{"name": "Name is required"}
+	mustContain(t, render(t, Body(p)), `id="field-art-again"`, "Choose the file again")
+	p.Errors = map[string]string{"art": "Too big"}
+	mustContain(t, render(t, Body(p)), `href="#field-art"`, `<input type="file" id="field-art"`, "Choose the file again")
+}
+
 // TestBody_RadioErrorLinkTargetExists: an error on a radio field links to
 // "#field-<name>", and the rendered body has an element with that id (the
 // radiogroup), so the link lands somewhere.

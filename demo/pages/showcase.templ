@@ -2334,7 +2334,7 @@ templ filedropSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "filedrop", Title: "File drop", Description: "Tap or click the zone (on a phone the native picker offers the photo library), or drag files onto it on a desktop: image files show a thumbnail in the list, a file over 1 MB is refused with a message while the others stay, and the remove button drops one file; a new pick replaces the selection, as the native input does."}) {
 		@panel.Panel(panel.Props{Level: 4, Title: "Preview on, images only, several files"}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
-				@label.Label(label.Props{For: "showcase-files-input"}) {
+				@label.Label(label.Props{For: "showcase-files"}) {
 					Artwork
 				}
 				@filedrop.FileDrop(filedrop.Props{

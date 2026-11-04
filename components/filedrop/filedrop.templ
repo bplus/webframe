@@ -29,7 +29,7 @@ templ FileDrop(props ...Props) {
 	}
 	{{ p = p.resolve() }}
 	<div
-		id={ p.baseID() }
+		id={ p.rootID() }
 		class={ utils.TwMerge("flex w-full min-w-0 flex-col gap-2", p.Class) }
 		x-data={ p.alpineData() }
 	>
@@ -57,7 +57,7 @@ templ FileDrop(props ...Props) {
 				class="sr-only"
 				x-ref="input"
 				x-on:change="accept($event.target.files)"
-				{ p.Attributes... }
+				{ p.inputAttrs()... }
 			/>
 			@icon.Upload(icon.Props{Size: 24, Class: "pointer-events-none text-muted-foreground"})
 			<span class="pointer-events-none text-sm font-medium text-foreground">{ p.label() }</span>
@@ -65,6 +65,9 @@ templ FileDrop(props ...Props) {
 				<span class="pointer-events-none text-xs text-muted-foreground">{ p.hint() }</span>
 			}
 		</label>
+		if p.ChooseAgain {
+			<p id={ p.againID() } class="text-sm text-muted-foreground" x-show="files.length === 0">{ p.againText() }</p>
+		}
 		<p role="alert" class="text-sm text-destructive" x-show="error" x-text="error" x-cloak></p>
 		<ul role="list" class="flex flex-col gap-2" x-show="files.length > 0" x-cloak>
 			<template x-for="(f, i) in files" :key="f.name + ':' + f.size + ':' + i">
@@ -83,7 +86,7 @@ templ FileDrop(props ...Props) {
 					<span class="shrink-0 text-xs text-muted-foreground" x-text="size(f.size)"></span>
 					<button
 						type="button"
-						class="shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+						class="-my-2.5 -mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
 						x-bind:aria-label="'Remove ' + f.name"
 						x-on:click="remove(i)"
 						disabled?={ p.Disabled }

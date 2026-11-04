@@ -54,7 +54,7 @@ templ FormField(f Field) {
 					@fieldLabel(f, f.ControlID())
 					@dateControl(f)
 				case TypeFile:
-					@fieldLabel(f, fileProps(f).ControlID())
+					@fieldLabel(f, f.ControlID())
 					@fileControl(f)
 				default:
 					@fieldLabel(f, f.ControlID())
@@ -233,11 +233,13 @@ templ dateControl(f Field) {
 	})
 }
 
-// fileProps builds the filedrop Props for f. The label targets the hidden
-// file input, fileProps(f).ControlID(), not f.ControlID().
+// fileProps builds the filedrop Props for f. filedrop's ID names the file
+// input, so f.ControlID() is the <input type="file"> and the label, the
+// error banner's link and any caller all land on it.
 func fileProps(f Field) filedrop.Props {
 	return filedrop.Props{
-		ID:         f.ControlID(),
+		ID:          f.ControlID(),
+		ChooseAgain: f.ChooseAgain || f.Value != "" || f.Error != "",
 		Name:       f.Name,
 		Accept:     f.Accept,
 		Multiple:   f.Multiple,

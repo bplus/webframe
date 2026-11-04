@@ -14838,7 +14838,7 @@ func filedropSection() templ.Component {
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = label.Label(label.Props{For: "showcase-files-input"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var612), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = label.Label(label.Props{For: "showcase-files"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var612), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

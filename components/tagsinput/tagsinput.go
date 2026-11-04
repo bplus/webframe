@@ -18,9 +18,16 @@
 // and the count are server-rendered from Values. Alpine then reads the
 // initial tags from the rendered chips and renders them from its own state,
 // so the server markup is the single source of the initial state. Pasted
-// "a, b, c" becomes three tags; duplicates are rejected case-insensitively;
+// "a, b, c" becomes three tags, and so does a pasted list with one tag per
+// line (a text input would otherwise drop the newlines); duplicates are rejected case-insensitively;
 // at MaxTags the input turns readonly (still focusable, so a phone keyboard
 // stays open). Suggestions render a <datalist>.
+//
+// The chips are a real list: a flex <ul role="list" aria-label="Tags"> with
+// one <li> per tag, and the text input sits after the list, outside it, so
+// a screen reader announces "Tags, list, 3 items". The list is hidden while
+// there are no tags. On phones (below md) each chip is 44px tall so its
+// remove button is a 44px target; from md up it is a 24px button.
 package tagsinput
 
 import (
@@ -174,6 +181,7 @@ func (p Props) inputAttrs() templ.Attributes {
 		"x-on:keydown":    "onKey($event)",
 		"x-on:blur":       "commit()",
 		"x-on:change":     "commit()",
+		"x-on:paste":      "onPaste($event)",
 		"x-bind:disabled": "disabled",
 		// At the cap the input stays focusable (readonly), so adding the
 		// last tag does not drop focus and close a phone's keyboard; the
@@ -241,6 +249,15 @@ const alpineData = `{
 		this.text = '';
 	},
 	removeAt(i) { if (!this.disabled) this.tags.splice(i, 1) },
+	onPaste(e) {
+		const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+		if (!/[\r\n]/.test(text)) return;
+		e.preventDefault();
+		const el = e.target;
+		const at = el.selectionStart ?? this.text.length, end = el.selectionEnd ?? at;
+		this.text = this.text.slice(0, at) + text.split(/\r?\n|\r/).join(this.sep) + this.text.slice(end);
+		this.commit();
+	},
 	onKey(e) {
 		if (e.key === 'Enter' || (this.sep.length === 1 && e.key === this.sep)) { e.preventDefault(); this.commit(); return }
 		if (e.key === 'Backspace' && this.text === '' && this.tags.length > 0) { e.preventDefault(); this.tags.pop() }

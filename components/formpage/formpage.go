@@ -84,7 +84,9 @@ func (p Props) id() string {
 
 // ResolveField returns a copy of f with values, errors and the default
 // validate URL applied, as described on Props.Values, Props.Errors and
-// Props.Validate. Other form-shaped pages (settingspage) use it too.
+// Props.Validate. When errors is not empty a TypeFile field also gets
+// ChooseAgain, because the browser cannot refill a file input. Other
+// form-shaped pages (settingspage) use it too.
 func ResolveField(f formfield.Field, values, errors map[string]string, validate string) formfield.Field {
 	if v, ok := values[f.Name]; ok {
 		f.Value = v
@@ -94,6 +96,11 @@ func ResolveField(f formfield.Field, values, errors map[string]string, validate 
 	}
 	if f.Validate == "" {
 		f.Validate = validate
+	}
+	// A failed POST re-renders the form, and a file input cannot be
+	// refilled: ask for the file again.
+	if f.Type == formfield.TypeFile && len(errors) > 0 {
+		f.ChooseAgain = true
 	}
 	return f
 }

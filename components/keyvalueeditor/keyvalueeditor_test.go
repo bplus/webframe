@@ -88,10 +88,12 @@ func TestKeyValueEditor_RowsAndNames(t *testing.T) {
 		strings.Index(out, `id="env-key-1"`) < strings.Index(out, `<template x-for`)) {
 		t.Errorf("rows out of order:\n%s", out)
 	}
-	// The live row binds its inputs to state and its id to the row index.
+	// The live row binds its inputs to state and its ids to the row's
+	// stable id, not its index, so removing a row renames no other row.
 	mustContain(t, out,
 		`x-model="row.key"`, `x-model="row.value"`,
-		`x-bind:id="$root.id + &#39;-key-&#39; + i"`,
+		`x-bind:id="$root.id + &#39;-key-&#39; + row.id"`,
+		`x-bind:id="$root.id + &#39;-value-&#39; + row.id"`,
 		`x-bind:aria-label="&#39;Remove row &#39; + (i + 1)"`,
 	)
 	mustNotContain(t, attrsOf(t, out, `id="env"`), ` data-disabled`)

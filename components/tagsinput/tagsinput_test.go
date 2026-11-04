@@ -233,3 +233,40 @@ func TestTagsInput_SeparatorKeyCommits(t *testing.T) {
 	mustContain(t, multi, `data-sep=", "`, "Enter adds a tag;")
 	mustNotContain(t, multi, "Enter or")
 }
+
+// TestTagsInput_ListSemantics: the chips are a real flex list (not
+// display: contents, which drops list semantics in Safari), the text input
+// sits after the list and outside it, and the list is hidden with no tags.
+func TestTagsInput_ListSemantics(t *testing.T) {
+	out := render(t, TagsInput(Props{ID: "t", Name: "tags", Values: []string{"go"}}))
+	i := strings.Index(out, `<ul id="t-list"`)
+	ul := out[i : i+strings.Index(out[i:], ">")+1]
+	mustContain(t, ul, `role="list"`, `aria-label="Tags"`, "flex", "flex-wrap", `x-bind:hidden="tags.length === 0"`)
+	mustNotContain(t, ul, "contents", " hidden ")
+	end := strings.Index(out, "</ul>")
+	if in := strings.Index(out, `<input id="t"`); in < end {
+		t.Errorf("the text input must come after the list, outside it:\n%s", out)
+	}
+	empty := render(t, TagsInput(Props{ID: "t", Name: "tags"}))
+	j := strings.Index(empty, `<ul id="t-list"`)
+	if !regexp.MustCompile(`\shidden[\s>]`).MatchString(empty[j : j+strings.Index(empty[j:], ">")+1]) {
+		t.Errorf("an empty list renders hidden:\n%s", empty)
+	}
+}
+
+// TestTagsInput_PasteSplitsLines: the text input intercepts paste and
+// splits on line breaks as well as the separator (a text input would strip
+// the newlines and paste one tag).
+func TestTagsInput_PasteSplitsLines(t *testing.T) {
+	out := render(t, TagsInput(Props{ID: "t", Name: "tags"}))
+	mustContain(t, textInputTag(t, out), `x-on:paste="onPaste($event)"`)
+	mustContain(t, out, "onPaste(e) {", "getData(&#39;text&#39;)", "e.preventDefault()", ".join(this.sep)")
+}
+
+// TestTagsInput_RemoveTarget: the chip remove button is 44px below md and
+// 24px from md up.
+func TestTagsInput_RemoveTarget(t *testing.T) {
+	out := render(t, TagsInput(Props{ID: "t", Name: "tags", Values: []string{"go"}}))
+	btn := regexp.MustCompile(`<button type="button" class="[^"]*"`).FindString(out)
+	mustContain(t, btn, "size-11", "md:size-6", "md:-my-1.5")
+}

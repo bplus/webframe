@@ -229,7 +229,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 				"data-key":        true,
 				"aria-label":      p.KeyPlaceholder,
 				"x-model":         "row.key",
-				"x-bind:id":       "$root.id + '-key-' + i",
+				"x-bind:id":       "$root.id + '-key-' + row.id",
 				"x-bind:disabled": "disabled",
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -244,7 +244,7 @@ func KeyValueEditor(props ...Props) templ.Component {
 				"data-value":      true,
 				"aria-label":      p.ValuePlaceholder,
 				"x-model":         "row.value",
-				"x-bind:id":       "$root.id + '-value-' + i",
+				"x-bind:id":       "$root.id + '-value-' + row.id",
 				"x-bind:disabled": "disabled",
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)

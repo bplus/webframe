@@ -202,7 +202,7 @@ func TestWidgets_ShowcaseSections(t *testing.T) {
 		// Form widgets.
 		`id="tagsinput"`, `id="showcase-tags-root"`, `data-max="5"`, `data-tag="legendary"`, `id="showcase-tags-options"`, "3/5",
 		`id="keyvalueeditor"`, `id="showcase-env"`, `name="env.key"`, `value="REGION"`, "Add variable",
-		`id="filedrop"`, `id="showcase-files-input"`, `accept="image/*"`, "multiple", "Up to 1 MB each",
+		`id="filedrop"`, `id="showcase-files-root"`, `<input type="file" id="showcase-files"`, `for="showcase-files"`, `accept="image/*"`, "multiple", "Up to 1 MB each",
 		`id="datetimepicker"`, `id="showcase-date"`, `type="date"`, `value="2026-09-12"`, `max="2026-12-31"`, `id="showcase-datetime"`, `type="datetime-local"`, `value="2026-09-12T09:30"`, `id="showcase-time"`, `type="time"`, `value="22:00:00"`, `step="15"`,
 		`id="rating"`, `aria-label="Small: 3 of 5"`, `aria-label="Medium: 4 of 5"`, `aria-label="Large: 5 of 5"`, `id="showcase-rating-input"`, `name="stars"`, "h-11 w-11", "Your rating",
 		// The palette section and the panic link under the error-swap section.

@@ -11,7 +11,12 @@
 // handler reads r.FormFile(name) or, with Multiple,
 // r.MultipartForm.File[name]. MaxSize is a client-side courtesy only; the
 // server must enforce its own limit. A file input cannot be refilled, so a
-// page re-rendered after a failed POST shows the zone empty.
+// page re-rendered after a failed POST shows the zone empty; set
+// ChooseAgain on that render and a line under the zone asks the user to
+// choose the file again.
+//
+// Ids: ID names the <input type="file"> (the control a label points at and
+// an error link focuses); the Alpine root is ID+"-root".
 package filedrop
 
 import (
@@ -26,7 +31,8 @@ import (
 // Props configures FileDrop. Name is the submitted field. Attributes go on
 // the hidden <input> (the focusable control), not the root.
 type Props struct {
-	// ID is the root's id; ControlID derives the input's id from it.
+	// ID is the file input's id; the root is ID+"-root". When empty it is
+	// "filedrop-"+Name, or a random id when Name is empty too.
 	ID         string
 	Class      string
 	Attributes templ.Attributes
@@ -47,6 +53,11 @@ type Props struct {
 	Label, Hint string
 	Required    bool
 	Disabled    bool
+	// ChooseAgain shows "Choose the file again" ("Choose the files again"
+	// with Multiple) under the zone. Set it when re-rendering a form after
+	// a failed POST: the browser cannot refill a file input, so a file the
+	// user picked before is gone.
+	ChooseAgain bool
 }
 
 // baseID is the id stem: ID, else "filedrop-"+Name, else a fresh random
@@ -71,9 +82,46 @@ func (p Props) resolve() Props {
 }
 
 // ControlID is the id of the hidden <input type="file">, for a label's for
-// attribute or aria-describedby.
+// attribute or aria-describedby. It is the resolved ID.
 func (p Props) ControlID() string {
-	return p.baseID() + "-input"
+	return p.baseID()
+}
+
+// rootID is the id of the Alpine root that wraps the zone and the list.
+func (p Props) rootID() string {
+	return p.baseID() + "-root"
+}
+
+// againID is the id of the ChooseAgain line.
+func (p Props) againID() string {
+	return p.baseID() + "-again"
+}
+
+// inputAttrs are the caller's Attributes for the file input, with the
+// ChooseAgain line's id added in front of any aria-describedby, so a
+// screen reader hears the line when the input takes focus.
+func (p Props) inputAttrs() templ.Attributes {
+	if !p.ChooseAgain {
+		return p.Attributes
+	}
+	out := templ.Attributes{}
+	for k, v := range p.Attributes {
+		out[k] = v
+	}
+	desc := p.againID()
+	if s, _ := p.Attributes["aria-describedby"].(string); s != "" {
+		desc += " " + s
+	}
+	out["aria-describedby"] = desc
+	return out
+}
+
+// againText is the ChooseAgain line.
+func (p Props) againText() string {
+	if p.Multiple {
+		return "Choose the files again"
+	}
+	return "Choose the file again"
 }
 
 func (p Props) label() string {
