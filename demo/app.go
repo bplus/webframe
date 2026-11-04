@@ -13,7 +13,8 @@ import (
 // theme toggle. Every showcase page is rendered through App.Render, and the
 // server wraps its mux in App.Middleware so the shell can mark the active
 // nav item. The Items pages are served through SidebarApp instead (see
-// RegisterItemRoutes); the "Items" entry here links across to them. Flash
+// RegisterItemRoutes); the "Items" entry here links across to them, and
+// "Graph" opens the graphwidget page at /graph. Flash
 // is flash.Take, so a one-shot message set before a redirect shows once on
 // the next page the shell renders. PaletteFor builds the same command
 // palette as the Items app's per request, so the showcase's palette section
@@ -27,6 +28,7 @@ var App = &appshell.App{
 	Nav: []appshell.NavItem{
 		{Label: "Showcase", Href: "/"},
 		{Label: "Items", Href: "/items", Match: "/items"},
+		{Label: "Graph", Href: "/graph"},
 		{Label: "Forms", Href: "/#forms"},
 		{Label: "Content", Href: "/#content"},
 		{Label: "Interactive", Href: "/#interactive"},

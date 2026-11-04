@@ -45,7 +45,7 @@ func HandleDashboard(w http.ResponseWriter, r *http.Request) {
 // tiles (items, published, drafts, packs) take the default span of 3, so
 // they fill one row of four on md and up. The two sections sit side by
 // side there: Recent changes (a timeline, span 4) beside Newest items (a
-// two-column card grid, span 8); below 900px dashboardgrid stacks every
+// two-column card grid, span 8); below md (768px) dashboardgrid stacks every
 // tile and section one per row.
 func dashboardProps(now time.Time) dashboardpage.Props {
 	items := newestFirst(Items.All())
