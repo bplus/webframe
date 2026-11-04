@@ -96,3 +96,16 @@ offset with one. Exit 1 on any failure, 2 for a usage error.
 make palette-check   # needs `make dev`; checks /items
 node tools/palette-check.mjs --url http://localhost:3333/items --shot tools/shots/palette
 ```
+
+## htmx-errors-check
+
+`htmx-errors-check.mjs` runs `static/js/htmx-errors.js` in a bare Node
+context (no browser, no npm packages) and hands its `htmx:beforeSwap`
+listener a list of error answers: an XML body, Go's `<nil>` as text/plain,
+an HTML fragment Go sniffed as text/plain, a full document, a JSON error and
+more. Each must be swapped or refused as the script's header comment says.
+`go test ./components/appshell/` runs it when `node` is on PATH.
+
+```bash
+node tools/htmx-errors-check.mjs
+```

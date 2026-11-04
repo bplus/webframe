@@ -68,6 +68,7 @@ templ LogViewer(props ...Props) {
 					hx-get={ p.Src }
 					hx-trigger={ p.every() }
 					hx-swap="beforeend"
+					data-wf-swallow-errors
 				}
 			>
 				@Fragment(p.visible())

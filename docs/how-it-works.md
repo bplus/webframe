@@ -330,7 +330,7 @@ still count as errors (htmx still fires its `htmx:responseError` event); anythin
 answer: a plain-text error. If a handler calls Go's `http.Error(w, "Internal Server Error",
 500)`, swapping that would put the raw words "Internal Server Error" where the form was.
 `static/js/htmx-errors.js` listens just before each swap
-([htmx-errors.js:79-83](../static/js/htmx-errors.js#L79-L83)):
+([htmx-errors.js:103-107](../static/js/htmx-errors.js#L103-L107)):
 
 ```js
 if (!d || !d.isError) return;
@@ -339,10 +339,13 @@ if (!isHTML(d.xhr) || swallows(d.target)) d.shouldSwap = false;
 
 In plain words: leave successful responses alone; for an error, cancel the swap if the body is
 not HTML, or if the target is marked `data-wf-swallow-errors`. "HTML" means the `Content-Type`
-says `text/html`, or the body starts with `<`
-([htmx-errors.js:51-71](../static/js/htmx-errors.js#L51-L71)). The `data-wf-swallow-errors` mark
-is on small polled elements, such as a nav badge count, where a full error page would be garbage
-and the next poll repairs things anyway. The practical rule: answer errors with `errorpage` or
+says `text/html`, or the body starts like HTML: `<!doctype html`, a comment, or a known HTML
+element such as `<form` or `<tr` ([htmx-errors.js:53-95](../static/js/htmx-errors.js#L53-L95)).
+That rescues a fragment whose handler forgot the header, while an XML error (`<?xml`,
+`<error>`) or text such as `<nil>` is still refused. The `data-wf-swallow-errors` mark
+is on small polled elements, such as a nav badge count or a `logviewer`'s polled lines, where a
+full error page would be garbage and the next poll repairs things anyway, and on a `splitpane`'s
+detail region unless its `ShowErrors` is set. The practical rule: answer errors with `errorpage` or
 `toast`, which send HTML, and never with `http.Error`.
 
 ### POST with good input: redirect, then the flash
@@ -621,7 +624,7 @@ In this order. Each builds on the one before.
 7. [components/flash/flash.go](../components/flash/flash.go): the one-time message cookie.
 8. [components/errorpage/errorpage.go](../components/errorpage/errorpage.go): error pages and
    the router wrapper.
-9. [static/js/htmx-errors.js](../static/js/htmx-errors.js): 84 lines, mostly comments; the
+9. [static/js/htmx-errors.js](../static/js/htmx-errors.js): 108 lines, mostly comments; the
    browser half of section 3.
 10. [internal/wflint/rules.go](../internal/wflint/rules.go): what app code may write.
 11. [components/appshell/shell.templ](../components/appshell/shell.templ): the nav chrome. Skim
