@@ -20,8 +20,10 @@ import (
 	"github.com/bplus/webframe/components/pageheader"
 )
 
-// Section is one titled group of fields, rendered as a layout.Section
-// (h3) holding a formfield.Fieldset of Fields, then Content when set.
+// Section is one group of fields, rendered as a layout.Section (h3)
+// holding a formfield.Fieldset of Fields, then Content when set. A section
+// with no Title and no Description has no heading, so it renders as a plain
+// group without the section's vertical padding and divider.
 type Section struct {
 	Title, Description string
 	Fields             []formfield.Field

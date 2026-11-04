@@ -352,3 +352,26 @@ func TestBody_SectionContent(t *testing.T) {
 		t.Errorf("content after the fieldset without Content: %q", after)
 	}
 }
+
+// An untitled section (no Title, no Description) has no heading to space
+// out, so it must not render as a padded, bordered layout.Section: that
+// left an empty band between the error banner and the first field. A
+// titled section on the same form keeps its layout.Section.
+func TestBody_UntitledSectionHasNoSectionPadding(t *testing.T) {
+	p := Props{
+		Action: "/books",
+		Sections: []Section{
+			{Fields: []formfield.Field{{Name: "title", Label: "Title"}}},
+			{Title: "More", Fields: []formfield.Field{{Name: "author", Label: "Author"}}},
+		},
+		Errors: map[string]string{"title": "Enter a title."},
+	}
+	out := render(t, Body(p))
+	first := out[:strings.Index(out, `name="title"`)]
+	first = first[strings.Index(first, "Please fix"):]
+	mustNotContain(t, first, "wf-section", "<section")
+	if n := strings.Count(out, "wf-section"); n != 1 {
+		t.Errorf("got %d wf-section elements, want 1 (the titled section only):\n%s", n, out)
+	}
+	mustOrder(t, out, "Please fix", `name="title"`, "<section", "More", `name="author"`, `type="submit"`)
+}
