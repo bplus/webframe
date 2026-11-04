@@ -55,12 +55,12 @@ func TestContainerAttributes(t *testing.T) {
 	}
 }
 
-// TestColorMapJSON_Escapes: a quote or backslash in a type or color must
-// still yield valid JSON that decodes back to the same entries.
+// TestColorMapJSON_Escapes: a quote or backslash in a type must still
+// yield valid JSON that decodes back to the same entries.
 func TestColorMapJSON_Escapes(t *testing.T) {
 	entries := []NodeColorEntry{
 		{Type: `say "hi"`, Color: `#fff`},
-		{Type: `back\slash`, Color: `rgb(1,2,3)"`},
+		{Type: `back\slash`, Color: `rgb(1,2,3)`},
 		{Type: "plain", Color: "red"},
 	}
 	got := colorMapJSON(entries)
@@ -74,11 +74,39 @@ func TestColorMapJSON_Escapes(t *testing.T) {
 		}
 	}
 	// Order is the entry order (deterministic markup).
-	if want := `{"say \"hi\"":"#fff","back\\slash":"rgb(1,2,3)\"","plain":"red"}`; got != want {
+	if want := `{"say \"hi\"":"#fff","back\\slash":"rgb(1,2,3)","plain":"red"}`; got != want {
 		t.Errorf("colorMapJSON = %s, want %s", got, want)
 	}
 	if got := colorMapJSON(nil); got != "{}" {
 		t.Errorf("colorMapJSON(nil) = %s, want {}", got)
+	}
+}
+
+// TestColors_Sanitized: node colors and the background pass through
+// utils.SanitizeColor, so a value that could break out of a style (a
+// semicolon, a quote, url(...)) reaches the script as the "#888" fallback.
+func TestColors_Sanitized(t *testing.T) {
+	entries := []NodeColorEntry{
+		{Type: "a", Color: "red;background:url(http://x)"},
+		{Type: "b", Color: `#fff"`},
+		{Type: "c", Color: "rgb(1, 2, 3)"},
+	}
+	if got, want := colorMapJSON(entries), `{"a":"#888","b":"#888","c":"rgb(1, 2, 3)"}`; got != want {
+		t.Errorf("colorMapJSON = %s, want %s", got, want)
+	}
+	var buf bytes.Buffer
+	if err := GraphWidget(Props{ID: "g", BackgroundColor: "black;x:y"}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if out := buf.String(); !strings.Contains(out, `data-tui-graph-bg="#888"`) || strings.Contains(out, "black;x:y") {
+		t.Errorf("background not sanitized: %s", out)
+	}
+	buf.Reset()
+	if err := GraphWidget(Props{ID: "g", BackgroundColor: "#101010"}).Render(context.Background(), &buf); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !strings.Contains(buf.String(), `data-tui-graph-bg="#101010"`) {
+		t.Errorf("safe background dropped: %s", buf.String())
 	}
 }
 
