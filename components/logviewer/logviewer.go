@@ -17,6 +17,10 @@
 //
 // The box has a fixed height and scrolls inside, so it never grows the
 // page. Long lines wrap when Wrap is set and otherwise scroll horizontally.
+//
+// Needs JavaScript: with Src set, new lines never arrive, and the filter box
+// and Follow switch do nothing; the lines rendered with the page and
+// Download work.
 package logviewer
 
 import (

@@ -28,6 +28,10 @@
 // a screen reader announces "Tags, list, 3 items". The list is hidden while
 // there are no tags. On phones (below md) each chip is 44px tall so its
 // remove button is a 44px target; from md up it is a 24px button.
+//
+// Needs JavaScript: the text box has no name, so a typed tag that was not
+// turned into a chip is dropped on submit (and Enter submits the form), and
+// chips cannot be removed; the tags already in Values are kept.
 package tagsinput
 
 import (

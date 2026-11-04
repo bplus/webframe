@@ -71,6 +71,10 @@
 // Nothing in Results changes height with page state except the rows: the
 // table header stays when there are no rows (the empty state fills one
 // cell) and the pagination summary line is always present.
+//
+// Needs JavaScript: searching and filtering do nothing (see filterbar), and
+// neither do htmx actions in the toolbar and rows or the empty state's Clear
+// filters; sort headers and page links work as plain links.
 package listpage
 
 import (

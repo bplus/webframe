@@ -84,7 +84,7 @@ is sent back in the response's `X-Request-Id` header
 ### Steps 2 and 3: your handler and Respond
 
 Your handler builds a declaration and calls a `Respond`. Here is `listpage.Respond` in full
-([components/listpage/listpage.go:496](../components/listpage/listpage.go#L496-L506)):
+([components/listpage/listpage.go:500](../components/listpage/listpage.go#L500-L510)):
 
 ```go
 app, err := appshell.Must(r.Context())
@@ -199,7 +199,7 @@ sequenceDiagram
 ```
 
 Each sortable header is a link with both a normal `href` and htmx attributes
-([components/datatable/datatable.go:257](../components/datatable/datatable.go#L257-L265)):
+([components/datatable/datatable.go:261](../components/datatable/datatable.go#L261-L269)):
 
 ```go
 attrs := templ.Attributes{"href": url}
@@ -211,7 +211,7 @@ if p.HxTarget != "" {
 
 In plain words: the link works without JavaScript (`href`); with htmx it fetches the same URL,
 puts the answer into the results region, and writes the URL into the address bar. `listpage`
-sets `HxTarget` to `#list-results` ([listpage.go:468](../components/listpage/listpage.go#L468)).
+sets `HxTarget` to `#list-results` ([listpage.go:472](../components/listpage/listpage.go#L472)).
 The pagination links do the same thing.
 
 On the server, your handler runs exactly as it did for the first visit. The only difference is
@@ -227,7 +227,7 @@ title out of it means a swap never duplicates the header.
 
 The filter bar sits above the results region, outside it. It holds hidden inputs for `sort`,
 `dir` and `per` (page size), so that changing a filter keeps your current sort
-([listpage.go:369](../components/listpage/listpage.go#L369-L377)). `page` is left out on
+([listpage.go:373](../components/listpage/listpage.go#L373-L381)). `page` is left out on
 purpose, so a filter change lands on page 1.
 
 Now the problem. You click the "Year" header. Only the results region is swapped, so the filter
@@ -261,7 +261,7 @@ A row's Delete button sends `DELETE /books/7`. That URL says nothing about which
 the user is looking at. htmx also sends `HX-Current-URL`, the address bar's URL.
 `listquery.ParseCurrent` reads the `Spec` from that
 ([listquery.go:106-122](../listquery/listquery.go#L106-L122)), and `listpage.RespondResults`
-([listpage.go:517](../components/listpage/listpage.go#L517-L526)) sends just the results part,
+([listpage.go:521](../components/listpage/listpage.go#L521-L530)) sends just the results part,
 plus an `HX-Replace-Url` header so the address bar shows the state that was actually served (for
 example page 3 became page 2 because its last row is gone).
 

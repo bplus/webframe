@@ -34,6 +34,10 @@
 // help line and the Feedback slot, aria-invalid="true" when Error is set,
 // and `required` (or aria-required where the submitting control is not
 // the one the browser validates); the Feedback slot sits last.
+//
+// Needs JavaScript: a TypeSelect field submits an empty value and a TypeTags
+// field drops a typed tag (see selectbox and tagsinput), and the on-blur
+// Validate check is skipped; the other types work.
 package formfield
 
 import (
