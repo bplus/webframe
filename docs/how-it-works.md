@@ -98,7 +98,7 @@ two ways to draw this page, the whole page body (`Page(p)`) and the results regi
 under that region's id (`list-results` by default); let the `App` pick one.
 
 `formpage.Respond`
-([components/formpage/formpage.go:235](../components/formpage/formpage.go#L235-L248)) has the
+([components/formpage/formpage.go:237](../components/formpage/formpage.go#L237-L250)) has the
 same shape. Its one named part is the `<form>` itself, and it adds a status code, which [section
 3](#3-a-form-round-trip) explains.
 
@@ -299,7 +299,7 @@ submit over htmx, and replace the whole `<form>` element with the answer. The pl
 Your handler (see `createBook` in
 [examples/04-validation/main.go:110](../examples/04-validation/main.go#L110-L128)) copies what
 was typed into `Values`, puts messages into `Errors`, and calls `Respond` again. `Respond`
-notices the errors ([formpage.go:243-247](../components/formpage/formpage.go#L243-L247)):
+notices the errors ([formpage.go:245-249](../components/formpage/formpage.go#L245-L249)):
 
 ```go
 status := 0

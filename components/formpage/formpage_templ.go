@@ -217,7 +217,7 @@ func ErrorBanner(fields []formfield.Field, errors map[string]string) templ.Compo
 		if len(errors) > 0 {
 			templ_7745c5c3_Err = banner.Banner(banner.Props{
 				Variant: banner.VariantError,
-				Title:   bannerTitle(len(errors)),
+				Title:   ErrorBannerTitle(len(errors)),
 				Details: errorDetails(errorItems(fields, errors)),
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {

@@ -58,7 +58,7 @@ templ ErrorBanner(fields []formfield.Field, errors map[string]string) {
 	if len(errors) > 0 {
 		@banner.Banner(banner.Props{
 			Variant: banner.VariantError,
-			Title:   bannerTitle(len(errors)),
+			Title:   ErrorBannerTitle(len(errors)),
 			Details: errorDetails(errorItems(fields, errors)),
 		})
 	}

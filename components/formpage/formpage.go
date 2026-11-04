@@ -193,9 +193,11 @@ func errorItems(fields []formfield.Field, errors map[string]string) []errorItem 
 	return items
 }
 
-// bannerTitle is the summary line: "Please fix the error below." for one
-// error, "Please fix the N errors below." for more.
-func bannerTitle(n int) string {
+// ErrorBannerTitle is the error banner's summary line for n errors:
+// "Please fix the error below." for one, "Please fix the N errors below."
+// for more. formpage, settingspage (through ErrorBanner) and authpage all
+// use it, so the wording lives in one place.
+func ErrorBannerTitle(n int) string {
 	if n == 1 {
 		return "Please fix the error below."
 	}
