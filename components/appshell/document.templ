@@ -82,8 +82,8 @@ templ Document(p DocProps) {
 			     deferred since it only needs to be ready before user
 			     interaction, and it initializes swapped-in [x-data] itself. -->
 			<meta name="htmx-config" content={ htmxConfig }/>
-			<script src="/static/js/htmx.min.js"></script>
-			<script defer src="/static/js/alpine.min.js"></script>
+			<script src={ assets.URL("/static/js/htmx.min.js") }></script>
+			<script defer src={ assets.URL("/static/js/alpine.min.js") }></script>
 			if p.Head != nil {
 				@p.Head
 			}

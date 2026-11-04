@@ -508,12 +508,13 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 // the address bar follows the state actually served (for example a page
 // clamped after its last row was deleted). base defaults to the path of
 // listquery.CurrentURL(r), the page the user is viewing rather than the
-// mutation's path. No appshell.App is needed. Render errors are returned.
+// mutation's path. It renders through appshell.RenderFragment, so it sets
+// Vary and, inside App.Middleware, sends a pending flash out of band. No
+// appshell.App is needed. Render errors are returned.
 func RespondResults(w http.ResponseWriter, r *http.Request, p Props) error {
 	if p.Base == "" {
 		p.Base = listquery.CurrentURL(r).Path
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("HX-Replace-Url", p.Spec.URL(p.Base))
-	return resultsPart(p).Render(r.Context(), w)
+	return appshell.RenderFragment(w, r, resultsPart(p))
 }

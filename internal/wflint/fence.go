@@ -5,18 +5,43 @@ import (
 	"strings"
 )
 
-// fencePrefixes map the call prefix of each sanctioned escape hatch to its
+// fencePackages are the sanctioned escape hatches: the package path, the
+// name it has when imported without an alias, the fenced function and the
 // Fence kind.
-var fencePrefixes = []struct{ prefix, kind string }{
-	{"custompage.CustomPage(", "page"},
-	{"customblock.CustomBlock(", "block"},
+var fencePackages = []struct {
+	re      *regexp.Regexp
+	def, fn string
+	kind    string
+}{
+	{importNameRe("github.com/bplus/webframe/components/custompage"), "custompage", "CustomPage", "page"},
+	{importNameRe("github.com/bplus/webframe/components/customblock"), "customblock", "CustomBlock", "block"},
+}
+
+// fencePrefix is the call text that opens one kind of fence in a file.
+type fencePrefix struct{ prefix, kind string }
+
+// fencePrefixesOf resolves how src names each fence package, the same way
+// proseScopeOf resolves prose: under its import alias when the file has
+// one, otherwise under the default name (a file with no import of the
+// package, such as a test fixture, still has its default-name calls
+// recognized; there they could not compile under any other meaning).
+func fencePrefixesOf(src string) []fencePrefix {
+	out := make([]fencePrefix, 0, len(fencePackages))
+	for _, f := range fencePackages {
+		name, ok := importName(src, f.re, f.def)
+		if !ok {
+			name = f.def
+		}
+		out = append(out, fencePrefix{name + "." + f.fn + "(", f.kind})
+	}
+	return out
 }
 
 // fenceOf reports whether a templ element expression (the text after @) is a
-// CustomPage or CustomBlock call, and which kind.
-func fenceOf(expr string) (kind string, ok bool) {
+// CustomPage or CustomBlock call under the names in prefixes, and which kind.
+func fenceOf(expr string, prefixes []fencePrefix) (kind string, ok bool) {
 	expr = strings.TrimSpace(expr)
-	for _, f := range fencePrefixes {
+	for _, f := range prefixes {
 		if strings.HasPrefix(expr, f.prefix) {
 			return f.kind, true
 		}

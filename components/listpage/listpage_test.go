@@ -674,3 +674,36 @@ func TestPage_StickyHeaderAndMaxHeightPassThrough(t *testing.T) {
 	p = itemProps(t, "")
 	wantNone(t, renderPage(t, p), "sticky", "max-h-[")
 }
+
+// RespondResults is a fragment render like Respond's: it sets Vary and,
+// inside Middleware, consumes a pending flash and sends it out of band, so
+// a flash set by a row-delete handler shows now.
+func TestRespondResults_VaryAndFlash(t *testing.T) {
+	a := testApp()
+	calls := 0
+	a.Flash = func(w http.ResponseWriter, r *http.Request) templ.Component {
+		calls++
+		return templ.Raw("FLASHMSG")
+	}
+	var respondErr error
+	h := a.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := itemProps(t, "")
+		p.Base = ""
+		respondErr = RespondResults(w, r, p)
+	}))
+	req := httptest.NewRequest("DELETE", "/items/1", nil)
+	req.Header.Set("HX-Request", "true")
+	req.Header.Set("HX-Target", "list-results")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if respondErr != nil {
+		t.Fatalf("RespondResults: %v", respondErr)
+	}
+	if v := rec.Header().Values("Vary"); len(v) != 1 || !strings.Contains(v[0], "HX-Target") {
+		t.Errorf("Vary = %q, want the render Vary set", v)
+	}
+	if calls != 1 {
+		t.Errorf("App.Flash called %d times, want 1", calls)
+	}
+	wantOrder(t, rec.Body.String(), `id="list-results"`, `<div id="wf-flash" hx-swap-oob="true">FLASHMSG</div>`)
+}

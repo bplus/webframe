@@ -558,7 +558,7 @@ func TestFenceHelpers(t *testing.T) {
 		{`  customblock.CustomBlock()`, "block", true},
 		{`card.Card()`, "", false},
 	} {
-		k, ok := fenceOf(c.expr)
+		k, ok := fenceOf(c.expr, fencePrefixesOf(""))
 		if k != c.kind || ok != c.ok {
 			t.Errorf("fenceOf(%q) = %q, %v; want %q, %v", c.expr, k, ok, c.kind, c.ok)
 		}
@@ -635,5 +635,27 @@ func TestLint_ComposeClean(t *testing.T) {
 	}
 	if vs := lintOne(t, f); len(vs) != 1 || vs[0].Rule != "html-from-go" || vs[0].Line != 4 {
 		t.Errorf("helper.go: got %+v, want one html-from-go at line 4", vs)
+	}
+}
+
+// TestLint_FencedAlias: fences are found under the name the file imports
+// custompage and customblock as, the way the prose exemption resolves its
+// alias. Once the file imports custompage as cp, a call spelled
+// custompage.CustomPage is some other package and fences nothing, so the
+// div inside it is reported.
+func TestLint_FencedAlias(t *testing.T) {
+	rep, err := Lint([]string{"testdata/fenced_alias.templ.txt"})
+	if err != nil {
+		t.Fatalf("Lint error: %v", err)
+	}
+	want := []Fence{
+		{File: "testdata/fenced_alias.templ.txt", Line: 9, Kind: "page", Reason: "aliased page"},
+		{File: "testdata/fenced_alias.templ.txt", Line: 12, Kind: "block", Reason: "aliased block"},
+	}
+	if !slices.Equal(rep.Fences, want) {
+		t.Errorf("fences = %+v, want %+v", rep.Fences, want)
+	}
+	if len(rep.Violations) != 1 || rep.Violations[0].Rule != "element" || rep.Violations[0].Line != 16 {
+		t.Errorf("violations = %+v, want one element violation at line 16", rep.Violations)
 	}
 }

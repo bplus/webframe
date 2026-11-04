@@ -7,8 +7,10 @@ type Props struct {
 }
 
 // CustomBlock fences hand-written markup that the design-system lint would
-// otherwise reject; the lint recognizes the call and the data-wf-custom
-// attribute. An empty Reason renders data-wf-missing-reason="true" so the
+// otherwise reject. The lint recognizes the fence by its call in the app's
+// source (under whatever name the file imports this package as); the
+// data-wf-custom="block" attribute only marks the fence in the rendered
+// page. An empty Reason renders data-wf-missing-reason="true" so the
 // omission shows on the page.
 templ CustomBlock(props ...Props) {
 	{{ var p Props }}

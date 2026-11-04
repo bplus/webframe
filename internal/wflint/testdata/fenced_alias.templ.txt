@@ -1,0 +1,18 @@
+package testdata
+
+import (
+	cp "github.com/bplus/webframe/components/custompage"
+	blk "github.com/bplus/webframe/components/customblock"
+)
+
+templ AliasFenced() {
+	@cp.CustomPage(cp.Props{Reason: "aliased page"}) {
+		<div class="x">page</div>
+	}
+	@blk.CustomBlock(blk.Props{Reason: "aliased block"}) {
+		<div>block</div>
+	}
+	@custompage.CustomPage(custompage.Props{Reason: "not this file's name"}) {
+		<div>reported</div>
+	}
+}
