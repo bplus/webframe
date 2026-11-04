@@ -406,6 +406,41 @@ func renderDocument(w http.ResponseWriter, r *http.Request, p DocProps, body tem
 	return Document(p).Render(templ.WithChildren(ctx, body), w)
 }
 
+// RenderFragment writes frag alone as an htmx fragment response, the way
+// Render answers a plain htmx request: it sets Content-Type and Vary and,
+// when an App with Flash is in the request context, consumes a pending
+// flash and sends it after frag as an out-of-band swap of #wf-flash.
+// Without an App it writes frag alone. Set any other headers first.
+func RenderFragment(w http.ResponseWriter, r *http.Request, frag templ.Component) error {
+	SetHeaders(w)
+	a, ok := FromContext(r.Context())
+	if !ok {
+		return frag.Render(r.Context(), w)
+	}
+	return a.writeFragment(w, r, 0, frag)
+}
+
+// writeFragment renders frag with status (0 means 200), followed by the
+// pending flash out of band. A fragment render still consumes the flash,
+// so a flash set by an htmx action shows now rather than on the next full
+// render. Flash runs before the status is written: it may set a cookie.
+func (a *App) writeFragment(w http.ResponseWriter, r *http.Request, status int, frag templ.Component) error {
+	var oob templ.Component
+	if a.Flash != nil {
+		if f := a.Flash(w, r); f != nil {
+			oob = flashOOB(f)
+		}
+	}
+	if status != 0 {
+		w.WriteHeader(status)
+	}
+	ctx := r.Context()
+	if err := frag.Render(ctx, w); err != nil || oob == nil {
+		return err
+	}
+	return oob.Render(ctx, w)
+}
+
 // RenderParts is Render with named swap regions: parts maps an element id
 // to the component rendering just that region. A fragment request whose
 // HX-Target names a key in parts gets only that part; any other fragment
@@ -431,26 +466,13 @@ func (a *App) RenderPartsStatus(w http.ResponseWriter, r *http.Request, status i
 		}
 	}
 	if WantsFragment(r) {
-		// A fragment render still consumes a pending flash and sends it
-		// out of band, so a flash set by an htmx action shows now rather
-		// than on the next full render.
-		var oob templ.Component
-		if a.Flash != nil {
-			if f := a.Flash(w, r); f != nil {
-				oob = flashOOB(f)
-			}
-		}
 		frag := full
 		if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
 			if part := parts[target]; part != nil {
 				frag = part
 			}
 		}
-		writeStatus()
-		if err := frag.Render(ctx, w); err != nil || oob == nil {
-			return err
-		}
-		return oob.Render(ctx, w)
+		return a.writeFragment(w, r, status, frag)
 	}
 	props := a.ShellProps(r)
 	if a.Flash != nil {
