@@ -53,7 +53,7 @@ sequenceDiagram
 
 ### Step 1: Middleware
 
-`Middleware` is at [components/appshell/app.go:83](../components/appshell/app.go#L83-L116). It
+`Middleware` is at [components/appshell/app.go:85](../components/appshell/app.go#L85-L119). It
 stores three things in the request context:
 
 ```go
@@ -63,20 +63,22 @@ ctx = context.WithValue(ctx, requestIDKey, id)
 ```
 
 In plain words: attach the `App`, the request path and the request id to this request
-([app.go:94-96](../components/appshell/app.go#L94-L96)). Later code reads them back with
-`appshell.Must` (the `App`, [app.go:266](../components/appshell/app.go#L266-L272)),
+([app.go:96-98](../components/appshell/app.go#L96-L98)). Later code reads them back with
+`appshell.Must` (the `App`, [app.go:270](../components/appshell/app.go#L270-L276)),
 `PathFromContext` (the path, used to highlight the current nav item and to build list links,
-[app.go:275](../components/appshell/app.go#L275-L278)) and `RequestID`
-([app.go:163](../components/appshell/app.go#L163-L166)). That is why handlers never pass the
+[app.go:279](../components/appshell/app.go#L279-L282)) and `RequestID`
+([app.go:166](../components/appshell/app.go#L166-L169)). That is why handlers never pass the
 `App` around; forget the wrapper and `Must` returns an error naming `Middleware`.
 
 
 The **request id** is a short string that appears in the log line for a panic and on the error
 page the user sees, so a user's report can be matched to the log. The rules are at
-[app.go:85-93](../components/appshell/app.go#L85-L93): reuse the id of an outer `Middleware` if
+[app.go:87-95](../components/appshell/app.go#L87-L95): reuse the id of an outer `Middleware` if
 there is one, else take the `X-Request-Id` header if it looks safe (letters, digits, `.`, `_`,
-`-`, at most 64 bytes, checked at [app.go:173](../components/appshell/app.go#L173-L186)), else
-make 16 random hex digits ([app.go:190](../components/appshell/app.go#L190-L194)).
+`-`, at most 64 bytes, checked at [app.go:176](../components/appshell/app.go#L176-L189)), else
+make 16 random hex digits ([app.go:193](../components/appshell/app.go#L193-L197)). The id used
+is sent back in the response's `X-Request-Id` header
+([app.go:100](../components/appshell/app.go#L100)), so the browser's network panel shows it too.
 
 ### Steps 2 and 3: your handler and Respond
 
@@ -101,7 +103,7 @@ same shape. Its one named part is the `<form>` itself, and it adds a status code
 
 ### Step 4: the three kinds of request
 
-`RenderPartsStatus` ([app.go:425](../components/appshell/app.go#L425-L466)) is where every page
+`RenderPartsStatus` ([app.go:429](../components/appshell/app.go#L429-L470)) is where every page
 is written. It sorts requests into three kinds:
 
 | Request | How it is recognized | What is sent |
@@ -111,7 +113,7 @@ is written. It sorts requests into three kinds:
 | any other plain htmx request | `HX-Request: true`, target not a named part | the page body, without `<html>` or nav |
 
 The first question, "does this request want a piece or a whole page?", is `WantsFragment`
-([app.go:305](../components/appshell/app.go#L305-L309)):
+([app.go:309](../components/appshell/app.go#L309-L313)):
 
 ```go
 return IsHX(r) &&
@@ -126,7 +128,7 @@ you press Back and htmx no longer has the old page in its own cache, so it asks 
 again.)
 
 The second question, "which piece?", is answered at
-[app.go:444-448](../components/appshell/app.go#L444-L448):
+[app.go:448-452](../components/appshell/app.go#L448-L452):
 
 ```go
 if target := strings.TrimPrefix(r.Header.Get("HX-Target"), "#"); target != "" {
@@ -155,8 +157,8 @@ to `/books`: the user would see an unstyled table with no page around it.
 
 The `Vary` response header is that hint. It tells caches "this response also depends on these
 request headers; store them separately". Every render sets it through `SetHeaders`
-([app.go:387](../components/appshell/app.go#L387-L396)), listing `HX-Request, HX-Boosted,
-HX-History-Restore-Request, HX-Target` ([app.go:314](../components/appshell/app.go#L314)):
+([app.go:391](../components/appshell/app.go#L391-L400)), listing `HX-Request, HX-Boosted,
+HX-History-Restore-Request, HX-Target` ([app.go:318](../components/appshell/app.go#L318)):
 exactly the four headers the two questions above read.
 
 ## 2. A list page round trip
@@ -350,7 +352,7 @@ and the next poll repairs things anyway. The practical rule: answer errors with 
 On success, `createBook` calls `flash.Success(w, r, "Saved", ...)` and then
 `appshell.Redirect(w, r, "/books")`.
 
-**The redirect** ([app.go:292](../components/appshell/app.go#L292-L299)):
+**The redirect** ([app.go:296](../components/appshell/app.go#L296-L303)):
 
 ```go
 if IsHX(r) {
@@ -378,7 +380,7 @@ because the redirect is a brand-new request and the server keeps no memory betwe
   message into the `wf_flash` cookie: JSON, base64-encoded, under 2 KB, expiring after 5
   minutes, unreadable from JavaScript (`HttpOnly`).
 - On the next render, `RenderPartsStatus` calls `App.Flash` *before writing anything*
-  ([app.go:456-459](../components/appshell/app.go#L456-L459)), because a cookie is a header and
+  ([app.go:460-463](../components/appshell/app.go#L460-L463)), because a cookie is a header and
   headers cannot change once the body starts. Your app set `App.Flash = flash.Take`.
 - `flash.Take` ([flash.go:90](../components/flash/flash.go#L90-L109)) reads the cookie,
   immediately tells the browser to delete it, and returns a banner.
@@ -391,7 +393,7 @@ banner is gone.
 If the next render is a fragment instead of a full page (a flash set by an htmx action that does
 not redirect), `RenderPartsStatus` still takes the flash and appends it as an out-of-band `<div
 id="wf-flash">`, so it appears on the page the user is looking at
-([app.go:437-453](../components/appshell/app.go#L437-L453)).
+([app.go:441-457](../components/appshell/app.go#L441-L457)).
 
 ## 4. When things go wrong
 
@@ -399,7 +401,7 @@ id="wf-flash">`, so it appears on the page the user is looking at
 
 A panic is Go's version of an uncaught exception. Without help, `net/http` logs it and drops the
 connection: the user sees a browser error page. `Middleware` catches it instead
-([app.go:99-113](../components/appshell/app.go#L99-L113)):
+([app.go:102-116](../components/appshell/app.go#L102-L116)):
 
 ```go
 log.Printf("appshell: panic serving %s %s (request %s): %v\n%s", r.Method, r.URL.Path, id, v, debug.Stack())
@@ -416,7 +418,7 @@ with a 500 page. If something has already been sent, stop: the status line and p
 are gone, and nothing can be taken back.
 
 "Has anything been sent?" is tracked by `recordingWriter`
-([app.go:207-220](../components/appshell/app.go#L207-L220)), a thin wrapper around the response
+([app.go:211-224](../components/appshell/app.go#L211-L224)), a thin wrapper around the response
 that flips a `wrote` flag on the first status or body write.
 
 ```mermaid
@@ -426,18 +428,18 @@ flowchart TD
     C -- no --> D[Drop redirect headers]
     D --> E{App.OnPanic set?}
     E -- yes --> F[OnPanic writes the 500, e.g. errorpage.PanicHandler in the shell]
-    E -- no --> G[Bare 500 document with the request id]
+    E -- no --> G[Bare 500 document with the request id and a home link]
     C -- yes --> H[Stop. The response ends as it is]
 ```
 
 Notes:
 
-- The default answer is a bare page with no nav, showing the request id
-  ([app.go:197](../components/appshell/app.go#L197-L203)). Set `App.OnPanic =
+- The default answer is a bare page with no nav, showing the request id and a plain
+  "Go home" link to `App.HomeHref` ([app.go:201](../components/appshell/app.go#L201-L207)). Set `App.OnPanic =
   errorpage.PanicHandler` for the styled 500 inside the shell
   ([components/errorpage/errorpage.go:89](../components/errorpage/errorpage.go#L89-L93)). If
   your `OnPanic` itself panics, the default answers instead
-  ([app.go:137-158](../components/appshell/app.go#L137-L158)).
+  ([app.go:140-161](../components/appshell/app.go#L140-L161)).
 - Most panics happen in your handler before rendering starts, so the 500 page is the usual
   outcome. A panic during rendering may come after output has gone out (a non-200 page always,
   since its status is written first).
