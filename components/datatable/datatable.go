@@ -191,7 +191,7 @@ func (p Props) colspan() string { return strconv.Itoa(p.columnCount()) }
 // empty resolves the zero-value Empty props to the default title.
 func (p Props) empty() emptystate.Props {
 	e := p.Empty
-	if e.Title == "" && e.Description == "" && e.Icon == "" {
+	if e.Title == "" && e.Description == "" && e.Icon == nil {
 		e.Title = "Nothing here yet"
 	}
 	return e

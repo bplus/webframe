@@ -8,6 +8,7 @@ import (
 
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/emptystate"
+	"github.com/bplus/webframe/components/icon"
 )
 
 func TestEmptyState_DefaultProps(t *testing.T) {
@@ -74,18 +75,18 @@ func TestEmptyState_WithIcon(t *testing.T) {
 	var buf bytes.Buffer
 	comp := emptystate.EmptyState(emptystate.Props{
 		Title: "Empty graph",
-		Icon:  "🔍",
+		Icon:  icon.Search(),
 	})
 	if err := comp.Render(context.Background(), &buf); err != nil {
 		t.Fatalf("render: %v", err)
 	}
 	html := buf.String()
 
-	if !strings.Contains(html, "🔍") {
-		t.Errorf("expected icon, got: %s", html)
+	if !strings.Contains(html, "<svg") {
+		t.Errorf("expected the icon's svg, got: %s", html)
 	}
-	if !strings.Contains(html, "text-4xl") {
-		t.Errorf("expected icon styling, got: %s", html)
+	if !strings.Contains(html, `[&_svg]:size-10`) || !strings.Contains(html, `aria-hidden="true"`) {
+		t.Errorf("expected the sized, aria-hidden icon wrapper, got: %s", html)
 	}
 }
 

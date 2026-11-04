@@ -425,7 +425,7 @@ func (p Props) bulkAction(a action.Action) action.Action {
 // them, so the link is a plain hx-get with hx-push-url.
 func (p Props) empty(base string) emptystate.Props {
 	e := p.Empty
-	if e.Title != "" || e.Description != "" || e.Icon != "" || e.Action != nil {
+	if e.Title != "" || e.Description != "" || e.Icon != nil || e.Action != nil {
 		return e
 	}
 	if !p.Spec.HasFilters() {
