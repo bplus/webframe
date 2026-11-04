@@ -96,7 +96,10 @@ func maxVal(bars []Bar) float64 {
 // With Horizontal and ShowLabels, the label gutter grows to fit the widest
 // label (up to 45% of the SVG, which may widen to 2x Width), and labels that
 // still don't fit are truncated with the full text in a hover <title>.
-// Vertical labels are never truncated.
+// Vertical labels are never truncated. When columns are too narrow for
+// their labels, a vertical chart leaves out all value labels (ShowValues)
+// and draws every k-th axis label (ShowLabels), so no two labels overlap;
+// a bar whose label or value is left out carries it in a hover <title>.
 templ BarChart(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -182,27 +185,26 @@ templ BarChart(props ...Props) {
 				}
 			} else {
 				{{ labelH := 20 }}
+				{{ slot := 0 }}
+				if len(bars) > 0 {
+					{{ slot = (w - 10) / len(bars) }}
+				}
+				{{ showValues := p.ShowValues && valuesFitColumns(bars, slot) }}
+				{{ axisShown := axisLabelsShown(bars, slot, w) }}
 				{{ top := 0 }}
-				if p.ShowValues {
+				if showValues {
 					{{ top = valueTopRoom }}
 				}
 				{{ plotH := max(0, h-labelH-10-top) }}
-				{{ barW := 0 }}
-				if len(bars) > 0 {
-					{{ barW = (w - 10) / len(bars) }}
-				}
-				{{ gap := 4 }}
 				for i, bar := range bars {
 					{{ color := defaultColor }}
 					if bar.Color != "" {
 						{{ color = utils.SanitizeColor(bar.Color) }}
 					}
 					{{ barHeight := max(0, int(math.Abs(bar.Value)*float64(plotH)/mv)) }}
-					{{ x := i*barW + gap/2 }}
-					{{ rectW := barW - gap }}
-					if rectW < 2 {
-						{{ rectW = 2 }}
-					}
+					{{ x, rectW := columnRect(i, slot) }}
+					{{ center := columnCenter(i, slot) }}
+					{{ hidden := (p.ShowValues && !showValues) || (p.ShowLabels && !axisShown[i]) }}
 					<rect
 						x={ fmt.Sprintf("%d", x) }
 						y={ fmt.Sprintf("%d", top+plotH-barHeight) }
@@ -210,19 +212,25 @@ templ BarChart(props ...Props) {
 						height={ fmt.Sprintf("%d", barHeight) }
 						fill={ color }
 						rx="2"
-					/>
-					if p.ShowLabels {
+					>
+						if hidden && p.ShowValues {
+							<title>{ bar.Label }: { valueLabel(bar.Value) }</title>
+						} else if hidden {
+							<title>{ bar.Label }</title>
+						}
+					</rect>
+					if p.ShowLabels && axisShown[i] {
 						<text
-							x={ fmt.Sprintf("%d", x+rectW/2) }
+							x={ fmt.Sprintf("%d", center) }
 							y={ fmt.Sprintf("%d", h-2) }
 							text-anchor="middle"
 							class="text-xs fill-muted-foreground"
 							style="font-size: 10px"
 						>{ bar.Label }</text>
 					}
-					if p.ShowValues {
+					if showValues {
 						<text
-							x={ fmt.Sprintf("%d", x+rectW/2) }
+							x={ fmt.Sprintf("%d", center) }
 							y={ fmt.Sprintf("%d", top+plotH-barHeight-4) }
 							text-anchor="middle"
 							class="text-xs fill-foreground"

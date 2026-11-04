@@ -16424,7 +16424,7 @@ func piechartSection() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "piechart", Title: "Pie chart", Description: "Parts of one whole as slices, a donut by default; colors come from a built-in palette when a slice sets none."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var669), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Section(layout.SectionProps{Level: 3, ID: "piechart", Title: "Pie chart", Description: "Parts of one whole as slices, a donut by default; a slice that sets no color takes one from the theme palette, so the chart follows light and dark."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var669), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
