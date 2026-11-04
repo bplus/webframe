@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"context"
 	"github.com/bplus/webframe/assets"
+	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/commandpalette"
 	"github.com/bplus/webframe/components/confirmdialog"
 )
@@ -96,7 +97,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(docLang(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 66, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 67, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -109,7 +110,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(docTitle(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 70, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 71, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -122,7 +123,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("/static/css/output.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 71, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 72, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -135,7 +136,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(htmxConfig)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 84, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 85, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -148,7 +149,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/htmx.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 85, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 86, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -161,7 +162,7 @@ func Document(p DocProps) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(assets.URL("/static/js/alpine.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 86, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/appshell/document.templ`, Line: 87, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -178,6 +179,10 @@ func Document(p DocProps) templ.Component {
 			}
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</head><body class=\"wf-theme antialiased\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = noscriptNotice().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,6 +209,55 @@ func Document(p DocProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</body></html>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// noscriptTitle and noscriptBody are the words of the notice a browser
+// with JavaScript turned off shows at the top of every page. The list
+// names the kinds of control that need JavaScript in any webframe app
+// (htmx buttons, the filter bar, tabs, dropdown menus, the command
+// palette, selectbox pickers, polling); a given app may use only some.
+const (
+	noscriptTitle = "JavaScript is turned off"
+	noscriptBody  = "Pages, links and most forms still work. Delete and other in-place buttons, filters, tabs, menus, drop-down pickers, search and live updates need JavaScript."
+)
+
+// noscriptNotice is a warning banner inside <noscript>, so a browser
+// running JavaScript ignores it and pays nothing for it.
+func noscriptNotice() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<noscript><div class=\"p-3 sm:p-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = banner.Banner(banner.Props{Variant: banner.VariantWarning, Title: noscriptTitle, Body: noscriptBody}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></noscript>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
