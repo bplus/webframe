@@ -351,6 +351,16 @@ full error page would be garbage and the next poll repairs things anyway, and on
 detail region unless its `ShowErrors` is set. The practical rule: answer errors with `errorpage` or
 `toast`, which send HTML, and never with `http.Error`.
 
+A refused swap must not leave the user wondering why nothing happened. A failed `logviewer` poll is
+dropped without a word, which is fine: the next poll a few seconds later repairs it. A `splitpane`
+list click is different: the user asked for something. So when its request fails, the detail region
+and the address bar stay as they were and `static/js/splitpane.js` shows a toast
+([splitpane.js:70-77](../static/js/splitpane.js#L70-L77)): "That item is no longer here. It may have
+been deleted." for a 404 or 410 answer, "Could not load that item. Try again." for any other error
+or for no answer at all. The pane renders both toasts, already worded, inside hidden `<template>`
+elements, so an app changes the words with the pane's `Gone` and `Failed` fields and writes no
+JavaScript.
+
 ### POST with good input: redirect, then the flash
 
 On success, `createBook` calls `flash.Success(w, r, "Saved", ...)` and then

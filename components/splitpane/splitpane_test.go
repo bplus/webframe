@@ -13,6 +13,7 @@ import (
 
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/toast"
 )
 
 func raw(s string) templ.Component {
@@ -119,6 +120,41 @@ func TestSplitPane_DetailSwallowsErrorsUnlessShowErrors(t *testing.T) {
 	}
 }
 
+// template returns the content of <template data-wf-splitpane-toast=which>.
+func template(t *testing.T, out, which string) string {
+	t.Helper()
+	open := `<template data-wf-splitpane-toast="` + which + `">`
+	i := strings.Index(out, open)
+	if i < 0 {
+		t.Fatalf("no %s toast template in:\n%s", which, out)
+	}
+	rest := out[i+len(open):]
+	return rest[:strings.Index(rest, "</template>")]
+}
+
+// The pane renders the two failed-click toasts as templates, outside the
+// detail region (a detail swap must not remove them), with the default
+// wording, in every mode: splitpane.js picks one by status.
+func TestSplitPane_FailedClickToasts(t *testing.T) {
+	for _, p := range []Props{listProps, detailProps(), func() Props { q := listProps; q.ShowErrors = true; return q }()} {
+		out := render(t, p)
+		wantAll(t, region(t, out, "mail"), "data-wf-splitpane")
+		gone, failed := template(t, out, "gone"), template(t, out, "failed")
+		wantAll(t, gone, "That item is no longer here", "It may have been deleted.", `role="status"`, "x-data")
+		wantAll(t, failed, "Could not load that item", "Try again.", `role="alert"`)
+		if strings.Index(out, "<template") < strings.Index(out, "</section>") {
+			t.Errorf("toast templates must follow the detail region:\n%s", out)
+		}
+	}
+	// An app's own wording replaces the default; the other keeps its own.
+	p := listProps
+	p.Gone = toast.Props{Kind: toast.KindInfo, Title: "That message was archived"}
+	out := render(t, p)
+	wantAll(t, template(t, out, "gone"), "That message was archived")
+	wantNone(t, template(t, out, "gone"), "no longer here")
+	wantAll(t, template(t, out, "failed"), "Could not load that item")
+}
+
 func TestSplitPane_BackLabelAndTitle(t *testing.T) {
 	p := detailProps()
 	p.BackLabel = "All mail"
@@ -127,7 +163,7 @@ func TestSplitPane_BackLabelAndTitle(t *testing.T) {
 	wantAll(t, out, "<span>All mail</span>", `aria-label="Message"`)
 	wantNone(t, out, "<span>Back</span>")
 	out = render(t, detailProps())
-	wantNone(t, out, "aria-label")
+	wantNone(t, region(t, out, "mail-detail"), "aria-label")
 }
 
 func TestSplitPane_Widths(t *testing.T) {

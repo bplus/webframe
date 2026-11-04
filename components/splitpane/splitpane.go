@@ -60,11 +60,26 @@
 //
 // # Errors
 //
-// When a list click's request fails (the item was deleted, the server
-// answers 404 or 500), the detail region keeps what it showed: it carries
-// data-wf-swallow-errors, so htmx-errors.js drops the error answer instead
-// of swapping it in. Set Props.ShowErrors to swap it in instead, so the
-// region shows the app's error page.
+// When a list click's request fails from md up (the item was deleted, the
+// server answers 404 or 500, the network is down), the detail region keeps
+// what it showed, the address bar keeps its URL, and a toast tells the
+// user what happened. The region carries data-wf-swallow-errors, so
+// htmx-errors.js drops the error answer instead of swapping it in; then
+// static/js/splitpane.js shows one of two toasts the pane renders as
+// hidden <template> elements:
+//
+//   - 404 Not Found or 410 Gone: Props.Gone, by default "That item is no
+//     longer here" / "It may have been deleted." (a warning).
+//   - any other error status, or no answer at all: Props.Failed, by
+//     default "Could not load that item" / "Try again." (an error).
+//
+// No app code is needed: the app's detail handler answers an unknown id
+// with errorpage.NotFound as usual. Set Gone or Failed to change the
+// wording. Set Props.ShowErrors to swap the error page into the region
+// instead; a toast then appears only when htmx-errors.js still refuses the
+// body (a plain-text 500), so no failure is silent. A phone's click is a
+// full page load and shows the error page either way.
+
 package splitpane
 
 import (
@@ -75,6 +90,7 @@ import (
 
 	"github.com/bplus/webframe/components/appshell"
 	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/toast"
 )
 
 // Width is the list column's width from md up. The zero value is WidthMd.
@@ -126,10 +142,45 @@ type Props struct {
 	// the detail region, so an item that has gone shows the app's 404 page
 	// there. By default the region carries data-wf-swallow-errors and
 	// htmx-errors.js drops the error: the region keeps what it showed and
-	// htmx still fires htmx:responseError. A phone's click is a full page
-	// load either way and shows the error page.
+	// the Gone or Failed toast tells the user. A phone's click is a full
+	// page load either way and shows the error page.
 	ShowErrors bool
+
+	// Gone is the toast shown when a list click is answered 404 Not Found
+	// or 410 Gone. With no Title and no Body it is DefaultGone.
+	Gone toast.Props
+	// Failed is the toast shown for any other error answer to a list
+	// click, or when the request got no answer. With no Title and no Body
+	// it is DefaultFailed.
+	Failed toast.Props
 }
+
+// DefaultGone is the toast for a list click answered 404 or 410: the item
+// was deleted (or moved) after the list was drawn.
+var DefaultGone = toast.Props{
+	Kind:  toast.KindWarning,
+	Title: "That item is no longer here",
+	Body:  "It may have been deleted.",
+}
+
+// DefaultFailed is the toast for any other failed list click.
+var DefaultFailed = toast.Props{
+	Kind:  toast.KindError,
+	Title: "Could not load that item",
+	Body:  "Try again.",
+}
+
+// orDefault returns t, or def when t has no Title and no Body.
+func orDefault(t, def toast.Props) toast.Props {
+	if t.Title == "" && t.Body == "" {
+		return def
+	}
+	return t
+}
+
+// gone and failed return the two toasts with their defaults applied.
+func (p Props) gone() toast.Props   { return orDefault(p.Gone, DefaultGone) }
+func (p Props) failed() toast.Props { return orDefault(p.Failed, DefaultFailed) }
 
 // id returns ID or the default root id.
 func (p Props) id() string {
