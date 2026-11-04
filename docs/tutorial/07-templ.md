@@ -42,7 +42,8 @@ go install github.com/a-h/templ/cmd/templ@v0.3.1001
 
 ## The code
 
-Add this file as `home.templ`, next to `main.go`:
+This step adds a file to the same `books` project. Save this as
+`home.templ`, next to `main.go`:
 
 <!-- file: examples/07-templ/home.templ -->
 ```templ
@@ -72,8 +73,10 @@ templ homePage(count int) {
 }
 ```
 
-Replace `main.go` from step 4 with this. The package comment changed, the
-`home` handler is new, and the `GET /{$}` route calls it:
+Then replace `main.go` with this. It starts from step 4's `main.go`, not
+step 6's, so it has no book pages, Edit or Delete. Compared with step 4, the
+package comment changed, the `home` handler is new, and the `GET /{$}` route
+calls it:
 
 <!-- file: examples/07-templ/main.go -->
 ```go

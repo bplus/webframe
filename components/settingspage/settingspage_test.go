@@ -124,7 +124,7 @@ func TestBody_ErrorsBannerAndFields(t *testing.T) {
 
 	p.Errors = map[string]string{"name": "Pick a name"}
 	out = render(t, Body(p))
-	mustContain(t, out, "Please fix the 1 error below.")
+	mustContain(t, out, "Please fix the error below.")
 	mustNotContain(t, out, "errors below")
 }
 
@@ -329,7 +329,7 @@ func TestRespond_TargetedForm422(t *testing.T) {
 		if !strings.HasPrefix(out, "<form") || !strings.HasSuffix(strings.TrimSpace(out), "</form>") {
 			t.Errorf("%s: body is not the form alone:\n%s", name, out)
 		}
-		mustContain(t, out, "Please fix the 1 error below.", "Display name: Pick a name", `aria-invalid="true"`, `role="switch" checked`)
+		mustContain(t, out, "Please fix the error below.", "Display name: Pick a name", `aria-invalid="true"`, `role="switch" checked`)
 		mustNotContain(t, out, "<h1", "<html", "wf-topbar", "wf-settings-bar", "<span>Save changes</span>", "AFTERCONTENT")
 		if v := rec.Header().Get("Vary"); !strings.Contains(v, "HX-Request") {
 			t.Errorf("%s: Vary %q lost with the early status", name, v)

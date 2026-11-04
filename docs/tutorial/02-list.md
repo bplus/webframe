@@ -8,7 +8,7 @@ view. Still no HTML, no CSS, no `.templ` files.
 
 ## The code
 
-Replace `main.go` from step 1 with this:
+Keep the same `books` directory and replace `main.go` from step 1 with this:
 
 <!-- file: examples/02-list/main.go -->
 ```go
@@ -140,22 +140,24 @@ same function reversed, so you never write it.
    the state and the total. `Sortable: true` makes a column header a sort
    link. `Noun` names the rows in the summary line ("1–4 of 9 books").
 
-**`listpage.Respond`** writes the answer. Clicking a column header or a page
-number does not load a new page: htmx asks the same URL for just the table
-and the page links, swaps them in and updates the address bar. `Respond`
-sees that request and sends only that part. A normal visit to the same URL
-gets the whole page.
-One handler serves both, and you do not write an `if` for it.
+**`listpage.Respond`** writes the answer. webframe includes htmx, a small
+script that fetches part of a page and swaps it in, which is how sorting
+changes only the table. Clicking a column header or a page number does not
+load a new page: htmx asks the same URL for just the table and the page
+links, swaps them in and updates the address bar. `Respond` sees that
+request and sends only that part. A normal visit to the same URL gets the
+whole page. One handler serves both, and you do not write an `if` for it.
 
 **`http.RedirectHandler`** in `routes` sends `/` to `/books` with a 303
 ("See Other") status. It comes from Go's standard library, not webframe.
 
 ## Try it
 
-- Click **Year** twice. The address bar shows `?sort=year&dir=desc`. Reload:
+- Click **Year** twice. The address bar shows `?dir=desc&sort=year`. Reload:
   the order stays.
 - Open http://localhost:8080/books?page=99. You get page 3, the last one.
 - Make the window narrow. The column headers stay, and a Sort menu appears
-  above the table for touch screens.
+  above the table for touch screens. At phone width (390 pixels) the page
+  numbers are hidden and only **Previous** and **Next** remain.
 
 Next: [Step 3: A form](03-form.md)

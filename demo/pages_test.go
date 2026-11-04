@@ -179,7 +179,7 @@ func TestPages_SettingsErrors(t *testing.T) {
 		t.Errorf("form swap does not start with <form:\n%s", body[:min(200, len(body))])
 	}
 	wantAll(t, body,
-		"Please fix the 1 error below.", "Display name is required", `aria-invalid="true"`,
+		"Please fix the error below.", "Display name is required", `aria-invalid="true"`,
 		// Every submitted value kept: the typed email, mentions now on, digest off.
 		`value="new@example.com"`, `role="switch" checked id="field-mentions"`, `role="switch" id="field-digest"`,
 	)
@@ -200,7 +200,7 @@ func TestPages_SettingsErrors(t *testing.T) {
 	if rec.Code != 422 {
 		t.Errorf("plain POST /settings with errors = %d, want 422", rec.Code)
 	}
-	wantAll(t, rec.Body.String(), "<!doctype", "Please fix the 1 error below.", "Danger zone", "wf-settings-bar")
+	wantAll(t, rec.Body.String(), "<!doctype", "Please fix the error below.", "Danger zone", "wf-settings-bar")
 	inOrder(t, rec.Body.String(), "</form>", "Danger zone", "wf-settings-bar")
 }
 

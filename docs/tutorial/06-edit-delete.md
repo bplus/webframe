@@ -8,9 +8,9 @@ dialog, then removes the book and goes back to the list.
 
 ## The code
 
-Replace `main.go` from step 5 with this. `showBook` has the two buttons and
-uses a new `notFound` helper, and `editForm`, `editBook`, `updateBook` and
-`deleteBook` are new:
+Keep the same `books` directory and replace `main.go` from step 5 with this.
+`showBook` has the two buttons and uses a new `notFound` helper, and
+`editForm`, `editBook`, `updateBook` and `deleteBook` are new:
 
 <!-- file: examples/06-edit-delete/main.go -->
 ```go

@@ -128,7 +128,7 @@ func TestBody_SingularError(t *testing.T) {
 	p := itemProps()
 	p.Errors = map[string]string{"name": "Name is required"}
 	out := render(t, Body(p))
-	mustContain(t, out, "Please fix the 1 error below.")
+	mustContain(t, out, "Please fix the error below.")
 	mustNotContain(t, out, "errors below")
 }
 
@@ -248,7 +248,7 @@ func TestRespond_TargetedBody(t *testing.T) {
 		if !strings.HasPrefix(out, "<form") {
 			t.Errorf("%s: body does not start with the form:\n%s", name, out)
 		}
-		mustContain(t, out, "Please fix the 1 error below.", `aria-invalid="true"`)
+		mustContain(t, out, "Please fix the error below.", `aria-invalid="true"`)
 		mustNotContain(t, out, "<h1", "<html", "wf-topbar")
 	}
 }

@@ -1,18 +1,22 @@
 # Step 1: Hello, page
 
-The smallest webframe app: one page inside the webframe shell. About 25 lines
-of Go, no HTML, no CSS, no `.templ` files.
+The smallest webframe app: one page inside the webframe shell. 37 lines of
+Go, no HTML, no CSS, no `.templ` files.
+
+The whole tutorial builds one project, a small app for a list of books, so
+the directory and the module are both called `books`. Every later step
+replaces `main.go` in this same directory.
 
 ![The hello page](img/01-hello.png)
 
 ## Prerequisites
 
 - Go 1.24 or newer
-- A new module that depends on webframe:
+- A new module, `books`, that depends on webframe:
 
 ```sh
-mkdir hello && cd hello
-go mod init example.com/hello
+mkdir books && cd books
+go mod init books
 go get github.com/bplus/webframe@latest
 ```
 
@@ -22,7 +26,7 @@ Save this as `main.go`:
 
 <!-- file: examples/01-hello/main.go -->
 ```go
-// Command hello is tutorial step 1: one page in the webframe shell.
+// Command books is tutorial step 1: one page in the webframe shell.
 package main
 
 import (
@@ -36,7 +40,7 @@ import (
 	"github.com/bplus/webframe/compose"
 )
 
-var app = &appshell.App{Name: "Hello"}
+var app = &appshell.App{Name: "Books"}
 
 func home(w http.ResponseWriter, r *http.Request) {
 	page := compose.Join(
@@ -74,7 +78,7 @@ components, a page header and a paragraph of text, and hands them to
 `app.Render`. `compose.Join` puts components one after another.
 
 **`app.Render`** writes the complete HTML document: the shell, the page title
-(`Home — Hello`), and your page inside it.
+(`Home — Books`), and your page inside it.
 
 **`routes`** wires everything to Go's standard router:
 
@@ -88,6 +92,9 @@ components, a page header and a paragraph of text, and hands them to
 ## Try it
 
 - Make the window narrow. The page works at phone width without any extra code.
-- Change the `Text`. A blank line in the string starts a new paragraph.
+- Change the `Text`. `\n\n` (two newlines) starts a new paragraph, as in
+  `Text: "First paragraph.\n\nSecond paragraph."`. Pressing Enter inside a
+  Go `"..."` string does not compile; a backquoted string (`` `...` ``) can
+  hold real line breaks, and a blank line in it also starts a new paragraph.
 
 Next: [Step 2: A list](02-list.md)

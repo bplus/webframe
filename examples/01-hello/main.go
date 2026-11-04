@@ -1,4 +1,4 @@
-// Command hello is tutorial step 1: one page in the webframe shell.
+// Command books is tutorial step 1: one page in the webframe shell.
 package main
 
 import (
@@ -12,7 +12,7 @@ import (
 	"github.com/bplus/webframe/compose"
 )
 
-var app = &appshell.App{Name: "Hello"}
+var app = &appshell.App{Name: "Books"}
 
 func home(w http.ResponseWriter, r *http.Request) {
 	page := compose.Join(

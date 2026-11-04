@@ -238,7 +238,7 @@ func TestItems_CreateErrors(t *testing.T) {
 	}
 	// A plain (non-htmx) POST with errors renders the whole document.
 	body = do(h, "POST", "/items", url.Values{"name": {"Blade of the Fallen Star"}, "type": {"weapon"}, "status": {"draft"}}, nil).Body.String()
-	wantAll(t, body, "<!doctype", "Please fix the 1 error below.", "already exists", `value="Blade of the Fallen Star"`)
+	wantAll(t, body, "<!doctype", "Please fix the error below.", "already exists", `value="Blade of the Fallen Star"`)
 	if total, _, _ := Items.Counts(); total != 14 {
 		t.Errorf("store changed on an invalid submit: %d items", total)
 	}
@@ -577,7 +577,7 @@ func TestItems_MultipartArtwork(t *testing.T) {
 	if rec.Code != 422 {
 		t.Fatalf("multipart POST with a text file = %d, want 422", rec.Code)
 	}
-	wantAll(t, rec.Body.String(), "Please fix the 1 error below.", "Artwork must be an image", `value="Scroll of Text"`, `data-tag="art"`)
+	wantAll(t, rec.Body.String(), "Please fix the error below.", "Artwork must be an image", `value="Scroll of Text"`, `data-tag="art"`)
 	if total, _, _ := Items.Counts(); total != 15 {
 		t.Errorf("store changed on a refused file: %d items", total)
 	}
