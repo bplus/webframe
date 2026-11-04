@@ -18,13 +18,14 @@ type Props struct {
 	Flush      bool // outer padding 0, overriding PageMargin
 }
 
-// SlotProps configures Slot. Both spans are clamped to [1, 12], even when
-// the Grid has more than 12 columns.
+// SlotProps configures Slot. ColSpan is clamped to [1, the Grid's column
+// count] and RowSpan to [1, 12]. A Slot rendered outside any Grid (an htmx
+// fragment, say) cannot know the column count and assumes 12.
 type SlotProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	ColSpan    int // columns to span, default 12 (full width)
+	ColSpan    int // columns to span, default the Grid's column count (full width)
 	RowSpan    int // rows to span, default 1
 }
 
@@ -37,7 +38,7 @@ templ Grid(props ...Props) {
 		{{ p = props[0] }}
 	}
 	if p.Cols == 0 {
-		{{ p.Cols = 12 }}
+		{{ p.Cols = defaultCols }}
 	}
 	{{ p.Cols = clamp(p.Cols, 1, 24) }}
 	if p.Gap == 0 {
@@ -62,7 +63,9 @@ templ Grid(props ...Props) {
 		style={ fmt.Sprintf("display:grid;grid-template-columns:repeat(%d,1fr);gap:%dpx;padding:%dpx", p.Cols, p.Gap, p.PageMargin) }
 		{ p.Attributes... }
 	>
-		{ children... }
+		@withCols(p.Cols) {
+			{ children... }
+		}
 	</div>
 }
 
@@ -74,10 +77,11 @@ templ Slot(props ...SlotProps) {
 	if len(props) > 0 {
 		{{ p = props[0] }}
 	}
+	{{ cols := gridCols(ctx) }}
 	if p.ColSpan == 0 {
-		{{ p.ColSpan = 12 }}
+		{{ p.ColSpan = cols }}
 	}
-	{{ p.ColSpan = clamp(p.ColSpan, 1, 12) }}
+	{{ p.ColSpan = clamp(p.ColSpan, 1, cols) }}
 	if p.RowSpan == 0 {
 		{{ p.RowSpan = 1 }}
 	}

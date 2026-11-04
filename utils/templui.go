@@ -24,11 +24,12 @@ import (
 // both conflicting classes and leave the outcome to CSS order.
 //
 // The result keeps the input order: each surviving class sits where its last
-// occurrence was. The upstream merge decides which classes survive, but it
-// writes them out by ranging over a Go map (and puts every non-Tailwind class
-// first), so its order changes from one process to the next. inputOrder puts
-// the survivors back in place, so the same props render the same HTML on
-// every run.
+// occurrence was. The upstream merge, tailwind-merge-go v0.2.1, decides which
+// classes survive but returns them in Go map order (with every non-Tailwind
+// class first), so the order changes from one process to the next. inputOrder
+// restores the input order, so the same props render the same HTML on every
+// run. Do not remove it while the module is on a version with that bug; a
+// test (TestTwMerge_KeepsInputOrder) fails if the order ever drifts again.
 func TwMerge(classes ...string) string {
 	return inputOrder(classes, twmerge.Merge(classes...))
 }

@@ -119,6 +119,10 @@ func TestBody_FileFieldAfterErrors(t *testing.T) {
 	p.Multipart = true
 	p.Sections[1].Fields = append(p.Sections[1].Fields, formfield.Field{Name: "art", Label: "Artwork", Type: formfield.TypeFile})
 	mustNotContain(t, render(t, Body(p)), "Choose the file again")
+	// An edit page's first load: the current file name in Values, no
+	// Errors. Nothing has failed, so no line.
+	p.Values = map[string]string{"art": "cover.png"}
+	mustNotContain(t, render(t, Body(p)), "Choose the file again")
 	p.Errors = map[string]string{"name": "Name is required"}
 	mustContain(t, render(t, Body(p)), `id="field-art-again"`, "Choose the file again")
 	p.Errors = map[string]string{"art": "Too big"}

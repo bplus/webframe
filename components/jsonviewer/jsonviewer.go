@@ -9,8 +9,9 @@
 // pair, so expanding and collapsing needs no JavaScript; Alpine is used only
 // by the optional copy-path buttons (through copybutton).
 //
-// On narrow screens long strings break anywhere and the indent stops
-// growing after six levels, so deep trees still fit; the frame scrolls
+// On narrow screens long string values break anywhere, keys wrap only at a
+// word that is longer than the whole row, and the indent stops growing after
+// six levels, so deep trees still fit; the frame scrolls
 // horizontally only when a single line cannot.
 package jsonviewer
 

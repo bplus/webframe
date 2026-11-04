@@ -463,12 +463,16 @@ func TestField_File(t *testing.T) {
 	if n := len(requiredAttr.FindAllString(in, -1)); n != 1 {
 		t.Errorf("got %d required, want 1: %s", n, in)
 	}
-	// A Value cannot refill the input; it asks for the file again.
+	// A Value cannot refill the input. Nor does it ask for the file
+	// again: an edit page's first load may put the current file name in
+	// Value, and nothing has failed yet.
 	withValue := render(t, FormField(Field{Name: "art", Label: "Artwork", Type: TypeFile, Value: "ignored.png"}))
 	if strings.Contains(tag(t, withValue, `<input type="file"[^>]*>`), "value=") || strings.Contains(withValue, "ignored.png") {
 		t.Errorf("a file input cannot carry a value: %s", withValue)
 	}
-	mustContain(t, withValue, "Choose the file again")
+	if strings.Contains(withValue, "Choose the file again") {
+		t.Errorf("Value alone should not ask for the file again: %s", withValue)
+	}
 	if strings.Contains(in, `aria-invalid="true"`) {
 		t.Errorf("unexpected aria-invalid without Error: %s", in)
 	}

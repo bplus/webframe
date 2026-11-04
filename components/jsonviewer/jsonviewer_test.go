@@ -229,3 +229,17 @@ func TestCopyPathHiddenUntilRowFocus(t *testing.T) {
 		t.Errorf("without CopyPath rows are not focusable:\n%s", plain)
 	}
 }
+
+// A key keeps its own width and wraps only when it is longer than the row,
+// so a short key such as "url" is never split mid-word at phone width
+// while the long value beside it still breaks.
+func TestKeyDoesNotBreakMidWord(t *testing.T) {
+	html := render(t, jsonviewer.Props{Value: map[string]any{"url": "https://example.com/a/very/long/path/that/must/break"}})
+	const key = `<span class="max-w-full shrink-0 break-words text-muted-foreground">&#34;url&#34;:</span>`
+	if !strings.Contains(html, key) {
+		t.Errorf("key span should be shrink-0 break-words, got:\n%s", html)
+	}
+	if !strings.Contains(html, `class="text-success break-all"`) {
+		t.Errorf("string value should still break anywhere, got:\n%s", html)
+	}
+}
