@@ -111,6 +111,16 @@ type Props struct {
 // from Props.Filters; children are not accepted. It is inert unless Script
 // and htmx are both on the page.
 //
+// One request per change: the search box's change event (it fires when the
+// box loses focus after an edit, and on Enter) sends nothing when the
+// debounced request has gone out already, and sends at once in the timer's
+// place when it has not. The bar is the source element of its requests and
+// the script gives it hx-sync="this:replace", so a request still in flight
+// is aborted when the next one goes out and only the answer to the newest
+// request is swapped. Attributes htmx inherits (hx-headers, hx-indicator,
+// ...) therefore apply from the bar's ancestors, and the request's
+// HX-Trigger header is the bar's id.
+//
 // The script is exposed as window.tui.filterbar with getParams(bar),
 // trigger(bar) and reset(bar), where bar is the root <div>; reset does what
 // the "Clear filters" button does.
@@ -164,7 +174,7 @@ func FilterBar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 121, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 131, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -182,7 +192,7 @@ func FilterBar(props ...Props) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxGet)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 124, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 134, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -195,7 +205,7 @@ func FilterBar(props ...Props) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.HxTarget)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 125, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 135, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -208,7 +218,7 @@ func FilterBar(props ...Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(hxSwap)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 126, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 136, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -226,7 +236,7 @@ func FilterBar(props ...Props) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(p.Drop, ","))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 128, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 138, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -343,7 +353,7 @@ func hiddenInput(barID, name, value string, oob bool) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(HiddenID(barID, name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 176, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 186, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -361,7 +371,7 @@ func hiddenInput(barID, name, value string, oob bool) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 178, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 188, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -374,7 +384,7 @@ func hiddenInput(barID, name, value string, oob bool) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 179, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 189, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -514,7 +524,7 @@ func filterSelect(f FilterConfig, id string, state bool) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 225, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 235, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -532,7 +542,7 @@ func filterSelect(f FilterConfig, id string, state bool) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(f.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 228, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 238, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -591,7 +601,7 @@ func selectControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 240, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 250, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -609,7 +619,7 @@ func selectControl(f FilterConfig, id string, state, oob bool) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(f.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 242, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 252, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -643,7 +653,7 @@ func selectControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(f.Placeholder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 253, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 263, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -662,7 +672,7 @@ func selectControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 257, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 267, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -689,7 +699,7 @@ func selectControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 262, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 272, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -761,7 +771,7 @@ func filterSearch(f FilterConfig, id string, state bool) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 273, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 283, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -779,7 +789,7 @@ func filterSearch(f FilterConfig, id string, state bool) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(f.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 276, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 286, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -836,7 +846,7 @@ func searchControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var31 string
 			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 287, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 297, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 			if templ_7745c5c3_Err != nil {
@@ -854,7 +864,7 @@ func searchControl(f FilterConfig, id string, state, oob bool) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(f.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 289, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 299, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -884,7 +894,7 @@ func searchControl(f FilterConfig, id string, state, oob bool) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(f.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 298, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 308, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -902,7 +912,7 @@ func searchControl(f FilterConfig, id string, state, oob bool) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(f.Placeholder)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 301, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 311, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -944,7 +954,7 @@ func filterToggle(f FilterConfig) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(f.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 308, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 318, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -962,7 +972,7 @@ func filterToggle(f FilterConfig) templ.Component {
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(f.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 313, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 323, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -975,7 +985,7 @@ func filterToggle(f FilterConfig) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 314, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 324, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -1003,7 +1013,7 @@ func filterToggle(f FilterConfig) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 323, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 333, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -1051,7 +1061,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 331, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 341, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
@@ -1064,7 +1074,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/filterbar.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 331, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/filterbar/filterbar.templ`, Line: 341, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {

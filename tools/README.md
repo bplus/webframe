@@ -141,6 +141,28 @@ make fetch-errors-check   # needs `make dev`
 node tools/fetch-errors-check.mjs --url http://localhost:3333 --shot tools/shots/fetch-errors
 ```
 
+## filterbar-check
+
+`filterbar-check.mjs` drives the filter bar of the demo's `/items` list at
+1280px and counts the htmx requests the page sends. It types in Search, waits
+for the answer and clicks elsewhere: the search box's `change` event must
+send no second request. It types, waits and clicks a toggle pill: exactly one
+more request must go out, with the search text and the pill. It types and
+presses Enter before the debounce time is over: one request must go out at
+once and none when the timer would have fired. Then it holds answers back
+(route interception): with the search request held, a pill click must go out
+at once, and after every answer has landed the results must be the rows a
+fresh load of the address bar's URL shows; the same with a held request
+sent after the first answer. No toast may show. htmx logs two console
+errors for a request it aborts (`htmx:afterRequest`, `htmx:sendAbort`); any
+other console error fails the run. Exit 1 on any failure, 2 for a usage
+error.
+
+```bash
+make filterbar-check   # needs `make dev`
+node tools/filterbar-check.mjs --url http://localhost:3333
+```
+
 ## htmx-errors-check
 
 `htmx-errors-check.mjs` runs `static/js/htmx-errors.js` in a bare Node

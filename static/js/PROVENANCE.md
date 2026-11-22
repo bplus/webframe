@@ -49,7 +49,7 @@ Written in this repository; covered by webframe's own license.
 
 | File | Origin | License | How verified |
 |---|---|---|---|
-| `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`. Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), not minifier output; only the outer `(()=>{(function(){"use strict";` wrapper copies the templUI file shape. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
+| `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`. Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), never minifier output; the name is historical. Until COMMIT75 it was one line inside an outer `(()=>{(function(){"use strict";` wrapper that copied the templUI file shape; since then it is formatted source with comments. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
 | `graphwidget.min.js` | webframe | MIT (webframe) | Added in `eaccae72` as the glue script for the vendored 3d-force-graph. |
 | `theme-toggle.js` | webframe | MIT (webframe) | Unminified. |
 | `autocomplete.js` | webframe | MIT (webframe) | Unminified; written with `components/autocomplete`. |
@@ -69,6 +69,19 @@ upgrade.
 
 ## Behavior notes for first-party scripts
 
+- `filterbar.min.js`: one request per change, and only the newest answer
+  lands. A `change` event from a debounced control (the search box: the
+  browser fires it when the box loses focus after an edit, and on Enter)
+  sends nothing when the bar's parameters equal those of the bar's last
+  request; with the debounce timer pending it sends at once and cancels the
+  timer. Every `triggerUpdate` cancels a pending timer. The bar is the source
+  element of `htmx.ajax` and the script sets `hx-sync="this:replace"` on it
+  (unless the bar has an `hx-sync` already), so htmx aborts the bar's request
+  in flight when the next goes out; htmx logs `htmx:afterRequest` and
+  `htmx:sendAbort` to the console for an aborted request. The promise
+  `htmx.ajax` returns is caught (htmx rejects it on abort). A bar with no
+  target still swaps into `<body>`. `make filterbar-check` covers this in a
+  browser.
 - `filterbar.min.js`: `resetAll` skips controls with `type="hidden"` or
   `data-tui-filterbar-state` (list state such as sort, dir and per survives
   "Clear filters"). `triggerUpdate` runs `applySets(bar)` (a selected
