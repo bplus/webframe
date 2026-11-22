@@ -47,9 +47,8 @@ check-ui:
 # Phone/desktop measurement with Playwright's Chromium. Not part of `check`:
 # needs `make dev` running on :3333. One-time: `npx --prefix tools playwright install chromium`.
 # The showcase deliberately 404s /static/img/missing-avatar.png (avatar fallback demo).
-# /longtext holds 300-character unbroken tokens (pageheader, banner; issues
-# 84 and 85) and a
-# banner Body of three lines; LONGTEXT_LINES is true when the three lines
+# /longtext holds 300-character unbroken tokens (pageheader, its status
+# badge, banner; issues 84 and 85) and a banner Body of three lines; LONGTEXT_LINES is true when the three lines
 # show as three.
 LONGTEXT_LINES = (() => { const p = document.querySelector("\#longtext-lines p.text-sm"); return p.getBoundingClientRect().height >= 2.5 * parseFloat(getComputedStyle(p).lineHeight); })()
 ui-check: tools/node_modules/.bin/tailwindcss

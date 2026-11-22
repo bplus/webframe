@@ -544,7 +544,7 @@ templ badgesSection() {
 		}
 		@panel.Panel(panel.Props{Level: 4, Title: "Status words", Subtitle: "badge.Status picks the color from the word and StatusLabel writes it out; a word it does not know, like weird, falls back to the outline so it still reads."}) {
 			@layout.Inline(layout.InlineProps{Wrap: true}) {
-				for _, s := range []string{"published", "draft", "failed", "running", "stale", "weird"} {
+				for _, s := range []string{"published", "draft", "failed", "running", "stale", "waiting", "shaping", "queued", "handed", "closed", "dead", "cancelled", "weird"} {
 					@badge.Badge(badge.Status(s)) {
 						{ badge.StatusLabel(s) }
 					}

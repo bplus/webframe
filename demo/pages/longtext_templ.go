@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strings"
 
+	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/banner"
 	"github.com/bplus/webframe/components/layout"
 	"github.com/bplus/webframe/components/pageheader"
@@ -21,7 +22,8 @@ import (
 var longToken = strings.Repeat("0123456789", 30)
 
 // LongText is the long text page body (GET /longtext): text props filled
-// (pageheader Title, Subtitle and Back; banner Title, Body and Details)
+// (pageheader Title, Subtitle, StatusText and Back; banner Title, Body and
+// Details)
 // with a 300-character unbroken token, and a banner whose Body has line
 // breaks. `make ui-check` loads this page at 390 and 1280 px; it fails when
 // a token makes the page scroll sideways or the three lines show as one.
@@ -59,9 +61,11 @@ func LongText() templ.Component {
 			}
 			ctx = templ.InitializeContext(ctx)
 			templ_7745c5c3_Err = pageheader.PageHeader(pageheader.Props{
-				Title:    "Title " + longToken,
-				Subtitle: "Subtitle " + longToken,
-				Back:     &pageheader.Link{Label: "Back " + longToken, Href: "/"},
+				Title:      "Title " + longToken,
+				Subtitle:   "Subtitle " + longToken,
+				Status:     badge.StatusPtr("running"),
+				StatusText: "Status " + longToken,
+				Back:       &pageheader.Link{Label: "Back " + longToken, Href: "/"},
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

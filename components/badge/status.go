@@ -14,42 +14,50 @@ var statusVariants = map[string]Variant{
 	"passed":    VariantSuccess,
 	"live":      VariantSuccess,
 	// Secondary
-	"draft":   VariantSecondary,
-	"pending": VariantSecondary,
-	"queued":  VariantSecondary,
-	"paused":  VariantSecondary,
-	"idle":    VariantSecondary,
-	"new":     VariantSecondary,
+	"draft":     VariantSecondary,
+	"pending":   VariantSecondary,
+	"paused":    VariantSecondary,
+	"idle":      VariantSecondary,
+	"new":       VariantSecondary,
+	"closed":    VariantSecondary,
+	"cancelled": VariantSecondary,
+	"canceled":  VariantSecondary,
 	// Destructive
 	"failed":   VariantDestructive,
 	"error":    VariantDestructive,
 	"blocked":  VariantDestructive,
 	"rejected": VariantDestructive,
 	"dead":     VariantDestructive,
+	"handed":   VariantDestructive,
 	// Info
 	"running":     VariantInfo,
 	"building":    VariantInfo,
 	"in-progress": VariantInfo,
 	"syncing":     VariantInfo,
 	"open":        VariantInfo,
+	"queued":      VariantInfo,
+	"shaping":     VariantInfo,
 	// Warning
 	"warning":  VariantWarning,
 	"stale":    VariantWarning,
 	"degraded": VariantWarning,
 	"retrying": VariantWarning,
 	"flaky":    VariantWarning,
+	"waiting":  VariantWarning,
 }
 
 // Status maps a status word to badge Props so apps never pick colors.
 // Matching is case-insensitive and ignores surrounding spaces. The badge
 // text is still the caller's children; use StatusLabel for a display form.
 //
-//	published, done, success, merged, active, ok, passed, live → Success
-//	draft, pending, queued, paused, idle, new                → Secondary
-//	failed, error, blocked, rejected, dead                    → Destructive
-//	running, building, in-progress, syncing, open             → Info
-//	warning, stale, degraded, retrying, flaky                 → Warning
-//	anything else                                             → Outline
+//	published, done, success, merged, active, ok, passed, live       → Success
+//	draft, pending, paused, idle, new, closed, cancelled, canceled   → Secondary
+//	failed, error, blocked, rejected, dead, handed                   → Destructive
+//	running, building, in-progress, syncing, open, queued, shaping   → Info
+//	warning, stale, degraded, retrying, flaky, waiting               → Warning
+//	anything else                                                    → Outline
+//
+// "handed" is a job that failed and was handed to a retry.
 func Status(kind string) Props {
 	key := strings.ToLower(strings.TrimSpace(kind))
 	if v, ok := statusVariants[key]; ok {
