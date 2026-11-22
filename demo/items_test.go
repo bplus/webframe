@@ -725,7 +725,7 @@ func TestItems_PackChoice(t *testing.T) {
 	h := itemsHandler(t)
 	body := do(h, "GET", "/items", nil, nil).Body.String()
 	wantAll(t, body,
-		`<div role="group" aria-label="Pack" data-tui-filterbar-choice`,
+		`<div id="items-filterbar-control-pack" role="group" aria-label="Pack" data-tui-filterbar-choice`,
 		`name="pack" value="" data-tui-filterbar-toggle data-tui-filterbar-choice-none data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
 		`>Starfall Pack <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">4</span>`,
 		`>Netherese Relics <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">4</span>`,
@@ -742,4 +742,13 @@ func TestItems_PackChoice(t *testing.T) {
 		`>Netherese Relics <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">2</span>`,
 	)
 	wantNone(t, mainContent(body), "Ashen Dagger", "Blade of the Fallen Star")
+	// A results-only answer carries the group again, out of band, with the
+	// counts of its own search, so the page's counts follow the search box.
+	body = do(h, "GET", "/items?q=of", nil, hx("items-results")).Body.String()
+	wantAll(t, body,
+		`<div id="items-filterbar-control-pack" role="group" aria-label="Pack" data-tui-filterbar-choice hx-swap-oob="true"`,
+		`>Starfall Pack <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">3</span>`,
+		`<select id="items-filterbar-control-type" name="type" data-tui-filterbar-control hx-swap-oob="true"`,
+		`<div id="items-filterbar-control-status" hx-swap-oob="true" class="flex gap-1">`)
+	wantNone(t, body, `type="search"`, `id="items-filterbar-control-q"`)
 }

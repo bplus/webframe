@@ -93,8 +93,20 @@ upgrade.
   the group, never the page, until the selected button is clear of the 32px
   edges, and `updateMore` sets `data-tui-filterbar-more` (`start`, `end`,
   `both`) while buttons are scrolled out, which `input.css` draws as a fade.
-  Both run on load, after `htmx:afterSettle`, on a window resize and from a
-  `ResizeObserver` on each group; `updateMore` also on the group's scroll.
+  The "none" button never counts as selected for scrolling. `showSelected`
+  runs for a group seen for the first time (page load, or after
+  `htmx:afterSettle`), from a `ResizeObserver` on each group and after a
+  click or reset; a group already seen only gets `updateMore` (also on its
+  own scroll and a window resize), so a swap elsewhere never moves it.
+- `filterbar.min.js`: out-of-band copies of a bar's controls
+  (`filterbar.ControlsOOB`, `HiddenOOB`). On `htmx:oobBeforeSwap` for an
+  element with an id inside a bar: a `<select>` that is
+  `document.activeElement` is not replaced (`detail.shouldSwap = false`),
+  because replacing it closes its open list (checked in Chromium 156 with
+  `select:open`: open before, closed after `outerHTML` was set, focus lost);
+  for a toggle or choice group the script records `scrollLeft` and the value
+  of the button that has the focus, and on `htmx:oobAfterSwap` (and
+  `htmx:afterSettle`) puts both back on the new element.
 - `filterbar.min.js`: `resetAll` skips controls with `type="hidden"` or
   `data-tui-filterbar-state` (list state such as sort, dir and per survives
   "Clear filters"). `triggerUpdate` runs `applySets(bar)` (a selected

@@ -121,13 +121,30 @@ func splitComma(vals []string) []string {
 // CSS selector, where "." would read as a class. It returns "" when barID is
 // "".
 func HiddenID(barID, name string) string {
+	return partID(barID, "-hidden-", name)
+}
+
+// ControlID is the id FilterBar gives the control named name (its
+// FilterConfig.ID) in the bar whose Props.ID is barID:
+// barID+"-control-"+name, with name made safe as HiddenID makes it. The
+// id is on the <select>, the search <input>, or the element that holds a
+// toggle's or a choice group's buttons, and it is what ControlsOOB replaces.
+// A control that carries list state (see Props.Hidden) has HiddenID
+// instead. It returns "" when barID is "".
+func ControlID(barID, name string) string {
+	return partID(barID, "-control-", name)
+}
+
+// partID is barID+infix+name with every character of name outside
+// [A-Za-z0-9_-] replaced by "-"; "" when barID is "".
+func partID(barID, infix, name string) string {
 	if barID == "" {
 		return ""
 	}
 	var b strings.Builder
-	b.Grow(len(barID) + 8 + len(name))
+	b.Grow(len(barID) + len(infix) + len(name))
 	b.WriteString(barID)
-	b.WriteString("-hidden-")
+	b.WriteString(infix)
 	for _, r := range name {
 		switch {
 		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':

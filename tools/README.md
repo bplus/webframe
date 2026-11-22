@@ -159,7 +159,14 @@ another button that one alone, and a click on the selected button or on
 "Clear filters" no value. On the showcase at 390px the group of 16 School
 buttons must stay on one line with no horizontal overflow of the page, mark
 its cut-off edge (`data-tui-filterbar-more`), and bring the selected button
-into view after a click and after a resize. htmx logs two console
+into view after a click and after a resize. The Pack counts must follow the
+search (each answer renders the group again out of band) and equal those of
+a fresh load, while the bar and the search box stay the same elements and
+the box keeps the focus, its text and its caret as a held answer lands;
+"Clear filters" must clear the group and bring the first counts back. A
+select that has the focus must not be replaced by an answer, one without the
+focus must be; a clicked choice button must have the focus again after its
+group was replaced; a scrolled group must keep its scroll position. htmx logs two console
 errors for a request it aborts (`htmx:afterRequest`, `htmx:sendAbort`); any
 other console error fails the run. Exit 1 on any failure, 2 for a usage
 error.

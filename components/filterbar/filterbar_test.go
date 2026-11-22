@@ -431,15 +431,118 @@ const v030NoID = `<div data-tui-filterbar data-tui-filterbar-hx-get="/items" dat
 
 // TestFilterBar_UnchangedFromV030: the zero value of every field added
 // after v0.3.0 (FilterOption.Count, TypeChoice) changes nothing: a bar of
-// that version's props renders byte for byte what it rendered then.
+// that version's props renders byte for byte what it rendered then. With an
+// ID the one difference is the ids: the root's, and since issue 74 one per
+// control (ControlID), with the label's for.
 func TestFilterBar_UnchangedFromV030(t *testing.T) {
 	p := richProps()
 	p.ID = ""
 	if got := render(t, p); got != v030NoID {
 		t.Errorf("FilterBar without an ID =\n%s\nwant the v0.3.0 render\n%s", got, v030NoID)
 	}
-	if got, want := render(t, richProps()), strings.Replace(v030NoID, `<div data-tui-filterbar `, `<div id="bar" data-tui-filterbar `, 1); got != want {
-		t.Errorf("FilterBar with an ID =\n%s\nwant the v0.3.0 render\n%s", got, want)
+	want := strings.NewReplacer(
+		`<div data-tui-filterbar `, `<div id="bar" data-tui-filterbar `,
+		`<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label><select name="type"`, `<label for="bar-control-type" class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label><select id="bar-control-type" name="type"`,
+		`<div class="flex gap-1">`, `<div id="bar-control-status" class="flex gap-1">`,
+		`<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Search</label><input type="search" name="q"`, `<label for="bar-control-q" class="text-xs font-medium text-muted-foreground whitespace-nowrap">Search</label><input type="search" id="bar-control-q" name="q"`,
+	).Replace(v030NoID)
+	if got := render(t, richProps()); got != want {
+		t.Errorf("FilterBar with an ID =\n%s\nwant the v0.3.0 render plus the ids\n%s", got, want)
+	}
+}
+
+// TestFilterBar_ControlIDs: with a bar ID every control has an id: a
+// select and a search box on the control itself (the label points at it),
+// a toggle and a choice group on the element that holds the buttons. A
+// state control keeps its HiddenID. Without a bar ID no control has an id.
+func TestFilterBar_ControlIDs(t *testing.T) {
+	p := richProps()
+	p.Filters = append(p.Filters, choiceProps().Filters[0],
+		filterbar.FilterConfig{ID: "items.sort", Label: "Sort", Type: filterbar.TypeSelect})
+	p.Hidden = map[string]string{"items.sort": ""}
+	html := render(t, p)
+	for _, want := range []string{
+		`<label for="bar-control-type" class=`, `<select id="bar-control-type" name="type" data-tui-filterbar-control class=`,
+		`<label for="bar-control-q" class=`, `<input type="search" id="bar-control-q" name="q" data-tui-filterbar-control data-tui-filterbar-debounce=`,
+		`<div id="bar-control-status" class="flex gap-1"><button type="button" name="status"`,
+		`<div id="bar-control-school" role="group" aria-label="School" data-tui-filterbar-choice class=`,
+		`<label for="bar-hidden-items-sort" class=`, `<select id="bar-hidden-items-sort" name="items.sort" data-tui-filterbar-control data-tui-filterbar-state class=`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in: %s", want, html)
+		}
+	}
+	if n := strings.Count(html, ` id="`); n != 6 {
+		t.Errorf("%d ids, want 6 (the bar and five controls): %s", n, html)
+	}
+	if strings.Contains(html, "hx-swap-oob") {
+		t.Errorf("FilterBar must not render oob controls: %s", html)
+	}
+	p.ID = ""
+	html = render(t, p)
+	if strings.Contains(html, ` id=`) || strings.Contains(html, ` for=`) {
+		t.Errorf("no id and no for without Props.ID: %s", html)
+	}
+	for _, c := range []struct{ bar, name, want string }{
+		{"bar", "type", "bar-control-type"},
+		{"list-filterbar", "items.status", "list-filterbar-control-items-status"},
+		{"", "type", ""},
+	} {
+		if got := filterbar.ControlID(c.bar, c.name); got != c.want {
+			t.Errorf("ControlID(%q, %q) = %q, want %q", c.bar, c.name, got, c.want)
+		}
+	}
+}
+
+// TestControlsOOB: each select, toggle and choice group renders bare (no
+// wrapper, no label) with its ControlID, hx-swap-oob="true" and the options
+// it was given; a search control renders nothing, and nothing renders
+// without a bar id.
+func TestControlsOOB(t *testing.T) {
+	renderOOB := func(id string, controls ...filterbar.FilterConfig) string {
+		var buf bytes.Buffer
+		if err := filterbar.ControlsOOB(id, controls...).Render(context.Background(), &buf); err != nil {
+			t.Fatalf("render: %v", err)
+		}
+		return buf.String()
+	}
+	typ := filterbar.FilterConfig{ID: "type", Label: "Type", Placeholder: "Any type", Type: filterbar.TypeSelect,
+		Options: []filterbar.FilterOption{{Label: "Weapon", Value: "weapon", Count: filterbar.Count(2)}, {Label: "Armor", Value: "armor", Selected: true, Count: filterbar.Count(0)}}}
+	status := filterbar.FilterConfig{ID: "items.status", Label: "Status", Type: filterbar.TypeToggle,
+		Options: []filterbar.FilterOption{{Label: "Draft", Value: "draft", Selected: true, Count: filterbar.Count(3)}}}
+	school := choiceProps().Filters[0]
+	school.Options[0].Count = filterbar.Count(7)
+	school.Options[0].Selected = true
+	q := filterbar.FilterConfig{ID: "q", Label: "Search", Type: filterbar.TypeSearch, Value: "blade"}
+
+	html := renderOOB("bar", typ, q, status, school)
+	want := `<select id="bar-control-type" name="type" data-tui-filterbar-control hx-swap-oob="true" class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">` +
+		`<option value="">Any type</option> <option value="weapon">Weapon (2)</option><option value="armor" selected>Armor (0)</option></select>` +
+		`<div id="bar-control-items-status" hx-swap-oob="true" class="flex gap-1">` +
+		`<button type="button" name="items.status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground">Draft <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">3</span></button></div>` +
+		`<div id="bar-control-school" role="group" aria-label="School" data-tui-filterbar-choice hx-swap-oob="true" class="flex gap-1 min-w-0 overflow-x-auto p-0.5">`
+	if !strings.HasPrefix(html, want) {
+		t.Errorf("ControlsOOB =\n%s\nwant it to start with\n%s", html, want)
+	}
+	if evo := button(t, html, "evocation"); !strings.Contains(evo, `aria-pressed="true"`) || !strings.Contains(evo, `>7</span>`) {
+		t.Errorf("the choice group must carry the new count and selection: %s", evo)
+	}
+	if n := strings.Count(html, `hx-swap-oob="true"`); n != 3 {
+		t.Errorf("%d oob elements, want 3 (no search box): %s", n, html)
+	}
+	for _, bad := range []string{`type="search"`, "blade", "<label", ">Status<", ">School<"} {
+		if strings.Contains(html, bad) {
+			t.Errorf("unexpected %q in: %s", bad, html)
+		}
+	}
+	if got := renderOOB("bar", q); got != "" {
+		t.Errorf("ControlsOOB of a search control = %q, want nothing", got)
+	}
+	if got := renderOOB("", typ, status, school); got != "" {
+		t.Errorf("ControlsOOB without a bar id = %q, want nothing", got)
+	}
+	if got := renderOOB("bar"); got != "" {
+		t.Errorf("ControlsOOB with no controls = %q, want nothing", got)
 	}
 }
 

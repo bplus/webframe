@@ -21,7 +21,16 @@
 //   line     on the showcase at 390, a group of 16 buttons stays on one
 //            line that scrolls inside the bar: the page has no horizontal
 //            overflow, the cut-off edge is marked, and the selected button
-//            is brought into view after a click and after a render.
+//            is brought into view after a click and after a render;
+//   counts   the counts in the Pack group follow the search: each answer
+//            renders the group again out of band, while the bar and the
+//            search box stay the same elements, and the box keeps the focus,
+//            its text and its caret while a held answer lands; "Clear
+//            filters" clears the group and the counts go back;
+//   focus    a <select> that has the focus is not replaced by an answer and
+//            one that has not is; a choice button that had the focus has it
+//            again after its group was replaced, and a scrolled group keeps
+//            its scroll position.
 //
 //   node tools/filterbar-check.mjs --url http://localhost:3333
 //
@@ -300,6 +309,116 @@ try {
     check((await overflow()) <= 0, `line: still no horizontal overflow (${await overflow()}px)`);
     check(errors.length === 0, `line: no console errors ${JSON.stringify(errors)}`);
     await page.close();
+  }
+
+  // --- counts: out-of-band controls, the search box untouched ---
+  {
+    const { page, sent, errors } = await open(browser, "/items");
+    const counts = () => page.locator("#items-filterbar [data-tui-filterbar-choice] [data-tui-filterbar-count]").allInnerTexts();
+    // freshCounts loads url in a new page: the counts the server renders
+    // for that state in the page itself.
+    const freshCounts = async (url) => {
+      const fresh = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+      await fresh.goto(url);
+      const c = await fresh.locator("#items-filterbar [data-tui-filterbar-choice] [data-tui-filterbar-count]").allInnerTexts();
+      await fresh.close();
+      return c.join(",");
+    };
+    const first = (await counts()).join(",");
+    check(first === "4,4,6", `counts: the Pack counts of the whole list (${first})`);
+    // Mark the elements that must survive every answer.
+    await page.evaluate((sel) => {
+      document.querySelector("#items-filterbar").wfMark = true;
+      document.querySelector(sel).wfMark = true;
+      document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark = true;
+    }, SEARCH);
+    await hold(page, () => true, 700);
+    await page.locator(SEARCH).pressSequentially("of", { delay: 20 });
+    await page.waitForTimeout(500); // the request is out, its answer is held
+    check(sent.length === 1 && (await counts()).join(",") === first, `counts: the answer is still held ${describe(sent)}`);
+    await page.waitForTimeout(1200); // landed
+    const now = (await counts()).join(",");
+    check(now !== first && now === (await freshCounts(page.url())), `counts: the counts are those of the search (${now}; a fresh load shows ${await freshCounts(page.url())})`);
+    const state = await page.evaluate((sel) => {
+      const box = document.querySelector(sel);
+      return {
+        bar: document.querySelector("#items-filterbar").wfMark === true,
+        box: box.wfMark === true,
+        group: document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark === true,
+        focused: document.activeElement === box,
+        value: box.value,
+        caret: box.selectionStart,
+      };
+    }, SEARCH);
+    check(state.bar && state.box, `counts: the bar and the search box are the same elements ${JSON.stringify(state)}`);
+    check(!state.group, "counts: the Pack group is a new element");
+    check(state.focused && state.value === "of" && state.caret === 2, `counts: the search box kept the focus, its text and its caret ${JSON.stringify(state)}`);
+    // The user goes on typing into the same box.
+    await page.keyboard.type(" the", { delay: 20 });
+    await page.waitForTimeout(SETTLE + 700);
+    const more = (await counts()).join(",");
+    check(sent[sent.length - 1].searchParams.get("q") === "of the" && more !== now && more === (await freshCounts(page.url())), `counts: typing goes on in the same box (${sent[sent.length - 1].search}, counts ${more})`);
+
+    await page.unroute("**/items?*");
+    await page.locator('#items-filterbar [data-tui-filterbar-choice] button[value="starfall"]').click();
+    await page.waitForTimeout(SETTLE);
+    await page.locator("#items-filterbar [data-tui-filterbar-reset]").click();
+    await page.waitForTimeout(SETTLE);
+    const pressed = await page.locator('#items-filterbar [data-tui-filterbar-choice] button[aria-pressed="true"]').evaluateAll((bs) => bs.map((b) => b.value).join(","));
+    check(pressed === "" && (await counts()).join(",") === first && !sent[sent.length - 1].searchParams.has("pack"), `counts: "Clear filters" clears the group and the counts go back (pressed "${pressed}", counts ${(await counts()).join(",")})`);
+    const real = errors.filter((e) => !/^htmx:(afterRequest|sendAbort)$/.test(e));
+    check(real.length === 0, `counts: no console errors but htmx's abort lines ${JSON.stringify(real)}`);
+    await page.close();
+  }
+
+  // --- focus: what an out-of-band replacement must not take away ---
+  {
+    const { page, errors } = await open(browser, "/items");
+    const TYPE = '#items-filterbar select[name="type"]';
+    const marked = () => page.evaluate((sel) => document.querySelector(sel).wfMark === true, TYPE);
+    await page.evaluate((sel) => {
+      document.querySelector(sel).wfMark = true;
+    }, TYPE);
+    await page.locator(TYPE).focus();
+    await page.locator(TYPE).selectOption("weapon");
+    await page.waitForTimeout(SETTLE);
+    const focused = await page.evaluate((sel) => document.activeElement === document.querySelector(sel), TYPE);
+    check(focused && (await marked()), `focus: a select that has the focus is not replaced (focused ${focused}, same element ${await marked()})`);
+    // The focus moves to the search box; the next answer replaces the select.
+    await typeAndWait(page, "of");
+    check(!(await marked()) && (await page.locator(TYPE).inputValue()) === "weapon", `focus: a select without the focus is replaced and keeps its value (${await page.locator(TYPE).inputValue()})`);
+
+    const NETH = '#items-filterbar [data-tui-filterbar-choice] button[value="netherese"]';
+    await page.locator(NETH).click();
+    await page.waitForTimeout(SETTLE);
+    const btn = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
+      return { focused: document.activeElement === b, pressed: b.getAttribute("aria-pressed") };
+    }, NETH);
+    check(btn.focused && btn.pressed === "true", `focus: the clicked choice button has the focus again after its group was replaced ${JSON.stringify(btn)}`);
+    check(errors.length === 0, `focus: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+
+    // A scrolled group with nothing selected keeps its place.
+    const show = await open(browser, "/", { width: 390, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const GROUP = "#filter-demo [data-tui-filterbar-choice]";
+    await show.page.locator(GROUP).scrollIntoViewIfNeeded();
+    await show.page.evaluate((sel) => {
+      document.querySelector(sel).scrollLeft = 300;
+    }, GROUP);
+    const answered = show.page.waitForResponse((r) => new URL(r.url()).searchParams.get("fq") === "fire");
+    await show.page.locator('#filter-demo input[type="search"]').pressSequentially("fire", { delay: 20 });
+    await answered;
+    await show.page.waitForTimeout(SETTLE);
+    const g = await show.page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      const count = (v) => el.querySelector(`button[value="${v}"] [data-tui-filterbar-count]`).textContent;
+      return { scrollLeft: el.scrollLeft, evocation: count("evocation"), runes: count("runes"), blood: count("blood"), more: el.getAttribute("data-tui-filterbar-more") };
+    }, GROUP);
+    check(g.evocation === "3" && g.runes === "1" && g.blood === "0", `focus: the showcase's School counts follow the search ${JSON.stringify(g)}`);
+    check(g.scrollLeft === 300 && g.more === "both", `focus: the replaced group keeps its scroll position and its edge marks ${JSON.stringify(g)}`);
+    check(show.errors.length === 0, `focus: no console errors on the showcase ${JSON.stringify(show.errors)}`);
+    await show.page.close();
   }
 } finally {
   await browser.close();

@@ -159,7 +159,7 @@ func TestFilterDemo(t *testing.T) {
 	h := Handler()
 	body := do(h, "GET", "/", nil, nil).Body.String()
 	wantAll(t, body, `id="filter-demo"`, `data-tui-filterbar-hx-get="/api/filter-demo"`, `id="filter-demo-results"`,
-		`<div role="group" aria-label="School" data-tui-filterbar-choice`, "46</strong> of 46 spells")
+		`<div id="filter-demo-control-school" role="group" aria-label="School" data-tui-filterbar-choice`, "46</strong> of 46 spells")
 	if n := strings.Count(body, `name="school"`); n != 17 {
 		t.Errorf("%d School buttons, want 17 (All and 16 schools)", n)
 	}
@@ -168,6 +168,11 @@ func TestFilterDemo(t *testing.T) {
 		t.Fatalf("GET /api/filter-demo = %d", rec.Code)
 	}
 	body = rec.Body.String()
-	wantAll(t, body, "3</strong> of 46 spells", "Fire Bolt", "Fireball", "Wall of Fire")
-	wantNone(t, body, "Fire Shape", "Rune of Fire", "<html")
+	wantAll(t, body, "3</strong> of 46 spells", "Fire Bolt", "Fireball", "Wall of Fire",
+		// The School group again, out of band, with the counts of the search
+		// and the chosen school selected; the search box is not sent.
+		`<div id="filter-demo-control-school" role="group" aria-label="School" data-tui-filterbar-choice hx-swap-oob="true"`,
+		`name="school" value="evocation" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
+		`>Runes <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">1</span>`)
+	wantNone(t, body, "Fire Shape", "<html", `type="search"`)
 }

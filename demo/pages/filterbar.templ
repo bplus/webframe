@@ -10,11 +10,11 @@ import (
 
 // filterbarSection is the showcase's Filter bar section. The showcase is a
 // static page, so the first render shows the unfiltered list; the bar loads
-// FilterDemoResults from GET /api/filter-demo (data in filterdemo.go).
+// FilterDemoResponse from GET /api/filter-demo (data in filterdemo.go).
 templ filterbarSection() {
 	{{ filters, found, total := FilterDemo(nil) }}
 	@layout.Section(layout.SectionProps{Level: 3, ID: "filterbar", Title: "Filter bar", Description: "The row of controls above a list. listpage builds one from its Filters (see /items); this one is called directly."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "One choice of sixteen, with counts", Subtitle: "TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "One choice of sixteen, with counts", Subtitle: "TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades. Type in Search and each count follows: the answer renders the group again out of band (ControlsOOB), and the search box keeps the focus."}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
 				@filterbar.FilterBar(filterbar.Props{
 					ID:        FilterDemoID,
@@ -29,6 +29,14 @@ templ filterbarSection() {
 			}
 		}
 	}
+}
+
+// FilterDemoResponse is what the bar's request is answered with: the
+// results region's content, then the bar's controls out of band
+// (filterbar.ControlsOOB renders the School group and skips the search box).
+templ FilterDemoResponse(filters []filterbar.FilterConfig, found []FilterDemoSpell, total int) {
+	@FilterDemoResults(found, total)
+	@filterbar.ControlsOOB(FilterDemoID, filters...)
 }
 
 // FilterDemoResults is the content of the demo's results region: a count

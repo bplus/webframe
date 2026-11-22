@@ -38,10 +38,12 @@
 // The URL is the list state. Every results-only response (Respond for a
 // request targeting the results region, RespondResults for a mutation)
 // carries, after the results, out-of-band copies of the bar's hidden
-// inputs (and of the Sort select in the hidden sort input's place) and of
-// the intro line (hx-swap-oob, matched by id), so a sort chosen from a
-// table header is what the next filter change sends and the intro's
-// counts follow a delete. The bar's URL rewrite drops its own parameters
+// inputs (and of the Sort select in the hidden sort input's place), of
+// the Filters controls and of the intro line (hx-swap-oob, matched by
+// id), so a sort chosen from a table header is what the next filter
+// change sends, a filter option's label and Count are those of the
+// response (a count can follow the search; the search box itself is
+// never rendered again), and the intro's counts follow a delete. The bar's URL rewrite drops its own parameters
 // and page (filterbar.Props.Drop) before writing the current values, so a
 // cleared filter leaves the address bar too. The empty state's "Clear
 // filters" drives the bar's own reset (window.tui.filterbar.reset) so the
@@ -537,4 +539,28 @@ func (p Props) validateActions() error {
 		groups = append(groups, row.Actions)
 	}
 	return action.ValidateAll(groups...)
+}
+
+// filterControls are the Filters controls as the bar renders them
+// (selected from Spec, named through Spec.Param), for the out-of-band copies
+// a results-only response carries (filterbar.ControlsOOB). The search box
+// and the Sort select are not among them, and neither is a filter that
+// carries list state (one named like the bar's sort, dir or per input):
+// filterbar.HiddenOOB renders that one.
+func (p Props) filterControls() []filterbar.FilterConfig {
+	if len(p.Filters) == 0 {
+		return nil
+	}
+	all := p.filterConfigs()
+	if p.Search != "" {
+		all = all[1:]
+	}
+	hidden := p.hiddenInputs()
+	out := make([]filterbar.FilterConfig, 0, len(p.Filters))
+	for _, f := range all[:len(p.Filters)] {
+		if _, state := hidden[f.ID]; !state {
+			out = append(out, f)
+		}
+	}
+	return out
 }

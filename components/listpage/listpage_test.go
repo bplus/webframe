@@ -421,11 +421,19 @@ func TestRespond_TargetedResults(t *testing.T) {
 		`<option value="name" selected data-tui-filterbar-set-dir="asc">NAMECOL ↑</option>`,
 		`</select>`,
 		`<p id="list-intro" class="text-sm text-muted-foreground" hx-swap-oob="true">INTROLINE</p>`)
-	// No filter bar, header, shell or title in the response itself; the
-	// select comes bare, without its label wrapper, and only once.
-	wantNone(t, body, "<h1", "PAGETITLE", "<html", "wf-topbar", "data-tui-filterbar-hx-get", "data-tui-filterbar-reset", `<label`, "Default order")
-	if n := strings.Count(body, "<select"); n != 1 {
-		t.Errorf("select appears %d times, want 1", n)
+	// Then the Filters controls, out of band and bare, with the selection
+	// the response served; never the search box.
+	wantOrder(t, body, `id="list-filterbar-hidden-sort"`,
+		`<select id="list-filterbar-control-type" name="type" data-tui-filterbar-control hx-swap-oob="true"`,
+		`<option value="">Any type</option>`,
+		`<div id="list-filterbar-control-status" hx-swap-oob="true" class="flex gap-1">`,
+		`value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false"`)
+	// No filter bar, header, shell or title in the response itself; each
+	// control comes bare, without its label wrapper, and only once.
+	wantNone(t, body, "<h1", "PAGETITLE", "<html", "wf-topbar", "data-tui-filterbar-hx-get", "data-tui-filterbar-reset", `<label`, "Default order",
+		`type="search"`, "TYPEFILTER", "STATUSFILTER")
+	if n := strings.Count(body, "<select"); n != 2 {
+		t.Errorf("select appears %d times, want 2 (Sort and the Type filter)", n)
 	}
 	if n := strings.Count(body, `name="sort"`); n != 1 {
 		t.Errorf("name=sort appears %d times, want 1", n)
@@ -717,7 +725,7 @@ func TestPage_ChoiceFilterFromSpec(t *testing.T) {
 		Options: []filterbar.FilterOption{{Label: "Published", Value: "published"}, {Label: "Draft", Value: "draft", Count: filterbar.Count(2)}}}}
 	out := renderPage(t, p)
 	wantAll(t, out,
-		`<div role="group" aria-label="STATUSFILTER" data-tui-filterbar-choice`,
+		`<div id="list-filterbar-control-status" role="group" aria-label="STATUSFILTER" data-tui-filterbar-choice`,
 		`name="status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
 		`name="status" value="published" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
 		`name="status" value="" data-tui-filterbar-toggle data-tui-filterbar-choice-none data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
