@@ -1,0 +1,59 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/bplus/webframe/components/button"
+	"github.com/bplus/webframe/components/dialog"
+	"github.com/bplus/webframe/components/layout"
+)
+
+// The demos of this file show a long list inside a container: the list
+// scrolls and the lines around it stay in view. Each is called from its
+// component's section of the showcase.
+
+// containerRows is how many rows each long-list demo shows.
+const containerRows = 100
+
+// longList is a list long enough to need scrolling in every container.
+templ longList() {
+	<ul>
+		for i := range containerRows {
+			<li>{ fmt.Sprintf("Row %d of %d", i+1, containerRows) }</li>
+		}
+	</ul>
+}
+
+// longListDialog is a dialog of the 800px tier whose Body scrolls: the
+// header, the count line and the footer are pinned.
+templ longListDialog() {
+	@dialog.Dialog(dialog.Props{ID: "long-list-dialog"}) {
+		@dialog.Trigger() {
+			@button.Button(button.Props{ID: "long-list-dialog-open", Variant: button.VariantOutline}) {
+				Long list dialog
+			}
+		}
+		@dialog.Content(dialog.ContentProps{Width: dialog.WidthXl}) {
+			@dialog.Header() {
+				@dialog.Title() {
+					Pick a row
+				}
+				@dialog.Description() {
+					The dialog is 800px wide and never taller than the screen.
+				}
+			}
+			@layout.Inline(layout.InlineProps{ID: "long-list-dialog-count"}) {
+				<span>{ fmt.Sprintf("Showing %d of %d. This line and the footer stay in view.", containerRows, containerRows) }</span>
+			}
+			@dialog.Body(dialog.BodyProps{ID: "long-list-dialog-body", Label: "Rows"}) {
+				@longList()
+			}
+			@dialog.Footer(dialog.FooterProps{ID: "long-list-dialog-footer"}) {
+				@dialog.Close() {
+					@button.Button() {
+						Done
+					}
+				}
+			}
+		}
+	}
+}

@@ -608,6 +608,9 @@
   .max-h-\[600px\] {
     max-height: 600px;
   }
+  .max-h-\[calc\(100dvh-2rem\)\] {
+    max-height: calc(100dvh - 2rem);
+  }
   .max-h-\[var\(--wf-palette-vh\,60dvh\)\] {
     max-height: var(--wf-palette-vh,60dvh);
   }
@@ -2352,6 +2355,15 @@
     }
     .sm\:max-h-\[80vh\] {
       max-height: 80vh;
+    }
+    .sm\:max-w-\[calc\(100\%-2rem\)\] {
+      max-width: calc(100% - 2rem);
+    }
+    .sm\:max-w-\[min\(640px\,calc\(100\%-2rem\)\)\] {
+      max-width: min(640px, calc(100% - 2rem));
+    }
+    .sm\:max-w-\[min\(800px\,calc\(100\%-2rem\)\)\] {
+      max-width: min(800px, calc(100% - 2rem));
     }
     .sm\:max-w-lg {
       max-width: var(--container-lg);

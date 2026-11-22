@@ -905,7 +905,7 @@ templ autocompleteSection() {
 // Dialog
 // ═══════════════════════════════════════
 templ dialogSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer. The long list dialog is of the 800px width tier and its body scrolls between a pinned count line and the footer."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dialog.Dialog() {
 				@dialog.Trigger() {
@@ -977,6 +977,7 @@ templ dialogSection() {
 					}
 				}
 			}
+			@longListDialog()
 		}
 	}
 }

@@ -177,7 +177,7 @@ Things that open on top of the page.
 
 | Package | What it is and when to use it | See it | Without JavaScript |
 |---|---|---|---|
-| [`dialog`](https://pkg.go.dev/github.com/bplus/webframe/components/dialog) | A centered modal window opened by a trigger, with header, content and footer parts. For a yes/no question, use `action.Confirm` instead. | `/#dialog` | Needs JavaScript: the trigger does not open the dialog. |
+| [`dialog`](https://pkg.go.dev/github.com/bplus/webframe/components/dialog) | A centered modal window opened by a trigger, with header, content, body and footer parts, never taller than the screen. `ContentProps.Width` picks a width tier (512px, or 640px and 800px as `slideover`); a `Body` scrolls a long list while the parts before and after it are pinned (they stay in view). For a yes/no question, use `action.Confirm` instead. | `/#dialog` | Needs JavaScript: the trigger does not open the dialog. |
 | [`slideover`](https://pkg.go.dev/github.com/bplus/webframe/components/slideover) | A panel that slides in from a screen edge (left, right, or bottom as a sheet), for settings or details where a centered dialog would be wrong. | `/#bottomsheet` | Needs JavaScript: the trigger does not open the panel. |
 | [`dropdown`](https://pkg.go.dev/github.com/bplus/webframe/components/dropdown) | A menu that opens on click, with items, groups, separators and sub-menus. | `/#dropdown` | Needs JavaScript: the menu does not open, so its items cannot be reached. |
 | [`popover`](https://pkg.go.dev/github.com/bplus/webframe/components/popover) | Floating content anchored to a trigger, opened on click or hover; the base that dropdown, selectbox and hovercard are built on. | `/#popover` | Needs JavaScript: the content never opens. |
