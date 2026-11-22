@@ -24,7 +24,7 @@ import (
 	"github.com/bplus/webframe/components/datatable"
 	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/pageheader"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 var app = &appshell.App{Name: "Books"}
@@ -49,7 +49,7 @@ var books = []Book{
 }
 
 // bookQuery is what the list reads from the URL: ?sort=year&dir=desc&page=2.
-var bookQuery = listquery.Options{
+var bookQuery = liststate.Options{
 	DefaultSort:     "title",
 	DefaultPageSize: 4,
 	AllowedSorts:    []string{"title", "author", "year"},
@@ -63,8 +63,8 @@ var sorters = map[string]func(a, b Book) bool{
 }
 
 func listBooks(w http.ResponseWriter, r *http.Request) {
-	spec := listquery.Parse(r, bookQuery)
-	page := listquery.Apply(books, spec, sorters, nil)
+	spec := liststate.Parse(r, bookQuery)
+	page := liststate.Apply(books, spec, sorters, nil)
 
 	var rows []datatable.Row
 	for _, book := range page.Items {
@@ -115,7 +115,7 @@ to `/books`.
 here the "database" is a slice in memory, so the example stays short. `Year`
 is a string because the list only shows it and sorts it.
 
-**`bookQuery`** tells `listquery` which URL parameters the list accepts:
+**`bookQuery`** tells `liststate` which URL parameters the list accepts:
 
 - `DefaultSort: "title"` is the order when the URL names none.
 - `DefaultPageSize: 4` is small on purpose, so nine books make three pages.
@@ -128,9 +128,9 @@ same function reversed, so you never write it.
 
 **`listBooks`** is the list handler. It does four things in order:
 
-1. `listquery.Parse(r, bookQuery)` reads `sort`, `dir` and `page` from the
+1. `liststate.Parse(r, bookQuery)` reads `sort`, `dir` and `page` from the
    URL into a `Spec`, the list's current state.
-2. `listquery.Apply(books, spec, sorters, nil)` sorts the slice and cuts out
+2. `liststate.Apply(books, spec, sorters, nil)` sorts the slice and cuts out
    the current page. The `nil` is the filter function; this list has no
    filters yet. `page.Items` holds the books to show, `page.Total` counts
    them all, and `page.Spec` is the state that was really served (a page

@@ -30,7 +30,7 @@ import (
 	"github.com/bplus/webframe/components/rating"
 	"github.com/bplus/webframe/components/toast"
 	"github.com/bplus/webframe/demo/pages"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // The Items app is the demo's acceptance scenario for the page layer: a
@@ -52,9 +52,9 @@ const (
 // itemsQuery is the list's query contract: newest first by default, 25 per
 // page, sortable by name/type/status/updated, filterable by type, status
 // and pack.
-var itemsQuery = listquery.Options{
+var itemsQuery = liststate.Options{
 	DefaultSort:     "updated",
-	DefaultDir:      listquery.Desc,
+	DefaultDir:      liststate.Desc,
 	DefaultPageSize: 25,
 	AllowedSorts:    []string{"name", "type", "status", "updated"},
 	FilterKeys:      []string{"type", "status", "pack"},
@@ -124,7 +124,7 @@ func RegisterItemRoutes(mux *http.ServeMux) {
 // or page request from inside the results region receives only the
 // results (listpage.Respond reads HX-Target).
 func HandleItemsList(w http.ResponseWriter, r *http.Request) {
-	spec := listquery.Parse(r, itemsQuery)
+	spec := liststate.Parse(r, itemsQuery)
 	if err := listpage.Respond(w, r, "Items", itemsListProps(spec)); err != nil {
 		renderFailed(err, "demo: render items")
 	}
@@ -135,9 +135,9 @@ func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 // counts, the Status pills (no counts), the search box,
 // the toolbar ("Build mod", "+ Create item", bulk "Publish selected") and
 // the five columns with their row actions.
-func itemsListProps(spec listquery.Spec) listpage.Props {
+func itemsListProps(spec liststate.Spec) listpage.Props {
 	all := Items.All()
-	page := listquery.Apply(all, spec, itemSorters, itemMatch)
+	page := liststate.Apply(all, spec, itemSorters, itemMatch)
 	total, published, drafts := Items.Counts()
 	now := time.Now()
 
@@ -213,7 +213,7 @@ func filterOptions(opts []formfield.Option) []filterbar.FilterOption {
 // itemCounts counts, per value of one filter, the items that choosing that
 // value would show: those that match spec's search and its other filters
 // (the filter named key itself is left out), grouped by valueOf.
-func itemCounts(items []Item, spec listquery.Spec, key string, valueOf func(Item) string) map[string]int {
+func itemCounts(items []Item, spec liststate.Spec, key string, valueOf func(Item) string) map[string]int {
 	others := spec
 	others.Filters = make(map[string][]string, len(spec.Filters))
 	for k, v := range spec.Filters {
@@ -231,7 +231,7 @@ func itemCounts(items []Item, spec listquery.Spec, key string, valueOf func(Item
 }
 
 // itemPackOptions are the Pack choices, each with its count (itemCounts).
-func itemPackOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+func itemPackOptions(items []Item, spec liststate.Spec) []filterbar.FilterOption {
 	counts := itemCounts(items, spec, "pack", itemPack)
 	out := make([]filterbar.FilterOption, len(itemPacks))
 	for i, p := range itemPacks {
@@ -242,7 +242,7 @@ func itemPackOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption
 
 // itemTypeFilterOptions are the Type select's choices, each with its count
 // (itemCounts): "Weapon (5)".
-func itemTypeFilterOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+func itemTypeFilterOptions(items []Item, spec liststate.Spec) []filterbar.FilterOption {
 	counts := itemCounts(items, spec, "type", func(it Item) string { return it.Type })
 	out := filterOptions(itemTypeOptions)
 	for i := range out {
@@ -260,12 +260,12 @@ func plural(n int, noun string) string {
 }
 
 // respondResults answers a mutation issued from inside the list: the list
-// state comes from the page the user is looking at (listquery.ParseCurrent
+// state comes from the page the user is looking at (liststate.ParseCurrent
 // reads the HX-Current-URL header), and listpage.RespondResults writes the
 // results region, the filter bar's hidden state and the intro line out of
 // band, and HX-Replace-Url so the address bar follows a clamped page.
 func respondResults(w http.ResponseWriter, r *http.Request) {
-	spec := listquery.ParseCurrent(r, itemsQuery)
+	spec := liststate.ParseCurrent(r, itemsQuery)
 	if err := listpage.RespondResults(w, r, itemsListProps(spec)); err != nil {
 		renderFailed(err, "demo: render items results")
 	}

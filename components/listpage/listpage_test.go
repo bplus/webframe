@@ -17,7 +17,7 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/pageheader"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 func renderPage(t *testing.T, p Props) string {
@@ -69,20 +69,20 @@ func wantOrder(t *testing.T, out string, parts ...string) {
 	}
 }
 
-var itemOptions = listquery.Options{
+var itemOptions = liststate.Options{
 	DefaultSort:  "updated",
-	DefaultDir:   listquery.Desc,
+	DefaultDir:   liststate.Desc,
 	AllowedSorts: []string{"name", "type", "status", "updated"},
 	FilterKeys:   []string{"type", "status"},
 }
 
-func itemSpec(t *testing.T, query string) listquery.Spec {
+func itemSpec(t *testing.T, query string) liststate.Spec {
 	t.Helper()
 	v, err := url.ParseQuery(query)
 	if err != nil {
 		t.Fatalf("query %q: %v", query, err)
 	}
-	return listquery.ParseValues(v, itemOptions)
+	return liststate.ParseValues(v, itemOptions)
 }
 
 func itemFilters() []filterbar.FilterConfig {
@@ -234,7 +234,7 @@ func TestPage_PrefixedSpecNamesControls(t *testing.T) {
 	o := itemOptions
 	o.Prefix = "items"
 	v, _ := url.ParseQuery("items.sort=name&items.status=draft&items.q=hi")
-	p.Spec = listquery.ParseValues(v, o)
+	p.Spec = liststate.ParseValues(v, o)
 	out := renderPage(t, p)
 	wantAll(t, out,
 		`<select id="list-filterbar-hidden-items-sort" name="items.sort"`,
@@ -503,7 +503,7 @@ func TestRespondResults(t *testing.T) {
 	req.Header.Set("HX-Request", "true")
 	req.Header.Set("HX-Target", "list-results")
 	req.Header.Set("HX-Current-URL", "http://localhost:3333/items?sort=name&dir=asc&page=2&status=draft")
-	spec := listquery.ParseCurrent(req, itemOptions)
+	spec := liststate.ParseCurrent(req, itemOptions)
 	p := itemProps(t, "")
 	p.Spec = spec
 	p.Base = ""

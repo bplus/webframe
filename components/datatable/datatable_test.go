@@ -11,7 +11,7 @@ import (
 	"github.com/bplus/webframe/components/action"
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/emptystate"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 func render(t *testing.T, p Props) string {
@@ -77,7 +77,7 @@ func TestDataTable_HeaderAndCells(t *testing.T) {
 }
 
 func TestDataTable_SortLinks(t *testing.T) {
-	spec := listquery.Spec{Sort: "name", Dir: listquery.Asc, Page: 3}
+	spec := liststate.Spec{Sort: "name", Dir: liststate.Asc, Page: 3}
 	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Spec: spec, Base: "/items"})
 	wantAll(t, out,
 		`aria-sort="ascending"`,
@@ -97,7 +97,7 @@ func TestDataTable_SortLinks(t *testing.T) {
 	}
 
 	// Descending flips the icon and the aria value.
-	spec.Dir = listquery.Desc
+	spec.Dir = liststate.Desc
 	out = render(t, Props{Columns: itemColumns, Rows: itemRows(), Spec: spec, Base: "/items"})
 	wantAll(t, out, `aria-sort="descending"`, `data-sort-icon="descending"`, `href="/items?dir=asc&amp;sort=name"`)
 	wantNone(t, out, `data-sort-icon="ascending"`)
@@ -231,7 +231,7 @@ func TestDataTable_Badge(t *testing.T) {
 }
 
 func TestDataTable_HxTarget(t *testing.T) {
-	spec := listquery.Spec{Sort: "name", Dir: listquery.Asc}
+	spec := liststate.Spec{Sort: "name", Dir: liststate.Asc}
 	out := render(t, Props{Columns: itemColumns, Rows: itemRows(), Spec: spec, Base: "/items", HxTarget: "#list-results"})
 	wantAll(t, out,
 		`href="/items?dir=desc&amp;sort=name"`,

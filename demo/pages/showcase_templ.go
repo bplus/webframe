@@ -72,7 +72,7 @@ import (
 	"github.com/bplus/webframe/components/textarea"
 	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toolbar"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // Showcase renders the full component reference page — every webframe
@@ -12062,8 +12062,8 @@ func toolbarSection() templ.Component {
 
 // paginationSpec is page 5 of a 10-per-page list, parsed the way a handler
 // would parse a request's query string.
-func paginationSpec() listquery.Spec {
-	return listquery.ParseValues(url.Values{"page": {"5"}}, listquery.Options{DefaultPageSize: 10})
+func paginationSpec() liststate.Spec {
+	return liststate.ParseValues(url.Values{"page": {"5"}}, liststate.Options{DefaultPageSize: 10})
 }
 
 func paginationSection() templ.Component {
@@ -12117,7 +12117,7 @@ func paginationSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Page 5 of 20", Subtitle: "Built from listquery.ParseValues with page=5 and 200 items at 10 a page; the numbered list hides below 768px and Previous and Next stay."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var503), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "Page 5 of 20", Subtitle: "Built from liststate.ParseValues with page=5 and 200 items at 10 a page; the numbered list hides below 768px and Previous and Next stay."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var503), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -12163,8 +12163,8 @@ func paginationSection() templ.Component {
 
 // tableSpec is the data table's sort state: sorted by name, ascending, as a
 // handler would parse it from ?sort=name.
-func tableSpec() listquery.Spec {
-	return listquery.ParseValues(url.Values{"sort": {"name"}}, listquery.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
+func tableSpec() liststate.Spec {
+	return liststate.ParseValues(url.Values{"sort": {"name"}}, liststate.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
 }
 
 // tableColumns are the four columns of the data table examples.

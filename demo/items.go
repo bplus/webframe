@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // Item is one record of the demo's "Items" app: a mod item with a type, a
@@ -260,7 +260,7 @@ func itemPack(it Item) string {
 	return ""
 }
 
-// itemSorters are the less functions listquery.Apply sorts items with, one
+// itemSorters are the less functions liststate.Apply sorts items with, one
 // per key in itemsQuery.AllowedSorts. Name, type and status compare
 // case-insensitively; updated compares the time.
 var itemSorters = map[string]func(a, b Item) bool{
@@ -270,12 +270,12 @@ var itemSorters = map[string]func(a, b Item) bool{
 	"updated": func(a, b Item) bool { return a.Updated.Before(b.Updated) },
 }
 
-// itemMatch is the filter for listquery.Apply: the item's Type must be
+// itemMatch is the filter for liststate.Apply: the item's Type must be
 // one of the "type" filter values (when any), its Status one of the
 // "status" values (when any), its pack (itemPack) one of the "pack" values
 // (when any), and its Name must contain the search text case-insensitively
 // (when any).
-func itemMatch(it Item, s listquery.Spec) bool {
+func itemMatch(it Item, s liststate.Spec) bool {
 	if vals := s.Filters["type"]; len(vals) > 0 && !containsFold(vals, it.Type) {
 		return false
 	}

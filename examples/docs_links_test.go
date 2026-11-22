@@ -30,7 +30,7 @@ var lineLink = regexp.MustCompile(`\]\(([^():#\s]+)#L(\d+)(?:-L(\d+))?\)`)
 var namedLink = regexp.MustCompile("(?:`([^`]+)`(?:\\s*\\(|\\s+(?:is|are) at\\s+|\\s+in\\s+|,\\s*)\\[|\\[`([^`]+)`)$")
 
 // goName is a Go identifier, optionally qualified (App.Middleware,
-// listquery.WithSort) and optionally followed by call arguments (Mount(mux)).
+// liststate.WithSort) and optionally followed by call arguments (Mount(mux)).
 var goName = regexp.MustCompile(`^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?:\(.*\))?$`)
 
 // linkedName returns the last component of the Go identifier that names the

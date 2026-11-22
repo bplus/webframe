@@ -1,7 +1,7 @@
 // Package listpage is the declarative list page: a page header, an optional
 // intro line, a filter bar, a toolbar with bulk actions and a create button,
 // then a dense datatable and pagination inside one swap region. The caller
-// declares data (columns, rows, a listquery.Spec, the total) and listpage
+// declares data (columns, rows, a liststate.Spec, the total) and listpage
 // wires sort, filter, search and page changes so each one re-renders only
 // the results region, via htmx, and pushes the URL.
 //
@@ -15,7 +15,7 @@
 // Query wiring: every control name goes through Spec.Param, so a prefixed
 // Spec ("items" → items.status, items.q, items.sort) stays namespaced.
 // Filter controls are named by their FilterConfig.ID (the bare filter key
-// listed in listquery.Options.FilterKeys); the search box is "q". The
+// listed in liststate.Options.FilterKeys); the search box is "q". The
 // filter bar (id ID+"-filterbar") carries sort, dir and per (never page)
 // so a filter change keeps the sort and lands on page 1; "Clear filters"
 // keeps them too. dir and per are hidden inputs; sort is a hidden input
@@ -92,7 +92,7 @@ import (
 	"github.com/bplus/webframe/components/filterbar"
 	"github.com/bplus/webframe/components/pageheader"
 	"github.com/bplus/webframe/components/pagination"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -137,7 +137,7 @@ type Props struct {
 	Intro string
 
 	// Filters are the filter bar's controls. FilterConfig.ID is the bare
-	// filter key (as in listquery.Options.FilterKeys); the rendered control
+	// filter key (as in liststate.Options.FilterKeys); the rendered control
 	// name is Spec.Param(ID). Selected/Value state is applied from Spec
 	// automatically; any Selected set by the caller is overridden.
 	Filters []filterbar.FilterConfig
@@ -154,10 +154,10 @@ type Props struct {
 
 	Columns []datatable.Column
 	Rows    []datatable.Row
-	// Spec is the current list state (from listquery.Parse, or the Spec
-	// listquery.Apply returned, whose Page is clamped). It drives sort
+	// Spec is the current list state (from liststate.Parse, or the Spec
+	// liststate.Apply returned, whose Page is clamped). It drives sort
 	// links, page links, filter selection and the hidden sort inputs.
-	Spec listquery.Spec
+	Spec liststate.Spec
 	// Total is the row count across every page, for the pagination
 	// summary.
 	Total int
@@ -256,28 +256,28 @@ func truncateLabel(label string) (string, bool) {
 // sortConfig builds the Sort select described in the package doc. The
 // option for the Spec's default order submits value "" and dir "", so it
 // adds no sort to the URL. A zero Spec.Dir counts as ascending, as
-// listquery sorts it.
+// liststate sorts it.
 func (p Props) sortConfig() filterbar.FilterConfig {
 	cols := p.sortableColumns()
 	setDir := setPrefix + p.Spec.Param(dirKey)
 	dir := p.Spec.Dir
-	if dir != listquery.Desc {
-		dir = listquery.Asc
+	if dir != liststate.Desc {
+		dir = liststate.Asc
 	}
 	opts := make([]filterbar.FilterOption, 0, 2*len(cols)+1)
 	matched := false
 	for _, c := range cols {
-		for _, d := range []listquery.Dir{listquery.Asc, listquery.Desc} {
+		for _, d := range []liststate.Dir{liststate.Asc, liststate.Desc} {
 			sel := p.Spec.Sort == c.Key && dir == d
 			matched = matched || sel
 			// The default order submits nothing (value "" and dir ""), so
 			// a filter change made in the default order leaves the URL as
-			// clean as listquery's own links do.
+			// clean as liststate's own links do.
 			value, setTo := c.Key, string(d)
 			if p.Spec.IsDefaultOrder(c.Key, d) {
 				value, setTo = "", ""
 			}
-			arrow := utils.IfElse(d == listquery.Asc, "↑", "↓")
+			arrow := utils.IfElse(d == liststate.Asc, "↑", "↓")
 			label, cut := truncateLabel(c.Label)
 			attrs := templ.Attributes{setDir: setTo}
 			if cut {
@@ -437,7 +437,7 @@ func (p Props) empty(base string) emptystate.Props {
 	if !p.Spec.HasFilters() {
 		return e
 	}
-	clear := p.Spec.URL(base, listquery.WithoutFilters())
+	clear := p.Spec.URL(base, liststate.WithoutFilters())
 	e.Title = "No matches"
 	e.Description = "Nothing matches your filters."
 	// A plain-link action with Attributes renders <a href …>; an Hx* field
@@ -516,7 +516,7 @@ func Respond(w http.ResponseWriter, r *http.Request, title string, p Props) erro
 // a row DELETE or a bulk POST. It sets HX-Replace-Url to p.Spec.URL(base) so
 // the address bar follows the state actually served (for example a page
 // clamped after its last row was deleted). base defaults to the path of
-// listquery.CurrentURL(r), the page the user is viewing rather than the
+// liststate.CurrentURL(r), the page the user is viewing rather than the
 // mutation's path. It renders through appshell.RenderFragment, so it sets
 // Vary and, inside App.Middleware, sends a pending flash out of band. No
 // appshell.App is needed. Render errors are returned.
@@ -525,7 +525,7 @@ func RespondResults(w http.ResponseWriter, r *http.Request, p Props) error {
 		return err
 	}
 	if p.Base == "" {
-		p.Base = listquery.CurrentURL(r).Path
+		p.Base = liststate.CurrentURL(r).Path
 	}
 	w.Header().Set("HX-Replace-Url", p.Spec.URL(p.Base))
 	return appshell.RenderFragment(w, r, resultsPart(p))

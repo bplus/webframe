@@ -59,7 +59,7 @@ func choiceSelected(opts []FilterOption) int {
 // entry. values is the whole truth: options not named in it come back
 // deselected. Toggle values
 // may be repeated entries or comma-joined in one entry (as filterbar.min.js
-// submits them). values is typically a url.Values or listquery.Spec.Filters.
+// submits them). values is typically a url.Values or liststate.Spec.Filters.
 // The input is never modified.
 func WithSelected(filters []FilterConfig, values map[string][]string) []FilterConfig {
 	if filters == nil {

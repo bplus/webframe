@@ -1,4 +1,4 @@
-// Package listquery is the query-string contract shared by sortable table
+// Package liststate is the query-string contract shared by sortable table
 // headers, filter bars and pagination: one list's state (sort, direction,
 // page, page size, search, filters) read from a URL and written back into
 // derived URLs. It renders nothing and knows no database; handlers translate
@@ -14,7 +14,7 @@
 // unknown directions to DefaultDir, non-numeric or non-positive pages to 1,
 // pages above MaxPage to MaxPage, and page sizes clamp to 1..MaxPageSize.
 // Nothing panics on any input.
-package listquery
+package liststate
 
 import (
 	"math"

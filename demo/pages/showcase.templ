@@ -65,7 +65,7 @@ import (
 	"github.com/bplus/webframe/components/textarea"
 	"github.com/bplus/webframe/components/timeline"
 	"github.com/bplus/webframe/components/toolbar"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // Showcase renders the full component reference page — every webframe
@@ -1777,13 +1777,13 @@ templ toolbarSection() {
 
 // paginationSpec is page 5 of a 10-per-page list, parsed the way a handler
 // would parse a request's query string.
-func paginationSpec() listquery.Spec {
-	return listquery.ParseValues(url.Values{"page": {"5"}}, listquery.Options{DefaultPageSize: 10})
+func paginationSpec() liststate.Spec {
+	return liststate.ParseValues(url.Values{"page": {"5"}}, liststate.Options{DefaultPageSize: 10})
 }
 
 templ paginationSection() {
 	@layout.Section(layout.SectionProps{Level: 3, ID: "pagination", Title: "Pagination", Description: "The range summary and the page controls for one list; the summary line is always there, even for zero rows or one page, so the row never jumps."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "Page 5 of 20", Subtitle: "Built from listquery.ParseValues with page=5 and 200 items at 10 a page; the numbered list hides below 768px and Previous and Next stay."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "Page 5 of 20", Subtitle: "Built from liststate.ParseValues with page=5 and 200 items at 10 a page; the numbered list hides below 768px and Previous and Next stay."}) {
 			@pagination.Pagination(pagination.Props{Total: 200, Spec: paginationSpec(), Base: "#", Noun: "items"})
 		}
 		@panel.Panel(panel.Props{Level: 4, Title: "No rows", Subtitle: "Zero items still renders the summary, with Previous and Next present but disabled, so the row keeps its height and width."}) {
@@ -1798,8 +1798,8 @@ templ paginationSection() {
 
 // tableSpec is the data table's sort state: sorted by name, ascending, as a
 // handler would parse it from ?sort=name.
-func tableSpec() listquery.Spec {
-	return listquery.ParseValues(url.Values{"sort": {"name"}}, listquery.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
+func tableSpec() liststate.Spec {
+	return liststate.ParseValues(url.Values{"sort": {"name"}}, liststate.Options{DefaultSort: "name", AllowedSorts: []string{"name", "type", "updated"}})
 }
 
 // tableColumns are the four columns of the data table examples.

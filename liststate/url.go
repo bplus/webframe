@@ -1,4 +1,4 @@
-package listquery
+package liststate
 
 import (
 	"net/url"

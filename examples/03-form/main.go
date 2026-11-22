@@ -16,7 +16,7 @@ import (
 	"github.com/bplus/webframe/components/formpage"
 	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/pageheader"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 var app = &appshell.App{Name: "Books", Flash: flash.Take}
@@ -43,7 +43,7 @@ var books = []Book{
 }
 
 // bookQuery is what the list reads from the URL: ?sort=year&dir=desc&page=2.
-var bookQuery = listquery.Options{
+var bookQuery = liststate.Options{
 	DefaultSort:     "title",
 	DefaultPageSize: 4,
 	AllowedSorts:    []string{"title", "author", "year"},
@@ -57,9 +57,9 @@ var sorters = map[string]func(a, b Book) bool{
 }
 
 func listBooks(w http.ResponseWriter, r *http.Request) {
-	spec := listquery.Parse(r, bookQuery)
+	spec := liststate.Parse(r, bookQuery)
 	booksLock.Lock()
-	page := listquery.Apply(books, spec, sorters, nil)
+	page := liststate.Apply(books, spec, sorters, nil)
 	booksLock.Unlock()
 
 	var rows []datatable.Row

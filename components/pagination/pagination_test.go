@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/bplus/webframe/components/appshell"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 func render(t *testing.T, p Props) string {
@@ -26,7 +26,7 @@ func render(t *testing.T, p Props) string {
 
 // spec builds a Spec the way a handler does, through ParseValues, so the
 // default page size is recorded and per is omitted from URLs at 25.
-func spec(page, size int) listquery.Spec {
+func spec(page, size int) liststate.Spec {
 	v := url.Values{}
 	if page > 1 {
 		v.Set("page", strconv.Itoa(page))
@@ -34,7 +34,7 @@ func spec(page, size int) listquery.Spec {
 	if size > 0 && size != 25 {
 		v.Set("per", strconv.Itoa(size))
 	}
-	return listquery.ParseValues(v, listquery.Options{})
+	return liststate.ParseValues(v, liststate.Options{})
 }
 
 func TestWindow(t *testing.T) {
@@ -93,7 +93,7 @@ func TestPagination_Links(t *testing.T) {
 	if !strings.Contains(out, `href="/items?page=3"`) {
 		t.Errorf("missing next link: %s", out)
 	}
-	// Page 1 is the zero value: listquery.Spec.URL omits it, so Previous
+	// Page 1 is the zero value: liststate.Spec.URL omits it, so Previous
 	// points at the bare base rather than ?page=1.
 	if !strings.Contains(out, `href="/items"`) {
 		t.Errorf("missing previous link to base: %s", out)
@@ -164,7 +164,7 @@ func TestPagination_Hx(t *testing.T) {
 }
 
 func TestPagination_Zero(t *testing.T) {
-	out := render(t, Props{Total: 0, Spec: listquery.Spec{}, Base: "/items", Noun: "items"})
+	out := render(t, Props{Total: 0, Spec: liststate.Spec{}, Base: "/items", Noun: "items"})
 	if !strings.Contains(out, ">0 items<") {
 		t.Errorf("missing zero summary: %s", out)
 	}
@@ -179,7 +179,7 @@ func TestPagination_Zero(t *testing.T) {
 
 func TestPagination_ZeroSpecUsesDefaultSize(t *testing.T) {
 	// A zero-value Spec behaves as page 1 with the default size (25).
-	out := render(t, Props{Total: 60, Spec: listquery.Spec{}, Base: "/items"})
+	out := render(t, Props{Total: 60, Spec: liststate.Spec{}, Base: "/items"})
 	if !strings.Contains(out, "1–25 of 60") {
 		t.Errorf("zero Spec should page by 25: %s", out)
 	}
@@ -190,7 +190,7 @@ func TestPagination_ZeroSpecUsesDefaultSize(t *testing.T) {
 
 func TestPagination_KeepsListState(t *testing.T) {
 	v := url.Values{"page": {"2"}, "per": {"10"}, "sort": {"name"}, "dir": {"desc"}, "q": {"a&b"}}
-	sp := listquery.ParseValues(v, listquery.Options{AllowedSorts: []string{"name"}})
+	sp := liststate.ParseValues(v, liststate.Options{AllowedSorts: []string{"name"}})
 	out := render(t, Props{Total: 30, Spec: sp, Base: "/items"})
 	if !strings.Contains(out, `href="/items?dir=desc&amp;page=3&amp;per=10&amp;q=a%26b&amp;sort=name"`) {
 		t.Errorf("links must carry the full Spec, escaped: %s", out)

@@ -17,7 +17,7 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/table"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -337,7 +337,7 @@ func head(p Props, col Column, base string) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, p.sortAttrs(p.Spec.URL(base, listquery.WithSort(col.Key))))
+				templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, p.sortAttrs(p.Spec.URL(base, liststate.WithSort(col.Key))))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -393,7 +393,7 @@ func head(p Props, col Column, base string) templ.Component {
 
 // sortIcon renders the chevron for a sortable column: a single direction on
 // the sorted column, a faint two-way chevron elsewhere so widths are stable.
-func sortIcon(spec listquery.Spec, key string) templ.Component {
+func sortIcon(spec liststate.Spec, key string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -936,7 +936,7 @@ func rowActions(actions []action.Action) templ.Component {
 }
 
 // headAttrs builds the th attributes: aria-sort on sortable columns only.
-func headAttrs(spec listquery.Spec, col Column) templ.Attributes {
+func headAttrs(spec liststate.Spec, col Column) templ.Attributes {
 	if !col.Sortable {
 		return nil
 	}
