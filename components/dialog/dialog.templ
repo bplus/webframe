@@ -15,6 +15,34 @@ const (
 	openKey     contextKey = "dialogOpen"
 )
 
+// Width selects the dialog's width from the sm breakpoint up. The tiers
+// above the default have the pixel values of slideover.Width, so a drawer
+// and a modal can be given the same width. Below sm every tier is the screen
+// less a 1rem margin on each side; from sm up no tier is wider than that.
+// Unknown values fall back to WidthDefault.
+type Width string
+
+// Width values accepted by ContentProps.Width.
+const (
+	WidthDefault Width = ""     // 512px
+	WidthLg      Width = "lg"   // 640px, as slideover.WidthLg
+	WidthXl      Width = "xl"   // 800px, as slideover.WidthXl
+	WidthFull    Width = "full" // the screen less the margin
+)
+
+func widthClass(w Width) string {
+	switch w {
+	case WidthLg:
+		return "sm:max-w-[min(640px,calc(100%-2rem))]"
+	case WidthXl:
+		return "sm:max-w-[min(800px,calc(100%-2rem))]"
+	case WidthFull:
+		return "sm:max-w-[calc(100%-2rem)]"
+	default:
+		return "sm:max-w-lg"
+	}
+}
+
 // Props configures Dialog. The zero value starts closed, dismissable by
 // click-away and Escape, with a generated instance ID. Set ID only when a
 // Trigger or Close outside the Dialog needs to reference it via For.
@@ -46,6 +74,15 @@ type ContentProps struct {
 	HideCloseButton  bool // suppress the default top-right X close button
 	Open             bool // Initial open state for standalone usage (when no context)
 	DisableAutoFocus bool // when true, focus is not moved into the dialog on open
+	Width            Width // width tier from sm up; "" = WidthDefault (512px)
+}
+
+// BodyProps configures Body.
+type BodyProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	Label      string // names the scroll region for assistive technology; "" = "Dialog content"
 }
 
 // CloseProps configures Close. The zero value closes the nearest enclosing
@@ -88,7 +125,7 @@ type DescriptionProps struct {
 // Dialog is the root that ties a Trigger and its Content together: it
 // passes its instance ID and open state to nested parts through the render
 // context. The parts compose as Dialog > Trigger, Content > Header > Title,
-// Description, Footer, Close. Open and close are driven by dialog.min.js
+// Description, Body, Footer, Close. Open and close are driven by dialog.min.js
 // (see Script), not Alpine; without Script the markup is inert.
 templ Dialog(props ...Props) {
 	{{ var p Props }}
@@ -151,7 +188,23 @@ templ Trigger(props ...TriggerProps) {
 
 // Content renders the modal: a full-screen backdrop and a centered panel
 // holding the children and, unless HideCloseButton is set, an X close
-// button.
+// button. The panel is a column of the Width tier and is never taller than
+// the screen less a 1rem margin. Put long content in a Body: the Body
+// scrolls, and the parts before and after it (a Header, filters, a count, a
+// Footer) are pinned, which means they stay in view. A child that is wider
+// than the panel does not widen it.
+//
+// The panel itself scrolls (overflow-y-auto) when its children do not fit:
+// with no Body, or on a screen so short that the Body is at its minimum
+// height. Three limits follow from that:
+//   - A direct child that can shrink (one with overflow-hidden or truncate)
+//     shrinks before the panel scrolls.
+//     Wrap it, or give it a Body, when it must keep its height.
+//   - When the panel scrolls, the X close button scrolls away with the
+//     content. Escape and the backdrop still close the dialog.
+//   - A popup that is drawn inside the panel is cut off at the panel's edge.
+//     An autocomplete near the bottom of a dialog is clipped, because its
+//     list is positioned inside the field and not moved to the body element.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -202,10 +255,12 @@ templ Content(props ...ContentProps) {
 				"fixed z-[65] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]",
 				// Style
 				"bg-background rounded-lg border shadow-lg",
-				// Layout
-				"grid gap-4 p-6",
+				// Layout: a column, so every child is as wide as the panel
+				// and no wider, and a Body can take the height that is left.
+				"flex flex-col gap-4 p-6",
 				// Size
-				"w-full max-w-[calc(100%-2rem)] sm:max-w-lg",
+				"w-full max-w-[calc(100%-2rem)]", widthClass(p.Width),
+				"max-h-[calc(100dvh-2rem)] overflow-y-auto",
 				// Transitions
 				"transition-all duration-200",
 				// Scale animation
@@ -304,6 +359,41 @@ templ Header(props ...HeaderProps) {
 			id={ p.ID }
 		}
 		class={ utils.TwMerge("flex flex-col gap-2 text-center sm:text-left", p.Class) }
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
+// Body is the scrolling part of Content: it takes the height that is left
+// under the screen-height limit and scrolls, so the parts before it and
+// after it are pinned. Place it directly inside Content. It is never less
+// than 12rem tall: on a screen too short for that and the pinned parts, the
+// whole panel scrolls instead. It can be focused, so it scrolls from the
+// keyboard; opening the dialog moves the focus to the Body when no focusable
+// element comes before it.
+templ Body(props ...BodyProps) {
+	{{ var p BodyProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge(
+				// -mx-1 px-1 leaves room for the focus rings of the
+				// children, which a scroll box cuts off at its edge.
+				// min-h-48: on a short screen the pinned parts must not
+				// squeeze the list to nothing; the panel scrolls instead.
+				"min-h-48 flex-1 overflow-y-auto -mx-1 px-1",
+				"rounded-xs focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+				p.Class,
+			) }
+		data-tui-dialog-body
+		role="region"
+		aria-label={ utils.IfElse(p.Label != "", p.Label, "Dialog content") }
+		tabindex="0"
 		{ p.Attributes... }
 	>
 		{ children... }

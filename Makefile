@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check graph-check palette-check splitpane-check fetch-errors-check filterbar-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check containers-check graph-check palette-check splitpane-check fetch-errors-check filterbar-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -48,6 +48,14 @@ ui-check: tools/node_modules/.bin/tailwindcss
 	node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png --ignore-console missing-avatar.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png --ignore-console missing-avatar.png
+
+# dialog and slideover in a real browser: the showcase's long-list dialog and
+# its drawer with a pinned line, at 390x844, 1280x800 and 390x340 (a phone on
+# its side). The Body scrolls while the lines around it stay in view, and on
+# the short screen the Body keeps its minimum height. Needs `make dev`
+# running, like ui-check.
+containers-check: tools/node_modules/.bin/tailwindcss
+	node tools/containers-check.mjs --url http://localhost:3333/
 
 # graphwidget in a real browser: a non-empty <canvas> in every widget on
 # /graph with no console errors, and a visible error box when the library or

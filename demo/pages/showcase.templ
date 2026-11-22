@@ -182,6 +182,7 @@ templ Showcase() {
 				<a href="#skeleton">Skeleton</a>
 				<a href="#spinner">Spinner</a>
 				<a href="#bottomsheet">Bottom sheet</a>
+				<a href="#drawer">Drawer</a>
 				<a href="#errorswap">Error-swap guard</a>
 			}
 		}
@@ -907,7 +908,7 @@ templ autocompleteSection() {
 // Dialog
 // ═══════════════════════════════════════
 templ dialogSection() {
-	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer."}) {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "dialog", Title: "Dialog", Description: "Modal dialogs with trigger, content, header, footer. The long list dialog is of the 800px width tier and its body scrolls between a pinned count line and the footer."}) {
 		@layout.Inline(layout.InlineProps{Wrap: true}) {
 			@dialog.Dialog() {
 				@dialog.Trigger() {
@@ -979,6 +980,7 @@ templ dialogSection() {
 					}
 				}
 			}
+			@longListDialog()
 		}
 	}
 }
@@ -1652,6 +1654,7 @@ templ layoutSection() {
 			@layout.Divider(layout.DividerProps{Label: "or"})
 			<p>Content below the divider.</p>
 		}
+		@scrollDemo()
 	}
 }
 
@@ -2037,6 +2040,7 @@ templ feedbackGroup() {
 		@skeletonSection()
 		@spinnerSection()
 		@bottomsheetSection()
+		@drawerSection()
 		@errorswapSection()
 	}
 }

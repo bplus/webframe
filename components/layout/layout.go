@@ -1,6 +1,8 @@
 // Package layout provides the spacing and grouping primitives app code
 // uses to place content next to or under other content without writing
-// raw block elements or classes.
+// raw block elements or classes: Stack, Inline, Section, Divider, TwoColumn
+// and ThreeColumn place content; Scroll is a box with a height limit that
+// scrolls a long list of components inside the page.
 package layout
 
 // Gap is the spacing between children. The zero value is medium.
