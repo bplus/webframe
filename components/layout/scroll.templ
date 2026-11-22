@@ -1,0 +1,71 @@
+package layout
+
+import "github.com/bplus/webframe/utils"
+
+// ScrollHeight is the height limit of a Scroll. The pixel values are those
+// of datatable.Height and logviewer.Height. Every tier is also limited to
+// the screen less 1rem at the top and the bottom, so the box is never taller
+// than a phone screen. Unknown values fall back to ScrollMd.
+type ScrollHeight string
+
+// ScrollHeight values accepted by ScrollProps.MaxHeight.
+const (
+	ScrollMd ScrollHeight = ""   // 400px
+	ScrollSm ScrollHeight = "sm" // 240px
+	ScrollLg ScrollHeight = "lg" // 600px
+)
+
+// ScrollProps configures a Scroll.
+type ScrollProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	// MaxHeight is the height limit. The zero value is ScrollMd.
+	MaxHeight ScrollHeight
+	// Label names the region for assistive technology (aria-label).
+	Label string
+}
+
+func scrollHeightClass(h ScrollHeight) string {
+	switch h {
+	case ScrollSm:
+		return "max-h-[min(240px,calc(100dvh-2rem))]"
+	case ScrollLg:
+		return "max-h-[min(600px,calc(100dvh-2rem))]"
+	default:
+		return "max-h-[min(400px,calc(100dvh-2rem))]"
+	}
+}
+
+// Scroll is a box that is as tall as its children up to MaxHeight and
+// scrolls them past it, so that what is around it (filters, a count) stays
+// in view and a long list does not make the page long. It can be focused, so
+// it scrolls from the keyboard. Inside a dialog or a slide-over use that
+// component's Body instead: it takes the height that is left.
+templ Scroll(props ...ScrollProps) {
+	{{ var p ScrollProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				"overflow-y-auto",
+				scrollHeightClass(p.MaxHeight),
+				"rounded-xs focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+				p.Class,
+			),
+		}
+		role="region"
+		if p.Label != "" {
+			aria-label={ p.Label }
+		}
+		tabindex="0"
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/panel"
 	"github.com/bplus/webframe/components/slideover"
 )
 
@@ -83,6 +84,19 @@ templ drawerSection() {
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+// scrollDemo shows layout.Scroll in a panel: the line above the box stays
+// in view while the rows scroll, and the page does not grow by 100 rows.
+templ scrollDemo() {
+	@panel.Panel(panel.Props{ID: "scroll-demo", Level: 4, Title: "Scroll", Subtitle: "A box with a height limit (240px here) that scrolls a long list inside the page."}) {
+		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
+			<span>{ fmt.Sprintf("Showing %d of %d. This line stays in view.", containerRows, containerRows) }</span>
+			@layout.Scroll(layout.ScrollProps{ID: "scroll-demo-rows", MaxHeight: layout.ScrollSm, Label: "Rows"}) {
+				@longList()
 			}
 		}
 	}
