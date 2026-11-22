@@ -7,15 +7,18 @@ generate:
 	templ generate -include-version=false
 
 # Node tooling (Tailwind CLI, Playwright) is pinned in tools/package.json.
-# TAILWIND can be overridden from the environment (the Dockerfile does).
+# TAILWIND can be overridden from the environment.
 TAILWIND ?= tools/node_modules/.bin/tailwindcss
 
 tools/node_modules/.bin/tailwindcss: tools/package.json tools/package-lock.json
 	npm ci --prefix tools --no-audit --no-fund
 	touch $@
 
+# input.css imports "tailwindcss", and the resolver looks for it in the
+# node_modules of static/css and of each directory above it, never in tools/.
+# NODE_PATH adds tools/node_modules to that search (issue 83).
 css: $(TAILWIND)
-	$(TAILWIND) -i static/css/input.css -o static/css/output.css
+	NODE_PATH="$(CURDIR)/tools/node_modules" $(TAILWIND) -i static/css/input.css -o static/css/output.css
 
 dev:
 	go run ./cmd/demo
