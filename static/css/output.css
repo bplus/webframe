@@ -2839,10 +2839,20 @@
   --color-ring: var(--color-primary-500);
 }
 [data-tui-filterbar-choice] {
-  scrollbar-width: none;
+  scroll-padding-inline: 32px;
 }
-[data-tui-filterbar-choice]::-webkit-scrollbar {
-  display: none;
+@media (hover: hover) and (pointer: fine) {
+  [data-tui-filterbar-choice] {
+    scrollbar-width: thin;
+  }
+}
+@media not ((hover: hover) and (pointer: fine)) {
+  [data-tui-filterbar-choice] {
+    scrollbar-width: none;
+  }
+  [data-tui-filterbar-choice]::-webkit-scrollbar {
+    display: none;
+  }
 }
 [data-tui-filterbar-choice][data-tui-filterbar-more="end"] {
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);

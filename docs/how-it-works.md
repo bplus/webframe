@@ -236,13 +236,15 @@ bar's hidden `sort` input still says "title". You then pick a filter. The bar se
 
 The fix: every results-only response also carries fresh copies of those hidden inputs, marked
 `hx-swap-oob="true"`. htmx finds each one's id on the page and replaces it. That is
-`resultsPart` ([listpage.templ:84](../components/listpage/listpage.templ#L84-L93)):
+`resultsPart` ([listpage.templ:84](../components/listpage/listpage.templ#L84-L95)):
 
 ```templ
 @Results(p)
 if p.hasFilterBar() {
     @filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs(), p.sortControls()...)
-    @filterbar.ControlsOOB(p.filterbarID(), p.filterControls()...)
+}
+if counted := p.filterControls(); len(counted) > 0 {
+    @filterbar.ControlsOOB(p.filterbarID(), counted...)
 }
 if p.Intro != "" {
     <p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>
@@ -251,10 +253,11 @@ if p.Intro != "" {
 In plain words: send the results; then send the filter bar's hidden inputs again, flagged to
 replace the old ones; then send the intro line again too, so its counts ("14 items, 3 drafts")
 stay correct after a delete. `HiddenOOB` is at
-[components/filterbar/filterbar.templ:241](../components/filterbar/filterbar.templ#L241-L254).
-`ControlsOOB` sends your `Filters` controls again the same way (never the search box, which may
-have the focus), so an option's label or count can change with every answer: "Drafts 3" becomes
-"Drafts 1" when the search narrows the list.
+[components/filterbar/filterbar.templ:246](../components/filterbar/filterbar.templ#L246-L259).
+`ControlsOOB` sends a filter control again the same way when one of its options has a `Count`
+(never the search box, which may have the focus), so the count can change with every answer:
+"Drafts 3" becomes "Drafts 1" when the search narrows the list. A list whose filters have no
+counts sends no filter control.
 On a list with sortable columns the `sort` value is carried by a visible "Sort" select (shown on
 phones, where some headers are hidden), and the out-of-band copy replaces that select too, so
 the headers and the select never disagree.

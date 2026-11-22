@@ -73,7 +73,7 @@ func FilterDemo(q url.Values) (filters []filterbar.FilterConfig, found []FilterD
 				found = append(found, FilterDemoSpell{Name: name, School: s.name})
 			}
 		}
-		opts = append(opts, filterbar.FilterOption{Label: s.name, Value: value, Count: filterbar.Count(n)})
+		opts = append(opts, filterbar.FilterOption{Label: s.name, Value: value, Count: filterbar.CountOf(n)})
 	}
 	filters = filterbar.WithSelected([]filterbar.FilterConfig{
 		{ID: FilterDemoSearch, Label: "Search", Placeholder: "Search spells", Type: filterbar.TypeSearch, Grow: true},

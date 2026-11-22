@@ -417,8 +417,9 @@ func TestHiddenOOB_Controls(t *testing.T) {
 }
 
 // v030NoID is what FilterBar rendered in v0.3.0 for richProps without an ID:
-// every control type of that version, a reset button, no Hidden. A bar that
-// sets none of the fields added since must still render exactly this.
+// every control type of that version, a reset button, no Hidden. It is kept
+// as it was; TestFilterBar_UnchangedFromV030 names each difference made on
+// purpose since.
 const v030NoID = `<div data-tui-filterbar data-tui-filterbar-hx-get="/items" data-tui-filterbar-hx-target="#results" data-tui-filterbar-hx-swap="innerHTML" class="flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg mt-2">` +
 	`<div class="flex items-center gap-2"><label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label>` +
 	`<select name="type" data-tui-filterbar-control class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"><option value="">Any type</option> <option value="weapon">Weapon</option><option value="armor" selected>Armor</option></select></div>` +
@@ -430,24 +431,33 @@ const v030NoID = `<div data-tui-filterbar data-tui-filterbar-hx-get="/items" dat
 	`<button type="button" data-tui-filterbar-reset class="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors">Clear filters</button></div>`
 
 // TestFilterBar_UnchangedFromV030: the zero value of every field added
-// after v0.3.0 (FilterOption.Count, TypeChoice) changes nothing: a bar of
-// that version's props renders byte for byte what it rendered then. With an
-// ID the one difference is the ids: the root's, and since issue 74 one per
-// control (ControlID), with the label's for.
+// after v0.3.0 (FilterOption.Count, TypeChoice, Grow, Bare) changes
+// nothing: a bar of that version's props renders what it rendered then,
+// with two differences made on purpose. Every toggle pill now states
+// aria-pressed (an accessibility fix: a pill's state was in its colors
+// only). And with an ID the controls have ids: the root's as before, and
+// since issue 74 one per control (ControlID), with the label's for.
 func TestFilterBar_UnchangedFromV030(t *testing.T) {
 	p := richProps()
 	p.ID = ""
-	if got := render(t, p); got != v030NoID {
-		t.Errorf("FilterBar without an ID =\n%s\nwant the v0.3.0 render\n%s", got, v030NoID)
+	pressed := strings.NewReplacer(
+		`data-tui-filterbar-toggle-selected="true" class=`, `data-tui-filterbar-toggle-selected="true" aria-pressed="true" class=`,
+		`data-tui-filterbar-toggle-selected="false" class=`, `data-tui-filterbar-toggle-selected="false" aria-pressed="false" class=`,
+	).Replace(v030NoID)
+	if n := strings.Count(pressed, "aria-pressed"); n != 2 {
+		t.Fatalf("%d aria-pressed in the expected render, want 2", n)
+	}
+	if got := render(t, p); got != pressed {
+		t.Errorf("FilterBar without an ID =\n%s\nwant the v0.3.0 render plus aria-pressed\n%s", got, pressed)
 	}
 	want := strings.NewReplacer(
 		`<div data-tui-filterbar `, `<div id="bar" data-tui-filterbar `,
 		`<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label><select name="type"`, `<label for="bar-control-type" class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label><select id="bar-control-type" name="type"`,
 		`<div class="flex gap-1">`, `<div id="bar-control-status" class="flex gap-1">`,
 		`<label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Search</label><input type="search" name="q"`, `<label for="bar-control-q" class="text-xs font-medium text-muted-foreground whitespace-nowrap">Search</label><input type="search" id="bar-control-q" name="q"`,
-	).Replace(v030NoID)
+	).Replace(pressed)
 	if got := render(t, richProps()); got != want {
-		t.Errorf("FilterBar with an ID =\n%s\nwant the v0.3.0 render plus the ids\n%s", got, want)
+		t.Errorf("FilterBar with an ID =\n%s\nwant the v0.3.0 render plus aria-pressed and the ids\n%s", got, want)
 	}
 }
 
@@ -465,23 +475,30 @@ func TestFilterBar_ControlIDs(t *testing.T) {
 		`<label for="bar-control-type" class=`, `<select id="bar-control-type" name="type" data-tui-filterbar-control class=`,
 		`<label for="bar-control-q" class=`, `<input type="search" id="bar-control-q" name="q" data-tui-filterbar-control data-tui-filterbar-debounce=`,
 		`<div id="bar-control-status" class="flex gap-1"><button type="button" name="status"`,
-		`<div id="bar-control-school" role="group" aria-label="School" data-tui-filterbar-choice class=`,
+		`<span id="bar-control-school-label" class="text-xs font-medium text-muted-foreground whitespace-nowrap">School</span>`,
+		`<div id="bar-control-school" role="group" aria-labelledby="bar-control-school-label" data-tui-filterbar-choice class=`,
 		`<label for="bar-hidden-items-sort" class=`, `<select id="bar-hidden-items-sort" name="items.sort" data-tui-filterbar-control data-tui-filterbar-state class=`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("missing %q in: %s", want, html)
 		}
 	}
-	if n := strings.Count(html, ` id="`); n != 6 {
-		t.Errorf("%d ids, want 6 (the bar and five controls): %s", n, html)
+	if n := strings.Count(html, ` id="`); n != 7 {
+		t.Errorf("%d ids, want 7 (the bar, five controls, the choice group's label): %s", n, html)
+	}
+	if strings.Contains(html, "aria-label=") {
+		t.Errorf("a group named by its visible label needs no aria-label: %s", html)
 	}
 	if strings.Contains(html, "hx-swap-oob") {
 		t.Errorf("FilterBar must not render oob controls: %s", html)
 	}
 	p.ID = ""
 	html = render(t, p)
-	if strings.Contains(html, ` id=`) || strings.Contains(html, ` for=`) {
-		t.Errorf("no id and no for without Props.ID: %s", html)
+	if strings.Contains(html, ` id=`) || strings.Contains(html, ` for=`) || strings.Contains(html, "aria-labelledby") {
+		t.Errorf("no id, no for and no aria-labelledby without Props.ID: %s", html)
+	}
+	if !strings.Contains(html, `<div role="group" aria-label="School" data-tui-filterbar-choice`) {
+		t.Errorf("without Props.ID the group falls back to aria-label: %s", html)
 	}
 	for _, c := range []struct{ bar, name, want string }{
 		{"bar", "type", "bar-control-type"},
@@ -507,11 +524,11 @@ func TestControlsOOB(t *testing.T) {
 		return buf.String()
 	}
 	typ := filterbar.FilterConfig{ID: "type", Label: "Type", Placeholder: "Any type", Type: filterbar.TypeSelect,
-		Options: []filterbar.FilterOption{{Label: "Weapon", Value: "weapon", Count: filterbar.Count(2)}, {Label: "Armor", Value: "armor", Selected: true, Count: filterbar.Count(0)}}}
+		Options: []filterbar.FilterOption{{Label: "Weapon", Value: "weapon", Count: filterbar.CountOf(2)}, {Label: "Armor", Value: "armor", Selected: true, Count: filterbar.CountOf(0)}}}
 	status := filterbar.FilterConfig{ID: "items.status", Label: "Status", Type: filterbar.TypeToggle,
-		Options: []filterbar.FilterOption{{Label: "Draft", Value: "draft", Selected: true, Count: filterbar.Count(3)}}}
+		Options: []filterbar.FilterOption{{Label: "Draft", Value: "draft", Selected: true, Count: filterbar.CountOf(3)}}}
 	school := choiceProps().Filters[0]
-	school.Options[0].Count = filterbar.Count(7)
+	school.Options[0].Count = filterbar.CountOf(7)
 	school.Options[0].Selected = true
 	q := filterbar.FilterConfig{ID: "q", Label: "Search", Type: filterbar.TypeSearch, Value: "blade"}
 
@@ -519,8 +536,8 @@ func TestControlsOOB(t *testing.T) {
 	want := `<select id="bar-control-type" name="type" data-tui-filterbar-control hx-swap-oob="true" class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">` +
 		`<option value="">Any type</option> <option value="weapon">Weapon (2)</option><option value="armor" selected>Armor (0)</option></select>` +
 		`<div id="bar-control-items-status" hx-swap-oob="true" class="flex gap-1">` +
-		`<button type="button" name="items.status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground">Draft <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">3</span></button></div>` +
-		`<div id="bar-control-school" role="group" aria-label="School" data-tui-filterbar-choice hx-swap-oob="true" class="flex gap-1 min-w-0 overflow-x-auto p-0.5">`
+		`<button type="button" name="items.status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true" class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground">Draft <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">3</span></button></div>` +
+		`<div id="bar-control-school" role="group" aria-labelledby="bar-control-school-label" data-tui-filterbar-choice hx-swap-oob="true" class="flex gap-1 min-w-0 overflow-x-auto p-0.5">`
 	if !strings.HasPrefix(html, want) {
 		t.Errorf("ControlsOOB =\n%s\nwant it to start with\n%s", html, want)
 	}
@@ -552,8 +569,8 @@ func choiceProps() filterbar.Props {
 	return filterbar.Props{Filters: []filterbar.FilterConfig{{
 		ID: "school", Label: "School", Placeholder: "All", Type: filterbar.TypeChoice,
 		Options: []filterbar.FilterOption{
-			{Label: "Evocation", Value: "evocation", Count: filterbar.Count(54)},
-			{Label: "Illusion", Value: "illusion", Count: filterbar.Count(0)},
+			{Label: "Evocation", Value: "evocation", Count: filterbar.CountOf(54)},
+			{Label: "Illusion", Value: "illusion", Count: filterbar.CountOf(0)},
 			{Label: "Other", Value: "other"},
 		},
 	}}}
@@ -571,7 +588,7 @@ func button(t *testing.T, html, value string) string {
 }
 
 // TestFilterBar_Choice: a TypeChoice group is a role="group" named by the
-// label, with one button per option plus the Placeholder button, each with
+// label (aria-label here, since the bar has no ID), with one button per option plus the Placeholder button, each with
 // aria-pressed and the toggle markers the script reads; the count renders
 // when set (0 as "0") and no count element renders when it is nil.
 func TestFilterBar_Choice(t *testing.T) {
@@ -679,12 +696,12 @@ func TestWithSelected_Choice(t *testing.T) {
 func TestFilterBar_Counts(t *testing.T) {
 	html := render(t, filterbar.Props{Filters: []filterbar.FilterConfig{
 		{ID: "status", Type: filterbar.TypeToggle, Options: []filterbar.FilterOption{
-			{Label: "Published", Value: "published", Count: filterbar.Count(11)},
+			{Label: "Published", Value: "published", Count: filterbar.CountOf(11)},
 			{Label: "Draft", Value: "draft"},
 		}},
 		{ID: "type", Type: filterbar.TypeSelect, Options: []filterbar.FilterOption{
-			{Label: "Weapon", Value: "weapon", Count: filterbar.Count(5)},
-			{Label: "Armor", Value: "armor", Count: filterbar.Count(0)},
+			{Label: "Weapon", Value: "weapon", Count: filterbar.CountOf(5)},
+			{Label: "Armor", Value: "armor", Count: filterbar.CountOf(0)},
 			{Label: "Other", Value: "other"},
 		}},
 	}})

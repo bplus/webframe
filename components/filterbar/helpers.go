@@ -6,10 +6,30 @@ import (
 	"strings"
 )
 
-// Count returns a pointer to n, for FilterOption.Count:
+// CountOf returns a pointer to n, for FilterOption.Count:
 //
-//	filterbar.FilterOption{Label: "Evocation", Value: "evocation", Count: filterbar.Count(54)}
-func Count(n int) *int { return &n }
+//	filterbar.FilterOption{Label: "Evocation", Value: "evocation", Count: filterbar.CountOf(54)}
+func CountOf(n int) *int { return &n }
+
+// HasCounts reports whether any option of f has a Count. listpage sends a
+// control again with every results response (ControlsOOB) only when it has.
+func HasCounts(f FilterConfig) bool {
+	for _, o := range f.Options {
+		if o.Count != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// labelID is the id of a choice group's visible label, which names the
+// group (aria-labelledby): the control's id plus "-label"; "" without one.
+func labelID(controlID string) string {
+	if controlID == "" {
+		return ""
+	}
+	return controlID + "-label"
+}
 
 // optionText is a select option's text: the label, then the count in
 // parentheses when there is one.

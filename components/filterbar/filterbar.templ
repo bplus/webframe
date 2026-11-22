@@ -25,8 +25,9 @@ const (
 	// selected value is sent under FilterConfig.ID; nothing is sent when
 	// none is. A click on the selected button deselects it. The buttons
 	// stay on one line: when they do not fit, the line scrolls sideways
-	// inside the bar, its cut-off edge fades, and the script brings the
-	// selected button into view.
+	// inside the bar (by swipe, by a thin scrollbar where there is a mouse,
+	// by the keyboard's focus), its cut-off edge fades, and the script
+	// brings the selected button into view.
 	TypeChoice FilterType = "choice"
 )
 
@@ -41,7 +42,7 @@ type FilterOption struct {
 	// Count, when not nil, renders after the label ("Evocation 54"); 0
 	// renders "0". TypeChoice and TypeToggle put it in the button;
 	// TypeSelect appends it to the option text in parentheses ("Evocation
-	// (54)"). The handler supplies the number (see the Count function).
+	// (54)"). The handler supplies the number (see CountOf).
 	Count *int
 	// Attributes spread onto the <option> (TypeSelect only). One attribute
 	// has a meaning: data-tui-filterbar-set-<name>="<value>" on the selected
@@ -140,9 +141,13 @@ type Props struct {
 // place when it has not. The bar is the source element of its requests and
 // the script gives it hx-sync="this:replace", so a request still in flight
 // is aborted when the next one goes out and only the answer to the newest
-// request is swapped. Attributes htmx inherits (hx-headers, hx-indicator,
-// ...) therefore apply from the bar's ancestors, and the request's
-// HX-Trigger header is the bar's id.
+// request is swapped. Each superseded request is aborted, and htmx reports
+// an abort as it reports a failure: it fires htmx:sendAbort and
+// htmx:afterRequest as error events and logs both names with
+// console.error. That is expected and no fault; it happens only when a
+// change is made while the answer to the previous one is still on its way.
+// Attributes htmx inherits (hx-headers, hx-indicator, ...) apply from the
+// bar's ancestors, and the request's HX-Trigger header is the bar's id.
 //
 // The script is exposed as window.tui.filterbar with getParams(bar),
 // trigger(bar) and reset(bar), where bar is the root <div>; reset does what
@@ -398,7 +403,8 @@ templ filterToggle(f FilterConfig, id string) {
 }
 
 // toggleControl is the bare element that holds a toggle's pills: an id when
-// given, and hx-swap-oob="true" when rendered by ControlsOOB.
+// given, and hx-swap-oob="true" when rendered by ControlsOOB. Each pill
+// states whether it is on with aria-pressed, which the script keeps true.
 templ toggleControl(f FilterConfig, id string, oob bool) {
 	<div
 		if id != "" {
@@ -417,9 +423,11 @@ templ toggleControl(f FilterConfig, id string, oob bool) {
 				data-tui-filterbar-toggle
 				if opt.Selected {
 					data-tui-filterbar-toggle-selected="true"
+					aria-pressed="true"
 					class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground"
 				} else {
 					data-tui-filterbar-toggle-selected="false"
+					aria-pressed="false"
 					class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 				}
 			>
@@ -443,14 +451,21 @@ templ optionCount(opt FilterOption) {
 // instead of widening the page.
 templ filterChoice(f FilterConfig, id string) {
 	<div class={ utils.TwMerge(wrapperClass(f), "min-w-0 max-w-full") }>
-		<span class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</span>
+		<span
+			if id != "" {
+				id={ labelID(id) }
+			}
+			class="text-xs font-medium text-muted-foreground whitespace-nowrap"
+		>{ f.Label }</span>
 		@choiceControl(f, id, false)
 	</div>
 }
 
-// choiceControl is the bare group: role="group" named by the label, one
-// button per option on one line, and before them the Placeholder button
-// when there is one. Each button is a toggle to filterbar.min.js (the same
+// choiceControl is the bare group: role="group", one button per option on
+// one line. With an id the group is named by its visible label
+// (aria-labelledby the label span filterChoice renders, id labelID);
+// without one, by aria-label. Before the options comes the Placeholder
+// button when there is one. Each button is a toggle to filterbar.min.js (the same
 // markers and class lists as a TypeToggle pill), so collecting, the URL and
 // "Clear filters" treat it as one; the group marker makes a click select
 // one button only. id and oob as for toggleControl.
@@ -461,7 +476,10 @@ templ choiceControl(f FilterConfig, id string, oob bool) {
 			id={ id }
 		}
 		role="group"
-		if f.Label != "" {
+		if id != "" {
+			aria-labelledby={ labelID(id) }
+		}
+		if id == "" && f.Label != "" {
 			aria-label={ f.Label }
 		}
 		data-tui-filterbar-choice

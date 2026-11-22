@@ -132,12 +132,22 @@
 }
 
 /* ── filterbar: a TypeChoice group ──
-   One line of buttons that scrolls sideways with no scrollbar.
-   filterbar.min.js sets data-tui-filterbar-more (start, end or both) while
-   buttons are scrolled out at that edge, and that edge fades over 32px (the
-   script's EDGE) to show there is more. */
-[data-tui-filterbar-choice] { scrollbar-width: none; }
-[data-tui-filterbar-choice]::-webkit-scrollbar { display: none; }
+   One line of buttons that scrolls sideways. filterbar.min.js sets
+   data-tui-filterbar-more (start, end or both) while buttons are scrolled
+   out at that edge, and that edge fades over 32px (the script's EDGE) to
+   show there is more. scroll-padding keeps a button the keyboard focuses
+   clear of the fade. With a mouse (hover and a fine pointer) the line has a
+   thin scrollbar, the only way to reach a cut-off button without a wheel
+   that scrolls sideways; on a touch screen, where a swipe scrolls it, the
+   scrollbar is hidden. */
+[data-tui-filterbar-choice] { scroll-padding-inline: 32px; }
+@media (hover: hover) and (pointer: fine) {
+  [data-tui-filterbar-choice] { scrollbar-width: thin; }
+}
+@media not ((hover: hover) and (pointer: fine)) {
+  [data-tui-filterbar-choice] { scrollbar-width: none; }
+  [data-tui-filterbar-choice]::-webkit-scrollbar { display: none; }
+}
 [data-tui-filterbar-choice][data-tui-filterbar-more="end"] {
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }

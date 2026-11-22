@@ -181,13 +181,19 @@ a fresh load, while the bar and the search box stay the same elements and
 the box keeps the focus, its text and its caret as a held answer lands;
 "Clear filters" must clear the group and bring the first counts back. A
 select that has the focus must not be replaced by an answer, one without the
-focus must be; a clicked choice button must have the focus again after its
+focus must be, and a control whose incoming copy is the same (after a sort
+from the table header) must stay the same element; a clicked choice button must have the focus again after its
 group was replaced; a scrolled group must keep its scroll position. Last,
 the showcase's bar must be bare (no padding, border or background) and its
 search box must fill its line beside its label at 1280px and at 390px, 192px
-wide at least and as high as before (2rem). htmx logs two console
-errors for a request it aborts (`htmx:afterRequest`, `htmx:sendAbort`); any
-other console error fails the run. Exit 1 on any failure, 2 for a usage
+wide at least and as high as before (2rem). The long line must have a thin
+scrollbar where there is a mouse and none on a touch screen, and Tab must
+reach all 17 buttons with each clear of the faded edges. With the script
+loaded a second time, one click on a choice button must still send one
+request and select it. The bar aborts a superseded request and htmx logs two
+console errors for an abort (`htmx:afterRequest`, `htmx:sendAbort`): exactly
+those two are expected, the held scenario checks that they appear, and any
+other console error in any scenario fails the run. Exit 1 on any failure, 2 for a usage
 error.
 
 ```bash

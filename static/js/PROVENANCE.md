@@ -93,14 +93,21 @@ upgrade.
   the group, never the page, until the selected button is clear of the 32px
   edges, and `updateMore` sets `data-tui-filterbar-more` (`start`, `end`,
   `both`) while buttons are scrolled out, which `input.css` draws as a fade.
-  The "none" button never counts as selected for scrolling. `showSelected`
+  A button that gets the focus (`focusin`) is scrolled clear of the edges
+  the same way. The "none" button never counts as selected for scrolling. `showSelected`
   runs for a group seen for the first time (page load, or after
   `htmx:afterSettle`), from a `ResizeObserver` on each group and after a
   click or reset; a group already seen only gets `updateMore` (also on its
   own scroll and a window resize), so a swap elsewhere never moves it.
+- `filterbar.min.js`: guards against a second run through
+  `window.tui.filterbar`, as the scripts below do through `window.wf.<name>`.
+  `triggerUpdate` does nothing for a bar that is no longer in the document
+  (a debounce timer that outlived a navigation).
 - `filterbar.min.js`: out-of-band copies of a bar's controls
   (`filterbar.ControlsOOB`, `HiddenOOB`). On `htmx:oobBeforeSwap` for an
-  element with an id inside a bar: a `<select>` that is
+  element with an id inside a bar: a select or a group whose incoming copy
+  has the same `controlState` (values, texts, selection) is not replaced;
+  a `<select>` that is
   `document.activeElement` is not replaced (`detail.shouldSwap = false`),
   because replacing it closes its open list (checked in Chromium 156 with
   `select:open`: open before, closed after `outerHTML` was set, focus lost);
@@ -123,8 +130,9 @@ upgrade.
   `make graph-check` covers this in a browser.
 - `confirm.js`, `htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`,
   `splitpane.js`: each guards against a second run through `window.wf.<name>`
-  (htmx re-executes `<script src>` tags in swapped content). The templUI
-  scripts are not guarded.
+  (htmx re-executes `<script src>` tags in swapped content);
+  `filterbar.min.js` does the same through `window.tui.filterbar`. The
+  templUI scripts are not guarded.
 - `htmx-errors.js`: on `htmx:beforeSwap` with `evt.detail.isError`, refuses
   the swap when the response is not `text/html` or the target sits inside
   `data-wf-swallow-errors`; otherwise leaves htmx's decision alone.

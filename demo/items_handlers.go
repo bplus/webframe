@@ -131,8 +131,8 @@ func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 }
 
 // itemsListProps applies spec to the store and declares the list page: the
-// intro line, the Type select, the Status pills and the single-choice Pack
-// buttons with their counts, the search box,
+// intro line, the Type select and the single-choice Pack buttons with their
+// counts, the Status pills (no counts), the search box,
 // the toolbar ("Build mod", "+ Create item", bulk "Publish selected") and
 // the five columns with their row actions.
 func itemsListProps(spec listquery.Spec) listpage.Props {
@@ -175,7 +175,7 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 		Header: pageheader.Props{Title: "Items"},
 		Intro:  fmt.Sprintf("%s · %s · %s", plural(total, "item"), strconv.Itoa(published)+" published", plural(drafts, "draft")),
 		Filters: []filterbar.FilterConfig{
-			{ID: "type", Label: "Type", Type: filterbar.TypeSelect, Placeholder: "All types", Options: filterOptions(itemTypeOptions)},
+			{ID: "type", Label: "Type", Type: filterbar.TypeSelect, Placeholder: "All types", Options: itemTypeFilterOptions(all, spec)},
 			{ID: "status", Label: "Status", Type: filterbar.TypeToggle, Options: filterOptions(itemStatusOptions)},
 			{ID: "pack", Label: "Pack", Type: filterbar.TypeChoice, Placeholder: "All", Options: itemPackOptions(all, spec)},
 		},
@@ -210,26 +210,43 @@ func filterOptions(opts []formfield.Option) []filterbar.FilterOption {
 	return out
 }
 
-// itemPackOptions are the Pack choices, each with the number of items it
-// would show: those of items that match spec's search and its other filters
-// and are in that pack.
-func itemPackOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+// itemCounts counts, per value of one filter, the items that choosing that
+// value would show: those that match spec's search and its other filters
+// (the filter named key itself is left out), grouped by valueOf.
+func itemCounts(items []Item, spec listquery.Spec, key string, valueOf func(Item) string) map[string]int {
 	others := spec
 	others.Filters = make(map[string][]string, len(spec.Filters))
 	for k, v := range spec.Filters {
-		if k != "pack" {
+		if k != key {
 			others.Filters[k] = v
 		}
 	}
 	counts := map[string]int{}
 	for _, it := range items {
 		if itemMatch(it, others) {
-			counts[itemPack(it)]++
+			counts[valueOf(it)]++
 		}
 	}
+	return counts
+}
+
+// itemPackOptions are the Pack choices, each with its count (itemCounts).
+func itemPackOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+	counts := itemCounts(items, spec, "pack", itemPack)
 	out := make([]filterbar.FilterOption, len(itemPacks))
 	for i, p := range itemPacks {
-		out[i] = filterbar.FilterOption{Label: p.Label, Value: p.Value, Count: filterbar.Count(counts[p.Value])}
+		out[i] = filterbar.FilterOption{Label: p.Label, Value: p.Value, Count: filterbar.CountOf(counts[p.Value])}
+	}
+	return out
+}
+
+// itemTypeFilterOptions are the Type select's choices, each with its count
+// (itemCounts): "Weapon (5)".
+func itemTypeFilterOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+	counts := itemCounts(items, spec, "type", func(it Item) string { return it.Type })
+	out := filterOptions(itemTypeOptions)
+	for i := range out {
+		out[i].Count = filterbar.CountOf(counts[out[i].Value])
 	}
 	return out
 }
