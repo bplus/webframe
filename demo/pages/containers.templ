@@ -95,7 +95,7 @@ templ scrollDemo() {
 	@panel.Panel(panel.Props{ID: "scroll-demo", Level: 4, Title: "Scroll", Subtitle: "A box with a height limit (240px here) that scrolls a long list inside the page."}) {
 		@layout.Stack(layout.StackProps{Gap: layout.GapS}) {
 			<span>{ fmt.Sprintf("Showing %d of %d. This line stays in view.", containerRows, containerRows) }</span>
-			@layout.Scroll(layout.ScrollProps{ID: "scroll-demo-rows", MaxHeight: layout.ScrollSm, Label: "Rows"}) {
+			@layout.Scroll(layout.ScrollProps{ID: "scroll-demo-rows", MaxHeight: layout.ScrollS, Label: "Rows"}) {
 				@longList()
 			}
 		}

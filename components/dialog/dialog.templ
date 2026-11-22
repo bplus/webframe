@@ -191,9 +191,20 @@ templ Trigger(props ...TriggerProps) {
 // button. The panel is a column of the Width tier and is never taller than
 // the screen less a 1rem margin. Put long content in a Body: the Body
 // scrolls, and the parts before and after it (a Header, filters, a count, a
-// Footer) are pinned, which means they stay in view. Without a Body, content
-// that is too tall scrolls the whole panel. A child that is wider than the
-// panel does not widen it.
+// Footer) are pinned, which means they stay in view. A child that is wider
+// than the panel does not widen it.
+//
+// The panel itself scrolls (overflow-y-auto) when its children do not fit:
+// with no Body, or on a screen so short that the Body is at its minimum
+// height. Three limits follow from that:
+//   - A direct child that can shrink (one with overflow-hidden or truncate)
+//     shrinks before the panel scrolls.
+//     Wrap it, or give it a Body, when it must keep its height.
+//   - When the panel scrolls, the X close button scrolls away with the
+//     content. Escape and the backdrop still close the dialog.
+//   - A popup that is drawn inside the panel is cut off at the panel's edge.
+//     An autocomplete near the bottom of a dialog is clipped, because its
+//     list is positioned inside the field and not moved to the body element.
 templ Content(props ...ContentProps) {
 	{{ var p ContentProps }}
 	if len(props) > 0 {
@@ -356,8 +367,11 @@ templ Header(props ...HeaderProps) {
 
 // Body is the scrolling part of Content: it takes the height that is left
 // under the screen-height limit and scrolls, so the parts before it and
-// after it are pinned. Place it directly inside Content. It can be focused,
-// so it scrolls from the keyboard.
+// after it are pinned. Place it directly inside Content. It is never less
+// than 12rem tall: on a screen too short for that and the pinned parts, the
+// whole panel scrolls instead. It can be focused, so it scrolls from the
+// keyboard; opening the dialog moves the focus to the Body when no focusable
+// element comes before it.
 templ Body(props ...BodyProps) {
 	{{ var p BodyProps }}
 	if len(props) > 0 {
@@ -370,7 +384,9 @@ templ Body(props ...BodyProps) {
 		class={ utils.TwMerge(
 				// -mx-1 px-1 leaves room for the focus rings of the
 				// children, which a scroll box cuts off at its edge.
-				"min-h-0 flex-1 overflow-y-auto -mx-1 px-1",
+				// min-h-48: on a short screen the pinned parts must not
+				// squeeze the list to nothing; the panel scrolls instead.
+				"min-h-48 flex-1 overflow-y-auto -mx-1 px-1",
 				"rounded-xs focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
 				p.Class,
 			) }

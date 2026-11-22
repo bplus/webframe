@@ -125,7 +125,7 @@ func TestContent_HeightLimitAndColumn(t *testing.T) {
 func TestBody(t *testing.T) {
 	out := render(t, Body(BodyProps{ID: "list"}))
 	for _, want := range []string{
-		`id="list"`, "min-h-0", "flex-1", "overflow-y-auto",
+		`id="list"`, "min-h-48", "flex-1", "overflow-y-auto",
 		"data-tui-dialog-body", `role="region"`, `aria-label="Dialog content"`, `tabindex="0"`,
 		"focus-visible:ring-[3px]",
 	} {

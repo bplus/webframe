@@ -391,9 +391,20 @@ func Trigger(props ...TriggerProps) templ.Component {
 // button. The panel is a column of the Width tier and is never taller than
 // the screen less a 1rem margin. Put long content in a Body: the Body
 // scrolls, and the parts before and after it (a Header, filters, a count, a
-// Footer) are pinned, which means they stay in view. Without a Body, content
-// that is too tall scrolls the whole panel. A child that is wider than the
-// panel does not widen it.
+// Footer) are pinned, which means they stay in view. A child that is wider
+// than the panel does not widen it.
+//
+// The panel itself scrolls (overflow-y-auto) when its children do not fit:
+// with no Body, or on a screen so short that the Body is at its minimum
+// height. Three limits follow from that:
+//   - A direct child that can shrink (one with overflow-hidden or truncate)
+//     shrinks before the panel scrolls.
+//     Wrap it, or give it a Body, when it must keep its height.
+//   - When the panel scrolls, the X close button scrolls away with the
+//     content. Escape and the backdrop still close the dialog.
+//   - A popup that is drawn inside the panel is cut off at the panel's edge.
+//     An autocomplete near the bottom of a dialog is clipped, because its
+//     list is positioned inside the field and not moved to the body element.
 func Content(props ...ContentProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -470,7 +481,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 231, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 242, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -546,7 +557,7 @@ func Content(props ...ContentProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 270, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 281, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -631,7 +642,7 @@ func Content(props ...ContentProps) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 306, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 317, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -702,7 +713,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 326, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 337, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -721,7 +732,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 329, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 340, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -817,7 +828,7 @@ func Header(props ...HeaderProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 348, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 359, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -867,8 +878,11 @@ func Header(props ...HeaderProps) templ.Component {
 
 // Body is the scrolling part of Content: it takes the height that is left
 // under the screen-height limit and scrolls, so the parts before it and
-// after it are pinned. Place it directly inside Content. It can be focused,
-// so it scrolls from the keyboard.
+// after it are pinned. Place it directly inside Content. It is never less
+// than 12rem tall: on a screen too short for that and the pinned parts, the
+// whole panel scrolls instead. It can be focused, so it scrolls from the
+// keyboard; opening the dialog moves the focus to the Body when no focusable
+// element comes before it.
 func Body(props ...BodyProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -897,7 +911,9 @@ func Body(props ...BodyProps) templ.Component {
 		var templ_7745c5c3_Var32 = []any{utils.TwMerge(
 			// -mx-1 px-1 leaves room for the focus rings of the
 			// children, which a scroll box cuts off at its edge.
-			"min-h-0 flex-1 overflow-y-auto -mx-1 px-1",
+			// min-h-48: on a short screen the pinned parts must not
+			// squeeze the list to nothing; the panel scrolls instead.
+			"min-h-48 flex-1 overflow-y-auto -mx-1 px-1",
 			"rounded-xs focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
 			p.Class,
 		)}
@@ -917,7 +933,7 @@ func Body(props ...BodyProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 368, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 382, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -948,7 +964,7 @@ func Body(props ...BodyProps) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(utils.IfElse(p.Label != "", p.Label, "Dialog content"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 379, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 395, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -1022,7 +1038,7 @@ func Footer(props ...FooterProps) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 396, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 412, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -1113,7 +1129,7 @@ func Title(props ...TitleProps) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 413, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 429, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {
@@ -1204,7 +1220,7 @@ func Description(props ...DescriptionProps) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 430, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 446, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1282,7 +1298,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 442, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 458, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -1295,7 +1311,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/dialog.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 442, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/dialog/dialog.templ`, Line: 458, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {

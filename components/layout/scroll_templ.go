@@ -12,14 +12,14 @@ import "github.com/bplus/webframe/utils"
 // ScrollHeight is the height limit of a Scroll. The pixel values are those
 // of datatable.Height and logviewer.Height. Every tier is also limited to
 // the screen less 1rem at the top and the bottom, so the box is never taller
-// than a phone screen. Unknown values fall back to ScrollMd.
+// than a phone screen. Unknown values fall back to ScrollM.
 type ScrollHeight string
 
 // ScrollHeight values accepted by ScrollProps.MaxHeight.
 const (
-	ScrollMd ScrollHeight = ""   // 400px
-	ScrollSm ScrollHeight = "sm" // 240px
-	ScrollLg ScrollHeight = "lg" // 600px
+	ScrollM ScrollHeight = ""  // 400px
+	ScrollS ScrollHeight = "s" // 240px
+	ScrollL ScrollHeight = "l" // 600px
 )
 
 // ScrollProps configures a Scroll.
@@ -27,17 +27,19 @@ type ScrollProps struct {
 	ID         string
 	Class      string
 	Attributes templ.Attributes
-	// MaxHeight is the height limit. The zero value is ScrollMd.
+	// MaxHeight is the height limit. The zero value is ScrollM.
 	MaxHeight ScrollHeight
-	// Label names the region for assistive technology (aria-label).
+	// Label names the box for assistive technology: with a Label the box
+	// is a region (role="region") with that aria-label; without one it has
+	// no role.
 	Label string
 }
 
 func scrollHeightClass(h ScrollHeight) string {
 	switch h {
-	case ScrollSm:
+	case ScrollS:
 		return "max-h-[min(240px,calc(100dvh-2rem))]"
-	case ScrollLg:
+	case ScrollL:
 		return "max-h-[min(600px,calc(100dvh-2rem))]"
 	default:
 		return "max-h-[min(400px,calc(100dvh-2rem))]"
@@ -75,7 +77,9 @@ func Scroll(props ...ScrollProps) templ.Component {
 			p = props[0]
 		}
 		var templ_7745c5c3_Var2 = []any{utils.TwMerge(
-			"overflow-y-auto",
+			// -mx-1 px-1 leaves room for the focus rings of the
+			// children, which a scroll box cuts off at its edge.
+			"overflow-y-auto -mx-1 px-1",
 			scrollHeightClass(p.MaxHeight),
 			"rounded-xs focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
 			p.Class,
@@ -97,7 +101,7 @@ func Scroll(props ...ScrollProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/scroll.templ`, Line: 52, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/scroll.templ`, Line: 54, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -121,19 +125,19 @@ func Scroll(props ...ScrollProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" role=\"region\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if p.Label != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " aria-label=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " role=\"region\" aria-label=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/scroll.templ`, Line: 64, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/layout/scroll.templ`, Line: 68, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

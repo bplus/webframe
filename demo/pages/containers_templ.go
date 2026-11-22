@@ -706,7 +706,7 @@ func scrollDemo() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = layout.Scroll(layout.ScrollProps{ID: "scroll-demo-rows", MaxHeight: layout.ScrollSm, Label: "Rows"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = layout.Scroll(layout.ScrollProps{ID: "scroll-demo-rows", MaxHeight: layout.ScrollS, Label: "Rows"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

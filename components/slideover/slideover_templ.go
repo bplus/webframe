@@ -583,8 +583,10 @@ func Panel(props ...PanelProps) templ.Component {
 			// Style
 			"bg-background shadow-xl",
 			"border-border",
-			// Layout
-			"flex flex-col",
+			// Layout. The panel scrolls only when the Body is at its
+			// minimum height and the parts still do not fit (a short
+			// screen, a tall Pinned).
+			"flex flex-col overflow-y-auto",
 			// Transitions
 			"transition-transform duration-300 ease-in-out",
 			// Slide animation
@@ -619,7 +621,7 @@ func Panel(props ...PanelProps) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 348, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 350, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -672,7 +674,7 @@ func Panel(props ...PanelProps) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 367, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 369, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -724,7 +726,7 @@ func Panel(props ...PanelProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(instanceID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 384, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 386, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -805,7 +807,7 @@ func Pinned(props ...PinnedProps) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 408, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 410, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -855,7 +857,8 @@ func Pinned(props ...PinnedProps) templ.Component {
 
 // Body is the scrollable main region of a Panel: it takes the remaining
 // height and scrolls, keeping the header and Footer pinned. Place it
-// directly inside Panel.
+// directly inside Panel. It is never less than 8rem tall: on a screen too
+// short for that and the pinned parts, the whole panel scrolls instead.
 func Body(props ...BodyProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -881,7 +884,7 @@ func Body(props ...BodyProps) templ.Component {
 		if len(props) > 0 {
 			p = props[0]
 		}
-		var templ_7745c5c3_Var28 = []any{utils.TwMerge("flex-1 overflow-y-auto p-6", p.Class)}
+		var templ_7745c5c3_Var28 = []any{utils.TwMerge("min-h-32 flex-1 overflow-y-auto p-6", p.Class)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -898,7 +901,7 @@ func Body(props ...BodyProps) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 428, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 431, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -991,7 +994,7 @@ func Footer(props ...FooterProps) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 448, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 451, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -1084,7 +1087,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(p.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 467, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 470, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -1103,7 +1106,7 @@ func Close(props ...CloseProps) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(p.For)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 470, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 473, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -1188,7 +1191,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 486, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 489, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
@@ -1201,7 +1204,7 @@ func Script() templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ScriptURL("/static/js/slideover.min.js"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 486, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/slideover/slideover.templ`, Line: 489, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {

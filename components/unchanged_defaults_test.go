@@ -20,10 +20,12 @@ import (
 // dialog, slideover and panel render for callers that set none of the fields
 // added after v0.3.0 (dialog's Width and Body, slideover's Pinned). They were
 // first written from v0.3.0 itself. A change to one of these files is a
-// change for every existing caller and must be meant; the two that were
-// meant are in the files' history: every dialog panel became a column with a
-// height limit, and every collapsible panel got its chevron and focus ring.
-// The slideover file and the panels that do not collapse are as in v0.3.0.
+// change for every existing caller and must be meant; those that were meant
+// are in the files' history: every dialog panel became a column with a
+// height limit, every collapsible panel got its chevron and focus ring, and
+// every slideover Body got a minimum height (min-h-32) with a panel that
+// scrolls (overflow-y-auto) when the parts do not fit a short screen. The
+// panels that do not collapse are as in v0.3.0.
 //
 // Regenerate with: go test ./components -run TestUnchangedDefaults -update-unchanged
 var updateUnchanged = flag.Bool("update-unchanged", false, "rewrite the testdata/unchanged-*.html files from the current output")

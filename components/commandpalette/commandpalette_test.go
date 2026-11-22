@@ -244,3 +244,34 @@ func TestPalette_UnsafeHrefNeutralised(t *testing.T) {
 		t.Errorf("a plain href must survive:\n%s", got)
 	}
 }
+
+// dialog.Content gives every dialog a height limit and lets the panel
+// scroll. The palette has its own limit and scrolls its list, not its panel:
+// its classes must win the merge, with none of the dialog's left beside them.
+func TestPalette_KeepsItsOwnHeightLimitAndOverflow(t *testing.T) {
+	got := render(t, Palette(sample()))
+	i := strings.Index(got, `" data-tui-dialog-content data-dialog-instance=`)
+	if i < 0 {
+		t.Fatalf("no dialog content element in:\n%s", got)
+	}
+	start := strings.LastIndex(got[:i], `class="`) + len(`class="`)
+	classes := strings.Fields(got[start : start+strings.Index(got[start:], `"`)])
+	has := func(want string) bool {
+		for _, c := range classes {
+			if c == want {
+				return true
+			}
+		}
+		return false
+	}
+	for _, want := range []string{"overflow-hidden", "max-h-[var(--wf-palette-vh,60dvh)]", "sm:max-h-[80vh]"} {
+		if !has(want) {
+			t.Errorf("missing %q in %v", want, classes)
+		}
+	}
+	for _, not := range []string{"overflow-y-auto", "max-h-[calc(100dvh-2rem)]"} {
+		if has(not) {
+			t.Errorf("the dialog's %q survived the merge in %v", not, classes)
+		}
+	}
+}
