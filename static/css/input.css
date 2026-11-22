@@ -131,6 +131,23 @@
   --color-ring:                 var(--color-primary-500);
 }
 
+/* ── filterbar: a TypeChoice group ──
+   One line of buttons that scrolls sideways with no scrollbar.
+   filterbar.min.js sets data-tui-filterbar-more (start, end or both) while
+   buttons are scrolled out at that edge, and that edge fades over 32px (the
+   script's EDGE) to show there is more. */
+[data-tui-filterbar-choice] { scrollbar-width: none; }
+[data-tui-filterbar-choice]::-webkit-scrollbar { display: none; }
+[data-tui-filterbar-choice][data-tui-filterbar-more="end"] {
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+[data-tui-filterbar-choice][data-tui-filterbar-more="start"] {
+  mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+}
+[data-tui-filterbar-choice][data-tui-filterbar-more="both"] {
+  mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+}
+
 /* ── Alpine cloak ── */
 [x-cloak] { display: none !important; }
 

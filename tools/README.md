@@ -153,7 +153,13 @@ once and none when the timer would have fired. Then it holds answers back
 (route interception): with the search request held, a pill click must go out
 at once, and after every answer has landed the results must be the rows a
 fresh load of the address bar's URL shows; the same with a held request
-sent after the first answer. No toast may show. htmx logs two console
+sent after the first answer. No toast may show. On the list's single-choice
+Pack group a click must send one request with that value alone, a click on
+another button that one alone, and a click on the selected button or on
+"Clear filters" no value. On the showcase at 390px the group of 16 School
+buttons must stay on one line with no horizontal overflow of the page, mark
+its cut-off edge (`data-tui-filterbar-more`), and bring the selected button
+into view after a click and after a resize. htmx logs two console
 errors for a request it aborts (`htmx:afterRequest`, `htmx:sendAbort`); any
 other console error fails the run. Exit 1 on any failure, 2 for a usage
 error.

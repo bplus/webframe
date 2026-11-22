@@ -82,6 +82,19 @@ upgrade.
   `htmx.ajax` returns is caught (htmx rejects it on abort). A bar with no
   target still swaps into `<body>`. `make filterbar-check` covers this in a
   browser.
+- `filterbar.min.js`: a button inside `[data-tui-filterbar-choice]`
+  (`filterbar.TypeChoice`) is a toggle of which one at most is selected:
+  `chooseOne` selects the clicked button alone, or on a click on the selected
+  button deselects it and selects the group's
+  `[data-tui-filterbar-choice-none]` button when it has one (a click on that
+  button while selected changes and sends nothing). `setSelected` also writes
+  `aria-pressed` on a button that has it. `resetAll` selects the "none"
+  button. The group is one line that scrolls sideways: `showSelected` scrolls
+  the group, never the page, until the selected button is clear of the 32px
+  edges, and `updateMore` sets `data-tui-filterbar-more` (`start`, `end`,
+  `both`) while buttons are scrolled out, which `input.css` draws as a fade.
+  Both run on load, after `htmx:afterSettle`, on a window resize and from a
+  `ResizeObserver` on each group; `updateMore` also on the group's scroll.
 - `filterbar.min.js`: `resetAll` skips controls with `type="hidden"` or
   `data-tui-filterbar-state` (list state such as sort, dir and per survives
   "Clear filters"). `triggerUpdate` runs `applySets(bar)` (a selected

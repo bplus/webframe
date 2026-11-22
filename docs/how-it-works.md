@@ -250,7 +250,7 @@ if p.Intro != "" {
 In plain words: send the results; then send the filter bar's hidden inputs again, flagged to
 replace the old ones; then send the intro line again too, so its counts ("14 items, 3 drafts")
 stay correct after a delete. `HiddenOOB` is at
-[components/filterbar/filterbar.templ:198](../components/filterbar/filterbar.templ#L198-L211).
+[components/filterbar/filterbar.templ:228](../components/filterbar/filterbar.templ#L228-L241).
 On a list with sortable columns the `sort` value is carried by a visible "Sort" select (shown on
 phones, where some headers are hidden), and the out-of-band copy replaces that select too, so
 the headers and the select never disagree.

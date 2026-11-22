@@ -415,3 +415,185 @@ func TestHiddenOOB_Controls(t *testing.T) {
 		t.Errorf("HiddenOOB =\n%s\nwant\n%s", got, want)
 	}
 }
+
+// v030NoID is what FilterBar rendered in v0.3.0 for richProps without an ID:
+// every control type of that version, a reset button, no Hidden. A bar that
+// sets none of the fields added since must still render exactly this.
+const v030NoID = `<div data-tui-filterbar data-tui-filterbar-hx-get="/items" data-tui-filterbar-hx-target="#results" data-tui-filterbar-hx-swap="innerHTML" class="flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg mt-2">` +
+	`<div class="flex items-center gap-2"><label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Type</label>` +
+	`<select name="type" data-tui-filterbar-control class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"><option value="">Any type</option> <option value="weapon">Weapon</option><option value="armor" selected>Armor</option></select></div>` +
+	`<div class="flex items-center gap-2"><span class="text-xs font-medium text-muted-foreground whitespace-nowrap">Status</span><div class="flex gap-1">` +
+	`<button type="button" name="status" value="published" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground">Published</button>` +
+	`<button type="button" name="status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false" class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground">Draft</button></div></div>` +
+	`<div class="flex items-center gap-2"><label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Search</label>` +
+	`<input type="search" name="q" data-tui-filterbar-control data-tui-filterbar-debounce="400" placeholder="Search items" class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"></div>` +
+	`<button type="button" data-tui-filterbar-reset class="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors">Clear filters</button></div>`
+
+// TestFilterBar_UnchangedFromV030: the zero value of every field added
+// after v0.3.0 (FilterOption.Count, TypeChoice) changes nothing: a bar of
+// that version's props renders byte for byte what it rendered then.
+func TestFilterBar_UnchangedFromV030(t *testing.T) {
+	p := richProps()
+	p.ID = ""
+	if got := render(t, p); got != v030NoID {
+		t.Errorf("FilterBar without an ID =\n%s\nwant the v0.3.0 render\n%s", got, v030NoID)
+	}
+	if got, want := render(t, richProps()), strings.Replace(v030NoID, `<div data-tui-filterbar `, `<div id="bar" data-tui-filterbar `, 1); got != want {
+		t.Errorf("FilterBar with an ID =\n%s\nwant the v0.3.0 render\n%s", got, want)
+	}
+}
+
+// choiceProps is a bar with one TypeChoice group: a Placeholder button, a
+// counted option, an option counted 0 and an option with no count.
+func choiceProps() filterbar.Props {
+	return filterbar.Props{Filters: []filterbar.FilterConfig{{
+		ID: "school", Label: "School", Placeholder: "All", Type: filterbar.TypeChoice,
+		Options: []filterbar.FilterOption{
+			{Label: "Evocation", Value: "evocation", Count: filterbar.Count(54)},
+			{Label: "Illusion", Value: "illusion", Count: filterbar.Count(0)},
+			{Label: "Other", Value: "other"},
+		},
+	}}}
+}
+
+// button returns the <button> element in html whose value attribute is value.
+func button(t *testing.T, html, value string) string {
+	t.Helper()
+	i := strings.Index(html, `value="`+value+`"`)
+	if i < 0 {
+		t.Fatalf("no button with value %q in: %s", value, html)
+	}
+	start := strings.LastIndex(html[:i], "<button")
+	return html[start : i+strings.Index(html[i:], "</button>")+len("</button>")]
+}
+
+// TestFilterBar_Choice: a TypeChoice group is a role="group" named by the
+// label, with one button per option plus the Placeholder button, each with
+// aria-pressed and the toggle markers the script reads; the count renders
+// when set (0 as "0") and no count element renders when it is nil.
+func TestFilterBar_Choice(t *testing.T) {
+	html := render(t, choiceProps())
+	if !strings.Contains(html, `<div role="group" aria-label="School" data-tui-filterbar-choice class="flex gap-1 min-w-0 overflow-x-auto p-0.5">`) {
+		t.Errorf("missing the group element in: %s", html)
+	}
+	if n := strings.Count(html, "<button"); n != 4 {
+		t.Errorf("%d buttons, want 4 (All and three options): %s", n, html)
+	}
+	if n := strings.Count(html, `name="school"`); n != 4 {
+		t.Errorf("%d buttons named school, want 4: %s", n, html)
+	}
+	if n := strings.Count(html, "aria-pressed="); n != 4 {
+		t.Errorf("%d aria-pressed attributes, want one per button: %s", n, html)
+	}
+	// Nothing selected: the Placeholder button is, and it has no value.
+	all := button(t, html, "")
+	for _, want := range []string{`data-tui-filterbar-choice-none`, `data-tui-filterbar-toggle-selected="true"`, `aria-pressed="true"`, `bg-primary`, `>All</button>`} {
+		if !strings.Contains(all, want) {
+			t.Errorf("Placeholder button lacks %q: %s", want, all)
+		}
+	}
+	evo := button(t, html, "evocation")
+	for _, want := range []string{`type="button"`, `data-tui-filterbar-toggle `, `data-tui-filterbar-toggle-selected="false"`, `aria-pressed="false"`, `shrink-0 whitespace-nowrap`, `>Evocation <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">54</span></button>`} {
+		if !strings.Contains(evo, want) {
+			t.Errorf("counted option lacks %q: %s", want, evo)
+		}
+	}
+	if strings.Contains(evo, "data-tui-filterbar-choice-none") {
+		t.Errorf("an option must not carry the Placeholder marker: %s", evo)
+	}
+	if ill := button(t, html, "illusion"); !strings.Contains(ill, `>0</span>`) {
+		t.Errorf("a count of 0 must render: %s", ill)
+	}
+	if other := button(t, html, "other"); !strings.Contains(other, `>Other</button>`) || strings.Contains(other, "data-tui-filterbar-count") {
+		t.Errorf("an option with a nil Count must render no count element: %s", other)
+	}
+	if n := strings.Count(html, "data-tui-filterbar-count"); n != 2 {
+		t.Errorf("%d count elements, want 2: %s", n, html)
+	}
+}
+
+// TestFilterBar_Choice_Selection: the first Selected option alone renders
+// selected, the Placeholder button is then not; without a Placeholder there
+// is no extra button, and without a Label no aria-label.
+func TestFilterBar_Choice_Selection(t *testing.T) {
+	p := choiceProps()
+	p.Filters[0].Options[1].Selected = true
+	p.Filters[0].Options[2].Selected = true
+	html := render(t, p)
+	if n := strings.Count(html, `aria-pressed="true"`); n != 1 {
+		t.Errorf("%d pressed buttons, want 1: %s", n, html)
+	}
+	if ill := button(t, html, "illusion"); !strings.Contains(ill, `aria-pressed="true"`) || !strings.Contains(ill, `data-tui-filterbar-toggle-selected="true"`) {
+		t.Errorf("the first Selected option must render selected: %s", ill)
+	}
+	if all := button(t, html, ""); !strings.Contains(all, `aria-pressed="false"`) {
+		t.Errorf("the Placeholder button must not be selected beside an option: %s", all)
+	}
+	p.Filters[0].Placeholder, p.Filters[0].Label = "", ""
+	html = render(t, p)
+	if strings.Contains(html, "data-tui-filterbar-choice-none") || strings.Count(html, "<button") != 3 {
+		t.Errorf("no Placeholder, no extra button: %s", html)
+	}
+	if strings.Contains(html, "aria-label") {
+		t.Errorf("no Label, no aria-label: %s", html)
+	}
+}
+
+// TestWithSelected_Choice: a TypeChoice option is selected from the query
+// value; of several values the first non-empty one counts, a comma-joined
+// value is one value, and no value deselects every option.
+func TestWithSelected_Choice(t *testing.T) {
+	in := choiceProps().Filters
+	in[0].Options[2].Selected = true
+	out := filterbar.WithSelected(in, map[string][]string{"school": {"", "illusion", "evocation"}})
+	if o := out[0].Options; o[0].Selected || !o[1].Selected || o[2].Selected {
+		t.Errorf("expected illusion alone selected, got %+v", o)
+	}
+	if !in[0].Options[2].Selected || in[0].Options[1].Selected {
+		t.Errorf("input slice mutated: %+v", in[0].Options)
+	}
+	html := render(t, filterbar.Props{Filters: out})
+	if ill := button(t, html, "illusion"); !strings.Contains(ill, `aria-pressed="true"`) {
+		t.Errorf("the option of the query value must render selected: %s", ill)
+	}
+	out = filterbar.WithSelected(in, map[string][]string{"school": {"illusion,evocation"}})
+	for _, o := range out[0].Options {
+		if o.Selected {
+			t.Errorf("a comma-joined value is not an option value, got %+v", out[0].Options)
+		}
+	}
+	out = filterbar.WithSelected(in, nil)
+	for _, o := range out[0].Options {
+		if o.Selected {
+			t.Errorf("expected nothing selected without a value, got %+v", out[0].Options)
+		}
+	}
+}
+
+// TestFilterBar_Counts: FilterOption.Count renders in a toggle pill after
+// the label and in a select option in parentheses; a nil Count leaves both
+// as they were.
+func TestFilterBar_Counts(t *testing.T) {
+	html := render(t, filterbar.Props{Filters: []filterbar.FilterConfig{
+		{ID: "status", Type: filterbar.TypeToggle, Options: []filterbar.FilterOption{
+			{Label: "Published", Value: "published", Count: filterbar.Count(11)},
+			{Label: "Draft", Value: "draft"},
+		}},
+		{ID: "type", Type: filterbar.TypeSelect, Options: []filterbar.FilterOption{
+			{Label: "Weapon", Value: "weapon", Count: filterbar.Count(5)},
+			{Label: "Armor", Value: "armor", Count: filterbar.Count(0)},
+			{Label: "Other", Value: "other"},
+		}},
+	}})
+	for _, want := range []string{
+		`>Published <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">11</span></button>`,
+		`>Draft</button>`,
+		`<option value="weapon">Weapon (5)</option>`,
+		`<option value="armor">Armor (0)</option>`,
+		`<option value="other">Other</option>`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in: %s", want, html)
+		}
+	}
+}

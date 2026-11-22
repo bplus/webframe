@@ -717,3 +717,29 @@ func TestItems_SaveFlashesOnce(t *testing.T) {
 		t.Errorf("reload still shows the flash")
 	}
 }
+
+// TestItems_PackChoice: the Pack filter is a single-choice group with a
+// count per pack; the counts follow the search and the other filters, not
+// the pack itself, and the chosen pack filters the rows.
+func TestItems_PackChoice(t *testing.T) {
+	h := itemsHandler(t)
+	body := do(h, "GET", "/items", nil, nil).Body.String()
+	wantAll(t, body,
+		`<div role="group" aria-label="Pack" data-tui-filterbar-choice`,
+		`name="pack" value="" data-tui-filterbar-toggle data-tui-filterbar-choice-none data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
+		`>Starfall Pack <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">4</span>`,
+		`>Netherese Relics <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">4</span>`,
+		`>No pack <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">6</span>`,
+		// The Status toggle is still there.
+		`value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false"`,
+	)
+	body = do(h, "GET", "/items?pack=netherese&q=of", nil, nil).Body.String()
+	wantAll(t, body,
+		`name="pack" value="netherese" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
+		"Boots of Quiet Steps", "Mantle of Ember", "1–2 of 2 items",
+		// Counts of the search "of" in every pack, the chosen one included.
+		`>Starfall Pack <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">3</span>`,
+		`>Netherese Relics <span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">2</span>`,
+	)
+	wantNone(t, mainContent(body), "Ashen Dagger", "Blade of the Fallen Star")
+}

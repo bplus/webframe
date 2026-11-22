@@ -2,14 +2,42 @@ package filterbar
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 )
 
+// Count returns a pointer to n, for FilterOption.Count:
+//
+//	filterbar.FilterOption{Label: "Evocation", Value: "evocation", Count: filterbar.Count(54)}
+func Count(n int) *int { return &n }
+
+// optionText is a select option's text: the label, then the count in
+// parentheses when there is one.
+func optionText(opt FilterOption) string {
+	if opt.Count == nil {
+		return opt.Label
+	}
+	return opt.Label + " (" + strconv.Itoa(*opt.Count) + ")"
+}
+
+// choiceSelected is the index of the option a TypeChoice group shows as
+// selected: the first with Selected set, -1 when there is none.
+func choiceSelected(opts []FilterOption) int {
+	for i, o := range opts {
+		if o.Selected {
+			return i
+		}
+	}
+	return -1
+}
+
 // WithSelected returns a copy of filters with the selected state applied
 // from values, keyed by FilterConfig.ID: a TypeSelect or TypeToggle option
-// is Selected when values[f.ID] contains its Value, and a TypeSearch filter
-// gets Value set to the first non-empty values[f.ID] entry. values is the
-// whole truth: options not named in it come back deselected. Toggle values
+// is Selected when values[f.ID] contains its Value, a TypeChoice option when
+// its Value is the first non-empty values[f.ID] entry (one at most), and a
+// TypeSearch filter gets Value set to the first non-empty values[f.ID]
+// entry. values is the whole truth: options not named in it come back
+// deselected. Toggle values
 // may be repeated entries or comma-joined in one entry (as filterbar.min.js
 // submits them). values is typically a url.Values or listquery.Spec.Filters.
 // The input is never modified.
@@ -32,6 +60,8 @@ func WithSelected(filters []FilterConfig, values map[string][]string) []FilterCo
 			}
 		case TypeToggle:
 			c.Options = markSelected(f.Options, splitComma(vals))
+		case TypeChoice:
+			c.Options = markSelected(f.Options, firstNonEmpty(vals))
 		default:
 			c.Options = markSelected(f.Options, vals)
 		}
@@ -58,6 +88,16 @@ func markSelected(opts []FilterOption, vals []string) []FilterOption {
 		out[i] = o
 	}
 	return out
+}
+
+// firstNonEmpty returns the first non-empty entry of vals alone, or nil.
+func firstNonEmpty(vals []string) []string {
+	for _, v := range vals {
+		if v != "" {
+			return []string{v}
+		}
+	}
+	return nil
 }
 
 // splitComma expands "a,b" entries into separate values; plain entries pass

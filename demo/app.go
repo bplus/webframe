@@ -120,6 +120,7 @@ func Routes(mux *http.ServeMux) {
 	// htmx demo endpoints.
 	mux.HandleFunc("POST /api/click", HandleClick)
 	mux.HandleFunc("GET /api/search", HandleSearch)
+	mux.HandleFunc("GET /api/filter-demo", HandleFilterDemo)
 	mux.HandleFunc("POST /api/validate", HandleValidate)
 	mux.HandleFunc("POST /api/picked", HandlePicked)
 	mux.HandleFunc("POST /api/toast", HandleToast)

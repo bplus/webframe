@@ -1,6 +1,7 @@
 package filterbar
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/bplus/webframe/utils"
@@ -20,15 +21,28 @@ const (
 	// TypeToggle is a row of pill buttons; multiple pills may be
 	// selected and their values are submitted comma-joined.
 	TypeToggle FilterType = "toggle"
+	// TypeChoice is a row of buttons of which at most one is selected. The
+	// selected value is sent under FilterConfig.ID; nothing is sent when
+	// none is. A click on the selected button deselects it. The buttons
+	// stay on one line: when they do not fit, the line scrolls sideways
+	// inside the bar, its cut-off edge fades, and the script brings the
+	// selected button into view.
+	TypeChoice FilterType = "choice"
 )
 
-// FilterOption is one choice within a select or toggle filter.
+// FilterOption is one choice within a select, toggle or choice filter.
 // Selected marks it active in the initial render (the selected
-// <option>, or a highlighted toggle pill).
+// <option>, or a highlighted button). A TypeChoice group shows only its
+// first Selected option as selected.
 type FilterOption struct {
 	Label    string
 	Value    string
 	Selected bool
+	// Count, when not nil, renders after the label ("Evocation 54"); 0
+	// renders "0". TypeChoice and TypeToggle put it in the button;
+	// TypeSelect appends it to the option text in parentheses ("Evocation
+	// (54)"). The handler supplies the number (see the Count function).
+	Count *int
 	// Attributes spread onto the <option> (TypeSelect only). One attribute
 	// has a meaning: data-tui-filterbar-set-<name>="<value>" on the selected
 	// option writes <value> into the bar's control named <name> before every
@@ -44,17 +58,19 @@ type FilterConfig struct {
 	ID string
 	// Label is the small caption rendered beside the control.
 	Label string
-	// Placeholder is the empty first <option> for TypeSelect and the
-	// input placeholder for TypeSearch; unused by TypeToggle.
+	// Placeholder is the empty first <option> for TypeSelect, the input
+	// placeholder for TypeSearch and, for TypeChoice, the label of a first
+	// button ("All") that is selected when no option is and sends no value;
+	// unused by TypeToggle.
 	Placeholder string
 	Type        FilterType
-	// Options populate TypeSelect and TypeToggle controls; unused by
-	// TypeSearch.
+	// Options populate TypeSelect, TypeToggle and TypeChoice controls;
+	// unused by TypeSearch.
 	Options []FilterOption
 	// Value is the initial text of a TypeSearch input (rendered as its
-	// value attribute when non-empty); unused by TypeSelect and
-	// TypeToggle, whose state lives in Options[i].Selected. WithSelected
-	// fills it from the query.
+	// value attribute when non-empty); unused by TypeSelect, TypeToggle
+	// and TypeChoice, whose state lives in Options[i].Selected.
+	// WithSelected fills it from the query.
 	Value string
 	// PhoneOnly hides the control from md (768px) up. Its value is still
 	// sent on every update, so the page should offer the same choice another
@@ -74,7 +90,8 @@ type Props struct {
 	HxTarget string // swap target selector
 	HxSwap   string // swap strategy (default "innerHTML")
 	// ShowReset appends a "Clear filters" button that resets every
-	// control and re-triggers the update.
+	// control (a TypeChoice group goes back to no selection) and
+	// re-triggers the update.
 	ShowReset bool
 	// Hidden renders one hidden input per entry (sorted by key), sent along
 	// with every filter change. It is meant for list state that is not a
@@ -86,7 +103,7 @@ type Props struct {
 	// A key that is also the ID of a TypeSelect or TypeSearch control renders
 	// no input: that control carries the state instead, taking the input's id
 	// and surviving "Clear filters" the same way, and the map value is
-	// ignored. Toggles are not promoted this way.
+	// ignored. Toggles and choice groups are not promoted this way.
 	Hidden map[string]string
 	// Drop names query parameters, beyond the bar's own controls, removed
 	// from the page URL on every change. A list page names its page
@@ -95,10 +112,11 @@ type Props struct {
 }
 
 // FilterBar renders a row of filter controls (selects, debounced search
-// inputs, toggle pills) and an optional reset button that drive htmx partial
-// reloads. On any change filterbar.min.js collects every control's value into
-// query parameters keyed by FilterConfig.ID (multi-selected toggles
-// comma-joined), GETs HxGet, swaps the response into HxTarget, dispatches a
+// inputs, toggle pills, single-choice button groups) and an optional reset
+// button that drive htmx partial reloads. On any change filterbar.min.js
+// collects every control's value into query parameters keyed by
+// FilterConfig.ID (multi-selected toggles comma-joined, the one selected
+// button of a choice group alone), GETs HxGet, swaps the response into HxTarget, dispatches a
 // bubbling "filterbar-change" event, and mirrors the parameters into the page
 // URL. Parameters the bar does not own stay in the URL. Controls come only
 // from Props.Filters; children are not accepted. It is inert unless Script
@@ -162,6 +180,8 @@ templ FilterBar(props ...Props) {
 					@filterSearch(f, id, state)
 				case TypeToggle:
 					@filterToggle(f)
+				case TypeChoice:
+					@filterChoice(f)
 			}
 		}
 		if p.ShowReset {
@@ -269,7 +289,7 @@ templ selectControl(f FilterConfig, id string, state, oob bool) {
 					selected
 				}
 				{ opt.Attributes... }
-			>{ opt.Label }</option>
+			>{ optionText(opt) }</option>
 		}
 	</select>
 }
@@ -330,10 +350,82 @@ templ filterToggle(f FilterConfig) {
 						data-tui-filterbar-toggle-selected="false"
 						class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
 					}
-				>{ opt.Label }</button>
+				>
+					{ opt.Label }
+					@optionCount(opt)
+				</button>
 			}
 		</div>
 	</div>
+}
+
+// optionCount is a button's count, after one space: nothing when
+// FilterOption.Count is nil.
+templ optionCount(opt FilterOption) {
+	if opt.Count != nil {
+		{ " " }<span data-tui-filterbar-count class="ml-0.5 tabular-nums opacity-70">{ strconv.Itoa(*opt.Count) }</span>
+	}
+}
+
+// filterChoice is a labelled single-choice group. The wrapper may shrink
+// below its content (min-w-0), so a group wider than the bar scrolls
+// instead of widening the page.
+templ filterChoice(f FilterConfig) {
+	<div class={ utils.TwMerge(wrapperClass(f), "min-w-0 max-w-full") }>
+		<span class="text-xs font-medium text-muted-foreground whitespace-nowrap">{ f.Label }</span>
+		@choiceControl(f)
+	</div>
+}
+
+// choiceControl is the bare group: role="group" named by the label, one
+// button per option on one line, and before them the Placeholder button
+// when there is one. Each button is a toggle to filterbar.min.js (the same
+// markers and class lists as a TypeToggle pill), so collecting, the URL and
+// "Clear filters" treat it as one; the group marker makes a click select
+// one button only.
+templ choiceControl(f FilterConfig) {
+	{{ sel := choiceSelected(f.Options) }}
+	<div
+		role="group"
+		if f.Label != "" {
+			aria-label={ f.Label }
+		}
+		data-tui-filterbar-choice
+		class="flex gap-1 min-w-0 overflow-x-auto p-0.5"
+	>
+		if f.Placeholder != "" {
+			@choiceButton(f.ID, FilterOption{Label: f.Placeholder}, sel < 0, true)
+		}
+		for i, opt := range f.Options {
+			@choiceButton(f.ID, opt, i == sel, false)
+		}
+	</div>
+}
+
+// choiceButton is one button of a choice group. none marks the Placeholder
+// button: it has no value, so it sends nothing.
+templ choiceButton(name string, opt FilterOption, selected, none bool) {
+	<button
+		type="button"
+		name={ name }
+		value={ opt.Value }
+		data-tui-filterbar-toggle
+		if none {
+			data-tui-filterbar-choice-none
+		}
+		if selected {
+			data-tui-filterbar-toggle-selected="true"
+			aria-pressed="true"
+			class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-primary bg-primary text-primary-foreground"
+		} else {
+			data-tui-filterbar-toggle-selected="false"
+			aria-pressed="false"
+			class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium border transition-colors border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+		}
+	>
+		{ opt.Label }
+		@optionCount(opt)
+	</button>
 }
 
 // Script loads filterbar.min.js. Include it once per page, alongside htmx.

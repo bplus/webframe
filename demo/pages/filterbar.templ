@@ -1,0 +1,45 @@
+package pages
+
+import (
+	"strconv"
+
+	"github.com/bplus/webframe/components/filterbar"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/panel"
+)
+
+// filterbarSection is the showcase's Filter bar section. The showcase is a
+// static page, so the first render shows the unfiltered list; the bar loads
+// FilterDemoResults from GET /api/filter-demo (data in filterdemo.go).
+templ filterbarSection() {
+	{{ filters, found, total := FilterDemo(nil) }}
+	@layout.Section(layout.SectionProps{Level: 3, ID: "filterbar", Title: "Filter bar", Description: "The row of controls above a list. listpage builds one from its Filters (see /items); this one is called directly."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "One choice of sixteen, with counts", Subtitle: "TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades."}) {
+			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
+				@filterbar.FilterBar(filterbar.Props{
+					ID:        FilterDemoID,
+					Filters:   filters,
+					HxGet:     "/api/filter-demo",
+					HxTarget:  "#" + FilterDemoID + "-results",
+					ShowReset: true,
+				})
+				@layout.Stack(layout.StackProps{ID: FilterDemoID + "-results", Gap: layout.GapS}) {
+					@FilterDemoResults(found, total)
+				}
+			}
+		}
+	}
+}
+
+// FilterDemoResults is the content of the demo's results region: a count
+// line and the matching spells.
+templ FilterDemoResults(found []FilterDemoSpell, total int) {
+	<p><strong>{ strconv.Itoa(len(found)) }</strong> of { strconv.Itoa(total) } spells</p>
+	if len(found) > 0 {
+		<ul>
+			for _, s := range found {
+				<li>{ s.Name } <small>{ s.School }</small></li>
+			}
+		</ul>
+	}
+}

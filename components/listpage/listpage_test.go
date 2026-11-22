@@ -707,3 +707,20 @@ func TestRespondResults_VaryAndFlash(t *testing.T) {
 	}
 	wantOrder(t, rec.Body.String(), `id="list-results"`, `<div id="wf-flash" hx-swap-oob="true">FLASHMSG</div>`)
 }
+
+// TestPage_ChoiceFilterFromSpec: a filterbar.TypeChoice filter passes
+// through Filters like the other types: named by Spec.Param and selected
+// from Spec.Filters.
+func TestPage_ChoiceFilterFromSpec(t *testing.T) {
+	p := itemProps(t, "status=draft")
+	p.Filters = []filterbar.FilterConfig{{ID: "status", Label: "STATUSFILTER", Placeholder: "All", Type: filterbar.TypeChoice,
+		Options: []filterbar.FilterOption{{Label: "Published", Value: "published"}, {Label: "Draft", Value: "draft", Count: filterbar.Count(2)}}}}
+	out := renderPage(t, p)
+	wantAll(t, out,
+		`<div role="group" aria-label="STATUSFILTER" data-tui-filterbar-choice`,
+		`name="status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
+		`name="status" value="published" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
+		`name="status" value="" data-tui-filterbar-toggle data-tui-filterbar-choice-none data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
+		`>2</span>`,
+	)
+}

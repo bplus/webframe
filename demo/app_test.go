@@ -151,3 +151,23 @@ func TestInteractionFragments(t *testing.T) {
 		t.Errorf("POST /api/validate?other=x = %d, want 400", rec.Code)
 	}
 }
+
+// TestFilterDemo: the showcase's Filter bar section renders a bar with a
+// 16-option single-choice group, and its endpoint answers the results
+// region's content for a search and a school.
+func TestFilterDemo(t *testing.T) {
+	h := Handler()
+	body := do(h, "GET", "/", nil, nil).Body.String()
+	wantAll(t, body, `id="filter-demo"`, `data-tui-filterbar-hx-get="/api/filter-demo"`, `id="filter-demo-results"`,
+		`<div role="group" aria-label="School" data-tui-filterbar-choice`, "46</strong> of 46 spells")
+	if n := strings.Count(body, `name="school"`); n != 17 {
+		t.Errorf("%d School buttons, want 17 (All and 16 schools)", n)
+	}
+	rec := do(h, "GET", "/api/filter-demo?fq=fire&school=evocation", nil, hx("filter-demo-results"))
+	if rec.Code != 200 {
+		t.Fatalf("GET /api/filter-demo = %d", rec.Code)
+	}
+	body = rec.Body.String()
+	wantAll(t, body, "3</strong> of 46 spells", "Fire Bolt", "Fireball", "Wall of Fire")
+	wantNone(t, body, "Fire Shape", "Rune of Fire", "<html")
+}

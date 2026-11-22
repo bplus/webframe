@@ -237,6 +237,29 @@ func (s *ItemStore) Counts() (total, published, drafts int) {
 	return total, published, drafts
 }
 
+// itemPacks are the Pack filter's choices: a value per mod pack of the seed
+// data, and "none" for an item in no pack.
+var itemPacks = []struct{ Label, Value string }{
+	{"Starfall Pack", "starfall"},
+	{"Netherese Relics", "netherese"},
+	{"No pack", "none"},
+}
+
+// itemPack is the Pack filter value of an item: the value of the itemPacks
+// entry whose label is its UsedIn, "none" for no pack, and "" for a pack
+// the filter does not list.
+func itemPack(it Item) string {
+	if it.UsedIn == "" {
+		return "none"
+	}
+	for _, p := range itemPacks {
+		if p.Label == it.UsedIn {
+			return p.Value
+		}
+	}
+	return ""
+}
+
 // itemSorters are the less functions listquery.Apply sorts items with, one
 // per key in itemsQuery.AllowedSorts. Name, type and status compare
 // case-insensitively; updated compares the time.
@@ -249,13 +272,17 @@ var itemSorters = map[string]func(a, b Item) bool{
 
 // itemMatch is the filter for listquery.Apply: the item's Type must be
 // one of the "type" filter values (when any), its Status one of the
-// "status" values (when any), and its Name must contain the search text
-// case-insensitively (when any).
+// "status" values (when any), its pack (itemPack) one of the "pack" values
+// (when any), and its Name must contain the search text case-insensitively
+// (when any).
 func itemMatch(it Item, s listquery.Spec) bool {
 	if vals := s.Filters["type"]; len(vals) > 0 && !containsFold(vals, it.Type) {
 		return false
 	}
 	if vals := s.Filters["status"]; len(vals) > 0 && !containsFold(vals, it.Status) {
+		return false
+	}
+	if vals := s.Filters["pack"]; len(vals) > 0 && !containsFold(vals, itemPack(it)) {
 		return false
 	}
 	if q := strings.TrimSpace(s.Search); q != "" && !strings.Contains(strings.ToLower(it.Name), strings.ToLower(q)) {
