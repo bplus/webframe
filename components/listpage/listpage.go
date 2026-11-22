@@ -38,10 +38,12 @@
 // The URL is the list state. Every results-only response (Respond for a
 // request targeting the results region, RespondResults for a mutation)
 // carries, after the results, out-of-band copies of the bar's hidden
-// inputs (and of the Sort select in the hidden sort input's place) and of
-// the intro line (hx-swap-oob, matched by id), so a sort chosen from a
-// table header is what the next filter change sends and the intro's
-// counts follow a delete. The bar's URL rewrite drops its own parameters
+// inputs (and of the Sort select in the hidden sort input's place), of
+// each Filters control that has a Count on an option, and of the intro
+// line (hx-swap-oob, matched by id), so a sort chosen from a table header
+// is what the next filter change sends, a counted filter's counts are
+// those of the response (they can follow the search; the search box
+// itself is never rendered again), and the intro's counts follow a delete. The bar's URL rewrite drops its own parameters
 // and page (filterbar.Props.Drop) before writing the current values, so a
 // cleared filter leaves the address bar too. The empty state's "Clear
 // filters" drives the bar's own reset (window.tui.filterbar.reset) so the
@@ -537,4 +539,30 @@ func (p Props) validateActions() error {
 		groups = append(groups, row.Actions)
 	}
 	return action.ValidateAll(groups...)
+}
+
+// filterControls are the Filters controls a results-only response renders
+// again out of band (filterbar.ControlsOOB), as the bar renders them
+// (selected from Spec, named through Spec.Param): those with a Count on at
+// least one option, since a count is what changes from one response to the
+// next. A list whose filters have no counts sends none. The search box and
+// the Sort select are never among them, and neither is a filter that
+// carries list state (one named like the bar's sort, dir or per input):
+// filterbar.HiddenOOB renders that one.
+func (p Props) filterControls() []filterbar.FilterConfig {
+	if len(p.Filters) == 0 {
+		return nil
+	}
+	all := p.filterConfigs()
+	if p.Search != "" {
+		all = all[1:]
+	}
+	hidden := p.hiddenInputs()
+	out := make([]filterbar.FilterConfig, 0, len(p.Filters))
+	for _, f := range all[:len(p.Filters)] {
+		if _, state := hidden[f.ID]; !state && filterbar.HasCounts(f) {
+			out = append(out, f)
+		}
+	}
+	return out
 }

@@ -77,13 +77,17 @@ templ Results(p Props) {
 
 // resultsPart is what a results-only response carries: Results, then
 // out-of-band copies of the filter bar's hidden sort/dir/per inputs (or the
-// Sort select) and the intro line, so a header sort carries into the next
-// filter change and the intro's counts follow a delete. It is never
-// rendered inside Page.
+// Sort select), of the Filters controls that have counts and of the intro
+// line, so a header sort carries into the next filter change, a filter's
+// counts are those of this response, and the intro's counts follow a
+// delete. It is never rendered inside Page.
 templ resultsPart(p Props) {
 	@Results(p)
 	if p.hasFilterBar() {
 		@filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs(), p.sortControls()...)
+	}
+	if counted := p.filterControls(); len(counted) > 0 {
+		@filterbar.ControlsOOB(p.filterbarID(), counted...)
 	}
 	if p.Intro != "" {
 		<p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>

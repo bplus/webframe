@@ -84,7 +84,7 @@ is sent back in the response's `X-Request-Id` header
 ### Steps 2 and 3: your handler and Respond
 
 Your handler builds a declaration and calls a `Respond`. Here is `listpage.Respond` in full
-([components/listpage/listpage.go:500](../components/listpage/listpage.go#L500-L510)):
+([components/listpage/listpage.go:502](../components/listpage/listpage.go#L502-L512)):
 
 ```go
 app, err := appshell.Must(r.Context())
@@ -211,7 +211,7 @@ if p.HxTarget != "" {
 
 In plain words: the link works without JavaScript (`href`); with htmx it fetches the same URL,
 puts the answer into the results region, and writes the URL into the address bar. `listpage`
-sets `HxTarget` to `#list-results` ([listpage.go:472](../components/listpage/listpage.go#L472)).
+sets `HxTarget` to `#list-results` ([listpage.go:474](../components/listpage/listpage.go#L474)).
 The pagination links do the same thing.
 
 On the server, your handler runs exactly as it did for the first visit. The only difference is
@@ -227,7 +227,7 @@ title out of it means a swap never duplicates the header.
 
 The filter bar sits above the results region, outside it. It holds hidden inputs for `sort`,
 `dir` and `per` (page size), so that changing a filter keeps your current sort
-([listpage.go:373](../components/listpage/listpage.go#L373-L381)). `page` is left out on
+([listpage.go:375](../components/listpage/listpage.go#L375-L383)). `page` is left out on
 purpose, so a filter change lands on page 1.
 
 Now the problem. You click the "Year" header. Only the results region is swapped, so the filter
@@ -236,12 +236,15 @@ bar's hidden `sort` input still says "title". You then pick a filter. The bar se
 
 The fix: every results-only response also carries fresh copies of those hidden inputs, marked
 `hx-swap-oob="true"`. htmx finds each one's id on the page and replaces it. That is
-`resultsPart` ([listpage.templ:83](../components/listpage/listpage.templ#L83-L91)):
+`resultsPart` ([listpage.templ:84](../components/listpage/listpage.templ#L84-L95)):
 
 ```templ
 @Results(p)
 if p.hasFilterBar() {
     @filterbar.HiddenOOB(p.filterbarID(), p.hiddenInputs(), p.sortControls()...)
+}
+if counted := p.filterControls(); len(counted) > 0 {
+    @filterbar.ControlsOOB(p.filterbarID(), counted...)
 }
 if p.Intro != "" {
     <p id={ p.introID() } class={ introClass } hx-swap-oob="true">{ p.Intro }</p>
@@ -250,7 +253,11 @@ if p.Intro != "" {
 In plain words: send the results; then send the filter bar's hidden inputs again, flagged to
 replace the old ones; then send the intro line again too, so its counts ("14 items, 3 drafts")
 stay correct after a delete. `HiddenOOB` is at
-[components/filterbar/filterbar.templ:198](../components/filterbar/filterbar.templ#L198-L211).
+[components/filterbar/filterbar.templ:246](../components/filterbar/filterbar.templ#L246-L259).
+`ControlsOOB` sends a filter control again the same way when one of its options has a `Count`
+(never the search box, which may have the focus), so the count can change with every answer:
+"Drafts 3" becomes "Drafts 1" when the search narrows the list. A list whose filters have no
+counts sends no filter control.
 On a list with sortable columns the `sort` value is carried by a visible "Sort" select (shown on
 phones, where some headers are hidden), and the out-of-band copy replaces that select too, so
 the headers and the select never disagree.
@@ -261,7 +268,7 @@ A row's Delete button sends `DELETE /books/7`. That URL says nothing about which
 the user is looking at. htmx also sends `HX-Current-URL`, the address bar's URL.
 `listquery.ParseCurrent` reads the `Spec` from that
 ([listquery.go:106-122](../listquery/listquery.go#L106-L122)), and `listpage.RespondResults`
-([listpage.go:521](../components/listpage/listpage.go#L521-L530)) sends just the results part,
+([listpage.go:523](../components/listpage/listpage.go#L523-L532)) sends just the results part,
 plus an `HX-Replace-Url` header so the address bar shows the state that was actually served (for
 example page 3 became page 2 because its last row is gone).
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -427,6 +428,8 @@ func TestRespond_TargetedResults(t *testing.T) {
 	if n := strings.Count(body, "<select"); n != 1 {
 		t.Errorf("select appears %d times, want 1", n)
 	}
+	// Filters with no counts are not sent again: nothing has a control id.
+	wantNone(t, body, "list-filterbar-control-", "data-tui-filterbar-toggle")
 	if n := strings.Count(body, `name="sort"`); n != 1 {
 		t.Errorf("name=sort appears %d times, want 1", n)
 	}
@@ -706,4 +709,71 @@ func TestRespondResults_VaryAndFlash(t *testing.T) {
 		t.Errorf("App.Flash called %d times, want 1", calls)
 	}
 	wantOrder(t, rec.Body.String(), `id="list-results"`, `<div id="wf-flash" hx-swap-oob="true">FLASHMSG</div>`)
+}
+
+// TestPage_ChoiceFilterFromSpec: a filterbar.TypeChoice filter passes
+// through Filters like the other types: named by Spec.Param and selected
+// from Spec.Filters.
+func TestPage_ChoiceFilterFromSpec(t *testing.T) {
+	p := itemProps(t, "status=draft")
+	p.Filters = []filterbar.FilterConfig{{ID: "status", Label: "STATUSFILTER", Placeholder: "All", Type: filterbar.TypeChoice,
+		Options: []filterbar.FilterOption{{Label: "Published", Value: "published"}, {Label: "Draft", Value: "draft", Count: filterbar.CountOf(2)}}}}
+	out := renderPage(t, p)
+	wantAll(t, out,
+		`<span id="list-filterbar-control-status-label" class="text-xs font-medium text-muted-foreground whitespace-nowrap">STATUSFILTER</span>`,
+		`<div id="list-filterbar-control-status" role="group" aria-labelledby="list-filterbar-control-status-label" data-tui-filterbar-choice`,
+		`name="status" value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true" aria-pressed="true"`,
+		`name="status" value="published" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
+		`name="status" value="" data-tui-filterbar-toggle data-tui-filterbar-choice-none data-tui-filterbar-toggle-selected="false" aria-pressed="false"`,
+		`>2</span>`,
+	)
+}
+
+// TestRespond_CountedFiltersOOB: a results-only response renders again, out
+// of band and bare, each Filters control that has a Count on an option,
+// with the counts and the selection it served; a filter without counts and
+// the search box are not sent.
+func TestRespond_CountedFiltersOOB(t *testing.T) {
+	p := itemProps(t, "status=draft")
+	p.Filters[1].Options[0].Count = filterbar.CountOf(1)
+	p.Filters[1].Options[1].Count = filterbar.CountOf(2)
+	var respondErr error
+	h := testApp().Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		respondErr = Respond(w, r, "PAGETITLE", p)
+	}))
+	req := httptest.NewRequest("GET", "/items?status=draft", nil)
+	req.Header.Set("HX-Request", "true")
+	req.Header.Set("HX-Target", "list-results")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if respondErr != nil {
+		t.Fatal(respondErr)
+	}
+	body := rec.Body.String()
+	wantOrder(t, body, `id="list-results"`, `id="list-filterbar-hidden-sort"`,
+		`<div id="list-filterbar-control-status" hx-swap-oob="true" class="flex gap-1">`,
+		`value="published" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="false"`, `>1</span>`,
+		`value="draft" data-tui-filterbar-toggle data-tui-filterbar-toggle-selected="true"`, `>2</span>`)
+	wantNone(t, body, "list-filterbar-control-type", `type="search"`, "TYPEFILTER", "STATUSFILTER", "<label")
+	if n := strings.Count(body, "list-filterbar-control-"); n != 1 {
+		t.Errorf("%d out-of-band filter controls, want 1 (the counted one)", n)
+	}
+}
+
+// TestRespond_ResultsUnchangedFromV030: for a list whose filters have no
+// counts, the results-only response is byte for byte the one v0.3.0 sent
+// (testdata/results-v030.html was written by v0.3.0 itself from these
+// props): no filter control is rendered again out of band.
+func TestRespond_ResultsUnchangedFromV030(t *testing.T) {
+	want, err := os.ReadFile("testdata/results-v030.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec, err := serve(t, map[string]string{"HX-Request": "true", "HX-Target": "list-results"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rec.Body.String(); got != string(want) {
+		t.Errorf("results-only response =\n%s\nwant the v0.3.0 response\n%s", got, want)
+	}
 }

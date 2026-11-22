@@ -17,6 +17,7 @@ make check          # check-generate, check-vet, check-test, check-ui (run befor
 make check-ui       # go run ./cmd/wflint ./demo: app code may only compose components
 make ui-check       # Playwright overflow/console check at 390 and 1280; needs `make dev`, not part of check
 make containers-check  # Playwright: the showcase's long-list dialog and pinned drawer scroll inside the screen, also at 390x340; needs `make dev`
+make filterbar-check   # Playwright: one request per filter change, newest answer wins, single-choice groups, counts that follow the search; needs `make dev`
 make graph-check    # Playwright: graphwidget renders a canvas on /graph and shows its error box on failure; needs `make dev`
 npx --prefix tools playwright install chromium   # one-time, before the first ui-check
 go test ./components/copybutton/...               # a single package
@@ -31,7 +32,7 @@ Build order matters: templ generate runs before CSS compilation and Go compilati
 - **listquery** (module root): the sort/filter/page query-string contract (`Parse`, `Spec`, `Spec.URL` and its `With*` helpers, `Apply[T]`). Renders nothing.
 - **compose** (module root): `With(parent, children...)`, `Join`, `Text` fill container components (`{ children... }`) from plain Go, with no `.templ` file. `components/compose_children_test.go` must have a row for every package whose templates render `{ children... }`.
 - **assets** embeds `static/`: `assets.Mount(mux)`, `assets.Handler()`, `assets.URL(path)`.
-- **JS**: Alpine for local state (inline `x-data`), HTMX for server interactions. First-party scripts in `static/js/` (`confirm.js`, `htmx-errors.js`, `splitpane.js`, `autocomplete.js`, `theme-toggle.js`) are plain files; the `*.min.js` component scripts come from templUI and are not edited here.
+- **JS**: Alpine for local state (inline `x-data`), HTMX for server interactions. First-party scripts in `static/js/` (`confirm.js`, `htmx-errors.js`, `splitpane.js`, `autocomplete.js`, `theme-toggle.js`, and despite their names `filterbar.min.js` and `graphwidget.min.js`) are edited here; `filterbar.min.js` is formatted, hand-written source that nothing minifies. The other `*.min.js` component scripts come from templUI and are not edited here, apart from the local modifications `static/js/PROVENANCE.md` lists. That file is the record of every script's origin; a commit that edits a first-party script adds its behavior to the notes there.
 - **CSS**: theme tokens in `static/css/input.css`. Light is the default; dark is an opt-in via `data-theme="dark"`, and `dark:` utilities follow that attribute, not the OS.
 
 ## The page layer

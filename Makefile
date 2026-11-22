@@ -1,4 +1,4 @@
-.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check containers-check graph-check palette-check splitpane-check fetch-errors-check
+.PHONY: build generate css dev clean check check-generate check-vet check-test check-ui ui-check containers-check graph-check palette-check splitpane-check fetch-errors-check filterbar-check
 
 build: generate css
 	go build -o bin/demo ./cmd/demo
@@ -82,3 +82,13 @@ splitpane-check: tools/node_modules/.bin/tailwindcss
 # page lands in its <main id="wf-main">. Needs `make dev` running, like ui-check.
 fetch-errors-check: tools/node_modules/.bin/tailwindcss
 	node tools/fetch-errors-check.mjs --url http://localhost:3333
+
+# filterbar in a real browser: the search box's change event sends no second
+# request, a pill click after a search sends one request with both values,
+# Enter sends at once, and with answers held back only the answer to the
+# newest request lands; a single-choice group sends one value, and 16
+# buttons at 390 stay on one line with the selected one in view; counts
+# follow the search while the search box keeps the focus. Needs `make dev`
+# running, like ui-check.
+filterbar-check: tools/node_modules/.bin/tailwindcss
+	node tools/filterbar-check.mjs --url http://localhost:3333

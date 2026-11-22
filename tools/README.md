@@ -157,6 +157,50 @@ make fetch-errors-check   # needs `make dev`
 node tools/fetch-errors-check.mjs --url http://localhost:3333 --shot tools/shots/fetch-errors
 ```
 
+## filterbar-check
+
+`filterbar-check.mjs` drives the filter bar of the demo's `/items` list at
+1280px and counts the htmx requests the page sends. It types in Search, waits
+for the answer and clicks elsewhere: the search box's `change` event must
+send no second request. It types, waits and clicks a toggle pill: exactly one
+more request must go out, with the search text and the pill. It types and
+presses Enter before the debounce time is over: one request must go out at
+once and none when the timer would have fired. Then it holds answers back
+(route interception): with the search request held, a pill click must go out
+at once, and after every answer has landed the results must be the rows a
+fresh load of the address bar's URL shows; the same with a held request
+sent after the first answer. No toast may show. On the list's single-choice
+Pack group a click must send one request with that value alone, a click on
+another button that one alone, and a click on the selected button or on
+"Clear filters" no value. On the showcase at 390px the group of 16 School
+buttons must stay on one line with no horizontal overflow of the page, mark
+its cut-off edge (`data-tui-filterbar-more`), and bring the selected button
+into view after a click and after a resize. The Pack counts must follow the
+search (each answer renders the group again out of band) and equal those of
+a fresh load, while the bar and the search box stay the same elements and
+the box keeps the focus, its text and its caret as a held answer lands;
+"Clear filters" must clear the group and bring the first counts back. A
+select that has the focus must not be replaced by an answer, one without the
+focus must be, and a control whose incoming copy is the same (after a sort
+from the table header) must stay the same element; a clicked choice button must have the focus again after its
+group was replaced; a scrolled group must keep its scroll position. Last,
+the showcase's bar must be bare (no padding, border or background) and its
+search box must fill its line beside its label at 1280px and at 390px, 192px
+wide at least and as high as before (2rem). The long line must have a thin
+scrollbar where there is a mouse and none on a touch screen, and Tab must
+reach all 17 buttons with each clear of the faded edges. With the script
+loaded a second time, one click on a choice button must still send one
+request and select it. The bar aborts a superseded request and htmx logs two
+console errors for an abort (`htmx:afterRequest`, `htmx:sendAbort`): exactly
+those two are expected, the held scenario checks that they appear, and any
+other console error in any scenario fails the run. Exit 1 on any failure, 2 for a usage
+error.
+
+```bash
+make filterbar-check   # needs `make dev`
+node tools/filterbar-check.mjs --url http://localhost:3333
+```
+
 ## htmx-errors-check
 
 `htmx-errors-check.mjs` runs `static/js/htmx-errors.js` in a bare Node

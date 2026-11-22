@@ -50,14 +50,14 @@ const (
 )
 
 // itemsQuery is the list's query contract: newest first by default, 25 per
-// page, sortable by name/type/status/updated, filterable by type and
-// status.
+// page, sortable by name/type/status/updated, filterable by type, status
+// and pack.
 var itemsQuery = listquery.Options{
 	DefaultSort:     "updated",
 	DefaultDir:      listquery.Desc,
 	DefaultPageSize: 25,
 	AllowedSorts:    []string{"name", "type", "status", "updated"},
-	FilterKeys:      []string{"type", "status"},
+	FilterKeys:      []string{"type", "status", "pack"},
 }
 
 // itemTypeOptions are the Type choices, shared by the filter bar and the
@@ -131,11 +131,13 @@ func HandleItemsList(w http.ResponseWriter, r *http.Request) {
 }
 
 // itemsListProps applies spec to the store and declares the list page: the
-// intro line, the Type select and Status pills, the search box,
+// intro line, the Type select and the single-choice Pack buttons with their
+// counts, the Status pills (no counts), the search box,
 // the toolbar ("Build mod", "+ Create item", bulk "Publish selected") and
 // the five columns with their row actions.
 func itemsListProps(spec listquery.Spec) listpage.Props {
-	page := listquery.Apply(Items.All(), spec, itemSorters, itemMatch)
+	all := Items.All()
+	page := listquery.Apply(all, spec, itemSorters, itemMatch)
 	total, published, drafts := Items.Counts()
 	now := time.Now()
 
@@ -173,8 +175,9 @@ func itemsListProps(spec listquery.Spec) listpage.Props {
 		Header: pageheader.Props{Title: "Items"},
 		Intro:  fmt.Sprintf("%s · %s · %s", plural(total, "item"), strconv.Itoa(published)+" published", plural(drafts, "draft")),
 		Filters: []filterbar.FilterConfig{
-			{ID: "type", Label: "Type", Type: filterbar.TypeSelect, Placeholder: "All types", Options: filterOptions(itemTypeOptions)},
+			{ID: "type", Label: "Type", Type: filterbar.TypeSelect, Placeholder: "All types", Options: itemTypeFilterOptions(all, spec)},
 			{ID: "status", Label: "Status", Type: filterbar.TypeToggle, Options: filterOptions(itemStatusOptions)},
+			{ID: "pack", Label: "Pack", Type: filterbar.TypeChoice, Placeholder: "All", Options: itemPackOptions(all, spec)},
 		},
 		Search:  "Search items",
 		Toolbar: []action.Action{{Label: "Build mod", Href: "#"}},
@@ -203,6 +206,47 @@ func filterOptions(opts []formfield.Option) []filterbar.FilterOption {
 	out := make([]filterbar.FilterOption, len(opts))
 	for i, o := range opts {
 		out[i] = filterbar.FilterOption{Label: o.Label, Value: o.Value}
+	}
+	return out
+}
+
+// itemCounts counts, per value of one filter, the items that choosing that
+// value would show: those that match spec's search and its other filters
+// (the filter named key itself is left out), grouped by valueOf.
+func itemCounts(items []Item, spec listquery.Spec, key string, valueOf func(Item) string) map[string]int {
+	others := spec
+	others.Filters = make(map[string][]string, len(spec.Filters))
+	for k, v := range spec.Filters {
+		if k != key {
+			others.Filters[k] = v
+		}
+	}
+	counts := map[string]int{}
+	for _, it := range items {
+		if itemMatch(it, others) {
+			counts[valueOf(it)]++
+		}
+	}
+	return counts
+}
+
+// itemPackOptions are the Pack choices, each with its count (itemCounts).
+func itemPackOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+	counts := itemCounts(items, spec, "pack", itemPack)
+	out := make([]filterbar.FilterOption, len(itemPacks))
+	for i, p := range itemPacks {
+		out[i] = filterbar.FilterOption{Label: p.Label, Value: p.Value, Count: filterbar.CountOf(counts[p.Value])}
+	}
+	return out
+}
+
+// itemTypeFilterOptions are the Type select's choices, each with its count
+// (itemCounts): "Weapon (5)".
+func itemTypeFilterOptions(items []Item, spec listquery.Spec) []filterbar.FilterOption {
+	counts := itemCounts(items, spec, "type", func(it Item) string { return it.Type })
+	out := filterOptions(itemTypeOptions)
+	for i := range out {
+		out[i].Count = filterbar.CountOf(counts[out[i].Value])
 	}
 	return out
 }

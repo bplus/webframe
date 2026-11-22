@@ -1,0 +1,564 @@
+#!/usr/bin/env node
+// filterbar-check: drive the demo's filter bars in Playwright's Chromium and
+// check what filterbar.min.js sends and what lands (see tools/README.md):
+//
+//   blur     on /items, type in Search, wait for the answer, click
+//            elsewhere on the page: the search box's change event sends no
+//            second request;
+//   pill     type in Search, wait, click a toggle pill: exactly one more
+//            request, carrying the search text and the pill;
+//   enter    type and press Enter before the debounce time is over: one
+//            request at once, none when the timer would have fired;
+//   newest   with the answer to the search request held back, a pill click
+//            made meanwhile goes out at once and wins: after every answer
+//            has landed the results are those of the newest request and so
+//            is the address bar;
+//   stale    the same with every request that lacks the pill held back, so
+//            a stale request sent after the first answer would land last;
+//   choice   a click on a single-choice button sends one request with that
+//            value alone, a click on another sends that one alone, a click
+//            on the selected one or on "Clear filters" sends no value;
+//   line     on the showcase at 390, a group of 16 buttons stays on one
+//            line that scrolls inside the bar: the page has no horizontal
+//            overflow, the cut-off edge is marked, and the selected button
+//            is brought into view after a click and after a render;
+//   counts   the counts in the Pack group follow the search: each answer
+//            renders the group again out of band, while the bar and the
+//            search box stay the same elements, and the box keeps the focus,
+//            its text and its caret while a held answer lands; "Clear
+//            filters" clears the group and the counts go back;
+//   focus    a <select> that has the focus is not replaced by an answer and
+//            one that has not is; a choice button that had the focus has it
+//            again after its group was replaced, and a scrolled group keeps
+//            its scroll position;
+//   reach    with a mouse the long line has a thin scrollbar, on a touch
+//            screen none; Tab reaches every button, each clear of the fade;
+//   twice    with the script loaded a second time, one click on a choice
+//            button still sends one request and selects it;
+//   bare     the showcase's bar is bare (no padding, border or background
+//            of its own) and its search box fills the line at 1280 and at
+//            390, never under 192px.
+//
+//   node tools/filterbar-check.mjs --url http://localhost:3333
+//
+// The bar aborts a superseded request, and htmx logs two console errors for
+// an abort (htmx:afterRequest, htmx:sendAbort). Exactly those two are
+// expected; any other console error fails the run.
+//
+// Exit codes: 0 ok, 1 a check failed, 2 usage.
+
+import { chromium } from "playwright";
+
+const USAGE = `usage: node tools/filterbar-check.mjs --url <u>
+  --url <u>  the demo's base URL, for example http://localhost:3333 (required)`;
+
+function usage(msg) {
+  process.stderr.write(`filterbar-check: ${msg}\n${USAGE}\n`);
+  process.exit(2);
+}
+
+function parseArgs(argv) {
+  const opts = { url: null };
+  for (let i = 0; i < argv.length; i++) {
+    const flag = argv[i];
+    if (flag === "-h" || flag === "--help") {
+      process.stdout.write(USAGE + "\n");
+      process.exit(0);
+    }
+    if (flag !== "--url") usage(`unknown argument ${flag}`);
+    const value = argv[++i];
+    if (!value) usage(`${flag} needs a value`);
+    opts.url = value.replace(/\/+$/, "");
+  }
+  if (!opts.url) usage("--url is required");
+  return opts;
+}
+
+const failures = [];
+function check(ok, what) {
+  process.stdout.write(`${ok ? "ok  " : "FAIL"} ${what}\n`);
+  if (!ok) failures.push(what);
+}
+
+// scenario runs one group of checks. A group that cannot run (an element
+// it drives is not on the page, as on a build without that control) is one
+// failed check, and the next group still runs.
+async function scenario(name, run) {
+  try {
+    await run();
+  } catch (e) {
+    check(false, `${name}: could not run: ${String(e.message || e).split("\n")[0]}`);
+  }
+}
+
+const opts = parseArgs(process.argv.slice(2));
+const SEARCH = '#items-filterbar input[type="search"]';
+const DRAFT = '#items-filterbar [data-tui-filterbar-toggle][value="draft"]';
+const RESULTS = "#items-results";
+// Longer than the search box's debounce time (400ms) plus an answer.
+const SETTLE = 900;
+
+// ABORT matches the two console errors htmx 2 logs for a request it aborts:
+// the names of the error events it fires. The bar aborts a superseded
+// request (hx-sync replace), so these two are expected; they are kept
+// apart from every other console error, which fails the run.
+const ABORT = /^htmx:(afterRequest|sendAbort)$/;
+
+// open loads path in a new page and records every htmx request the page
+// sends to reqPath (the filter bar's requests; the page's own path unless
+// given), as URL objects, htmx's abort lines (aborts) and every other
+// console error (errors). ignore is a pattern of console errors the demo
+// page itself logs on purpose. context holds browser.newPage options.
+async function open(browser, path, { width = 1280, reqPath = path, ignore = null, context = {} } = {}) {
+  const page = await browser.newPage({ viewport: { width, height: 800 }, ...context });
+  const sent = [];
+  const errors = [];
+  const aborts = [];
+  page.on("request", (req) => {
+    const u = new URL(req.url());
+    if (u.pathname === reqPath && req.headers()["hx-request"] === "true") {
+      u.at = Date.now();
+      sent.push(u);
+    }
+  });
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    if (ABORT.test(m.text())) aborts.push(m.text());
+    else if (!(ignore && ignore.test(m.text() + " " + (m.location().url || "")))) errors.push(m.text());
+  });
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.setDefaultTimeout(5000);
+  await page.goto(opts.url + path);
+  return { page, sent, errors, aborts };
+}
+
+// typeAndWait types text into the search box and waits until the debounced
+// request has been answered and swapped.
+async function typeAndWait(page, text) {
+  const answered = page.waitForResponse((r) => new URL(r.url()).searchParams.get("q") === text);
+  await page.locator(SEARCH).pressSequentially(text, { delay: 20 });
+  await answered;
+  await page.waitForTimeout(SETTLE);
+}
+
+// rows is the text of the results region's table body rows.
+async function rows(page) {
+  return (await page.locator(`${RESULTS} tbody tr`).allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
+}
+
+// freshRows loads url in a new page and returns its rows: what the server
+// renders for that state with no script involved in the request.
+async function freshRows(browser, url) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await page.goto(url);
+  const r = await rows(page);
+  await page.close();
+  return r;
+}
+
+const describe = (sent) => JSON.stringify(sent.map((u) => u.search));
+
+// hold delays every bar request whose URL matches, by ms.
+async function hold(page, matches, ms) {
+  await page.route("**/items?*", async (route) => {
+    const req = route.request();
+    if (req.headers()["hx-request"] === "true" && matches(new URL(req.url()))) {
+      await new Promise((r) => setTimeout(r, ms));
+    }
+    try {
+      await route.continue();
+    } catch {
+      // The page aborted the request while it was held.
+    }
+  });
+}
+
+// newestWins checks the state after a search and a pill click with some
+// answers held back: results, address bar and toast container.
+async function newestWins(browser, page, sent, what) {
+  const u = new URL(page.url());
+  check(u.searchParams.get("q") === "of" && u.searchParams.get("status") === "draft", `${what}: the address bar shows the newest state (${u.search})`);
+  const last = sent[sent.length - 1];
+  check(last && last.searchParams.get("q") === "of" && last.searchParams.get("status") === "draft", `${what}: the newest request carries the search text and the pill ${describe(sent)}`);
+  const want = await freshRows(browser, page.url());
+  const got = await rows(page);
+  check(want.length > 0 && JSON.stringify(got) === JSON.stringify(want), `${what}: the results are those of the newest request (${got.length} rows shown, ${want.length} expected)`);
+  check((await page.locator("#toast-container > *").count()) === 0, `${what}: no toast`);
+}
+
+const browser = await chromium.launch();
+try {
+  // --- blur: the change event after typing sends nothing ---
+  await scenario("blur", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    await typeAndWait(page, "of");
+    check(sent.length === 1 && sent[0].searchParams.get("q") === "of", `blur: typing sends one request ${describe(sent)}`);
+    await page.locator("h1").first().click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 1, `blur: a click elsewhere sends no second request ${describe(sent)}`);
+    check(new URL(page.url()).searchParams.get("q") === "of", `blur: the address bar keeps the search (${page.url()})`);
+    check(errors.length === 0, `blur: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- pill: one more request, with both values ---
+  await scenario("pill", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    await typeAndWait(page, "of");
+    const before = sent.length;
+    await page.locator(DRAFT).click();
+    await page.waitForTimeout(SETTLE);
+    const more = sent.slice(before);
+    check(more.length === 1, `pill: a pill click after a search sends exactly one more request ${describe(more)}`);
+    const last = sent[sent.length - 1];
+    check(last.searchParams.get("q") === "of" && last.searchParams.get("status") === "draft", `pill: that request carries the search text and the pill (${last.search})`);
+    check((await page.locator(DRAFT).getAttribute("aria-pressed")) === "true", "pill: the pill states aria-pressed=true");
+    check(errors.length === 0, `pill: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- enter: one request at once, and the timer is cancelled ---
+  await scenario("enter", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    await page.locator(SEARCH).pressSequentially("of", { delay: 20 });
+    await page.locator(SEARCH).press("Enter");
+    await page.waitForTimeout(150);
+    check(sent.length === 1 && sent[0].searchParams.get("q") === "of", `enter: Enter sends the search at once, before the debounce time ${describe(sent)}`);
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 1, `enter: the cancelled timer sends nothing more ${describe(sent)}`);
+    check(errors.length === 0, `enter: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- newest: the search answer is held back, the pill click wins ---
+  await scenario("newest", async () => {
+    const { page, sent, errors, aborts } = await open(browser, "/items");
+    await hold(page, (u) => !u.searchParams.has("status"), 1500);
+    await page.locator(SEARCH).pressSequentially("of", { delay: 20 });
+    await page.waitForTimeout(600); // the debounced request is out and held
+    const clicked = Date.now();
+    await page.locator(DRAFT).click();
+    await page.waitForTimeout(3500); // every answer has landed
+    const pill = sent.find((u) => u.searchParams.has("status"));
+    check(pill && pill.at - clicked < 500, `newest: the pill request goes out at once, not after the held answer (${pill ? pill.at - clicked : "never"}ms after the click)`);
+    await newestWins(browser, page, sent, "newest");
+    check(aborts.slice().sort().join(",") === "htmx:afterRequest,htmx:sendAbort", `newest: htmx reports the one aborted request with its two lines ${JSON.stringify(aborts)}`);
+    check(errors.length === 0, `newest: no other console errors ${JSON.stringify(errors)}`);
+    check(sent.length === 2, `newest: two requests in all, the held one and the pill's ${describe(sent)}`);
+    await page.close();
+  });
+
+  // --- stale: a stale request sent after the first answer lands last ---
+  await scenario("stale", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    await typeAndWait(page, "of");
+    await hold(page, (u) => !u.searchParams.has("status"), 1500);
+    await page.locator(DRAFT).click();
+    await page.waitForTimeout(3500);
+    await newestWins(browser, page, sent, "stale");
+    check(errors.length === 0, `stale: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- choice: one value at most, one request per click ---
+  await scenario("choice", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    const pack = (v) => page.locator(`#items-filterbar [data-tui-filterbar-choice] button[value="${v}"]`);
+    const pressed = async () => (await page.locator('#items-filterbar [data-tui-filterbar-choice] button[aria-pressed="true"]').evaluateAll((bs) => bs.map((b) => b.value))).join(",");
+    check((await pressed()) === "", `choice: "All" is selected at first (pressed: "${await pressed()}")`);
+
+    await pack("netherese").click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 1 && sent[0].searchParams.getAll("pack").join("|") === "netherese", `choice: a click sends exactly one request with the one value ${describe(sent)}`);
+    check((await pressed()) === "netherese", `choice: the clicked button alone is pressed ("${await pressed()}")`);
+    check(new URL(page.url()).searchParams.get("pack") === "netherese", `choice: the address bar shows the value (${page.url()})`);
+
+    await pack("starfall").click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 2 && sent[1].searchParams.getAll("pack").join("|") === "starfall", `choice: a click on another option sends that option alone ${describe(sent.slice(1))}`);
+    check((await pressed()) === "starfall", `choice: the first button is no longer pressed ("${await pressed()}")`);
+
+    await pack("starfall").click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 3 && !sent[2].searchParams.has("pack"), `choice: a click on the selected option sends no value ${describe(sent.slice(2))}`);
+    check((await pressed()) === "", `choice: "All" is selected again ("${await pressed()}")`);
+
+    await pack("").click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 3, `choice: a click on the selected "All" sends nothing ${describe(sent.slice(3))}`);
+
+    await pack("netherese").click();
+    await page.locator(DRAFT).click();
+    await page.waitForTimeout(SETTLE);
+    const before = sent.length;
+    await page.locator("#items-filterbar [data-tui-filterbar-reset]").click();
+    await page.waitForTimeout(SETTLE);
+    const reset = sent.slice(before);
+    check(reset.length === 1 && !reset[0].searchParams.has("pack") && !reset[0].searchParams.has("status"), `choice: "Clear filters" sends one request with no value for the group ${describe(reset)}`);
+    check((await pressed()) === "", `choice: "Clear filters" selects "All" ("${await pressed()}")`);
+    check(!new URL(page.url()).searchParams.has("pack"), `choice: "Clear filters" takes the value out of the address bar (${page.url()})`);
+    check(errors.length === 0, `choice: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- line: 16 buttons at 390 ---
+  await scenario("line", async () => {
+    // The showcase points one avatar at a missing image on purpose.
+    const { page, sent, errors } = await open(browser, "/", { width: 390, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const GROUP = "#filter-demo [data-tui-filterbar-choice]";
+    const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    // inView measures the selected button against the group's visible box.
+    const inView = () =>
+      page.evaluate((sel) => {
+        const g = document.querySelector(sel);
+        const b = g.querySelector('[aria-pressed="true"]');
+        const gr = g.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        return { value: b.value, ok: br.left >= gr.left - 1 && br.right <= gr.right + 1, more: g.getAttribute("data-tui-filterbar-more"), scrollLeft: g.scrollLeft };
+      }, GROUP);
+    check((await page.locator(`${GROUP} button`).count()) === 17, "line: the group has 16 options and All");
+    check((await overflow()) <= 0, `line: no horizontal overflow of the page at 390 (${await overflow()}px)`);
+    const tops = await page.locator(`${GROUP} button`).evaluateAll((bs) => new Set(bs.map((b) => Math.round(b.getBoundingClientRect().top))).size);
+    check(tops === 1, `line: every button is on one line (${tops} line(s))`);
+    let v = await inView();
+    check(v.more === "end", `line: the cut-off edge is marked (data-tui-filterbar-more="${v.more}")`);
+
+    await page.locator(`${GROUP} button[value="transmutation"]`).click();
+    await page.waitForTimeout(SETTLE);
+    check(sent.length === 1 && sent[0].searchParams.get("school") === "transmutation", `line: the last option sends its value ${describe(sent)}`);
+    v = await inView();
+    check(v.value === "transmutation" && v.ok && v.scrollLeft > 0, `line: the selected option is in view after the click ${JSON.stringify(v)}`);
+    check(v.more === "start", `line: the other edge is marked now (data-tui-filterbar-more="${v.more}")`);
+
+    // A render (here: the group scrolled away, then a resize) brings it back.
+    await page.evaluate((sel) => {
+      document.querySelector(sel).scrollLeft = 0;
+    }, GROUP);
+    await page.setViewportSize({ width: 380, height: 800 });
+    await page.waitForTimeout(300);
+    v = await inView();
+    check(v.ok && v.scrollLeft > 0, `line: the selected option is brought back into view after a render ${JSON.stringify(v)}`);
+    check((await overflow()) <= 0, `line: still no horizontal overflow (${await overflow()}px)`);
+    check(errors.length === 0, `line: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- counts: out-of-band controls, the search box untouched ---
+  await scenario("counts", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    const counts = () => page.locator("#items-filterbar [data-tui-filterbar-choice] [data-tui-filterbar-count]").allInnerTexts();
+    // freshCounts loads url in a new page: the counts the server renders
+    // for that state in the page itself.
+    const freshCounts = async (url) => {
+      const fresh = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+      await fresh.goto(url);
+      const c = await fresh.locator("#items-filterbar [data-tui-filterbar-choice] [data-tui-filterbar-count]").allInnerTexts();
+      await fresh.close();
+      return c.join(",");
+    };
+    const first = (await counts()).join(",");
+    check(first === "4,4,6", `counts: the Pack counts of the whole list (${first})`);
+    // Mark the elements that must survive every answer.
+    await page.evaluate((sel) => {
+      document.querySelector("#items-filterbar").wfMark = true;
+      document.querySelector(sel).wfMark = true;
+      document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark = true;
+    }, SEARCH);
+    await hold(page, () => true, 700);
+    await page.locator(SEARCH).pressSequentially("of", { delay: 20 });
+    await page.waitForTimeout(500); // the request is out, its answer is held
+    check(sent.length === 1 && (await counts()).join(",") === first, `counts: the answer is still held ${describe(sent)}`);
+    await page.waitForTimeout(1200); // landed
+    const now = (await counts()).join(",");
+    check(now !== first && now === (await freshCounts(page.url())), `counts: the counts are those of the search (${now}; a fresh load shows ${await freshCounts(page.url())})`);
+    const state = await page.evaluate((sel) => {
+      const box = document.querySelector(sel);
+      return {
+        bar: document.querySelector("#items-filterbar").wfMark === true,
+        box: box.wfMark === true,
+        group: document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark === true,
+        focused: document.activeElement === box,
+        value: box.value,
+        caret: box.selectionStart,
+      };
+    }, SEARCH);
+    check(state.bar && state.box, `counts: the bar and the search box are the same elements ${JSON.stringify(state)}`);
+    check(!state.group, "counts: the Pack group is a new element");
+    check(state.focused && state.value === "of" && state.caret === 2, `counts: the search box kept the focus, its text and its caret ${JSON.stringify(state)}`);
+    // The user goes on typing into the same box.
+    await page.keyboard.type(" the", { delay: 20 });
+    await page.waitForTimeout(SETTLE + 700);
+    const more = (await counts()).join(",");
+    check(sent[sent.length - 1].searchParams.get("q") === "of the" && more !== now && more === (await freshCounts(page.url())), `counts: typing goes on in the same box (${sent[sent.length - 1].search}, counts ${more})`);
+
+    await page.unroute("**/items?*");
+    await page.locator('#items-filterbar [data-tui-filterbar-choice] button[value="starfall"]').click();
+    await page.waitForTimeout(SETTLE);
+    await page.locator("#items-filterbar [data-tui-filterbar-reset]").click();
+    await page.waitForTimeout(SETTLE);
+    const pressed = await page.locator('#items-filterbar [data-tui-filterbar-choice] button[aria-pressed="true"]').evaluateAll((bs) => bs.map((b) => b.value).join(","));
+    check(pressed === "" && (await counts()).join(",") === first && !sent[sent.length - 1].searchParams.has("pack"), `counts: "Clear filters" clears the group and the counts go back (pressed "${pressed}", counts ${(await counts()).join(",")})`);
+    check(errors.length === 0, `counts: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- focus: what an out-of-band replacement must not take away ---
+  await scenario("focus", async () => {
+    const { page, errors } = await open(browser, "/items");
+    const TYPE = '#items-filterbar select[name="type"]';
+    const marked = () => page.evaluate((sel) => document.querySelector(sel).wfMark === true, TYPE);
+    await page.evaluate((sel) => {
+      document.querySelector(sel).wfMark = true;
+    }, TYPE);
+    const labels = () => page.locator(`${TYPE} option`).allInnerTexts();
+    const whole = (await labels()).join("|");
+    check(/Weapon \(\d+\)/.test(whole), `focus: the Type select shows counts (${whole})`);
+    // While the select has the focus, an answer with other counts arrives
+    // (the search text is set and sent from script, so the focus stays).
+    await page.locator(TYPE).focus();
+    await page.evaluate((sel) => {
+      const box = document.querySelector(sel);
+      box.value = "of";
+      window.tui.filterbar.trigger(box.closest("[data-tui-filterbar]"));
+    }, SEARCH);
+    await page.waitForTimeout(SETTLE);
+    const focused = await page.evaluate((sel) => document.activeElement === document.querySelector(sel), TYPE);
+    check(focused && (await marked()) && (await labels()).join("|") === whole, `focus: a select that has the focus is not replaced (focused ${focused}, same element ${await marked()}, ${(await labels()).join("|")})`);
+    // The focus leaves; the next answer replaces the select.
+    await page.locator(SEARCH).focus();
+    await page.evaluate((sel) => window.tui.filterbar.trigger(document.querySelector(sel).closest("[data-tui-filterbar]")), SEARCH);
+    await page.waitForTimeout(SETTLE);
+    const narrowed = (await labels()).join("|");
+    check(!(await marked()) && narrowed !== whole, `focus: a select without the focus is replaced with the new counts (${narrowed})`);
+
+    // An answer that changes nothing in a control leaves the element alone:
+    // a sort from the table header has the same counts.
+    await page.evaluate((sel) => {
+      document.querySelector(sel).wfMark = true;
+      document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark = true;
+    }, TYPE);
+    const sorted = page.waitForResponse((r) => new URL(r.url()).searchParams.get("sort") === "name");
+    await page.locator("#items-results th a").first().click();
+    await sorted;
+    await page.waitForTimeout(SETTLE);
+    const kept = await page.evaluate((sel) => [document.querySelector(sel).wfMark === true, document.querySelector("#items-filterbar [data-tui-filterbar-choice]").wfMark === true], TYPE);
+    check(kept[0] && kept[1], `focus: a control whose incoming copy is the same is not replaced (select ${kept[0]}, group ${kept[1]})`);
+
+    const NETH = '#items-filterbar [data-tui-filterbar-choice] button[value="netherese"]';
+    await page.locator(NETH).click();
+    await page.waitForTimeout(SETTLE);
+    const btn = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
+      return { focused: document.activeElement === b, pressed: b.getAttribute("aria-pressed") };
+    }, NETH);
+    check(btn.focused && btn.pressed === "true", `focus: the clicked choice button has the focus again after its group was replaced ${JSON.stringify(btn)}`);
+    check(errors.length === 0, `focus: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+
+    // A scrolled group with nothing selected keeps its place.
+    const show = await open(browser, "/", { width: 390, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const GROUP = "#filter-demo [data-tui-filterbar-choice]";
+    await show.page.locator(GROUP).scrollIntoViewIfNeeded();
+    await show.page.evaluate((sel) => {
+      document.querySelector(sel).scrollLeft = 300;
+    }, GROUP);
+    const answered = show.page.waitForResponse((r) => new URL(r.url()).searchParams.get("fq") === "fire");
+    await show.page.locator('#filter-demo input[type="search"]').pressSequentially("fire", { delay: 20 });
+    await answered;
+    await show.page.waitForTimeout(SETTLE);
+    const g = await show.page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      const count = (v) => el.querySelector(`button[value="${v}"] [data-tui-filterbar-count]`).textContent;
+      return { scrollLeft: el.scrollLeft, evocation: count("evocation"), runes: count("runes"), blood: count("blood"), more: el.getAttribute("data-tui-filterbar-more") };
+    }, GROUP);
+    check(g.evocation === "3" && g.runes === "1" && g.blood === "0", `focus: the showcase's School counts follow the search ${JSON.stringify(g)}`);
+    check(g.scrollLeft === 300 && g.more === "both", `focus: the replaced group keeps its scroll position and its edge marks ${JSON.stringify(g)}`);
+    check(show.errors.length === 0, `focus: no console errors on the showcase ${JSON.stringify(show.errors)}`);
+    await show.page.close();
+  });
+
+  // --- bare: no card, a search box that fills its line ---
+  for (const width of [1280, 390]) await scenario(`bare at ${width}`, async () => {
+    const { page, errors } = await open(browser, "/", { width, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const m = await page.evaluate(() => {
+      const bar = document.querySelector("#filter-demo");
+      const box = bar.querySelector('input[type="search"]');
+      const label = bar.querySelector("label");
+      const cs = getComputedStyle(bar);
+      const b = bar.getBoundingClientRect();
+      const i = box.getBoundingClientRect();
+      const l = label.getBoundingClientRect();
+      return {
+        padding: cs.paddingLeft, border: cs.borderLeftWidth, background: cs.backgroundColor,
+        bar: Math.round(b.width), box: Math.round(i.width), height: Math.round(i.height),
+        fills: Math.abs(b.right - i.right) <= 1, labelBeside: l.right <= i.left && Math.abs(l.top + l.height / 2 - (i.top + i.height / 2)) <= 2,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    check(m.padding === "0px" && m.border === "0px" && m.background === "rgba(0, 0, 0, 0)", `bare at ${width}: no padding, border or background ${JSON.stringify(m)}`);
+    // h-8 is 2rem: the height of every bar control, whatever the root size.
+    const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+    check(m.fills && m.box >= 192 && m.labelBeside && m.height === Math.round(2 * rem), `bare at ${width}: the search box fills its line beside its label (${m.box}px of a ${m.bar}px bar, ${m.height}px high)`);
+    check(m.overflow <= 0, `bare at ${width}: no horizontal overflow (${m.overflow}px)`);
+    check(errors.length === 0, `bare at ${width}: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+
+  // --- reach: every button of a long line can be reached ---
+  await scenario("reach", async () => {
+    const GROUP = "#filter-demo [data-tui-filterbar-choice]";
+    // With a mouse the line has a thin scrollbar; on a touch screen none.
+    const mouse = await open(browser, "/", { width: 390, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const bar = (page) => page.evaluate((sel) => getComputedStyle(document.querySelector(sel)).scrollbarWidth, GROUP);
+    check((await mouse.page.evaluate(() => matchMedia("(hover: hover) and (pointer: fine)").matches)) && (await bar(mouse.page)) === "thin", `reach: with a mouse the line has a thin scrollbar (scrollbar-width: ${await bar(mouse.page)})`);
+    // The keyboard: Tab from the search box walks the buttons; each focused
+    // button is scrolled clear of the faded edges (scroll-padding).
+    await mouse.page.locator('#filter-demo input[type="search"]').focus();
+    let clear = true;
+    let last = "";
+    for (let i = 0; i < 17; i++) {
+      await mouse.page.keyboard.press("Tab");
+      const f = await mouse.page.evaluate((sel) => {
+        const g = document.querySelector(sel);
+        const b = document.activeElement;
+        if (!g.contains(b)) return null;
+        const gr = g.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        const first = b === g.firstElementChild;
+        const final = b === g.lastElementChild;
+        // At either end of the line there is no fade to stay clear of.
+        return { value: b.value, ok: (first || br.left >= gr.left + 31) && (final || br.right <= gr.right - 31) && br.left >= gr.left - 1 && br.right <= gr.right + 1 };
+      }, GROUP);
+      if (!f || !f.ok) clear = false;
+      if (f) last = f.value;
+    }
+    check(clear && last === "transmutation", `reach: Tab reaches all 17 buttons and each is clear of the faded edges (last: ${last})`);
+    check(mouse.errors.length === 0, `reach: no console errors ${JSON.stringify(mouse.errors)}`);
+    await mouse.page.close();
+
+    const touch = await open(browser, "/", { width: 390, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/, context: { isMobile: true, hasTouch: true } });
+    check(!(await touch.page.evaluate(() => matchMedia("(hover: hover) and (pointer: fine)").matches)) && (await bar(touch.page)) === "none", `reach: on a touch screen the scrollbar is hidden (scrollbar-width: ${await bar(touch.page)})`);
+    await touch.page.close();
+  });
+
+  // --- twice: the script loaded a second time adds nothing ---
+  await scenario("twice", async () => {
+    const { page, sent, errors } = await open(browser, "/items");
+    await page.addScriptTag({ url: "/static/js/filterbar.min.js" });
+    await page.waitForTimeout(200);
+    const NETH = '#items-filterbar [data-tui-filterbar-choice] button[value="netherese"]';
+    await page.locator(NETH).click();
+    await page.waitForTimeout(SETTLE);
+    const pressed = await page.locator(NETH).getAttribute("aria-pressed");
+    check(sent.length === 1 && sent[0].searchParams.get("pack") === "netherese" && pressed === "true", `twice: with the script loaded twice, one click sends one request and the button is selected ${describe(sent)} (aria-pressed ${pressed})`);
+    check(errors.length === 0, `twice: no console errors ${JSON.stringify(errors)}`);
+    await page.close();
+  });
+} finally {
+  await browser.close();
+}
+
+if (failures.length) {
+  process.stderr.write(`filterbar-check: ${failures.length} check(s) failed\n`);
+  process.exit(1);
+}

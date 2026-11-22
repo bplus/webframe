@@ -49,7 +49,7 @@ Written in this repository; covered by webframe's own license.
 
 | File | Origin | License | How verified |
 |---|---|---|---|
-| `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`. Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), not minifier output; only the outer `(()=>{(function(){"use strict";` wrapper copies the templUI file shape. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
+| `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`, `d9c2a88` (issue 75: one request per change), `dad3963` (issue 73: single-choice groups), `befd74d` (issue 74: out-of-band controls), `11d0384` (second-load guard, unchanged controls are not replaced, focus reveal). Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), never minifier output; the name is historical. Until `d9c2a88` it was one line inside an outer `(()=>{(function(){"use strict";` wrapper that copied the templUI file shape; since then it is formatted source with comments. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
 | `graphwidget.min.js` | webframe | MIT (webframe) | Added in `eaccae72` as the glue script for the vendored 3d-force-graph. |
 | `theme-toggle.js` | webframe | MIT (webframe) | Unminified. |
 | `autocomplete.js` | webframe | MIT (webframe) | Unminified; written with `components/autocomplete`. |
@@ -69,6 +69,51 @@ upgrade.
 
 ## Behavior notes for first-party scripts
 
+- `filterbar.min.js`: one request per change, and only the newest answer
+  lands. A `change` event from a debounced control (the search box: the
+  browser fires it when the box loses focus after an edit, and on Enter)
+  sends nothing when the bar's parameters equal those of the bar's last
+  request; with the debounce timer pending it sends at once and cancels the
+  timer. Every `triggerUpdate` cancels a pending timer. The bar is the source
+  element of `htmx.ajax` and the script sets `hx-sync="this:replace"` on it
+  (unless the bar has an `hx-sync` already), so htmx aborts the bar's request
+  in flight when the next goes out; htmx logs `htmx:afterRequest` and
+  `htmx:sendAbort` to the console for an aborted request. The promise
+  `htmx.ajax` returns is caught (htmx rejects it on abort). A bar with no
+  target still swaps into `<body>`. `make filterbar-check` covers this in a
+  browser.
+- `filterbar.min.js`: a button inside `[data-tui-filterbar-choice]`
+  (`filterbar.TypeChoice`) is a toggle of which one at most is selected:
+  `chooseOne` selects the clicked button alone, or on a click on the selected
+  button deselects it and selects the group's
+  `[data-tui-filterbar-choice-none]` button when it has one (a click on that
+  button while selected changes and sends nothing). `setSelected` also writes
+  `aria-pressed` on a button that has it. `resetAll` selects the "none"
+  button. The group is one line that scrolls sideways: `showSelected` scrolls
+  the group, never the page, until the selected button is clear of the 32px
+  edges, and `updateMore` sets `data-tui-filterbar-more` (`start`, `end`,
+  `both`) while buttons are scrolled out, which `input.css` draws as a fade.
+  A button that gets the focus (`focusin`) is scrolled clear of the edges
+  the same way. The "none" button never counts as selected for scrolling. `showSelected`
+  runs for a group seen for the first time (page load, or after
+  `htmx:afterSettle`), from a `ResizeObserver` on each group and after a
+  click or reset; a group already seen only gets `updateMore` (also on its
+  own scroll and a window resize), so a swap elsewhere never moves it.
+- `filterbar.min.js`: guards against a second run through
+  `window.tui.filterbar`, as the scripts below do through `window.wf.<name>`.
+  `triggerUpdate` does nothing for a bar that is no longer in the document
+  (a debounce timer that outlived a navigation).
+- `filterbar.min.js`: out-of-band copies of a bar's controls
+  (`filterbar.ControlsOOB`, `HiddenOOB`). On `htmx:oobBeforeSwap` for an
+  element with an id inside a bar: a select or a group whose incoming copy
+  has the same `controlState` (values, texts, selection) is not replaced;
+  a `<select>` that is
+  `document.activeElement` is not replaced (`detail.shouldSwap = false`),
+  because replacing it closes its open list (checked in Chromium 156 with
+  `select:open`: open before, closed after `outerHTML` was set, focus lost);
+  for a toggle or choice group the script records `scrollLeft` and the value
+  of the button that has the focus, and on `htmx:oobAfterSwap` (and
+  `htmx:afterSettle`) puts both back on the new element.
 - `filterbar.min.js`: `resetAll` skips controls with `type="hidden"` or
   `data-tui-filterbar-state` (list state such as sort, dir and per survives
   "Clear filters"). `triggerUpdate` runs `applySets(bar)` (a selected
@@ -85,8 +130,9 @@ upgrade.
   `make graph-check` covers this in a browser.
 - `confirm.js`, `htmx-errors.js`, `autocomplete.js`, `theme-toggle.js`,
   `splitpane.js`: each guards against a second run through `window.wf.<name>`
-  (htmx re-executes `<script src>` tags in swapped content). The templUI
-  scripts are not guarded.
+  (htmx re-executes `<script src>` tags in swapped content);
+  `filterbar.min.js` does the same through `window.tui.filterbar`. The
+  templUI scripts are not guarded.
 - `htmx-errors.js`: on `htmx:beforeSwap` with `evt.detail.isError`, refuses
   the swap when the response is not `text/html` or the target sits inside
   `data-wf-swallow-errors`; otherwise leaves htmx's decision alone.
