@@ -100,3 +100,35 @@ func TestPanelLevelClamps(t *testing.T) {
 		t.Errorf("level 1 want h2 in %s", out)
 	}
 }
+
+// A collapsible panel shows which state it is in: a decorative chevron at
+// the start of the summary that turns when the panel's own details is open.
+func TestPanel_CollapsibleMark(t *testing.T) {
+	for _, open := range []bool{false, true} {
+		out := render(t, Panel(Props{Title: "T", Collapsible: true, Open: open}))
+		summary := out[strings.Index(out, "<summary"):strings.Index(out, "</summary>")]
+		for _, want := range []string{"data-wf-panel-mark", `aria-hidden="true"`, "<svg", "[details[open]&gt;summary_&amp;]:rotate-90", "T</h3>"} {
+			if !strings.Contains(summary, want) {
+				t.Errorf("open=%v: missing %q in summary %s", open, want, summary)
+			}
+		}
+		if strings.Index(summary, "data-wf-panel-mark") > strings.Index(summary, "<h3") {
+			t.Errorf("open=%v: the mark must come before the title: %s", open, summary)
+		}
+		if !strings.Contains(summary, "focus-visible:ring-[3px]") {
+			t.Errorf("open=%v: the summary needs a visible focus ring: %s", open, summary)
+		}
+	}
+}
+
+// Only a collapsible panel with a header has a mark.
+func TestPanel_NoMarkWithoutSummary(t *testing.T) {
+	for name, p := range map[string]Props{
+		"plain":                {Title: "T", Subtitle: "S"},
+		"collapsible headless": {Collapsible: true},
+	} {
+		if out := render(t, Panel(p)); strings.Contains(out, "data-wf-panel-mark") || strings.Contains(out, "<summary") {
+			t.Errorf("%s: unexpected mark or summary in %s", name, out)
+		}
+	}
+}

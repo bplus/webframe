@@ -75,7 +75,7 @@ and never decides layout.
 | Package | What it is and when to use it | See it | Without JavaScript |
 |---|---|---|---|
 | [`layout`](https://pkg.go.dev/github.com/bplus/webframe/components/layout) | The spacing and grouping pieces: `Stack` (one under another), `Inline` (side by side), `Section` (titled), `Divider`, `TwoColumn` and `ThreeColumn`. | `/#layout` | Works |
-| [`panel`](https://pkg.go.dev/github.com/bplus/webframe/components/panel) | A framed block of content with an optional title, actions, collapsing, and a flush mode for tables. | `/#panel` | Works (collapsing uses a native disclosure element). |
+| [`panel`](https://pkg.go.dev/github.com/bplus/webframe/components/panel) | A framed block of content with an optional title, actions, collapsing (the header row opens and closes it and carries a chevron that shows the state), and a flush mode for tables. | `/#panel` | Works (collapsing uses a native disclosure element). |
 | [`card`](https://pkg.go.dev/github.com/bplus/webframe/components/card) | A bordered, rounded box with optional header, title, description, content and footer parts. For a grid of item cards, use `cardgrid`. | `/#cards` | Works |
 | [`dashboardgrid`](https://pkg.go.dev/github.com/bplus/webframe/components/dashboardgrid) | A column grid whose slots span a number of columns; it collapses to one column on a phone. `dashboardpage` uses it for you. | `/#stattiles`, `/#image` | Works |
 | [`aspectratio`](https://pkg.go.dev/github.com/bplus/webframe/components/aspectratio) | Holds its content at a fixed width-to-height ratio (square, 16:9, 3:4, 2:1), for images, video or maps. | `/#aspectratio` | Works |
