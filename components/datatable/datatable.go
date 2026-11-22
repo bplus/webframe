@@ -1,6 +1,6 @@
 // Package datatable renders a declarative data table on top of the table
 // primitive: columns and rows as data, sort links built from a
-// listquery.Spec, an optional selection column, per-row actions, and an
+// liststate.Spec, an optional selection column, per-row actions, and an
 // empty state that keeps the header in place.
 //
 // Phone collapse (below md, 768px): columns marked Hidden are removed
@@ -31,7 +31,7 @@ import (
 	"github.com/bplus/webframe/components/badge"
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/emptystate"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // Align is a horizontal text alignment. On a Column the zero value is
@@ -64,7 +64,7 @@ const (
 	HeightLg Height = "lg"
 )
 
-// Column describes one table column. Key is the listquery sort key when
+// Column describes one table column. Key is the liststate sort key when
 // Sortable is set; Label is the header text.
 type Column struct {
 	Key, Label string
@@ -118,7 +118,7 @@ type Row struct {
 }
 
 // Props configures DataTable. Spec is the current sort state; header links
-// are Spec.URL(Base, listquery.WithSort(key)). An empty Base falls back to
+// are Spec.URL(Base, liststate.WithSort(key)). An empty Base falls back to
 // the request path stored by appshell.Middleware, else to a query-only href.
 //
 // Selection adds a leading checkbox column (the header box drives
@@ -137,7 +137,7 @@ type Props struct {
 
 	Columns []Column
 	Rows    []Row
-	Spec    listquery.Spec
+	Spec    liststate.Spec
 	Base    string
 
 	HxTarget string
@@ -246,11 +246,11 @@ func alignClass(a Align) string {
 }
 
 // ariaSort is the aria-sort value for a sortable column under spec.
-func ariaSort(spec listquery.Spec, key string) string {
+func ariaSort(spec liststate.Spec, key string) string {
 	if !spec.IsSorted(key) {
 		return "none"
 	}
-	if spec.Dir == listquery.Desc {
+	if spec.Dir == liststate.Desc {
 		return "descending"
 	}
 	return "ascending"

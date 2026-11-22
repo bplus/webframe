@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/a-h/templ"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 // Props configures Pagination. Class is merged via utils.TwMerge; Attributes
@@ -14,13 +14,13 @@ type Props struct {
 	Class      string
 	Attributes templ.Attributes
 	// Total is the number of rows across every page (Page.Total from
-	// listquery.Apply, or the SQL count).
+	// liststate.Apply, or the SQL count).
 	Total int
 	// Spec supplies the current Page and PageSize and every other list
 	// parameter (sort, search, filters), all of which carry into the page
-	// links. Pass the Spec listquery.Apply returned, whose Page has been
+	// links. Pass the Spec liststate.Apply returned, whose Page has been
 	// clamped to the last page; a zero-value Spec means page 1 of 25.
-	Spec listquery.Spec
+	Spec liststate.Spec
 	// Base is the link base ("/items"). "" uses the request path stored by
 	// appshell.Middleware (appshell.PathFromContext); when that is empty too,
 	// links are query-only ("?page=3") and resolve against the current page.
@@ -110,9 +110,9 @@ func (p Props) summary(s state) string {
 	return strconv.Itoa(start) + "–" + strconv.Itoa(end) + " of " + strconv.Itoa(p.Total) + noun
 }
 
-// href is the link for page n from base, built by listquery so every other
+// href is the link for page n from base, built by liststate so every other
 // list parameter (sort, search, filters, non-default page size) rides along
 // and values are query-escaped.
 func (p Props) href(base string, n int) string {
-	return p.Spec.URL(base, listquery.WithPage(n))
+	return p.Spec.URL(base, liststate.WithPage(n))
 }

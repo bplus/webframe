@@ -28,7 +28,7 @@ and call its `Respond`.
 - **One page inside the app's frame:** `appshell` with a `pageheader`. See
   [tutorial step 1](tutorial/01-hello.md).
 - **A list of records** (sort, filter, search, pages): `listpage` with
-  `listquery`. See [tutorial step 2](tutorial/02-list.md).
+  `liststate`. See [tutorial step 2](tutorial/02-list.md).
 - **A create or edit form:** `formpage`. See [tutorial step 3](tutorial/03-form.md),
   and [step 4](tutorial/04-validation.md) for showing errors on bad input.
 - **One record on its own page:** `detailpage`. See `/items/1` in the demo.
@@ -189,6 +189,6 @@ Packages at the module root that render nothing on their own.
 
 | Package | What it is and when to use it | See it | Without JavaScript |
 |---|---|---|---|
-| [`listquery`](https://pkg.go.dev/github.com/bplus/webframe/listquery) | Reads a list's sort, direction, page, page size, search and filters from the URL and builds the links back; `Apply` sorts and pages a Go slice, `Offset`/`Limit` feed SQL. | `/items` | Works |
+| [`liststate`](https://pkg.go.dev/github.com/bplus/webframe/liststate) | Reads a list's sort, direction, page, page size, search and filters from the URL and builds the links back; `Apply` sorts and pages a Go slice, `Offset`/`Limit` feed SQL. | `/items` | Works |
 | [`compose`](https://pkg.go.dev/github.com/bplus/webframe/compose) | Builds component trees in plain Go, without a `.templ` file: `compose.With` puts content inside a container component. | `/dashboard` (the pack counts), [tutorial step 1](tutorial/01-hello.md) | Works |
 | [`assets`](https://pkg.go.dev/github.com/bplus/webframe/assets) | Serves webframe's embedded CSS and JavaScript; call `assets.Mount(mux)` once. | every page | Works |

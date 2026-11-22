@@ -10,7 +10,7 @@ import (
 	"github.com/bplus/webframe/components/emptystate"
 	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/components/table"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -93,7 +93,7 @@ templ head(p Props, col Column, base string) {
 		if col.Sortable {
 			<a
 				class={ utils.TwMerge("inline-flex items-center gap-1 whitespace-nowrap hover:text-foreground", utils.If(col.Align == AlignRight, "flex-row-reverse")) }
-				{ p.sortAttrs(p.Spec.URL(base, listquery.WithSort(col.Key)))... }
+				{ p.sortAttrs(p.Spec.URL(base, liststate.WithSort(col.Key)))... }
 			>
 				{ col.Label }
 				@sortIcon(p.Spec, col.Key)
@@ -106,7 +106,7 @@ templ head(p Props, col Column, base string) {
 
 // sortIcon renders the chevron for a sortable column: a single direction on
 // the sorted column, a faint two-way chevron elsewhere so widths are stable.
-templ sortIcon(spec listquery.Spec, key string) {
+templ sortIcon(spec liststate.Spec, key string) {
 	{{ state := ariaSort(spec, key) }}
 	<span aria-hidden="true" data-sort-icon={ state } class={ utils.TwMerge("inline-flex shrink-0", utils.If(state == "none", "opacity-40")) }>
 		switch state {
@@ -228,7 +228,7 @@ templ rowActions(actions []action.Action) {
 }
 
 // headAttrs builds the th attributes: aria-sort on sortable columns only.
-func headAttrs(spec listquery.Spec, col Column) templ.Attributes {
+func headAttrs(spec liststate.Spec, col Column) templ.Attributes {
 	if !col.Sortable {
 		return nil
 	}

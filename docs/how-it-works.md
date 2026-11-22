@@ -171,16 +171,16 @@ Which column is sorted, which page you are on, what you searched for: all of it 
 query string, such as `/books?sort=year&dir=desc&page=2`. The server keeps nothing between
 requests. That gives you reload, bookmarks, a shareable link and a working Back button for free.
 
-`listquery.Parse` ([listquery/listquery.go:97](../listquery/listquery.go#L97-L99)) reads the
-query string into a `Spec` ([listquery.go:51](../listquery/listquery.go#L51-L76)), which is a
+`liststate.Parse` ([liststate/liststate.go:97](../liststate/liststate.go#L97-L99)) reads the
+query string into a `Spec` ([liststate.go:51](../liststate/liststate.go#L51-L76)), which is a
 plain struct: `Sort`, `Dir`, `Page`, `PageSize`, `Search`, `Filters`. Every value is checked
-([`ParseValues`, listquery.go:129](../listquery/listquery.go#L129)): a sort key not in
+([`ParseValues`, liststate.go:129](../liststate/liststate.go#L129)): a sort key not in
 `AllowedSorts` falls back to the default, a page below 1 becomes 1, and so on. So a hand-edited
 URL cannot break the page.
 
-Going the other way, `Spec.URL` ([listquery/url.go:30](../listquery/url.go#L30)) builds a link
-from a `Spec` plus a change. A sort header link is `Spec.URL(base, listquery.WithSort("year"))`.
-`WithSort` ([url.go:145](../listquery/url.go#L145-L159)) flips the direction if you are already
+Going the other way, `Spec.URL` ([liststate/url.go:30](../liststate/url.go#L30)) builds a link
+from a `Spec` plus a change. A sort header link is `Spec.URL(base, liststate.WithSort("year"))`.
+`WithSort` ([url.go:145](../liststate/url.go#L145-L159)) flips the direction if you are already
 sorted by that column, else sorts ascending, and always goes back to page 1.
 
 ### Clicking a sort header
@@ -192,7 +192,7 @@ sequenceDiagram
     participant S as Server
     U->>X: click "Year" header
     X->>S: GET /books?sort=year (HX-Request, HX-Target: list-results)
-    S->>S: listquery.Parse, load rows, listpage.Respond
+    S->>S: liststate.Parse, load rows, listpage.Respond
     S-->>X: results region + out-of-band hidden inputs
     X->>X: swap list-results, replace hidden inputs by id
     X->>U: push /books?sort=year to the address bar
@@ -266,8 +266,8 @@ the headers and the select never disagree.
 
 A row's Delete button sends `DELETE /books/7`. That URL says nothing about which page and sort
 the user is looking at. htmx also sends `HX-Current-URL`, the address bar's URL.
-`listquery.ParseCurrent` reads the `Spec` from that
-([listquery.go:106-122](../listquery/listquery.go#L106-L122)), and `listpage.RespondResults`
+`liststate.ParseCurrent` reads the `Spec` from that
+([liststate.go:106-122](../liststate/liststate.go#L106-L122)), and `listpage.RespondResults`
 ([listpage.go:523](../components/listpage/listpage.go#L523-L532)) sends just the results part,
 plus an `HX-Replace-Url` header so the address bar shows the state that was actually served (for
 example page 3 became page 2 because its last row is gone).
@@ -689,8 +689,8 @@ In this order. Each builds on the one before.
    `Render`/`RenderParts`, `Redirect`, `WantsFragment`. The heart of section 1.
 3. [components/appshell/document.templ](../components/appshell/document.templ): the `<html>`
    skeleton every page shares, and the htmx config.
-4. [listquery/listquery.go](../listquery/listquery.go) and
-   [listquery/url.go](../listquery/url.go): the URL as list state, read and written.
+4. [liststate/liststate.go](../liststate/liststate.go) and
+   [liststate/url.go](../liststate/url.go): the URL as list state, read and written.
 5. [components/listpage/listpage.go](../components/listpage/listpage.go) and
    [listpage.templ](../components/listpage/listpage.templ): one page type end to end. Read the
    package comment at the top first.

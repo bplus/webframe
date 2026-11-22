@@ -29,7 +29,7 @@ import (
 	"github.com/bplus/webframe/components/formpage"
 	"github.com/bplus/webframe/components/listpage"
 	"github.com/bplus/webframe/components/pageheader"
-	"github.com/bplus/webframe/listquery"
+	"github.com/bplus/webframe/liststate"
 )
 
 var app = &appshell.App{Name: "Books", Flash: flash.Take}
@@ -56,7 +56,7 @@ var books = []Book{
 }
 
 // bookQuery is what the list reads from the URL: ?sort=year&dir=desc&page=2.
-var bookQuery = listquery.Options{
+var bookQuery = liststate.Options{
 	DefaultSort:     "title",
 	DefaultPageSize: 4,
 	AllowedSorts:    []string{"title", "author", "year"},
@@ -70,9 +70,9 @@ var sorters = map[string]func(a, b Book) bool{
 }
 
 func listBooks(w http.ResponseWriter, r *http.Request) {
-	spec := listquery.Parse(r, bookQuery)
+	spec := liststate.Parse(r, bookQuery)
 	booksLock.Lock()
-	page := listquery.Apply(books, spec, sorters, nil)
+	page := liststate.Apply(books, spec, sorters, nil)
 	booksLock.Unlock()
 
 	var rows []datatable.Row
@@ -157,7 +157,7 @@ message, the next page shows it in a banner, and it is gone after that.
 **`booksLock`** is a `sync.Mutex`. Go's web server handles requests at the
 same time, and now one of them can change `books` while another reads it.
 `Lock` and `Unlock` around every use make them take turns. In `listBooks`
-the lock wraps the `listquery.Apply` call.
+the lock wraps the `liststate.Apply` call.
 
 **`Primary`** in the list's header adds the **New book** button, a plain link
 to `/books/new`. `action.VariantPrimary` makes it the filled button.
