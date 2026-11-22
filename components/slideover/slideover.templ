@@ -112,6 +112,14 @@ type CloseProps struct {
 	For        string // ID of the slide-over to close (optional, defaults to closest)
 }
 
+// PinnedProps configures Pinned. All fields are optional pass-throughs to
+// the rendered div.
+type PinnedProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+}
+
 // BodyProps configures the Body scroll region. All fields are optional
 // pass-throughs to the rendered div.
 type BodyProps struct {
@@ -174,7 +182,7 @@ func sideClasses(s Side) (position string, closedTranslate string, openTranslate
 // SlideOver is the root wrapper that binds a drawer's Trigger and Panel into
 // one unit, for edge-anchored panels (settings, detail views) where a
 // centered dialog would be wrong. The expected structure is
-// SlideOver > { Trigger, Panel > { Body, Footer, Close } }.
+// SlideOver > { Trigger, Panel > { Pinned, Body, Footer, Close } }.
 //
 // Nested parts inherit the instance ID (generated when Props.ID is empty)
 // and Props.Open through the render context. Parts placed outside the
@@ -246,8 +254,8 @@ templ Trigger(props ...TriggerProps) {
 // and right panels are full-height columns of the Width tier, full width
 // below sm. A bottom sheet is full width with a decorative drag handle,
 // capped at the Height tier. The header (Title and, unless HideCloseButton,
-// a close button) stays pinned; children are expected to be Body and/or
-// Footer.
+// a close button) stays pinned; children are expected to be Pinned
+// (optional), Body and Footer, in that order.
 //
 // An enclosing SlideOver's context overrides PanelProps.ID and supplies the
 // initial open state. A standalone Panel always starts closed and its ID
@@ -324,8 +332,10 @@ templ Panel(props ...PanelProps) {
 				// Style
 				"bg-background shadow-xl",
 				"border-border",
-				// Layout
-				"flex flex-col",
+				// Layout. The panel scrolls only when the Body is at its
+				// minimum height and the parts still do not fit (a short
+				// screen, a tall Pinned).
+				"flex flex-col overflow-y-auto",
 				// Transitions
 				"transition-transform duration-300 ease-in-out",
 				// Slide animation
@@ -386,9 +396,31 @@ templ Panel(props ...PanelProps) {
 	</div>
 }
 
+// Pinned holds content that is pinned between the Panel's header and its
+// Body, which means it stays in view while the Body scrolls: filters, a
+// count, a notice. Place it directly inside Panel, before Body. It has the
+// header's horizontal padding and a rule under it, on every Side.
+templ Pinned(props ...PinnedProps) {
+	{{ var p PinnedProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	<div
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={ utils.TwMerge("shrink-0 border-b border-border px-4 sm:px-6 py-3", p.Class) }
+		data-tui-slideover-pinned
+		{ p.Attributes... }
+	>
+		{ children... }
+	</div>
+}
+
 // Body is the scrollable main region of a Panel: it takes the remaining
 // height and scrolls, keeping the header and Footer pinned. Place it
-// directly inside Panel.
+// directly inside Panel. It is never less than 8rem tall: on a screen too
+// short for that and the pinned parts, the whole panel scrolls instead.
 templ Body(props ...BodyProps) {
 	{{ var p BodyProps }}
 	if len(props) > 0 {
@@ -398,7 +430,7 @@ templ Body(props ...BodyProps) {
 		if p.ID != "" {
 			id={ p.ID }
 		}
-		class={ utils.TwMerge("flex-1 overflow-y-auto p-6", p.Class) }
+		class={ utils.TwMerge("min-h-32 flex-1 overflow-y-auto p-6", p.Class) }
 		data-tui-slideover-body
 		{ p.Attributes... }
 	>

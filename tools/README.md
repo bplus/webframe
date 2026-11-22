@@ -97,6 +97,22 @@ make palette-check   # needs `make dev`; checks /items
 node tools/palette-check.mjs --url http://localhost:3333/items --shot tools/shots/palette
 ```
 
+## containers-check
+
+`containers-check.mjs` opens the showcase's long-list dialog and its drawer
+with a pinned line at 390x844, 1280x800 and 390x340 (a phone on its side).
+In the dialog the panel must fit the screen, the `Body` must scroll, and the
+count line and the footer must not move while it does. In the drawer the
+`Pinned` line must not move while the `Body` scrolls. On the short screen the
+dialog's `Body` must keep its minimum height and the panel must scroll
+instead, so that the footer can still be reached. Exit 1 on any failure, 2
+for a usage error.
+
+```bash
+make containers-check   # needs `make dev`; checks /
+node tools/containers-check.mjs --url http://localhost:3333/ --shot tools/shots/containers
+```
+
 ## splitpane-check
 
 `splitpane-check.mjs` loads the demo's `/browse` split pane at 1280px. It opens

@@ -2,6 +2,7 @@ package panel
 
 import (
 	"github.com/bplus/webframe/components/action"
+	"github.com/bplus/webframe/components/icon"
 	"github.com/bplus/webframe/utils"
 )
 
@@ -22,7 +23,11 @@ type Props struct {
 
 	Title, Subtitle string
 	Actions         []action.Action
-	// Collapsible renders <details>/<summary>; Open expands it.
+	// Collapsible renders <details>/<summary>; Open expands it. The header
+	// row is the summary and starts with a chevron that points right when
+	// the panel is closed and down when it is open. A collapsible panel with
+	// no Title, Subtitle or Actions has no summary, so the user cannot open
+	// or close it: it stays as Open says.
 	Collapsible, Open bool
 	// Flush removes body padding (e.g. for tables).
 	Flush   bool
@@ -67,8 +72,13 @@ func bodyClass(p Props) string {
 	return "p-4"
 }
 
-templ headerRow(p Props) {
-	<div class="flex flex-wrap items-start justify-between gap-4 px-4 py-3">
+// openMarkClass turns the chevron a quarter when its own panel is open. The
+// selector names the summary's parent, so a collapsible panel inside an open
+// one keeps its own state.
+const openMarkClass = "shrink-0 text-muted-foreground transition-transform [details[open]>summary_&]:rotate-90"
+
+// titleBlock is the title and subtitle of the header row.
+templ titleBlock(p Props) {
 		<div class="min-w-0">
 			if p.Title != "" {
 				switch headingTag(p.Level) {
@@ -84,6 +94,20 @@ templ headerRow(p Props) {
 				<p class="text-sm text-muted-foreground">{ p.Subtitle }</p>
 			}
 		</div>
+}
+
+templ headerRow(p Props) {
+	<div class="flex flex-wrap items-start justify-between gap-4 px-4 py-3">
+		if p.Collapsible {
+			<div class="flex min-w-0 items-start gap-2">
+				<span class={ openMarkClass } aria-hidden="true" data-wf-panel-mark>
+					@icon.ChevronRight(icon.Props{Size: 16})
+				</span>
+				@titleBlock(p)
+			</div>
+		} else {
+			@titleBlock(p)
+		}
 		if len(p.Actions) > 0 {
 			<div class="min-w-0 max-w-full">
 				@action.Group(p.Actions)
@@ -93,7 +117,9 @@ templ headerRow(p Props) {
 }
 
 // Panel renders a titled region whose title is a heading at Level. A panel
-// with no title, subtitle or actions renders no header row.
+// with no title, subtitle or actions renders no header row. The header row
+// of a Collapsible panel opens and closes it and carries a chevron that
+// shows which of the two it is.
 templ Panel(props ...Props) {
 	{{ var p Props }}
 	if len(props) > 0 {
@@ -111,7 +137,7 @@ templ Panel(props ...Props) {
 			{ p.Attributes... }
 		>
 			if p.hasHeader() {
-				<summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+				<summary class="cursor-pointer list-none rounded-lg focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] [&::-webkit-details-marker]:hidden">
 					@headerRow(p)
 				</summary>
 			}

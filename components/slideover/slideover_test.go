@@ -209,3 +209,51 @@ func TestPanel_OpenFromSlideOverContext(t *testing.T) {
 		t.Errorf("panel must inherit the wrapper instance: %s", out)
 	}
 }
+
+func TestPinned(t *testing.T) {
+	out := render(t, Pinned(PinnedProps{ID: "filters"}))
+	for _, want := range []string{`id="filters"`, "shrink-0", "border-b", "border-border", "px-4", "sm:px-6", "data-tui-slideover-pinned"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in %s", want, out)
+		}
+	}
+	if strings.Contains(out, "overflow-y-auto") {
+		t.Errorf("Pinned must not scroll: %s", out)
+	}
+}
+
+// Pinned, Body and Footer render in that order inside the panel element, on
+// every side.
+func TestPanel_PinnedBodyFooterOrder(t *testing.T) {
+	parts := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		for _, part := range []templ.Component{Pinned(), Body(), Footer()} {
+			if err := part.Render(ctx, w); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	for _, side := range []Side{SideRight, SideLeft, SideBottom} {
+		out := render(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return Panel(PanelProps{ID: "p", Title: "T", Side: side}).Render(templ.WithChildren(ctx, parts), w)
+		}))
+		panel := strings.Index(out, "data-tui-slideover-panel")
+		pinned := strings.Index(out, "data-tui-slideover-pinned")
+		body := strings.Index(out, "data-tui-slideover-body")
+		footer := strings.Index(out, "border-t border-border p-4")
+		if !(panel >= 0 && panel < pinned && pinned < body && body < footer) {
+			t.Errorf("side %q: want panel < pinned < body < footer, got %d %d %d %d", side, panel, pinned, body, footer)
+		}
+		if !strings.HasSuffix(strings.TrimSpace(out), "</div></div>") {
+			t.Errorf("side %q: the footer must close inside the panel: %s", side, out)
+		}
+	}
+}
+
+// A Panel without Pinned has no trace of it.
+func TestPanel_NoPinnedByDefault(t *testing.T) {
+	out := render(t, Panel(PanelProps{ID: "p", Title: "T"}))
+	if strings.Contains(out, "data-tui-slideover-pinned") {
+		t.Errorf("Panel must render Pinned only when asked: %s", out)
+	}
+}
