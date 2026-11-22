@@ -77,6 +77,11 @@ type FilterConfig struct {
 	// way on wider screens (listpage's Sort select stands in for the table's
 	// sort headers).
 	PhoneOnly bool
+	// Grow makes a TypeSearch control take the width that is left in its
+	// line, never less than the 192px it has without Grow: its wrapper
+	// grows (flex-1) and the input fills it. The label stays beside the
+	// input. Other types ignore it.
+	Grow bool
 }
 
 // Props configures FilterBar.
@@ -111,6 +116,11 @@ type Props struct {
 	// from the page URL on every change. A list page names its page
 	// parameter, since a filter change goes back to page 1.
 	Drop []string
+	// Bare renders the bar without the card: no border, no background, no
+	// padding, no rounded corners. The controls, the gaps and the wrapping
+	// stay as they are. For a bar inside a surface that has its own border
+	// and padding (a dialog, a slide-over, a panel).
+	Bare bool
 }
 
 // FilterBar renders a row of filter controls (selects, debounced search
@@ -159,7 +169,8 @@ templ FilterBar(props ...Props) {
 		}
 		class={
 			utils.TwMerge(
-				"flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg",
+				"flex flex-wrap items-center gap-3",
+				utils.If(!p.Bare, "p-3 bg-card border border-border rounded-lg"),
 				p.Class,
 			),
 		}
@@ -275,9 +286,19 @@ templ ControlsOOB(barID string, controls ...FilterConfig) {
 }
 
 // wrapperClass is the class list of a control's label+control wrapper:
-// md:hidden when the control is PhoneOnly.
+// md:hidden when the control is PhoneOnly, flex-1 when it is a search
+// control with Grow.
 func wrapperClass(f FilterConfig) string {
-	return utils.TwMerge("flex items-center gap-2", utils.If(f.PhoneOnly, "md:hidden"))
+	return utils.TwMerge("flex items-center gap-2", utils.If(f.PhoneOnly, "md:hidden"), utils.If(f.Type == TypeSearch && f.Grow, "flex-1"))
+}
+
+// searchWidthClass is the width of a search input: 192px, or with Grow
+// what its wrapper has left and 192px at least.
+func searchWidthClass(f FilterConfig) string {
+	if f.Grow {
+		return "flex-1 min-w-48"
+	}
+	return "w-48"
 }
 
 // filterSelect is a labelled select; id is set when the bar has one, state
@@ -343,7 +364,8 @@ templ filterSearch(f FilterConfig, id string, state bool) {
 }
 
 // searchControl is the bare search <input>; id, state and oob as for
-// selectControl.
+// selectControl. Its width follows FilterConfig.Grow wherever it renders,
+// so HiddenOOB's copy of a promoted search box is as wide as the bar's.
 templ searchControl(f FilterConfig, id string, state, oob bool) {
 	<input
 		type="search"
@@ -363,7 +385,7 @@ templ searchControl(f FilterConfig, id string, state, oob bool) {
 		}
 		data-tui-filterbar-debounce="400"
 		placeholder={ f.Placeholder }
-		class="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+		class={ "h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring", searchWidthClass(f) }
 	/>
 }
 

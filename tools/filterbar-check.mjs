@@ -30,7 +30,10 @@
 //   focus    a <select> that has the focus is not replaced by an answer and
 //            one that has not is; a choice button that had the focus has it
 //            again after its group was replaced, and a scrolled group keeps
-//            its scroll position.
+//            its scroll position;
+//   bare     the showcase's bar is bare (no padding, border or background
+//            of its own) and its search box fills the line at 1280 and at
+//            390, never under 192px.
 //
 //   node tools/filterbar-check.mjs --url http://localhost:3333
 //
@@ -419,6 +422,32 @@ try {
     check(g.scrollLeft === 300 && g.more === "both", `focus: the replaced group keeps its scroll position and its edge marks ${JSON.stringify(g)}`);
     check(show.errors.length === 0, `focus: no console errors on the showcase ${JSON.stringify(show.errors)}`);
     await show.page.close();
+  }
+
+  // --- bare: no card, a search box that fills its line ---
+  for (const width of [1280, 390]) {
+    const { page } = await open(browser, "/", { width, reqPath: "/api/filter-demo", ignore: /missing-avatar\.png/ });
+    const m = await page.evaluate(() => {
+      const bar = document.querySelector("#filter-demo");
+      const box = bar.querySelector('input[type="search"]');
+      const label = bar.querySelector("label");
+      const cs = getComputedStyle(bar);
+      const b = bar.getBoundingClientRect();
+      const i = box.getBoundingClientRect();
+      const l = label.getBoundingClientRect();
+      return {
+        padding: cs.paddingLeft, border: cs.borderLeftWidth, background: cs.backgroundColor,
+        bar: Math.round(b.width), box: Math.round(i.width), height: Math.round(i.height),
+        fills: Math.abs(b.right - i.right) <= 1, labelBeside: l.right <= i.left && Math.abs(l.top + l.height / 2 - (i.top + i.height / 2)) <= 2,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    check(m.padding === "0px" && m.border === "0px" && m.background === "rgba(0, 0, 0, 0)", `bare at ${width}: no padding, border or background ${JSON.stringify(m)}`);
+    // h-8 is 2rem: the height of every bar control, whatever the root size.
+    const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+    check(m.fills && m.box >= 192 && m.labelBeside && m.height === Math.round(2 * rem), `bare at ${width}: the search box fills its line beside its label (${m.box}px of a ${m.bar}px bar, ${m.height}px high)`);
+    check(m.overflow <= 0, `bare at ${width}: no horizontal overflow (${m.overflow}px)`);
+    await page.close();
   }
 } finally {
   await browser.close();

@@ -700,3 +700,103 @@ func TestFilterBar_Counts(t *testing.T) {
 		}
 	}
 }
+
+// classOf returns the class tokens of the first element in html that
+// starts with open (for example `<input type="search"`).
+func classOf(t *testing.T, html, open string) []string {
+	t.Helper()
+	i := strings.Index(html, open)
+	if i < 0 {
+		t.Fatalf("no %q in: %s", open, html)
+	}
+	tag := html[i : i+strings.Index(html[i:], ">")]
+	j := strings.Index(tag, `class="`)
+	if j < 0 {
+		t.Fatalf("no class on %q: %s", open, tag)
+	}
+	rest := tag[j+len(`class="`):]
+	return strings.Fields(rest[:strings.Index(rest, `"`)])
+}
+
+func hasClass(classes []string, c string) bool {
+	for _, x := range classes {
+		if x == c {
+			return true
+		}
+	}
+	return false
+}
+
+// TestFilterBar_Grow: a search control with Grow has a growing wrapper and
+// an input that fills it with a 192px floor, and no fixed w-48; without
+// Grow the input is w-48 as before. Grow on another type changes nothing.
+func TestFilterBar_Grow(t *testing.T) {
+	html := render(t, filterbar.Props{Filters: []filterbar.FilterConfig{
+		{ID: "q", Label: "Search", Type: filterbar.TypeSearch, Grow: true},
+	}})
+	input := classOf(t, html, `<input type="search"`)
+	if !hasClass(input, "flex-1") || !hasClass(input, "min-w-48") || hasClass(input, "w-48") {
+		t.Errorf("Grow input classes = %v, want flex-1 and min-w-48 and no w-48", input)
+	}
+	if !strings.Contains(html, `<div class="flex items-center gap-2 flex-1"><label`) {
+		t.Errorf("Grow wrapper must be flex-1 with the label inside: %s", html)
+	}
+	html = render(t, filterbar.Props{Filters: []filterbar.FilterConfig{
+		{ID: "q", Label: "Search", Type: filterbar.TypeSearch},
+		{ID: "type", Label: "Type", Type: filterbar.TypeSelect, Grow: true},
+	}})
+	input = classOf(t, html, `<input type="search"`)
+	if !hasClass(input, "w-48") || hasClass(input, "flex-1") || hasClass(input, "min-w-48") {
+		t.Errorf("input classes without Grow = %v, want w-48 alone", input)
+	}
+	if strings.Contains(html, "flex-1") {
+		t.Errorf("Grow must not change a select, and no wrapper grows without it: %s", html)
+	}
+}
+
+// TestFilterBar_Bare: Bare drops the card (padding, background, border,
+// rounded corners) and keeps the layout classes; Class still merges.
+// Without Bare the root class list is the one of v0.3.0.
+func TestFilterBar_Bare(t *testing.T) {
+	html := render(t, filterbar.Props{Bare: true, Class: "mt-2", Filters: richProps().Filters})
+	root := classOf(t, html, `<div data-tui-filterbar`)
+	if got := strings.Join(root, " "); got != "flex flex-wrap items-center gap-3 mt-2" {
+		t.Errorf("Bare root classes = %q", got)
+	}
+	for _, bad := range []string{"p-3", "bg-card", "border", "border-border", "rounded-lg"} {
+		if hasClass(root, bad) {
+			t.Errorf("Bare root must not have %q: %v", bad, root)
+		}
+	}
+	// The controls are untouched: only the root's class list differs.
+	card := render(t, filterbar.Props{Class: "mt-2", Filters: richProps().Filters})
+	if want := strings.Replace(card, ` p-3 bg-card border border-border rounded-lg mt-2">`, ` mt-2">`, 1); html != want {
+		t.Errorf("Bare must change the root class list only:\n%s\nwant\n%s", html, want)
+	}
+	root = classOf(t, card, `<div data-tui-filterbar`)
+	if got := strings.Join(root, " "); got != "flex flex-wrap items-center gap-3 p-3 bg-card border border-border rounded-lg mt-2" {
+		t.Errorf("root classes without Bare = %q, want the v0.3.0 list", got)
+	}
+}
+
+// TestHiddenOOB_GrowSearch: HiddenOOB renders a promoted search control
+// with the width classes the bar gave it.
+func TestHiddenOOB_GrowSearch(t *testing.T) {
+	q := filterbar.FilterConfig{ID: "q", Label: "Search", Type: filterbar.TypeSearch, Value: "blade", Grow: true}
+	bar := render(t, filterbar.Props{ID: "bar", Hidden: map[string]string{"q": ""}, Filters: []filterbar.FilterConfig{q}})
+	var buf bytes.Buffer
+	if err := filterbar.HiddenOOB("bar", map[string]string{"q": ""}, q).Render(context.Background(), &buf); err != nil {
+		t.Fatal(err)
+	}
+	oob := buf.String()
+	if !strings.HasPrefix(oob, `<input type="search" id="bar-hidden-q" name="q" data-tui-filterbar-control data-tui-filterbar-state hx-swap-oob="true" value="blade"`) {
+		t.Errorf("HiddenOOB = %s", oob)
+	}
+	inBar, inOOB := classOf(t, bar, `<input type="search"`), classOf(t, oob, `<input type="search"`)
+	if strings.Join(inBar, " ") != strings.Join(inOOB, " ") {
+		t.Errorf("HiddenOOB search classes = %v, the bar's = %v", inOOB, inBar)
+	}
+	if !hasClass(inOOB, "flex-1") || !hasClass(inOOB, "min-w-48") || hasClass(inOOB, "w-48") {
+		t.Errorf("HiddenOOB search classes = %v, want the Grow classes", inOOB)
+	}
+}

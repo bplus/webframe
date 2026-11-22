@@ -11,6 +11,11 @@
 // it. WithSelected marks the options and fills the search text from the
 // query.
 //
+// The bar is a card of its own; Props.Bare drops the card for a bar inside a
+// surface that has a border and padding already (a panel, a dialog, a
+// slide-over). FilterConfig.Grow makes the search box take the width its
+// line has left instead of a fixed 192px.
+//
 // A filter change swaps Props.HxTarget only; the bar is never rendered
 // again, because its search box may have the focus and a half-typed value.
 // A response that swaps the target can still change the bar, with two

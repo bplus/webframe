@@ -14,7 +14,7 @@ import (
 templ filterbarSection() {
 	{{ filters, found, total := FilterDemo(nil) }}
 	@layout.Section(layout.SectionProps{Level: 3, ID: "filterbar", Title: "Filter bar", Description: "The row of controls above a list. listpage builds one from its Filters (see /items); this one is called directly."}) {
-		@panel.Panel(panel.Props{Level: 4, Title: "One choice of sixteen, with counts", Subtitle: "TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades. Type in Search and each count follows: the answer renders the group again out of band (ControlsOOB), and the search box keeps the focus."}) {
+		@panel.Panel(panel.Props{Level: 4, Title: "A bare bar in a panel: one choice of sixteen, with counts", Subtitle: "Bare: the panel is the surface, so the bar has no card of its own. Grow: the search box takes the width its line has left. TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades. Type in Search and each count follows: the answer renders the group again out of band (ControlsOOB), and the search box keeps the focus."}) {
 			@layout.Stack(layout.StackProps{Gap: layout.GapM}) {
 				@filterbar.FilterBar(filterbar.Props{
 					ID:        FilterDemoID,
@@ -22,6 +22,7 @@ templ filterbarSection() {
 					HxGet:     "/api/filter-demo",
 					HxTarget:  "#" + FilterDemoID + "-results",
 					ShowReset: true,
+					Bare:      true,
 				})
 				@layout.Stack(layout.StackProps{ID: FilterDemoID + "-results", Gap: layout.GapS}) {
 					@FilterDemoResults(found, total)

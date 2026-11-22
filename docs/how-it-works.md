@@ -251,7 +251,7 @@ if p.Intro != "" {
 In plain words: send the results; then send the filter bar's hidden inputs again, flagged to
 replace the old ones; then send the intro line again too, so its counts ("14 items, 3 drafts")
 stay correct after a delete. `HiddenOOB` is at
-[components/filterbar/filterbar.templ:230](../components/filterbar/filterbar.templ#L230-L243).
+[components/filterbar/filterbar.templ:241](../components/filterbar/filterbar.templ#L241-L254).
 `ControlsOOB` sends your `Filters` controls again the same way (never the search box, which may
 have the focus), so an option's label or count can change with every answer: "Drafts 3" becomes
 "Drafts 1" when the search narrows the list.

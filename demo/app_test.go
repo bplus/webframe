@@ -159,6 +159,8 @@ func TestFilterDemo(t *testing.T) {
 	h := Handler()
 	body := do(h, "GET", "/", nil, nil).Body.String()
 	wantAll(t, body, `id="filter-demo"`, `data-tui-filterbar-hx-get="/api/filter-demo"`, `id="filter-demo-results"`,
+		// Bare, with a growing search box.
+		`data-tui-filterbar-hx-swap="innerHTML" class="flex flex-wrap items-center gap-3">`, `<div class="flex items-center gap-2 flex-1"><label for="filter-demo-control-fq"`,
 		`<div id="filter-demo-control-school" role="group" aria-label="School" data-tui-filterbar-choice`, "46</strong> of 46 spells")
 	if n := strings.Count(body, `name="school"`); n != 17 {
 		t.Errorf("%d School buttons, want 17 (All and 16 schools)", n)

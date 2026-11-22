@@ -82,6 +82,7 @@ func filterbarSection() templ.Component {
 						HxGet:     "/api/filter-demo",
 						HxTarget:  "#" + FilterDemoID + "-results",
 						ShowReset: true,
+						Bare:      true,
 					}).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
@@ -120,7 +121,7 @@ func filterbarSection() templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "One choice of sixteen, with counts", Subtitle: "TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades. Type in Search and each count follows: the answer renders the group again out of band (ControlsOOB), and the search box keeps the focus."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = panel.Panel(panel.Props{Level: 4, Title: "A bare bar in a panel: one choice of sixteen, with counts", Subtitle: "Bare: the panel is the surface, so the bar has no card of its own. Grow: the search box takes the width its line has left. TypeChoice: a click selects one school, a second click on it (or on All) clears it. The buttons stay on one line that scrolls sideways; the cut-off edge fades. Type in Search and each count follows: the answer renders the group again out of band (ControlsOOB), and the search box keeps the focus."}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -200,7 +201,7 @@ func FilterDemoResults(found []FilterDemoSpell, total int) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(found)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 45, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 46, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -213,7 +214,7 @@ func FilterDemoResults(found []FilterDemoSpell, total int) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(total))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 45, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 46, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -236,7 +237,7 @@ func FilterDemoResults(found []FilterDemoSpell, total int) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(s.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 49, Col: 16}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 50, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -249,7 +250,7 @@ func FilterDemoResults(found []FilterDemoSpell, total int) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(s.School)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 49, Col: 36}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `demo/pages/filterbar.templ`, Line: 50, Col: 36}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
