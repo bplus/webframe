@@ -196,7 +196,7 @@ func TestEscapesScriptLine(t *testing.T) {
 
 // TestSideBySidePairing checks how deletions pair with the additions after
 // them. It was reported flaky once during the batch 5 merge; that run's
-// failure was the class-order assertion fixed in 7e7c2aa (TwMerge emits
+// failure was the class-order assertion fixed in 8200753 (TwMerge emits
 // classes in any order). Since then go test -count=200 -race on this
 // package is clean, and nothing here depends on map order or timing.
 func TestSideBySidePairing(t *testing.T) {

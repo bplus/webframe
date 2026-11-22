@@ -41,7 +41,7 @@ Axel Adrian (`LICENSE` at tag `v1.3.0`). Each pairs with
 | `selectbox.min.js` | templUI | v1.3.0 | MIT | Identical to upstream at `v1.3.0`. |
 | `tabs.min.js` | templUI | v1.3.0 | MIT | Identical to upstream at `v1.3.0`. |
 | `textarea.min.js` | templUI | v1.3.0 | MIT | Identical to upstream at `v1.3.0`. |
-| `slideover.min.js` | templUI `dialog.min.js`, adapted for webframe | v1.3.0 base | MIT (templUI) | Added in `5138e52` ("Mirrors dialog component pattern"). It is templUI v1.3.0 `dialog.min.js` with `dialog` renamed to `slideover` and `content` renamed to `panel` in attribute names, plus one added `document.dispatchEvent(new CustomEvent("slideover-open", ...))`; 98% character match after those renames. templUI has no slideover or filterbar component at any tag (all tags through v2.0.0 checked); its `sheet` component ships no script. Unchanged since `5138e52`. |
+| `slideover.min.js` | templUI `dialog.min.js`, adapted for webframe | v1.3.0 base | MIT (templUI) | Added in `f463056` ("Mirrors dialog component pattern"). It is templUI v1.3.0 `dialog.min.js` with `dialog` renamed to `slideover` and `content` renamed to `panel` in attribute names, plus one added `document.dispatchEvent(new CustomEvent("slideover-open", ...))`; 98% character match after those renames. templUI has no slideover or filterbar component at any tag (all tags through v2.0.0 checked); its `sheet` component ships no script. Unchanged since `f463056`. |
 
 ## First-party (webframe, MIT)
 
@@ -49,8 +49,8 @@ Written in this repository; covered by webframe's own license.
 
 | File | Origin | License | How verified |
 |---|---|---|---|
-| `filterbar.min.js` | webframe | MIT (webframe) | Added in `5138e52` together with `components/filterbar/filterbar.templ`; later edited in `96b044a`, `45bcbf6`, `b36d458`, `d9c2a88` (issue 75: one request per change), `dad3963` (issue 73: single-choice groups), `befd74d` (issue 74: out-of-band controls), `11d0384` (second-load guard, unchanged controls are not replaced, focus reveal). Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), never minifier output; the name is historical. Until `d9c2a88` it was one line inside an outer `(()=>{(function(){"use strict";` wrapper that copied the templUI file shape; since then it is formatted source with comments. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
-| `graphwidget.min.js` | webframe | MIT (webframe) | Added in `eaccae72` as the glue script for the vendored 3d-force-graph. |
+| `filterbar.min.js` | webframe | MIT (webframe) | Added in `f463056` together with `components/filterbar/filterbar.templ`; later edited in `dd4e473`, `c6dfd2d`, `472f7cd`, `f05c4aa` (issue 75: one request per change), `34f6aed` (issue 73: single-choice groups), `9c45acd` (issue 74: out-of-band controls), `414fc2d` (second-load guard, unchanged controls are not replaced, focus reveal). Hand-written ES5 (`var`, named functions, readable identifiers such as `findBar`, `collectParams`, `triggerUpdate`), never minifier output; the name is historical. Until `f05c4aa` it was one line inside an outer `(()=>{(function(){"use strict";` wrapper that copied the templUI file shape; since then it is formatted source with comments. No matching file in any templUI tag, and GitHub code search for `data-tui-filterbar` finds only bplus repositories. |
+| `graphwidget.min.js` | webframe | MIT (webframe) | Added in `fb510ae0` as the glue script for the vendored 3d-force-graph. |
 | `theme-toggle.js` | webframe | MIT (webframe) | Unminified. |
 | `autocomplete.js` | webframe | MIT (webframe) | Unminified; written with `components/autocomplete`. |
 | `confirm.js` | webframe | MIT (webframe) | Unminified; written with `components/confirmdialog`. |
