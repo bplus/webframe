@@ -5,6 +5,7 @@ import (
 	"github.com/bplus/webframe/components/button"
 	"github.com/bplus/webframe/components/dialog"
 	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/slideover"
 )
 
 // The demos of this file show a long list inside a container: the list
@@ -51,6 +52,35 @@ templ longListDialog() {
 				@dialog.Close() {
 					@button.Button() {
 						Done
+					}
+				}
+			}
+		}
+	}
+}
+
+// drawerSection shows a drawer with a Pinned line: the title, the pinned
+// line and the footer stay in view while the Body scrolls.
+templ drawerSection() {
+	@layout.Section(layout.SectionProps{Level: 3, ID: "drawer", Title: "Drawer with a pinned line", Description: "A slide-over from the right with a long list. The line under the title is a Pinned part: it stays in view while the list scrolls, as the footer does."}) {
+		@slideover.SlideOver(slideover.Props{ID: "long-list-drawer"}) {
+			@slideover.Trigger() {
+				@button.Button(button.Props{ID: "long-list-drawer-open", Variant: button.VariantOutline}) {
+					Open drawer
+				}
+			}
+			@slideover.Panel(slideover.PanelProps{Title: "Pick a row", Width: slideover.WidthLg}) {
+				@slideover.Pinned(slideover.PinnedProps{ID: "long-list-drawer-pinned"}) {
+					<span>{ fmt.Sprintf("Showing %d of %d. This line stays in view.", containerRows, containerRows) }</span>
+				}
+				@slideover.Body(slideover.BodyProps{ID: "long-list-drawer-body"}) {
+					@longList()
+				}
+				@slideover.Footer() {
+					@slideover.Close() {
+						@button.Button() {
+							Done
+						}
 					}
 				}
 			}
