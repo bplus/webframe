@@ -1,8 +1,14 @@
 // Command wflint lints an app's templ, Go and CSS sources and reports code
 // that bypasses the component library: raw block HTML, class and style
-// attributes, templ.Raw and the like. Run it over the app's directories (for
-// example "go run github.com/bplus/webframe/cmd/wflint ./internal/web") as part
-// of the app's checks; it exits 1 when it finds a violation.
+// attributes, templ.Raw and the like. Run it over the app's directories as
+// part of the app's checks; it exits 1 when it finds a violation. In an app
+// module, add it once as a tool and run it with go tool:
+//
+//	go get -tool github.com/bplus/webframe/cmd/wflint
+//	go tool wflint ./internal/web
+//
+// "go run github.com/bplus/webframe/cmd/wflint" fails there with a missing
+// go.sum entry, because the app's go.sum does not hold wflint's dependencies.
 package main
 
 import (

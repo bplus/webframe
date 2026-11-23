@@ -1,0 +1,43 @@
+package pages
+
+import (
+	"strings"
+
+	"github.com/bplus/webframe/components/badge"
+	"github.com/bplus/webframe/components/banner"
+	"github.com/bplus/webframe/components/layout"
+	"github.com/bplus/webframe/components/pageheader"
+	"github.com/bplus/webframe/compose"
+)
+
+// longToken is 300 characters with no place to break: a hash, a path or a
+// URL from real data looks like this.
+var longToken = strings.Repeat("0123456789", 30)
+
+// LongText is the long text page body (GET /longtext): text props filled
+// (pageheader Title, Subtitle, StatusText and Back; banner Title, Body and
+// Details)
+// with a 300-character unbroken token, and a banner whose Body has line
+// breaks. `make ui-check` loads this page at 390 and 1280 px; it fails when
+// a token makes the page scroll sideways or the three lines show as one.
+templ LongText() {
+	@layout.Stack(layout.StackProps{Gap: layout.GapL}) {
+		@pageheader.PageHeader(pageheader.Props{
+			Title:      "Title " + longToken,
+			Subtitle:   "Subtitle " + longToken,
+			Status:     badge.StatusPtr("running"),
+			StatusText: "Status " + longToken,
+			Back:       &pageheader.Link{Label: "Back " + longToken, Href: "/"},
+		})
+		@banner.Banner(banner.Props{
+			Title:   "Title " + longToken,
+			Body:    "Body " + longToken,
+			Details: compose.Text("Details " + longToken),
+		})
+		@banner.Banner(banner.Props{
+			ID:    "longtext-lines",
+			Title: "Three lines",
+			Body:  "First line.\nSecond line.\nThird line.",
+		})
+	}
+}

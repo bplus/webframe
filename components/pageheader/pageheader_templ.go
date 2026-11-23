@@ -156,14 +156,14 @@ func PageHeader(props ...Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"mb-2 inline-block text-sm text-muted-foreground hover:text-primary\">← ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"mb-2 inline-block max-w-full wrap-anywhere text-sm text-muted-foreground hover:text-primary\">← ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Back.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 64, Col: 120}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 64, Col: 145}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -174,7 +174,7 @@ func PageHeader(props ...Props) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"flex flex-wrap items-start justify-between gap-4\"><div class=\"min-w-0\"><h1 class=\"flex flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"flex flex-wrap items-start justify-between gap-4\"><div class=\"min-w-0\"><h1 class=\"flex flex-wrap items-center gap-2 wrap-anywhere text-3xl font-semibold tracking-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -225,14 +225,14 @@ func PageHeader(props ...Props) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Subtitle != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<p class=\"text-muted-foreground\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<p class=\"wrap-anywhere text-muted-foreground\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 77, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pageheader/pageheader.templ`, Line: 77, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {

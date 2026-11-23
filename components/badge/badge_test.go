@@ -64,6 +64,17 @@ func TestBadge_ExistingVariantsUnchanged(t *testing.T) {
 	}
 }
 
+// A badge is never wider than its container: a long unbroken word is cut
+// off, not allowed to push the page sideways.
+func TestBadge_StaysInsideContainer(t *testing.T) {
+	html := render(t, Badge())
+	for _, w := range []string{"max-w-full", "overflow-hidden", "whitespace-nowrap", "justify-center-safe"} {
+		if !strings.Contains(html, w) {
+			t.Errorf("missing class %q in %s", w, html)
+		}
+	}
+}
+
 func TestStatus_Mapping(t *testing.T) {
 	cases := map[string]Variant{
 		// Success
@@ -71,17 +82,18 @@ func TestStatus_Mapping(t *testing.T) {
 		"merged": VariantSuccess, "active": VariantSuccess, "ok": VariantSuccess,
 		"passed": VariantSuccess, "live": VariantSuccess,
 		// Secondary
-		"draft": VariantSecondary, "pending": VariantSecondary, "queued": VariantSecondary,
+		"draft": VariantSecondary, "pending": VariantSecondary,
 		"paused": VariantSecondary, "idle": VariantSecondary, "new": VariantSecondary,
+		"closed": VariantSecondary, "cancelled": VariantSecondary, "canceled": VariantSecondary,
 		// Destructive
 		"failed": VariantDestructive, "error": VariantDestructive, "blocked": VariantDestructive,
-		"rejected": VariantDestructive, "dead": VariantDestructive,
+		"rejected": VariantDestructive, "dead": VariantDestructive, "handed": VariantDestructive,
 		// Info
 		"running": VariantInfo, "building": VariantInfo, "in-progress": VariantInfo,
-		"syncing": VariantInfo, "open": VariantInfo,
+		"syncing": VariantInfo, "open": VariantInfo, "queued": VariantInfo, "shaping": VariantInfo,
 		// Warning
 		"warning": VariantWarning, "stale": VariantWarning, "degraded": VariantWarning,
-		"retrying": VariantWarning, "flaky": VariantWarning,
+		"retrying": VariantWarning, "flaky": VariantWarning, "waiting": VariantWarning,
 		// Normalization: case and surrounding space.
 		"Published ": VariantSuccess, "  FAILED": VariantDestructive, "In-Progress": VariantInfo,
 		// Unknown

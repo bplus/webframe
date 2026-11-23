@@ -18,7 +18,7 @@ npx --prefix tools playwright install chromium   # ~170 MB into ~/Library/Caches
 Start the demo first (`make dev`, serves on :3333), then:
 
 ```bash
-make ui-check                     # /items at 390, / at 390 and 1280
+make ui-check                     # /items at 390, / and /longtext at 390 and 1280
 node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 node tools/ui-check.mjs --url http://localhost:3333/items --width 390 \
   --eval 'document.querySelectorAll("table th").length'
@@ -35,6 +35,7 @@ Arguments:
 | `--height <n>` | viewport height (default 844 when width <= 500, else 800) |
 | `--shot <path>` | full-page PNG; directories are created. `tools/shots/` is git-ignored |
 | `--eval <js>` | expression evaluated in the page after load + networkidle; result printed as JSON on its own line |
+| `--assert <js>` | repeatable; expression evaluated in the page after load; the run fails unless the result is truthy |
 | `--click <selector>` | click before eval/shot, then wait 300ms |
 | `--hover <selector>` | hover before eval/shot, then wait 300ms |
 | `--wait <ms>` | extra wait after networkidle |
@@ -56,6 +57,7 @@ Exit code 1 (with the reason on stderr) when any of:
 
 - the page fails to load (network error, no response, or HTTP status >= 400)
 - `horizontalOverflow` is true
+- an `--assert` expression is not truthy
 - a `console.error` or uncaught page error occurred (each one is printed with its
   resource URL), unless it matches an `--ignore-console` substring
 

@@ -342,8 +342,12 @@ commit them; then every build, including CI, runs `templ generate` first.
 - Change the sentence in `home.templ`, then restart with `go run .` without
   running `templ generate`. The page does not change, because Go still
   compiles the old `home_templ.go`. Run `templ generate`, restart, and reload.
-- Wrap the paragraph in a `<div>` and run `go run github.com/bplus/webframe/cmd/wflint .`.
-  The linter refuses it and suggests `layout.Stack` or `layout.Inline`.
+- Wrap the paragraph in a `<div>` and run the linter. Add it to your module
+  once with `go get -tool github.com/bplus/webframe/cmd/wflint` (Go 1.24 or
+  later), then run `go tool wflint .`. The linter refuses the `<div>` and
+  suggests `layout.Stack` or `layout.Inline`. (`go run` with the package
+  path does not work in an app module: the linter's own dependencies are
+  not in your `go.sum`.)
 
 That's the tutorial. To see every component, clone webframe, run `make dev`
 and open the components showcase at http://localhost:3333. For the full API,

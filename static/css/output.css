@@ -925,6 +925,9 @@
   .justify-center {
     justify-content: center;
   }
+  .justify-center-safe {
+    justify-content: safe center;
+  }
   .justify-end {
     justify-content: flex-end;
   }
@@ -1526,6 +1529,9 @@
   }
   .whitespace-pre {
     white-space: pre;
+  }
+  .whitespace-pre-line {
+    white-space: pre-line;
   }
   .whitespace-pre-wrap {
     white-space: pre-wrap;

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // ui-check: load one demo page in Playwright's Chromium at a device-style
-// viewport, measure it, and fail loud on horizontal overflow, load failures
-// and console errors (minus any matched by --ignore-console). See tools/README.md.
+// viewport, measure it, and fail loud on horizontal overflow, load failures,
+// console errors (minus any matched by --ignore-console) and a false --assert.
+// See tools/README.md.
 //
 //   node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 //
 // Always prints one JSON line (last line of stdout):
 //   {url, width, height, scrollWidth, horizontalOverflow}
-// Exit codes: 0 ok, 1 overflow / load failure / console error, 2 usage.
+// Exit codes: 0 ok, 1 overflow / load failure / console error / false assert, 2 usage.
 
 import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
@@ -19,6 +20,8 @@ const USAGE = `usage: node tools/ui-check.mjs --url <u> [options]
   --height <n>       viewport height (default 844 when width <= 500, else 800)
   --shot <path>      write a full-page PNG here (directories are created)
   --eval <js>        evaluate this expression in the page after load; prints the JSON result
+  --assert <js>      repeatable; evaluate this expression in the page after load and
+                     fail the run unless the result is truthy
   --click <selector> click this element before --eval/--shot (waits 300ms after)
   --hover <selector> hover this element before --eval/--shot (waits 300ms after)
   --wait <ms>        extra wait after networkidle, before click/hover/eval/shot
@@ -32,8 +35,8 @@ function fail(code, msg) {
 }
 
 function parseArgs(argv) {
-  const opts = { width: 1280, height: null, shot: null, eval: null, click: null, hover: null, wait: 0, url: null, ignoreConsole: [] };
-  const takesValue = new Set(["--url", "--width", "--height", "--shot", "--eval", "--click", "--hover", "--wait", "--ignore-console"]);
+  const opts = { width: 1280, height: null, shot: null, eval: null, click: null, hover: null, wait: 0, url: null, ignoreConsole: [], assert: [] };
+  const takesValue = new Set(["--url", "--width", "--height", "--shot", "--eval", "--assert", "--click", "--hover", "--wait", "--ignore-console"]);
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === "-h" || flag === "--help") {
@@ -47,6 +50,10 @@ function parseArgs(argv) {
     if (key === "ignore-console") {
       if (value === "") fail(2, `${flag} needs a non-empty substring`);
       opts.ignoreConsole.push(value);
+      continue;
+    }
+    if (key === "assert") {
+      opts.assert.push(value);
       continue;
     }
     if (key === "width" || key === "height" || key === "wait") {
@@ -108,6 +115,12 @@ async function main() {
     if (opts.eval) {
       const result = await page.evaluate(opts.eval);
       process.stdout.write(JSON.stringify(result === undefined ? null : result) + "\n");
+    }
+    for (const expr of opts.assert) {
+      if (!(await page.evaluate(expr))) {
+        process.stderr.write(`ui-check: assert failed: ${expr}\n`);
+        failed = true;
+      }
     }
     if (opts.shot) {
       await mkdir(dirname(opts.shot), { recursive: true });

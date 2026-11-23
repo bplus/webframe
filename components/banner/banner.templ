@@ -28,7 +28,8 @@ type Props struct {
 	Attributes templ.Attributes
 
 	Variant Variant
-	// Title is the bold first line; Body the plain text under it.
+	// Title is the bold first line; Body the plain text under it. A line
+	// break in Body shows as a line break.
 	Title, Body string
 	// Details renders after the body, e.g. a <ul> of field errors.
 	Details templ.Component
@@ -120,13 +121,13 @@ templ Banner(props ...Props) {
 			@variantIcon(p.Variant)
 			<div class="min-w-0 flex-1">
 				if p.Title != "" {
-					<p class="font-semibold">{ p.Title }</p>
+					<p class="wrap-anywhere font-semibold">{ p.Title }</p>
 				}
 				if p.Body != "" {
-					<p class="text-sm text-foreground">{ p.Body }</p>
+					<p class="wrap-anywhere whitespace-pre-line text-sm text-foreground">{ p.Body }</p>
 				}
 				if p.Details != nil {
-					<div class="mt-1 text-sm text-foreground">
+					<div class="mt-1 wrap-anywhere text-sm text-foreground">
 						@p.Details
 					</div>
 				}

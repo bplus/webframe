@@ -47,10 +47,16 @@ check-ui:
 # Phone/desktop measurement with Playwright's Chromium. Not part of `check`:
 # needs `make dev` running on :3333. One-time: `npx --prefix tools playwright install chromium`.
 # The showcase deliberately 404s /static/img/missing-avatar.png (avatar fallback demo).
+# /longtext holds 300-character unbroken tokens (pageheader, its status
+# badge, banner; issues 84 and 85) and a banner Body of three lines; LONGTEXT_LINES is true when the three lines
+# show as three.
+LONGTEXT_LINES = (() => { const p = document.querySelector("\#longtext-lines p.text-sm"); return p.getBoundingClientRect().height >= 2.5 * parseFloat(getComputedStyle(p).lineHeight); })()
 ui-check: tools/node_modules/.bin/tailwindcss
 	node tools/ui-check.mjs --url http://localhost:3333/items --width 390 --shot tools/shots/items-390.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 390 --shot tools/shots/showcase-390.png --ignore-console missing-avatar.png
 	node tools/ui-check.mjs --url http://localhost:3333/ --width 1280 --shot tools/shots/showcase-1280.png --ignore-console missing-avatar.png
+	node tools/ui-check.mjs --url http://localhost:3333/longtext --width 390 --shot tools/shots/longtext-390.png --assert '$(LONGTEXT_LINES)'
+	node tools/ui-check.mjs --url http://localhost:3333/longtext --width 1280 --shot tools/shots/longtext-1280.png --assert '$(LONGTEXT_LINES)'
 
 # dialog and slideover in a real browser: the showcase's long-list dialog and
 # its drawer with a pinned line, at 390x844, 1280x800 and 390x340 (a phone on

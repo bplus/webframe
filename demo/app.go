@@ -97,6 +97,7 @@ func Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", HandleShowcase)
 	mux.HandleFunc("GET /graph", HandleGraph)
 	mux.HandleFunc("GET /api/graph", HandleGraphData)
+	mux.HandleFunc("GET /longtext", HandleLongText)
 
 	// The Items app (list, detail, create/edit form) on the sidebar shell:
 	// GET /items, /items/new, /items/{id}, /items/{id}/edit,
